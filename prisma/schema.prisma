@@ -1,0 +1,139 @@
+// Medikal Satış Operasyon Yönetim Sistemi - veri modeli
+// Para alanları integer KURUŞ olarak saklanır (150,50 TL -> 15050).
+// learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Role {
+  ADMIN
+  SELLER
+}
+
+enum EntityStatus {
+  ACTIVE
+  PASSIVE
+}
+
+enum OrderStatus {
+  PENDING // Bekliyor
+  PREPARING // Hazırlanıyor
+  SHIPPED // Kargolandı
+  DELIVERED // Teslim Edildi
+  CANCELLED // İptal Edildi
+}
+
+enum StockMovementType {
+  IN // Giriş
+  OUT // Çıkış
+}
+
+enum PaymentMethod {
+  CASH // Nakit
+  TRANSFER // Havale / EFT
+  CARD // Kredi Kartı
+  OTHER // Diğer
+}
+
+model User {
+  id           String       @id @default(cuid())
+  name         String
+  email        String       @unique
+  phone        String?
+  passwordHash String
+  role         Role         @default(SELLER)
+  status       EntityStatus @default(ACTIVE)
+  createdAt    DateTime     @default(now())
+
+  orders   Order[]
+  payments Payment[]
+}
+
+model Product {
+  id        String       @id @default(cuid())
+  name      String
+  code      String       @unique
+  salePrice Int // kuruş
+  stock     Int          @default(0)
+  status    EntityStatus @default(ACTIVE)
+  createdAt DateTime     @default(now())
+
+  orderItems     OrderItem[]
+  stockMovements StockMovement[]
+}
+
+model StockMovement {
+  id        String            @id @default(cuid())
+  product   Product           @relation(fields: [productId], references: [id])
+  productId String
+  type      StockMovementType
+  quantity  Int
+  note      String?
+  order     Order?            @relation(fields: [orderId], references: [id])
+  orderId   String?
+  createdAt DateTime          @default(now())
+
+  @@index([productId])
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  seller      User        @relation(fields: [sellerId], references: [id])
+  sellerId    String
+  doctorName  String
+  hospital    String?
+  status      OrderStatus @default(PENDING)
+  totalAmount Int // kuruş
+  orderDate   DateTime    @default(now())
+  createdAt   DateTime    @default(now())
+
+  items          OrderItem[]
+  shipment       Shipment?
+  stockMovements StockMovement[]
+
+  @@index([sellerId])
+  @@index([status])
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   String
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+  quantity  Int
+  unitPrice Int // kuruş (sipariş anındaki satış fiyatı snapshot)
+  lineTotal Int // kuruş (quantity * unitPrice)
+
+  @@index([orderId])
+}
+
+model Shipment {
+  id             String      @id @default(cuid())
+  order          Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId        String      @unique
+  carrier        String?
+  trackingNumber String?
+  shippedAt      DateTime?
+  status         OrderStatus @default(SHIPPED)
+  createdAt      DateTime    @default(now())
+}
+
+model Payment {
+  id        String        @id @default(cuid())
+  seller    User          @relation(fields: [sellerId], references: [id])
+  sellerId  String
+  amount    Int // kuruş
+  date      DateTime      @default(now())
+  method    PaymentMethod @default(TRANSFER)
+  note      String?
+  createdAt DateTime      @default(now())
+
+  @@index([sellerId])
+}

@@ -1,0 +1,106 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import bcrypt from "bcryptjs";
+import { prisma } from "@/lib/db";
+import { requireAdmin } from "@/lib/session";
+import { EntityStatus } from "@/generated/prisma/enums";
+
+export type SellerFormState = { error?: string };
+
+export async function createSeller(
+  _prev: SellerFormState,
+  formData: FormData
+): Promise<SellerFormState> {
+  await requireAdmin();
+
+  const name = (formData.get("name") as string)?.trim();
+  const email = (formData.get("email") as string)?.trim().toLowerCase();
+  const phone = ((formData.get("phone") as string) || "").trim() || null;
+  const password = formData.get("password") as string;
+
+  if (!name || !email) return { error: "Ad ve e-posta zorunludur." };
+  if (!password || password.length < 4)
+    return { error: "Şifre en az 4 karakter olmalıdır." };
+
+  const status: EntityStatus =
+    formData.get("status") === "PASSIVE"
+      ? EntityStatus.PASSIVE
+      : EntityStatus.ACTIVE;
+
+  try {
+    await prisma.user.create({
+      data: {
+        name,
+        email,
+        phone,
+        status,
+        role: "SELLER",
+        passwordHash: await bcrypt.hash(password, 10),
+      },
+    });
+  } catch {
+    return { error: "Bu e-posta zaten kayıtlı." };
+  }
+
+  revalidatePath("/sellers");
+  redirect("/sellers");
+}
+
+export async function updateSeller(
+  id: string,
+  _prev: SellerFormState,
+  formData: FormData
+): Promise<SellerFormState> {
+  await requireAdmin();
+
+  const name = (formData.get("name") as string)?.trim();
+  const email = (formData.get("email") as string)?.trim().toLowerCase();
+  const phone = ((formData.get("phone") as string) || "").trim() || null;
+  const password = (formData.get("password") as string) || "";
+
+  if (!name || !email) return { error: "Ad ve e-posta zorunludur." };
+
+  const status: EntityStatus =
+    formData.get("status") === "PASSIVE"
+      ? EntityStatus.PASSIVE
+      : EntityStatus.ACTIVE;
+
+  const data: {
+    name: string;
+    email: string;
+    phone: string | null;
+    status: EntityStatus;
+    passwordHash?: string;
+  } = { name, email, phone, status };
+
+  if (password) {
+    if (password.length < 4)
+      return { error: "Şifre en az 4 karakter olmalıdır." };
+    data.passwordHash = await bcrypt.hash(password, 10);
+  }
+
+  try {
+    await prisma.user.update({ where: { id }, data });
+  } catch {
+    return { error: "Bu e-posta zaten kayıtlı." };
+  }
+
+  revalidatePath("/sellers");
+  redirect("/sellers");
+}
+
+export async function deleteSeller(id: string) {
+  await requireAdmin();
+  const [orders, payments] = await Promise.all([
+    prisma.order.count({ where: { sellerId: id } }),
+    prisma.payment.count({ where: { sellerId: id } }),
+  ]);
+  if (orders > 0 || payments > 0) {
+    redirect("/sellers?error=used");
+  }
+  await prisma.user.delete({ where: { id } });
+  revalidatePath("/sellers");
+  redirect("/sellers");
+}
