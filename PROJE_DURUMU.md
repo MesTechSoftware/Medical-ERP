@@ -22,15 +22,17 @@ Kurulum ve iş kuralları detayı için `README.md`'ye bak.
 
 ## Veri Modeli (`prisma/schema.prisma`)
 
-7 model + 5 enum. 1 migration uygulanmış (`20260714131152_init`).
+8 model + 5 enum. 2 migration uygulanmış (`20260714131152_init`, `20260716134856_add_audit_log`).
 
-- **User** — `role` (ADMIN/SELLER), `status`, `passwordHash`; siparişler + ödemeler ile ilişkili
+- **User** — `role` (ADMIN/SELLER), `status`, `passwordHash`; siparişler + ödemeler + audit ile ilişkili
 - **Product** — `code` (unique), `salePrice` (kuruş), `stock`
 - **StockMovement** — `IN`/`OUT` hareket; ürüne ve opsiyonel siparişe bağlı
 - **Order** — satıcı, doktor/hastane, `status`, `totalAmount` (kuruş)
 - **OrderItem** — `unitPrice` sipariş anındaki fiyat snapshot'ı, `lineTotal`
 - **Shipment** — siparişe 1-1; kargo firması, takip no, durum
 - **Payment** — satıcı ödemesi; `method`, `amount` (kuruş)
+- **AuditLog** — denetim kaydı; `actorId` (nullable), `action`, `entityType`, `entityId`,
+  `before/afterData` (JSON string); hassas alanlar merkezî sanitize ile temizlenir
 
 Enum'lar: `Role`, `EntityStatus`, `OrderStatus` (PENDING→PREPARING→SHIPPED→DELIVERED / CANCELLED),
 `StockMovementType`, `PaymentMethod`.
@@ -47,6 +49,7 @@ Rol bazlı iki route grubu var: `(admin)` ve `(seller)`, ayrı layout'larla.
 - ✅ Siparişler — liste / detay + durum yönetimi
 - ✅ Kargo — sevkiyat yönetimi
 - ✅ Ödemeler — liste + ödeme kaydı (`PaymentForm`)
+- ✅ Audit Log — kritik işlemlerin denetim kaydı (salt okunur, son 100, filtre)
 
 **Satıcı** (`src/app/(seller)/`)
 - ✅ Siparişlerim — liste / yeni sipariş / detay (`OrderForm`)
@@ -54,8 +57,10 @@ Rol bazlı iki route grubu var: `(admin)` ve `(seller)`, ayrı layout'larla.
 
 **Ortak / altyapı**
 - ✅ Login (`src/app/login/`) + Auth.js route handler
+- ✅ Privacy / KVKK aydınlatma sayfası (`src/app/privacy/`, public)
 - ✅ Ortak bileşenler: `AppShell`, `SidebarLink`, `OrderDetail`, `ConfirmSubmit`, `LogoutButton`, `form.tsx`, `ui.tsx`
-- ✅ `lib/`: `auth`, `auth-actions`, `session`, `db`, `cari`, `money`, `format`
+- ✅ `lib/`: `auth`, `auth-actions`, `session`, `db`, `cari`, `money`, `format`, `audit`, `rate-limit`, `validation`
+- ✅ `scripts/backup.ts` — SQLite yedekleme + bütünlük doğrulaması (`npm run backup`)
 
 Her modül kendi `actions.ts` dosyasıyla Server Actions üzerinden çalışıyor.
 
