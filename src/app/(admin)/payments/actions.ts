@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { tlToKurus } from "@/lib/money";
+import { amountTLSchema } from "@/lib/validation";
 import { PaymentMethod } from "@/generated/prisma/enums";
 
 export type PaymentFormState = { error?: string; ok?: boolean };
@@ -26,7 +27,7 @@ export async function createPayment(
   const dateStr = (formData.get("date") as string) || "";
 
   if (!sellerId) return { error: "Satıcı seçiniz." };
-  if (!Number.isFinite(amountTL) || amountTL <= 0)
+  if (!amountTLSchema.safeParse(amountTL).success)
     return { error: "Geçerli bir tutar giriniz." };
 
   const seller = await prisma.user.findFirst({

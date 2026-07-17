@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
+import { quantitySchema } from "@/lib/validation";
 
 export type StockFormState = { error?: string; ok?: boolean };
 
@@ -13,11 +14,11 @@ export async function addStockEntry(
   await requireAdmin();
 
   const productId = formData.get("productId") as string;
-  const quantity = Math.trunc(Number(formData.get("quantity")));
+  const quantity = Number(formData.get("quantity"));
   const note = ((formData.get("note") as string) || "").trim() || null;
 
   if (!productId) return { error: "Ürün seçiniz." };
-  if (!Number.isFinite(quantity) || quantity <= 0)
+  if (!quantitySchema.safeParse(quantity).success)
     return { error: "Geçerli bir miktar giriniz." };
 
   const product = await prisma.product.findUnique({ where: { id: productId } });

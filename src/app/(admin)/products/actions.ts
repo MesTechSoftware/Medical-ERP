@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { tlToKurus } from "@/lib/money";
+import { priceTLSchema } from "@/lib/validation";
 import { EntityStatus } from "@/generated/prisma/enums";
 
 export type ProductFormState = { error?: string };
@@ -19,7 +20,7 @@ function parseProductForm(formData: FormData) {
       : EntityStatus.ACTIVE;
 
   if (!name || !code) return { error: "Ürün adı ve kodu zorunludur." as const };
-  if (!Number.isFinite(priceTL) || priceTL < 0)
+  if (!priceTLSchema.safeParse(priceTL).success)
     return { error: "Geçerli bir satış fiyatı giriniz." as const };
 
   return { data: { name, code, salePrice: tlToKurus(priceTL), status } };
