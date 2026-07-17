@@ -130,6 +130,14 @@ sorun varsa non-zero exit ile durur.
 - **SQLite tek dosya/tek sunucu:** ~10 satıcı, düşük eşzamanlılık için uygundur. Ölçek
   artarsa (yüksek eşzamanlı yazma) PostgreSQL'e geçiş ve yedek/rate-limit stratejisinin
   yeniden değerlendirilmesi gerekir.
+- **Oturum iptali gecikmeli:** Yetki JWT'den (login anındaki snapshot) doğrulanıyor; bir
+  kullanıcı "Pasif" yapıldığında veya rolü değiştiğinde bu, mevcut oturuma **token süresi
+  dolana kadar** yansımaz. Anlık iptal için `requireSession()` içinde canlı DB doğrulaması
+  gerekir (yol haritası — bkz. `PROJE_DURUMU.md`).
+
+> **Yol haritası:** Demo sonrası ele alınacak mühendislik bulguları (oturum iptali, stok
+> yarışı/PostgreSQL, hata sınırları, CI, sayfalama, birim testler) `PROJE_DURUMU.md`'de
+> önceliklendirilmiş olarak listelenmiştir.
 
 ## Kapsam Dışı (bu MVP'de yok)
 
