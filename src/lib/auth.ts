@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
+import { checkLock, recordFailure, reset } from "@/lib/rate-limit";
 import type { Role } from "@/generated/prisma/enums";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -18,12 +19,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const password = credentials?.password as string | undefined;
         if (!email || !password) return null;
 
+        // Brute-force koruması (tek enforcement noktası: ham endpoint dahil).
+        if (checkLock(email).locked) return null;
+
         const user = await prisma.user.findUnique({ where: { email } });
-        if (!user || user.status !== "ACTIVE") return null;
+        if (!user || user.status !== "ACTIVE") {
+          recordFailure(email);
+          return null;
+        }
 
         const ok = await bcrypt.compare(password, user.passwordHash);
-        if (!ok) return null;
+        if (!ok) {
+          recordFailure(email);
+          return null;
+        }
 
+        reset(email);
         return {
           id: user.id,
           name: user.name,
