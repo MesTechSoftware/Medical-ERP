@@ -53,3 +53,6 @@ next-env.d.ts
 /blob-report
 /playwright/.cache
 /playwright/.auth
+
+# yedekler
+/backups
