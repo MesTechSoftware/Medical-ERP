@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { loginAction, type LoginState } from "@/lib/auth-actions";
 
@@ -68,6 +69,12 @@ export default function LoginPage() {
             {pending ? "Giriş yapılıyor..." : "Giriş Yap"}
           </button>
         </form>
+
+        <p className="mt-6 text-center text-xs text-slate-400">
+          <Link href="/privacy" className="hover:text-slate-600">
+            Gizlilik Politikası
+          </Link>
+        </p>
       </div>
     </main>
   );
