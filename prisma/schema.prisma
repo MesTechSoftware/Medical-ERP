@@ -51,8 +51,9 @@ model User {
   status       EntityStatus @default(ACTIVE)
   createdAt    DateTime     @default(now())
 
-  orders   Order[]
-  payments Payment[]
+  orders    Order[]
+  payments  Payment[]
+  auditLogs AuditLog[]
 }
 
 model Product {
@@ -136,4 +137,23 @@ model Payment {
   createdAt DateTime      @default(now())
 
   @@index([sellerId])
+}
+
+// Kritik işlemlerin denetim kaydı: kim, ne yaptı, ne zaman, hangi kayıtta.
+// actorId nullable: başarısız giriş gibi olaylarda kimliklenmiş aktör yoktur.
+// before/after JSON string olarak saklanır (SQLite'ta TEXT); hassas alanlar
+// createAuditLog içinde merkezî olarak temizlenir (bkz. src/lib/audit.ts).
+model AuditLog {
+  id         String   @id @default(cuid())
+  actor      User?    @relation(fields: [actorId], references: [id])
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String?
+  beforeData String?
+  afterData  String?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, createdAt])
+  @@index([actorId])
 }

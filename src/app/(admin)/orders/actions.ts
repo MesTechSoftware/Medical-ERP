@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
+import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { OrderStatus } from "@/generated/prisma/enums";
 
 function revalidateOrders() {
@@ -14,23 +15,35 @@ function revalidateOrders() {
 
 /** PENDING -> PREPARING */
 export async function prepareOrder(id: string) {
-  await requireAdmin();
-  await prisma.order.updateMany({
+  const session = await requireAdmin();
+  const res = await prisma.order.updateMany({
     where: { id, status: "PENDING" },
     data: { status: OrderStatus.PREPARING },
   });
+  if (res.count > 0) {
+    await createAuditLog({
+      actorId: session.user.id,
+      action: AUDIT_ACTIONS.ORDER_STATUS_CHANGE,
+      entityType: "Order",
+      entityId: id,
+      before: { status: "PENDING" },
+      after: { status: "PREPARING" },
+    });
+  }
   revalidateOrders();
   redirect(`/orders/${id}`);
 }
 
 /** SHIPPED -> DELIVERED */
 export async function markDelivered(id: string) {
-  await requireAdmin();
+  const session = await requireAdmin();
+  let changed = 0;
   await prisma.$transaction(async (tx) => {
     const updated = await tx.order.updateMany({
       where: { id, status: "SHIPPED" },
       data: { status: OrderStatus.DELIVERED },
     });
+    changed = updated.count;
     if (updated.count > 0) {
       await tx.shipment.updateMany({
         where: { orderId: id },
@@ -38,13 +51,23 @@ export async function markDelivered(id: string) {
       });
     }
   });
+  if (changed > 0) {
+    await createAuditLog({
+      actorId: session.user.id,
+      action: AUDIT_ACTIONS.ORDER_STATUS_CHANGE,
+      entityType: "Order",
+      entityId: id,
+      before: { status: "SHIPPED" },
+      after: { status: "DELIVERED" },
+    });
+  }
   revalidateOrders();
   redirect(`/orders/${id}`);
 }
 
 /** Siparişi iptal eder ve stoğu geri yükler. */
 export async function cancelOrder(id: string) {
-  await requireAdmin();
+  const session = await requireAdmin();
 
   const order = await prisma.order.findUnique({
     where: { id },
@@ -76,6 +99,15 @@ export async function cancelOrder(id: string) {
       where: { id },
       data: { status: OrderStatus.CANCELLED },
     });
+  });
+
+  await createAuditLog({
+    actorId: session.user.id,
+    action: AUDIT_ACTIONS.ORDER_CANCEL,
+    entityType: "Order",
+    entityId: id,
+    before: { status: order.status },
+    after: { status: "CANCELLED" },
   });
 
   revalidateOrders();

@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { checkLock, recordFailure, reset } from "@/lib/rate-limit";
+import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import type { Role } from "@/generated/prisma/enums";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -25,16 +26,32 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user || user.status !== "ACTIVE") {
           recordFailure(email);
+          await createAuditLog({
+            action: AUDIT_ACTIONS.AUTH_LOGIN_FAILURE,
+            entityType: "Auth",
+            entityId: email,
+          });
           return null;
         }
 
         const ok = await bcrypt.compare(password, user.passwordHash);
         if (!ok) {
           recordFailure(email);
+          await createAuditLog({
+            action: AUDIT_ACTIONS.AUTH_LOGIN_FAILURE,
+            entityType: "Auth",
+            entityId: email,
+          });
           return null;
         }
 
         reset(email);
+        await createAuditLog({
+          actorId: user.id,
+          action: AUDIT_ACTIONS.AUTH_LOGIN_SUCCESS,
+          entityType: "Auth",
+          entityId: user.id,
+        });
         return {
           id: user.id,
           name: user.name,

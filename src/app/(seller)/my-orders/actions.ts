@@ -6,6 +6,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireSeller } from "@/lib/session";
 import { quantitySchema } from "@/lib/validation";
+import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 
 export type OrderFormState = { error?: string };
 
@@ -39,8 +40,9 @@ export async function createOrder(
     return { error: "En az bir ürün ve geçerli miktar giriniz." };
   const lines: LineInput[] = parsedLines.data;
 
+  let created: { id: string; totalAmount: number };
   try {
-    await prisma.$transaction(async (tx) => {
+    created = await prisma.$transaction(async (tx) => {
       const items: {
         productId: string;
         quantity: number;
@@ -97,12 +99,27 @@ export async function createOrder(
           },
         });
       }
+
+      return { id: order.id, totalAmount };
     });
   } catch (e) {
     return {
       error: e instanceof Error ? e.message : "Sipariş oluşturulamadı.",
     };
   }
+
+  await createAuditLog({
+    actorId: sellerId,
+    action: AUDIT_ACTIONS.ORDER_CREATE,
+    entityType: "Order",
+    entityId: created.id,
+    after: {
+      doctorName,
+      hospital,
+      totalAmount: created.totalAmount,
+      itemCount: lines.length,
+    },
+  });
 
   revalidatePath("/my-orders");
   revalidatePath("/products");

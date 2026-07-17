@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { tlToKurus } from "@/lib/money";
 import { amountTLSchema } from "@/lib/validation";
+import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { PaymentMethod } from "@/generated/prisma/enums";
 
 export type PaymentFormState = { error?: string; ok?: boolean };
@@ -18,7 +19,7 @@ export async function createPayment(
   _prev: PaymentFormState,
   formData: FormData
 ): Promise<PaymentFormState> {
-  await requireAdmin();
+  const session = await requireAdmin();
 
   const sellerId = formData.get("sellerId") as string;
   const amountTL = Number(formData.get("amount"));
@@ -37,7 +38,7 @@ export async function createPayment(
 
   const date = dateStr ? new Date(dateStr) : new Date();
 
-  await prisma.payment.create({
+  const payment = await prisma.payment.create({
     data: {
       sellerId,
       amount: tlToKurus(amountTL),
@@ -45,6 +46,14 @@ export async function createPayment(
       note,
       date,
     },
+  });
+
+  await createAuditLog({
+    actorId: session.user.id,
+    action: AUDIT_ACTIONS.PAYMENT_CREATE,
+    entityType: "Payment",
+    entityId: payment.id,
+    after: payment,
   });
 
   revalidatePath("/payments");

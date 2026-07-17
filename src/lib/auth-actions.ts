@@ -1,8 +1,9 @@
 "use server";
 
 import { AuthError } from "next-auth";
-import { signIn, signOut } from "@/lib/auth";
+import { auth, signIn, signOut } from "@/lib/auth";
 import { checkLock } from "@/lib/rate-limit";
+import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 
 export type LoginState = { error?: string };
 
@@ -41,5 +42,14 @@ export async function loginAction(
 }
 
 export async function logoutAction() {
+  const session = await auth();
+  if (session?.user) {
+    await createAuditLog({
+      actorId: session.user.id,
+      action: AUDIT_ACTIONS.AUTH_LOGOUT,
+      entityType: "Auth",
+      entityId: session.user.id,
+    });
+  }
   await signOut({ redirectTo: "/login" });
 }

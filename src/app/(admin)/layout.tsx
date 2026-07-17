@@ -9,6 +9,7 @@ const navItems: NavItem[] = [
   { href: "/orders", label: "Siparişler" },
   { href: "/shipping", label: "Kargo" },
   { href: "/payments", label: "Ödemeler" },
+  { href: "/audit-logs", label: "Audit Log" },
 ];
 
 export default async function AdminLayout({

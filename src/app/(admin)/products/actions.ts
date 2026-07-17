@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { tlToKurus } from "@/lib/money";
 import { priceTLSchema } from "@/lib/validation";
+import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { EntityStatus } from "@/generated/prisma/enums";
 
 export type ProductFormState = { error?: string };
@@ -30,14 +31,15 @@ export async function createProduct(
   _prev: ProductFormState,
   formData: FormData
 ): Promise<ProductFormState> {
-  await requireAdmin();
+  const session = await requireAdmin();
   const parsed = parseProductForm(formData);
   if (parsed.error) return { error: parsed.error };
 
   const initialStock = Math.max(0, Math.trunc(Number(formData.get("initialStock")) || 0));
 
+  let product;
   try {
-    await prisma.product.create({
+    product = await prisma.product.create({
       data: { ...parsed.data, stock: initialStock },
     });
   } catch {
@@ -46,20 +48,23 @@ export async function createProduct(
 
   // Başlangıç stoğu varsa hareket kaydı oluştur
   if (initialStock > 0) {
-    const created = await prisma.product.findUnique({
-      where: { code: parsed.data!.code },
+    await prisma.stockMovement.create({
+      data: {
+        productId: product.id,
+        type: "IN",
+        quantity: initialStock,
+        note: "Başlangıç stok girişi",
+      },
     });
-    if (created) {
-      await prisma.stockMovement.create({
-        data: {
-          productId: created.id,
-          type: "IN",
-          quantity: initialStock,
-          note: "Başlangıç stok girişi",
-        },
-      });
-    }
   }
+
+  await createAuditLog({
+    actorId: session.user.id,
+    action: AUDIT_ACTIONS.PRODUCT_CREATE,
+    entityType: "Product",
+    entityId: product.id,
+    after: product,
+  });
 
   revalidatePath("/products");
   revalidatePath("/stock");
@@ -71,18 +76,30 @@ export async function updateProduct(
   _prev: ProductFormState,
   formData: FormData
 ): Promise<ProductFormState> {
-  await requireAdmin();
+  const session = await requireAdmin();
   const parsed = parseProductForm(formData);
   if (parsed.error) return { error: parsed.error };
 
+  const before = await prisma.product.findUnique({ where: { id } });
+
+  let updated;
   try {
-    await prisma.product.update({
+    updated = await prisma.product.update({
       where: { id },
       data: parsed.data,
     });
   } catch {
     return { error: "Bu ürün kodu zaten kullanılıyor." };
   }
+
+  await createAuditLog({
+    actorId: session.user.id,
+    action: AUDIT_ACTIONS.PRODUCT_UPDATE,
+    entityType: "Product",
+    entityId: id,
+    before,
+    after: updated,
+  });
 
   revalidatePath("/products");
   redirect("/products");
