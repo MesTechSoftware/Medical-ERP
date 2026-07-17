@@ -2,12 +2,19 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireSeller } from "@/lib/session";
+import { quantitySchema } from "@/lib/validation";
+import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 
 export type OrderFormState = { error?: string };
 
 type LineInput = { productId: string; quantity: number };
+
+const orderLinesSchema = z
+  .array(z.object({ productId: z.string().min(1), quantity: quantitySchema }))
+  .min(1);
 
 export async function createOrder(
   _prev: OrderFormState,
@@ -21,19 +28,21 @@ export async function createOrder(
 
   if (!doctorName) return { error: "Doktor adı zorunludur." };
 
-  let lines: LineInput[];
+  let raw: unknown;
   try {
-    lines = JSON.parse((formData.get("items") as string) || "[]");
+    raw = JSON.parse((formData.get("items") as string) || "[]");
   } catch {
     return { error: "Sipariş kalemleri okunamadı." };
   }
 
-  lines = lines.filter((l) => l.productId && l.quantity > 0);
-  if (lines.length === 0)
-    return { error: "En az bir ürün ve miktar giriniz." };
+  const parsedLines = orderLinesSchema.safeParse(raw);
+  if (!parsedLines.success)
+    return { error: "En az bir ürün ve geçerli miktar giriniz." };
+  const lines: LineInput[] = parsedLines.data;
 
+  let created: { id: string; totalAmount: number };
   try {
-    await prisma.$transaction(async (tx) => {
+    created = await prisma.$transaction(async (tx) => {
       const items: {
         productId: string;
         quantity: number;
@@ -90,12 +99,27 @@ export async function createOrder(
           },
         });
       }
+
+      return { id: order.id, totalAmount };
     });
   } catch (e) {
     return {
       error: e instanceof Error ? e.message : "Sipariş oluşturulamadı.",
     };
   }
+
+  await createAuditLog({
+    actorId: sellerId,
+    action: AUDIT_ACTIONS.ORDER_CREATE,
+    entityType: "Order",
+    entityId: created.id,
+    after: {
+      doctorName,
+      hospital,
+      totalAmount: created.totalAmount,
+      itemCount: lines.length,
+    },
+  });
 
   revalidatePath("/my-orders");
   revalidatePath("/products");

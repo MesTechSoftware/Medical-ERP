@@ -1,6 +1,6 @@
 # Proje Durumu — Medikal Satış Operasyon Yönetim Sistemi
 
-_Son güncelleme: 2026-07-15 · Sürüm: 0.1.0 (MVP) · Durum: geliştirme_
+_Son güncelleme: 2026-07-16 · Sürüm: 0.1.0 (MVP) · Durum: geliştirme_
 
 Merkezi depodaki medikal ürünlerin ~10 satıcı üzerinden doktorlara ulaştırıldığı bir firmanın
 operasyonlarını (ürün, stok, sipariş, kargo, ödeme, satıcı cari hesabı) tek sistemde toplayan
@@ -67,6 +67,16 @@ Her modül kendi `actions.ts` dosyasıyla Server Actions üzerinden çalışıyo
 - **Cari:** `Güncel Bakiye = Toplam Satış (iptal hariç) − Toplam Ödeme` — `getSellerCari` /
   `getAllSellersCari`.
 
+## Sürüm Kontrolü & Test
+
+- **Git:** başlatıldı; remote `origin` = GitHub `memirdemir/medikal-satis-operasyon`. `.gitignore`
+  artık `*.db`, `.env*` (istisna: `.env.example`) ve Playwright artefaktlarını dışlıyor.
+  `.env.example` şablonu eklendi (gizli değerler repoda değil).
+- **E2E test altyapısı (Playwright):** `@playwright/test 1.61.1` + Chromium. `e2e/` altında 18 test
+  (auth/yetki, admin smoke + ürün/satıcı/cari-ödeme, satıcı sipariş). İzole `test.db`'ye karşı,
+  3100 portunda otomatik dev sunucusuyla çalışır; `dev.db`'ye dokunmaz. Komut: `npm run test:e2e`.
+  > Not: bu iş `test/playwright-e2e` dalında (origin'e push'lu), **henüz `main`'e merge edilmedi**.
+
 ## Çalıştırma
 
 ```bash
@@ -80,7 +90,10 @@ Demo hesapları README'de (admin@medikal.local / `admin123`, satıcılar / `sati
 
 ## Durum Notları / Bilinmeyenler
 
-- Otomatik test yok. `playwright` bağımlılık olarak var ama test dosyası bulunmuyor.
-- `dev.db` ve `.env` repoda fiziksel olarak duruyor — versiyon kontrolüne alınırken `.gitignore`
-  ile dışlanmalı (git henüz başlatılmadı).
+- Otomatik test: E2E paketi eklendi (yukarıya bakınız), ancak `main`'e merge bekliyor. Birim test yok.
+- `dev.db` ve `.env` yerelde duruyor ama artık `.gitignore` ile versiyon kontrolünden dışlanıyor.
+- **Production sertleştirme — tamamlandı** (`feature/production-hardening` dalı, 6 atomik commit;
+  kaynak: `gelistirme.md` / `GELISTIRME_PLANI_v3.md`): SQLite yedekleme (+bütünlük doğrulaması),
+  login rate-limit (brute-force), KVKK/Privacy sayfası, para/miktar-kritik alanlarda Zod doğrulama,
+  ve merkezî-sanitize'lı Audit Log. Detaylar README'de. `main`'e merge bekliyor.
 - MVP kapsam dışı: e-Fatura, kargo API, bildirim, çoklu depo, barkod, raporlama (bkz. README).

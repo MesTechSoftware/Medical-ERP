@@ -2,6 +2,8 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
+import { checkLock, recordFailure, reset } from "@/lib/rate-limit";
+import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import type { Role } from "@/generated/prisma/enums";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -18,12 +20,38 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const password = credentials?.password as string | undefined;
         if (!email || !password) return null;
 
+        // Brute-force koruması (tek enforcement noktası: ham endpoint dahil).
+        if (checkLock(email).locked) return null;
+
         const user = await prisma.user.findUnique({ where: { email } });
-        if (!user || user.status !== "ACTIVE") return null;
+        if (!user || user.status !== "ACTIVE") {
+          recordFailure(email);
+          await createAuditLog({
+            action: AUDIT_ACTIONS.AUTH_LOGIN_FAILURE,
+            entityType: "Auth",
+            entityId: email,
+          });
+          return null;
+        }
 
         const ok = await bcrypt.compare(password, user.passwordHash);
-        if (!ok) return null;
+        if (!ok) {
+          recordFailure(email);
+          await createAuditLog({
+            action: AUDIT_ACTIONS.AUTH_LOGIN_FAILURE,
+            entityType: "Auth",
+            entityId: email,
+          });
+          return null;
+        }
 
+        reset(email);
+        await createAuditLog({
+          actorId: user.id,
+          action: AUDIT_ACTIONS.AUTH_LOGIN_SUCCESS,
+          entityType: "Auth",
+          entityId: user.id,
+        });
         return {
           id: user.id,
           name: user.name,
