@@ -56,3 +56,6 @@ next-env.d.ts
 
 # yedekler
 /backups
+
+# PRD (dahili doküman, repoda tutulmuyor)
+/PRD.md
