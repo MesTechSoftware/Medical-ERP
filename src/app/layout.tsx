@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Medikal Satış Operasyon Yönetim Sistemi",
+  title: "Anka West · Medikal Satış Operasyon",
   description: "Merkezi stok, sipariş, kargo ve cari hesap yönetimi",
 };
 

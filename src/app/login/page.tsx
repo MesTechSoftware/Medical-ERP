@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useActionState } from "react";
 import { loginAction, type LoginState } from "@/lib/auth-actions";
@@ -13,10 +14,18 @@ export default function LoginPage() {
     <main className="flex min-h-screen items-center justify-center p-4">
       <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
         <div className="mb-6 text-center">
-          <h1 className="text-lg font-semibold text-slate-900">
-            Medikal Satış Operasyon
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">Yönetim Sistemi</p>
+          <Image
+            src="/logo.png"
+            alt="Anka West"
+            width={604}
+            height={480}
+            priority
+            className="mx-auto mb-5 h-auto w-36"
+          />
+          <h1 className="text-lg font-semibold text-slate-900">Anka West</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Medikal Satış Operasyon Sistemi
+          </p>
         </div>
 
         <form action={formAction} className="space-y-4">
@@ -33,7 +42,7 @@ export default function LoginPage() {
               type="email"
               required
               autoComplete="email"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand"
               placeholder="ornek@medikal.local"
             />
           </div>
@@ -51,7 +60,7 @@ export default function LoginPage() {
               type="password"
               required
               autoComplete="current-password"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand"
             />
           </div>
 

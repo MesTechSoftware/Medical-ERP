@@ -59,3 +59,10 @@ next-env.d.ts
 
 # PRD (dahili doküman, repoda tutulmuyor)
 /PRD.md
+
+# Screenshot script geçici veritabanı
+/screenshots.db
+/screenshots.db-*
+
+# Sunum görselleri (script ile üretiliyor)
+/sunum-gorseller

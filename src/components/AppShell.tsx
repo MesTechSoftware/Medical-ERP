@@ -1,7 +1,9 @@
+import Image from "next/image";
 import SidebarLink from "@/components/SidebarLink";
 import LogoutButton from "@/components/LogoutButton";
+import { type LucideIcon } from "lucide-react";
 
-export type NavItem = { href: string; label: string };
+export type NavItem = { href: string; label: string; icon: LucideIcon };
 
 export default function AppShell({
   navItems,
@@ -17,16 +19,34 @@ export default function AppShell({
   return (
     <div className="flex min-h-screen w-full">
       {/* Sidebar */}
-      <aside className="hidden w-60 shrink-0 flex-col border-r border-slate-200 bg-white px-4 py-6 md:flex">
-        <div className="mb-8 px-2">
-          <div className="text-sm font-semibold leading-tight text-slate-900">
-            Medikal Satış
+      <aside className="hidden w-60 shrink-0 flex-col border-r border-slate-200 bg-white md:flex">
+        {/* px-7 + gap-2: işaret ve metin, alttaki nav ikon/etiket sütunlarına hizalanır */}
+        <div className="flex h-[61px] shrink-0 items-center gap-2 border-b border-slate-200 px-7">
+          <Image
+            src="/logo-mark.png"
+            alt=""
+            width={278}
+            height={480}
+            priority
+            className="h-12 w-auto"
+          />
+          <div className="min-w-0">
+            <div className="truncate text-sm font-semibold leading-tight tracking-tight text-slate-900">
+              Anka West
+            </div>
+            <div className="truncate text-[11px] leading-tight text-slate-500">
+              Medikal Satış Operasyon
+            </div>
           </div>
-          <div className="text-xs text-slate-500">Operasyon Sistemi</div>
         </div>
-        <nav className="flex flex-1 flex-col gap-1">
+        <nav className="flex flex-1 flex-col gap-1 px-4 py-4">
           {navItems.map((item) => (
-            <SidebarLink key={item.href} href={item.href} label={item.label} />
+            <SidebarLink
+              key={item.href}
+              href={item.href}
+              label={item.label}
+              icon={<item.icon size={20} strokeWidth={1.75} className="shrink-0" />}
+            />
           ))}
         </nav>
       </aside>
@@ -37,7 +57,12 @@ export default function AppShell({
           {/* Mobil nav */}
           <nav className="flex gap-1 overflow-x-auto md:hidden">
             {navItems.map((item) => (
-              <SidebarLink key={item.href} href={item.href} label={item.label} />
+              <SidebarLink
+                key={item.href}
+                href={item.href}
+                label={item.label}
+                icon={<item.icon size={20} strokeWidth={1.75} className="shrink-0" />}
+              />
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-3">
