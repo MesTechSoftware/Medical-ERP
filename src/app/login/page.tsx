@@ -17,8 +17,8 @@ export default function LoginPage() {
           <Image
             src="/logo.png"
             alt="Anka West"
-            width={604}
-            height={480}
+            width={421}
+            height={399}
             priority
             className="mx-auto mb-5 h-auto w-36"
           />

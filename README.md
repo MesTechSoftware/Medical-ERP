@@ -1,4 +1,4 @@
-# Medikal Satış Operasyon Yönetim Sistemi
+# Anka West · Medikal Satış Operasyon Yönetim Sistemi
 
 Merkezi depodaki medikal ürünlerin ~10 satıcı aracılığıyla doktorlara ulaştırıldığı bir firmanın operasyonlarını (ürün, merkezi stok, sipariş, kargo, ödeme, satıcı cari hesabı) tek sistemde yöneten web uygulaması. MVP.
 
@@ -7,7 +7,7 @@ Merkezi depodaki medikal ürünlerin ~10 satıcı aracılığıyla doktorlara ul
 - **Next.js 16** (App Router, Server Actions) — full-stack, tek proje
 - **SQLite + Prisma 7** (better-sqlite3 driver adapter)
 - **Auth.js (NextAuth v5)** — Credentials, rol bazlı (ADMIN / SELLER)
-- **Tailwind CSS 4**
+- **Tailwind CSS 4** + `lucide-react` ikonlar
 
 > **Not:** Tüm parasal değerler veritabanında **integer kuruş** olarak saklanır (150,50 TL → `15050`). Gösterimde `src/lib/money.ts` içindeki `formatTRY` kullanılır.
 
@@ -15,10 +15,22 @@ Merkezi depodaki medikal ürünlerin ~10 satıcı aracılığıyla doktorlara ul
 
 ```bash
 npm install
+cp .env.example .env        # ortam değişkenleri (aşağıya bak)
 npx prisma migrate dev      # veritabanı + tablolar
 npm run db:seed             # örnek demo verisi
 npm run dev                 # http://localhost:3000
 ```
+
+### Ortam Değişkenleri
+
+`.env` repoda yoktur; `.env.example` şablonundan üretilir. İki değişken gerekir:
+
+| Değişken       | Açıklama                                                          |
+| -------------- | ----------------------------------------------------------------- |
+| `DATABASE_URL` | SQLite dosya yolu — dev için `file:./dev.db`                       |
+| `AUTH_SECRET`  | Auth.js JWT imzalama anahtarı — `openssl rand -base64 32` ile üret |
+
+> `AUTH_SECRET` boş bırakılırsa giriş akışı çalışmaz. Taze klonda bu adımı atlamayın.
 
 ## Demo Hesapları
 
@@ -34,6 +46,14 @@ npm run dev                 # http://localhost:3000
 **Admin:** Dashboard, Ürünler, Stok, Satıcılar (+cari), Siparişler (durum yönetimi), Kargo, Ödemeler, Audit Log
 **Satıcı:** Siparişlerim (+yeni sipariş), Hesabım (cari/bakiye)
 
+## Marka & Arayüz
+
+Uygulama **Anka West** markasıyla giydirilmiştir: giriş ekranı ve sidebar logosu
+(`public/logo.png`, `public/logo-mark.png`), güncellenmiş favicon ve "Anka West · Medikal Satış
+Operasyon" başlığı. Logodan örneklenen `--color-brand` tokenı (`src/app/globals.css`) login form
+focus rengi ile aktif sidebar bağlantısının ikon vurgusunda kullanılır. Sidebar ve mobil nav
+bağlantılarının ikonları `lucide-react`'ten gelir.
+
 ## İş Kuralları (özet)
 
 - **Sipariş oluşturma:** birim fiyat, sipariş anındaki ürün fiyatından snapshot alınır. Kaydederken tek transaction'da Order + kalemler + stok düşümü + `OUT` stok hareketi yapılır; stok yetersizse iptal edilir.
@@ -41,17 +61,36 @@ npm run dev                 # http://localhost:3000
 - **Cari hesap:** ayrı tablo değildir, hesaplanır (`src/lib/cari.ts`):
   `Güncel Bakiye = Toplam Satış (iptal hariç) − Toplam Ödeme`
 - **Durum akışı:** Bekliyor → Hazırlanıyor → Kargolandı (kargo ekranından) → Teslim Edildi. Her aşamada iptal mümkün (teslim/iptal hariç).
+- **Aktif/Pasif:** Pasif ürün sipariş edilemez (form dışı + sunucuda reddedilir). Pasif satıcı ödeme
+  ekranında listelenmez — ancak açık oturumu varsa sipariş oluşturmaya devam eder (bkz. "Oturum
+  iptali gecikmeli").
 
 ## Komutlar
 
 ```bash
 npm run dev          # geliştirme sunucusu
 npm run build        # production build
+npm start            # build edilmiş uygulamayı çalıştır
+npm run lint         # ESLint
 npm run db:seed      # demo verisini yeniden yükle (mevcut veriyi siler)
 npm run db:reset     # migration'ları sıfırla
 npm run backup       # veritabanını yedekle (+ bütünlük doğrulaması)
 npx prisma studio    # veritabanı görüntüleyici
 ```
+
+### E2E Test (Playwright)
+
+```bash
+npm run test:e2e         # 18 test (Chromium)
+npm run test:e2e:ui      # etkileşimli UI modu
+npm run test:e2e:report  # son koşunun HTML raporu
+```
+
+Testler **izole** çalışır: `playwright.config.ts` ayrı bir `test.db` kurar (migrate + seed) ve dev
+sunucusunu **3100** portunda ayağa kaldırır — `dev.db`'ye ve 3000 portundaki oturumunuza dokunmaz.
+Kapsam: girişsiz erişim/yetki yönlendirmeleri, admin smoke (7 sayfa), ürün ve satıcı oluşturma,
+ödeme → cari yansıması, satıcı sipariş oluşturma. Rol oturumları `auth.setup.ts` ile bir kez
+hazırlanıp `storageState` olarak paylaşılır.
 
 ## Güvenlik, Gizlilik ve Dayanıklılık
 
