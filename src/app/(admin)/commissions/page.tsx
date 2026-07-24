@@ -54,6 +54,7 @@ export default async function CommissionsPage() {
         description="Satıcı prim dönemleri, kapanış ve ödeme takibi"
       />
 
+      <div data-open-period>
       <Card>
         <h2 className="mb-1 text-sm font-semibold text-slate-900">
           Açık Dönem — {formatPeriod(current)}
@@ -110,6 +111,7 @@ export default async function CommissionsPage() {
           </table>
         </div>
       </Card>
+      </div>
 
       <div className="mt-6">
         <Card>

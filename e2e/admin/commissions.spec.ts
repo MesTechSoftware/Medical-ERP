@@ -157,9 +157,10 @@ test("FR-34: açık (içinde bulunulan) dönem kapatılamaz", async ({ page }) =
   // Açık dönem tablosunda kapatma butonu HİÇ render edilmez: "Dönemi Kapat"
   // yalnızca "Kapatılabilir Dönem" (geçmiş ay) bölümünde çıkar.
   await page.goto("/commissions");
-  const openSection = page
-    .locator("section, div")
-    .filter({ hasText: `Açık Dönem — ` });
+  // [data-open-period] yalnızca açık dönem kartını kapsar; geniş ata div'leri
+  // (kök konteyner) kapatma butonlarını locator'a sızdırmaz.
+  const openSection = page.locator("[data-open-period]");
+  await expect(openSection).toBeVisible();
   await expect(openSection.getByRole("button", { name: "Dönemi Kapat" })).toHaveCount(
     0
   );
