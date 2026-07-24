@@ -10,14 +10,31 @@ import {
   StatusBadge,
   EmptyRow,
 } from "@/components/ui";
+import Pagination from "@/components/Pagination";
+import { getPagination, pageCount } from "@/lib/pagination";
 
-export default async function MyOrdersPage() {
+export default async function MyOrdersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string; per?: string }>;
+}) {
   const session = await requireSeller();
-  const orders = await prisma.order.findMany({
-    where: { sellerId: session.user.id },
-    orderBy: { orderDate: "desc" },
-    include: { _count: { select: { items: true } } },
-  });
+  const { page, perPage, skip, take } = getPagination(await searchParams);
+  const where = { sellerId: session.user.id };
+
+  const [orders, total] = await Promise.all([
+    prisma.order.findMany({
+      where,
+      orderBy: { orderDate: "desc" },
+      skip,
+      take,
+      include: {
+        _count: { select: { items: true } },
+        doctor: { select: { fullName: true, clinic: true } },
+      },
+    }),
+    prisma.order.count({ where }),
+  ]);
 
   return (
     <div>
@@ -54,14 +71,14 @@ export default async function MyOrdersPage() {
                     {formatDate(o.orderDate)}
                   </td>
                   <td className="px-4 py-3 font-medium text-slate-900">
-                    {o.doctorName}
+                    {o.doctor.fullName}
                   </td>
-                  <td className="px-4 py-3 text-slate-500">{o.hospital ?? "—"}</td>
+                  <td className="px-4 py-3 text-slate-500">{o.doctor.clinic}</td>
                   <td className="px-4 py-3 text-right tabular-nums">
                     {o._count.items}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums">
-                    {formatTRY(o.totalAmount)}
+                    {formatTRY(o.grossTotal)}
                   </td>
                   <td className="px-4 py-3">
                     <StatusBadge status={o.status} />
@@ -80,6 +97,13 @@ export default async function MyOrdersPage() {
           </table>
         </div>
       </Card>
+
+      <Pagination
+        page={page}
+        totalPages={pageCount(total, perPage)}
+        total={total}
+        basePath="/my-orders"
+      />
     </div>
   );
 }

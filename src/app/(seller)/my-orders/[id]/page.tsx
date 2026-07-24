@@ -16,6 +16,7 @@ export default async function MyOrderDetailPage({
   const order = await prisma.order.findFirst({
     where: { id, sellerId: session.user.id },
     include: {
+      doctor: true,
       items: { include: { product: { select: { name: true, code: true } } } },
       shipment: true,
     },

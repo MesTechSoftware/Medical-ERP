@@ -10,7 +10,10 @@ export default async function ShippingPage() {
     prisma.order.findMany({
       where: { status: "PREPARING" },
       orderBy: { orderDate: "asc" },
-      include: { seller: { select: { name: true } } },
+      include: {
+        seller: { select: { name: true } },
+        doctor: { select: { fullName: true, clinic: true } },
+      },
     }),
     prisma.order.findMany({
       where: { status: { in: ["SHIPPED", "DELIVERED"] } },
@@ -18,6 +21,7 @@ export default async function ShippingPage() {
       take: 30,
       include: {
         seller: { select: { name: true } },
+        doctor: { select: { fullName: true, clinic: true } },
         shipment: true,
       },
     }),
@@ -52,15 +56,15 @@ export default async function ShippingPage() {
                         href={`/orders/${o.id}`}
                         className="font-medium text-slate-900 hover:underline"
                       >
-                        {o.doctorName}
+                        {o.doctor.fullName}
                       </Link>
                       <span className="ml-2 text-sm text-slate-500">
-                        {o.hospital ?? ""} · {o.seller.name} ·{" "}
+                        {o.doctor.clinic} · {o.seller.name} ·{" "}
                         {formatDate(o.orderDate)}
                       </span>
                     </div>
                     <span className="text-sm font-medium tabular-nums text-slate-900">
-                      {formatTRY(o.totalAmount)}
+                      {formatTRY(o.grossTotal)}
                     </span>
                   </div>
                   <form
@@ -127,7 +131,7 @@ export default async function ShippingPage() {
                   className="border-b border-slate-100 last:border-0"
                 >
                   <td className="px-4 py-3 font-medium text-slate-900">
-                    {o.doctorName}
+                    {o.doctor.fullName}
                   </td>
                   <td className="px-4 py-3 text-slate-500">{o.seller.name}</td>
                   <td className="px-4 py-3 text-slate-700">

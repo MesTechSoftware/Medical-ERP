@@ -5,15 +5,27 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireSeller } from "@/lib/session";
-import { quantitySchema } from "@/lib/validation";
+import { priceTLSchema, quantitySchema } from "@/lib/validation";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
+import { tlToKurus, formatTRY } from "@/lib/money";
+import { discountRate, lineTotals, sumLineTotals } from "@/lib/vat";
+import { canSellerOrderForDoctor } from "@/lib/doctor";
+import { getDueSettings, addDays } from "@/lib/settings";
 
 export type OrderFormState = { error?: string };
 
-type LineInput = { productId: string; quantity: number };
+type LineInput = { productId: string; quantity: number; netUnitPriceTL?: number };
 
 const orderLinesSchema = z
-  .array(z.object({ productId: z.string().min(1), quantity: quantitySchema }))
+  .array(
+    z.object({
+      productId: z.string().min(1),
+      quantity: quantitySchema,
+      // Satıcı birim fiyatı değiştirebilir (FR-12). Girilmezse liste fiyatı kullanılır.
+      // Her zaman NET (KDV hariç) TL olarak gelir; dönüşüm istemcide yapılır (FR-18).
+      netUnitPriceTL: priceTLSchema.optional(),
+    })
+  )
   .min(1);
 
 export async function createOrder(
@@ -23,10 +35,19 @@ export async function createOrder(
   const session = await requireSeller();
   const sellerId = session.user.id;
 
-  const doctorName = (formData.get("doctorName") as string)?.trim();
-  const hospital = ((formData.get("hospital") as string) || "").trim() || null;
+  const doctorId = (formData.get("doctorId") as string)?.trim();
+  if (!doctorId) return { error: "Doktor seçiniz." };
 
-  if (!doctorName) return { error: "Doktor adı zorunludur." };
+  // 🔴 FR-04 / RULE-02: sahiplik SUNUCU TARAFINDA doğrulanır. Arayüzde yalnızca
+  // kendi doktorları listelenir ama ham istek de aynı kapıdan geçmek zorunda.
+  const doctor = await prisma.doctor.findUnique({
+    where: { id: doctorId },
+    select: { id: true, fullName: true, ownerSellerId: true, status: true },
+  });
+  if (!doctor) return { error: "Doktor bulunamadı." };
+
+  const ownership = canSellerOrderForDoctor(sellerId, doctor);
+  if (!ownership.allowed) return { error: ownership.reason };
 
   let raw: unknown;
   try {
@@ -40,14 +61,24 @@ export async function createOrder(
     return { error: "En az bir ürün ve geçerli miktar giriniz." };
   const lines: LineInput[] = parsedLines.data;
 
-  let created: { id: string; totalAmount: number };
+  // FR-21: her siparişe vade tarihi girilir; varsayılan gün sayısı admin
+  // parametresidir (D-20).
+  const { defaultDueDays } = await getDueSettings();
+  const dueDate = addDays(new Date(), defaultDueDays);
+
+  let created: { id: string; grossTotal: bigint };
   try {
     created = await prisma.$transaction(async (tx) => {
       const items: {
         productId: string;
         quantity: number;
-        unitPrice: number;
-        lineTotal: number;
+        netUnitPrice: bigint;
+        listPriceAtSale: bigint;
+        discountRate: number;
+        vatRate: number;
+        vatAmount: bigint;
+        lineNetTotal: bigint;
+        lineGrossTotal: bigint;
       }[] = [];
 
       for (const line of lines) {
@@ -57,38 +88,65 @@ export async function createOrder(
         if (!product) throw new Error(`Ürün bulunamadı.`);
         if (product.status !== "ACTIVE")
           throw new Error(`${product.name} pasif durumda.`);
-        if (product.stock < line.quantity)
+
+        // Fiyat: satıcı girdiyse onu, girmediyse liste fiyatını kullan.
+        const netUnitPrice =
+          line.netUnitPriceTL !== undefined
+            ? tlToKurus(line.netUnitPriceTL)
+            : product.netListPrice;
+
+        // RULE-03: taban fiyatın (net) altına inilemez — SUNUCU TARAFINDA zorlanır.
+        if (netUnitPrice < product.netMinPrice) {
+          throw new Error(
+            `${product.name} için birim fiyat taban fiyatın altında olamaz ` +
+              `(taban: ${formatTRY(product.netMinPrice)} + KDV hariç).`
+          );
+        }
+
+        // Stok düşümü ATOMİK: koşul WHERE'de, veritabanında değerlendirilir.
+        // Önce okuyup JS'te karşılaştırmak (check-then-act) iki eşzamanlı
+        // siparişin aynı son birimi satmasına izin veriyordu — stok negatife
+        // düşebiliyordu. count === 0 => yeterli stok yoktu.
+        const decremented = await tx.product.updateMany({
+          where: { id: product.id, stock: { gte: line.quantity } },
+          data: { stock: { decrement: line.quantity } },
+        });
+        if (decremented.count === 0)
           throw new Error(
             `${product.name} için yeterli stok yok (mevcut: ${product.stock}).`
           );
 
+        // Fiyat + KDV sipariş anında DONDURULUR (RULE-04). Yuvarlama kalem
+        // bazındadır; sipariş toplamı bu değerlerin toplamıdır (bkz. vat.ts).
+        const totals = lineTotals(netUnitPrice, line.quantity, product.vatRate);
         items.push({
           productId: product.id,
           quantity: line.quantity,
-          unitPrice: product.salePrice,
-          lineTotal: product.salePrice * line.quantity,
+          netUnitPrice,
+          listPriceAtSale: product.netListPrice,
+          discountRate: discountRate(product.netListPrice, netUnitPrice),
+          vatRate: product.vatRate,
+          ...totals,
         });
       }
 
-      const totalAmount = items.reduce((s, i) => s + i.lineTotal, 0);
+      const { netTotal, vatTotal, grossTotal } = sumLineTotals(items);
 
       const order = await tx.order.create({
         data: {
           sellerId,
-          doctorName,
-          hospital,
+          doctorId,
           status: "PENDING",
-          totalAmount,
+          dueDate,
+          netTotal,
+          vatTotal,
+          grossTotal,
           items: { create: items },
         },
       });
 
-      // Stok düşümü + OUT hareketleri
+      // Stok yukarıda düşüldü; burada yalnızca OUT hareketleri yazılır.
       for (const item of items) {
-        await tx.product.update({
-          where: { id: item.productId },
-          data: { stock: { decrement: item.quantity } },
-        });
         await tx.stockMovement.create({
           data: {
             productId: item.productId,
@@ -100,7 +158,7 @@ export async function createOrder(
         });
       }
 
-      return { id: order.id, totalAmount };
+      return { id: order.id, grossTotal };
     });
   } catch (e) {
     return {
@@ -114,9 +172,9 @@ export async function createOrder(
     entityType: "Order",
     entityId: created.id,
     after: {
-      doctorName,
-      hospital,
-      totalAmount: created.totalAmount,
+      doctorId,
+      doctorName: doctor.fullName,
+      grossTotal: created.grossTotal,
       itemCount: lines.length,
     },
   });
