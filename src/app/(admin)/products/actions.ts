@@ -14,17 +14,37 @@ export type ProductFormState = { error?: string };
 function parseProductForm(formData: FormData) {
   const name = (formData.get("name") as string)?.trim();
   const code = (formData.get("code") as string)?.trim();
-  const priceTL = Number(formData.get("salePrice"));
+  // Fiyatlar NET (KDV hariç) girilir; kanonik değer nettir (FR-17, FR-19).
+  const listPriceTL = Number(formData.get("netListPrice"));
+  const minPriceTL = Number(formData.get("netMinPrice"));
+  const vatRate = Number(formData.get("vatRate"));
   const status: EntityStatus =
     formData.get("status") === "PASSIVE"
       ? EntityStatus.PASSIVE
       : EntityStatus.ACTIVE;
 
   if (!name || !code) return { error: "Ürün adı ve kodu zorunludur." as const };
-  if (!priceTLSchema.safeParse(priceTL).success)
-    return { error: "Geçerli bir satış fiyatı giriniz." as const };
+  if (!priceTLSchema.safeParse(listPriceTL).success)
+    return { error: "Geçerli bir liste fiyatı giriniz." as const };
+  if (!priceTLSchema.safeParse(minPriceTL).success)
+    return { error: "Geçerli bir taban fiyat giriniz." as const };
+  if (!Number.isInteger(vatRate) || vatRate < 0 || vatRate > 100)
+    return { error: "KDV oranı 0-100 arasında tam sayı olmalıdır." as const };
+  if (minPriceTL > listPriceTL)
+    return {
+      error: "Taban fiyat liste fiyatından yüksek olamaz." as const,
+    };
 
-  return { data: { name, code, salePrice: tlToKurus(priceTL), status } };
+  return {
+    data: {
+      name,
+      code,
+      netListPrice: tlToKurus(listPriceTL),
+      netMinPrice: tlToKurus(minPriceTL),
+      vatRate,
+      status,
+    },
+  };
 }
 
 export async function createProduct(
