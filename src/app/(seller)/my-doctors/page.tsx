@@ -83,7 +83,7 @@ export default async function DoctorsPage({
                   </td>
                   <td className="px-4 py-3 text-right">
                     <Link
-                      href={`/doctors/${d.id}/edit`}
+                      href={`/my-doctors/${d.id}/edit`}
                       className="text-sm font-medium text-slate-600 hover:text-slate-900"
                     >
                       Düzenle
