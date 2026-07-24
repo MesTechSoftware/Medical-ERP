@@ -9,6 +9,12 @@ import {
   Truck,
   CreditCard,
   ShieldCheck,
+  Stethoscope,
+  Percent,
+  CalendarDays,
+  Store,
+  PackageCheck,
+  BarChart3,
 } from "lucide-react";
 
 const navItems: NavItem[] = [
@@ -16,9 +22,15 @@ const navItems: NavItem[] = [
   { href: "/products", label: "Ürünler", icon: Globe },
   { href: "/stock", label: "Stok", icon: Layers },
   { href: "/sellers", label: "Satıcılar", icon: Users },
+  { href: "/doctors", label: "Doktorlar", icon: Stethoscope },
   { href: "/orders", label: "Siparişler", icon: ClipboardList },
   { href: "/shipping", label: "Kargo", icon: Truck },
-  { href: "/payments", label: "Ödemeler", icon: CreditCard },
+  { href: "/collections", label: "Tahsilatlar", icon: CreditCard },
+  { href: "/commissions", label: "Primler", icon: Percent },
+  { href: "/congresses", label: "Kongreler", icon: CalendarDays },
+  { href: "/dealers", label: "Bayiler", icon: Store },
+  { href: "/dealer-shipments", label: "Bayi Sevkiyat", icon: PackageCheck },
+  { href: "/reports", label: "Raporlar", icon: BarChart3 },
   { href: "/audit-logs", label: "Audit Log", icon: ShieldCheck },
 ];
 
