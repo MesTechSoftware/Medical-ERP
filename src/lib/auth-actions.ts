@@ -18,7 +18,7 @@ export async function loginAction(
   const email = (formData.get("email") as string) ?? "";
 
   // Zaten kilitliyse denemeyi hiç başlatma.
-  const pre = checkLock(email);
+  const pre = await checkLock(email);
   if (pre.locked) return { error: lockedMessage(pre.retryAfterMinutes) };
 
   try {
@@ -31,7 +31,7 @@ export async function loginAction(
   } catch (error) {
     if (error instanceof AuthError) {
       // Sayacı authorize artırdı; burada yalnızca güncel duruma göre mesaj seç.
-      const post = checkLock(email);
+      const post = await checkLock(email);
       return post.locked
         ? { error: lockedMessage(post.retryAfterMinutes) }
         : { error: "E-posta veya şifre hatalı." };

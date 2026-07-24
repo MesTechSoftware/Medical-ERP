@@ -1,24 +1,45 @@
 import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "../src/generated/prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { DEFAULT_VAT_RATE, lineTotals, sumLineTotals } from "../src/lib/vat";
+import { normalizePhone } from "../src/lib/phone";
+import { addDays } from "../src/lib/settings";
 
-const adapter = new PrismaBetterSqlite3({
-  url: process.env.DATABASE_URL ?? "file:./dev.db",
-});
+const DEFAULT_DUE_DAYS = 30;
+
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  throw new Error("DATABASE_URL tanımlı değil (bkz. .env.example).");
+}
+const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
-// TL -> kuruş
-const tl = (v: number) => Math.round(v * 100);
+// TL -> kuruş (BigInt; parasal alanlar BigInt kuruş olarak saklanır)
+const tl = (v: number) => BigInt(Math.round(v * 100));
 
 async function main() {
   console.log("Seed başlıyor: mevcut veriler temizleniyor...");
   // Bağımlılık sırasına göre temizle
+  await prisma.loginAttempt.deleteMany();
+  await prisma.dealerShipmentItem.deleteMany();
+  await prisma.dealerShipment.deleteMany();
+  await prisma.dealerPrice.deleteMany();
+  await prisma.dealerPayment.deleteMany();
+  await prisma.dealer.deleteMany();
   await prisma.stockMovement.deleteMany();
   await prisma.orderItem.deleteMany();
   await prisma.shipment.deleteMany();
   await prisma.order.deleteMany();
-  await prisma.payment.deleteMany();
+  await prisma.doctorAssignment.deleteMany();
+  await prisma.congressLedger.deleteMany();
+  await prisma.congressRegistration.deleteMany();
+  await prisma.congressPackage.deleteMany();
+  await prisma.congress.deleteMany();
+  await prisma.paymentAllocation.deleteMany();
+  await prisma.dueDateChange.deleteMany();
+  await prisma.doctorPayment.deleteMany();
+  await prisma.doctor.deleteMany();
   await prisma.product.deleteMany();
   await prisma.user.deleteMany();
 
@@ -49,16 +70,24 @@ async function main() {
     )
   );
 
-  // --- Ürünler (salePrice ve stok kuruş/adet) ---
+  // --- Ürünler ---
+  // Fiyatlar NET (KDV hariç) kuruş. Taban fiyat listenin %80'i olarak kurgulandı
+  // ki satıcının serbest fiyat alanı (FR-12) test edilebilsin.
+  const p = (listTL: number, minTL: number, stock: number) => ({
+    netListPrice: tl(listTL),
+    netMinPrice: tl(minTL),
+    vatRate: DEFAULT_VAT_RATE,
+    stock,
+  });
   const productSeeds = [
-    { name: "Cerrahi Eldiven (Kutu)", code: "MED-001", salePrice: tl(120), stock: 500 },
-    { name: "Steril Gazlı Bez", code: "MED-002", salePrice: tl(45.5), stock: 800 },
-    { name: "Enjektör 5ml (100lü)", code: "MED-003", salePrice: tl(85), stock: 300 },
-    { name: "Ameliyat İpliği", code: "MED-004", salePrice: tl(230), stock: 150 },
-    { name: "Dijital Ateş Ölçer", code: "MED-005", salePrice: tl(340.9), stock: 60 },
-    { name: "Tansiyon Aleti", code: "MED-006", salePrice: tl(750), stock: 8 }, // kritik stok
-    { name: "Cerrahi Maske (50li)", code: "MED-007", salePrice: tl(60), stock: 1200 },
-    { name: "İnfüzyon Seti", code: "MED-008", salePrice: tl(95.75), stock: 5 }, // kritik stok
+    { name: "Cerrahi Eldiven (Kutu)", code: "MED-001", ...p(120, 96, 500) },
+    { name: "Steril Gazlı Bez", code: "MED-002", ...p(45.5, 36.4, 800) },
+    { name: "Enjektör 5ml (100lü)", code: "MED-003", ...p(85, 68, 300) },
+    { name: "Ameliyat İpliği", code: "MED-004", ...p(230, 184, 150) },
+    { name: "Dijital Ateş Ölçer", code: "MED-005", ...p(340.9, 272.72, 60) },
+    { name: "Tansiyon Aleti", code: "MED-006", ...p(750, 600, 8) }, // kritik stok
+    { name: "Cerrahi Maske (50li)", code: "MED-007", ...p(60, 48, 1200) },
+    { name: "İnfüzyon Seti", code: "MED-008", ...p(95.75, 76.6, 5) }, // kritik stok
   ];
 
   const products: Awaited<ReturnType<typeof prisma.product.create>>[] = [];
@@ -78,11 +107,48 @@ async function main() {
 
   const byCode = (code: string) => products.find((p) => p.code === code)!;
 
+  // --- Doktorlar (her biri bir satıcının portföyünde — RULE-02) ---
+  const doctorSeeds = [
+    { fullName: "Selin Aksoy", title: "Dr.", specialty: "Kardiyoloji", clinic: "Acıbadem Hastanesi", region: "Marmara", city: "İstanbul", phone: "0532 111 22 33", seller: 0 },
+    { fullName: "Kaan Öz", title: "Op. Dr.", specialty: "Ortopedi", clinic: "Memorial", region: "Marmara", city: "İstanbul", phone: "0533 222 33 44", seller: 0 },
+    { fullName: "Elif Yıldız", title: "Prof. Dr.", specialty: "Nöroloji", clinic: "Medipol", region: "Marmara", city: "İstanbul", phone: "0534 333 44 55", seller: 1 },
+    { fullName: "Burak Şahin", title: "Dr.", specialty: "Dahiliye", clinic: "Florence Nightingale", region: "Ege", city: "İzmir", phone: "0535 444 55 66", seller: 1 },
+    { fullName: "Cem Arslan", title: "Dr.", specialty: "Genel Cerrahi", clinic: "Liv Hospital", region: "İç Anadolu", city: "Ankara", phone: "0536 555 66 77", seller: 2 },
+  ];
+
+  const doctors: { id: string; fullName: string }[] = [];
+  for (const d of doctorSeeds) {
+    const ownerId = sellers[d.seller].id;
+    const created = await prisma.doctor.create({
+      data: {
+        fullName: d.fullName,
+        title: d.title,
+        specialty: d.specialty,
+        clinic: d.clinic,
+        region: d.region,
+        city: d.city,
+        phoneNormalized: normalizePhone(d.phone),
+        ownerSellerId: ownerId,
+      },
+    });
+    await prisma.doctorAssignment.create({
+      data: {
+        doctorId: created.id,
+        sellerId: ownerId,
+        assignedBy: admin.id,
+        reason: "Seed ilk atama",
+      },
+    });
+    doctors.push(created);
+  }
+
+  const byDoctor = (fullName: string) =>
+    doctors.find((d) => d.fullName === fullName)!;
+
   // --- Örnek siparişler (stok düşümü + OUT hareketi ile) ---
   async function createOrder(opts: {
     sellerId: string;
     doctorName: string;
-    hospital: string;
     status: "PENDING" | "PREPARING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
     lines: { code: string; qty: number }[];
   }) {
@@ -91,20 +157,25 @@ async function main() {
       return {
         productId: prod.id,
         quantity: l.qty,
-        unitPrice: prod.salePrice,
-        lineTotal: prod.salePrice * l.qty,
+        netUnitPrice: prod.netListPrice,
+        listPriceAtSale: prod.netListPrice,
+        discountRate: 0,
+        vatRate: prod.vatRate,
+        ...lineTotals(prod.netListPrice, l.qty, prod.vatRate),
       };
     });
-    const total = items.reduce((s, i) => s + i.lineTotal, 0);
+    const { netTotal, vatTotal, grossTotal } = sumLineTotals(items);
     const cancelled = opts.status === "CANCELLED";
 
     const order = await prisma.order.create({
       data: {
         sellerId: opts.sellerId,
-        doctorName: opts.doctorName,
-        hospital: opts.hospital,
+        doctorId: byDoctor(opts.doctorName).id,
         status: opts.status,
-        totalAmount: total,
+        dueDate: addDays(new Date(), DEFAULT_DUE_DAYS),
+        netTotal,
+        vatTotal,
+        grossTotal,
         items: { create: items },
       },
     });
@@ -146,8 +217,7 @@ async function main() {
 
   await createOrder({
     sellerId: sellers[0].id,
-    doctorName: "Dr. Selin Aksoy",
-    hospital: "Acıbadem Hastanesi",
+    doctorName: "Selin Aksoy",
     status: "DELIVERED",
     lines: [
       { code: "MED-001", qty: 10 },
@@ -157,16 +227,14 @@ async function main() {
 
   await createOrder({
     sellerId: sellers[0].id,
-    doctorName: "Dr. Kaan Öz",
-    hospital: "Memorial",
+    doctorName: "Kaan Öz",
     status: "SHIPPED",
     lines: [{ code: "MED-005", qty: 5 }],
   });
 
   await createOrder({
     sellerId: sellers[1].id,
-    doctorName: "Dr. Elif Yıldız",
-    hospital: "Medipol",
+    doctorName: "Elif Yıldız",
     status: "PREPARING",
     lines: [
       { code: "MED-003", qty: 15 },
@@ -176,34 +244,103 @@ async function main() {
 
   await createOrder({
     sellerId: sellers[1].id,
-    doctorName: "Dr. Burak Şahin",
-    hospital: "Florence Nightingale",
+    doctorName: "Burak Şahin",
     status: "PENDING",
     lines: [{ code: "MED-004", qty: 4 }],
   });
 
   await createOrder({
     sellerId: sellers[2].id,
-    doctorName: "Dr. Cem Arslan",
-    hospital: "Liv Hospital",
+    doctorName: "Cem Arslan",
     status: "CANCELLED",
     lines: [{ code: "MED-006", qty: 2 }],
   });
 
-  // --- Örnek ödemeler ---
-  await prisma.payment.create({
-    data: { sellerId: sellers[0].id, amount: tl(1500), method: "TRANSFER", note: "Kısmi ödeme" },
+  // --- Örnek tahsilatlar (doktordan ŞİRKETE — D-01) ---
+  // Biri KISMİ (FR-25 test edilebilsin), FIFO ile en eski vadeye mahsup edilir.
+  const firstDoctor = byDoctor("Selin Aksoy");
+  const openOrder = await prisma.order.findFirst({
+    where: { doctorId: firstDoctor.id, status: { not: "CANCELLED" } },
+    orderBy: { dueDate: "asc" },
   });
-  await prisma.payment.create({
-    data: { sellerId: sellers[0].id, amount: tl(500), method: "CASH" },
+  if (openOrder) {
+    const partial = openOrder.grossTotal / 3n; // kısmi tahsilat
+    const payment = await prisma.doctorPayment.create({
+      data: {
+        doctorId: firstDoctor.id,
+        amount: partial,
+        method: "TRANSFER",
+        referenceNo: "SEED-001",
+        note: "Kısmi tahsilat (seed)",
+        recordedBy: admin.id,
+      },
+    });
+    await prisma.paymentAllocation.create({
+      data: { paymentId: payment.id, orderId: openOrder.id, amount: partial },
+    });
+  }
+
+  // --- Kongreler ve paketler (Faz E) ---
+  const congress = await prisma.congress.create({
+    data: {
+      name: "Antalya Kardiyoloji Kongresi",
+      description: "Yıllık ulusal kongre",
+      location: "Antalya",
+      startDate: addDays(new Date(), 90),
+      endDate: addDays(new Date(), 93),
+      quota: 50,
+      status: "YAYINDA",
+    },
   });
-  await prisma.payment.create({
-    data: { sellerId: sellers[1].id, amount: tl(1000), method: "CARD", note: "Peşin" },
+  await prisma.congressPackage.createMany({
+    data: [
+      { congressId: congress.id, name: "Tam Paket", value: tl(200000), quota: 10 },
+      { congressId: congress.id, name: "Katılım", value: tl(50), quota: 20 },
+    ],
   });
+
+  // --- Bayiler (Faz D) ---
+  const dealerLoginPass = await bcrypt.hash("bayi123", 10);
+  const dealerUser = await prisma.user.create({
+    data: {
+      name: "Anadolu Medikal Ltd.",
+      email: "bayi@medikal.local",
+      passwordHash: dealerLoginPass,
+      role: "DEALER",
+    },
+  });
+  const dealer = await prisma.dealer.create({
+    data: {
+      code: "BAYI-001",
+      title: "Anadolu Medikal Ltd.",
+      taxOffice: "Kızılay",
+      taxNo: "1234567890",
+      contactName: "Deniz Aslan",
+      phone: "0312 444 55 66",
+      userId: dealerUser.id,
+    },
+  });
+  // Login'siz ikinci bayi (admin-only yönetilen).
+  await prisma.dealer.create({
+    data: { code: "BAYI-002", title: "Ege Sağlık A.Ş.", contactName: "Merve Kaya" },
+  });
+  // Bayiye özel fiyat listesi (listenin ~%90'ı).
+  for (const code of ["MED-001", "MED-002", "MED-006"]) {
+    const prod = byCode(code);
+    await prisma.dealerPrice.create({
+      data: {
+        dealerId: dealer.id,
+        productId: prod.id,
+        netPrice: (prod.netListPrice * 9n) / 10n,
+        vatRate: prod.vatRate,
+      },
+    });
+  }
 
   console.log("Seed tamamlandı.");
   console.log(`  Admin:   ${admin.email} / admin123`);
   console.log(`  Satıcı:  ${sellers.map((s) => s.email).join(", ")} / satici123`);
+  console.log(`  Bayi:    ${dealerUser.email} / bayi123`);
 }
 
 main()

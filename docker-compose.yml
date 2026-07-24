@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: medikal_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: medikal
+      POSTGRES_PASSWORD: medikal_dev
+      POSTGRES_DB: medikal_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - medikal_pgdata:/var/lib/postgresql/data
+      # e2e testleri ayrı bir veritabanında koşar (playwright.config.ts).
+      - ./docker/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U medikal -d medikal_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  medikal_pgdata:
