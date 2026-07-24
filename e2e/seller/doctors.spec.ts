@@ -110,6 +110,25 @@ test("satıcı başka satıcının doktorunu listesinde görmez (FR-05)", async 
   await expect(page.getByText(foreign.fullName)).toHaveCount(0);
 });
 
+test("listedeki 'Düzenle' linki doktorun edit sayfasını açar (404 vermez)", async ({
+  page,
+}) => {
+  const name = unique("Dr Duzenle");
+  await addDoctor(page, name, uniquePhone());
+  await expect(page).toHaveURL(/\/my-doctors$/);
+
+  // Regresyon: link yanlışlıkla admin rotasına (/doctors/:id/edit) işaret ederse
+  // satıcı erişemez ve 404 döner. Satıcının kendi rotasına gitmeli.
+  await page
+    .locator("tr", { hasText: name })
+    .getByRole("link", { name: "Düzenle" })
+    .click();
+
+  await expect(page).toHaveURL(/\/my-doctors\/[^/]+\/edit$/);
+  // Edit formu doktorun verisiyle yüklendi (404 değil, doğru kayıt).
+  await expect(page.getByLabel("Ad Soyad")).toHaveValue(name);
+});
+
 test("🔴 sahibi olmayan doktora sipariş SUNUCUDA reddedilir (FR-04/RULE-02)", async ({
   page,
 }) => {
