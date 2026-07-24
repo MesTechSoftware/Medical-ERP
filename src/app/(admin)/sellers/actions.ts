@@ -117,11 +117,13 @@ export async function updateSeller(
 
 export async function deleteSeller(id: string) {
   await requireAdmin();
-  const [orders, payments] = await Promise.all([
+  // Satıcı ödemesi kavramı kalktı (D-01); artık sipariş ve doktor portföyü
+  // silmeyi engelliyor — geçmiş siparişler eski satıcıda kalmalı (FR-07).
+  const [orders, doctors] = await Promise.all([
     prisma.order.count({ where: { sellerId: id } }),
-    prisma.payment.count({ where: { sellerId: id } }),
+    prisma.doctor.count({ where: { ownerSellerId: id } }),
   ]);
-  if (orders > 0 || payments > 0) {
+  if (orders > 0 || doctors > 0) {
     redirect("/sellers?error=used");
   }
   await prisma.user.delete({ where: { id } });

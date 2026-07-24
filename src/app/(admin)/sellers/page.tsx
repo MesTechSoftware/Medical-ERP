@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { getAllSellersCari } from "@/lib/cari";
+import { getSellerReceivables } from "@/lib/doctor-cari";
 import { formatTRY } from "@/lib/money";
 import {
   PageHeader,
@@ -18,26 +18,26 @@ export default async function SellersPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const { error } = await searchParams;
-  const [sellers, cariMap] = await Promise.all([
+  const [sellers, receivables] = await Promise.all([
     prisma.user.findMany({
       where: { role: "SELLER" },
       orderBy: { name: "asc" },
     }),
-    getAllSellersCari(),
+    getSellerReceivables(),
   ]);
 
   return (
     <div>
       <PageHeader
         title="Satıcılar"
-        description="Satıcı yönetimi ve cari hesap durumu"
+        description="Satıcı yönetimi ve tahsilat sorumluluğu"
         action={<LinkButton href="/sellers/new">Yeni Satıcı</LinkButton>}
       />
 
       {error === "used" && (
         <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-          Bu satıcının sipariş veya ödeme kaydı olduğu için silinemez. Bunun
-          yerine &quot;Pasif&quot; yapabilirsiniz.
+          Bu satıcının sipariş kaydı olduğu için silinemez. Bunun yerine
+          &quot;Pasif&quot; yapabilirsiniz.
         </div>
       )}
 
@@ -48,9 +48,9 @@ export default async function SellersPage({
               <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
                 <th className="px-4 py-2 font-medium">Satıcı</th>
                 <th className="px-4 py-2 font-medium">İletişim</th>
-                <th className="px-4 py-2 text-right font-medium">Toplam Satış</th>
-                <th className="px-4 py-2 text-right font-medium">Toplam Ödeme</th>
-                <th className="px-4 py-2 text-right font-medium">Bakiye</th>
+                <th className="px-4 py-2 text-right font-medium">Doktor</th>
+                <th className="px-4 py-2 text-right font-medium">Açık Alacak</th>
+                <th className="px-4 py-2 text-right font-medium">Vadesi Geçmiş</th>
                 <th className="px-4 py-2 font-medium">Durum</th>
                 <th className="px-4 py-2 text-right font-medium">İşlem</th>
               </tr>
@@ -60,10 +60,10 @@ export default async function SellersPage({
                 <EmptyRow colSpan={7} text="Henüz satıcı eklenmemiş." />
               )}
               {sellers.map((s) => {
-                const cari = cariMap.get(s.id) ?? {
-                  toplamSatis: 0,
-                  toplamOdeme: 0,
-                  guncelBakiye: 0,
+                const r = receivables.get(s.id) ?? {
+                  acikAlacak: 0n,
+                  gecikmis: 0n,
+                  doktorSayisi: 0,
                 };
                 return (
                   <tr
@@ -85,20 +85,18 @@ export default async function SellersPage({
                       )}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums">
-                      {formatTRY(cari.toplamSatis)}
+                      {r.doktorSayisi}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums">
-                      {formatTRY(cari.toplamOdeme)}
+                      {formatTRY(r.acikAlacak)}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums font-semibold">
                       <span
                         className={
-                          cari.guncelBakiye > 0
-                            ? "text-red-600"
-                            : "text-slate-900"
+                          r.gecikmis > 0n ? "text-red-600" : "text-slate-900"
                         }
                       >
-                        {formatTRY(cari.guncelBakiye)}
+                        {formatTRY(r.gecikmis)}
                       </span>
                     </td>
                     <td className="px-4 py-3">
