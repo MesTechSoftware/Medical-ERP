@@ -45,7 +45,13 @@ export default async function ProductsPage({
               <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
                 <th className="px-4 py-2 font-medium">Ürün</th>
                 <th className="px-4 py-2 font-medium">Kod</th>
-                <th className="px-4 py-2 text-right font-medium">Satış Fiyatı</th>
+                <th className="px-4 py-2 text-right font-medium">
+                  Liste (net)
+                </th>
+                <th className="px-4 py-2 text-right font-medium">
+                  Taban (net)
+                </th>
+                <th className="px-4 py-2 text-right font-medium">KDV</th>
                 <th className="px-4 py-2 text-right font-medium">Stok</th>
                 <th className="px-4 py-2 font-medium">Durum</th>
                 <th className="px-4 py-2 text-right font-medium">İşlem</th>
@@ -53,7 +59,7 @@ export default async function ProductsPage({
             </thead>
             <tbody>
               {products.length === 0 && (
-                <EmptyRow colSpan={6} text="Henüz ürün eklenmemiş." />
+                <EmptyRow colSpan={8} text="Henüz ürün eklenmemiş." />
               )}
               {products.map((p) => (
                 <tr
@@ -65,7 +71,13 @@ export default async function ProductsPage({
                   </td>
                   <td className="px-4 py-3 text-slate-500">{p.code}</td>
                   <td className="px-4 py-3 text-right tabular-nums">
-                    {formatTRY(p.salePrice)}
+                    {formatTRY(p.netListPrice)}
+                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums text-slate-500">
+                    {formatTRY(p.netMinPrice)}
+                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums text-slate-500">
+                    %{p.vatRate}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums">
                     <span

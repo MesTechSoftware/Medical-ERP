@@ -7,7 +7,8 @@ const pages: [path: string, heading: string][] = [
   ["/sellers", "Satıcılar"],
   ["/orders", "Siparişler"],
   ["/shipping", "Kargo"],
-  ["/payments", "Ödemeler"],
+  ["/collections", "Tahsilatlar"],
+  ["/doctors", "Doktorlar"],
 ];
 
 for (const [path, heading] of pages) {

@@ -29,7 +29,9 @@ export default async function EditProductPage({
           defaults={{
             name: product.name,
             code: product.code,
-            salePriceTL: kurusToTl(product.salePrice),
+            netListPriceTL: kurusToTl(product.netListPrice),
+            netMinPriceTL: kurusToTl(product.netMinPrice),
+            vatRate: product.vatRate,
             status: product.status,
           }}
         />

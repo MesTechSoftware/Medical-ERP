@@ -20,6 +20,7 @@ export default async function AdminOrderDetailPage({
     where: { id },
     include: {
       seller: { select: { name: true } },
+      doctor: true,
       items: { include: { product: { select: { name: true, code: true } } } },
       shipment: true,
     },

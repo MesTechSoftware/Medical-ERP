@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Aynı dal için üst üste gelen koşuları iptal et.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # CI'da hem uygulama hem e2e aynı PostgreSQL servisini kullanır.
+  DATABASE_URL: postgresql://medikal:medikal_dev@localhost:5432/medikal_dev?schema=public
+  TEST_DATABASE_URL: postgresql://medikal:medikal_dev@localhost:5432/medikal_test?schema=public
+  AUTH_SECRET: ci-only-secret-not-used-in-production
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: medikal
+          POSTGRES_PASSWORD: medikal_dev
+          POSTGRES_DB: medikal_dev
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U medikal -d medikal_dev"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      # Prisma client src/generated/prisma'ya üretilir ve GITIGNORED'dır;
+      # typecheck ve build'den ÖNCE üretilmek zorunda.
+      - name: Prisma client üret
+        run: npx prisma generate
+
+      - name: e2e test veritabanını oluştur
+        run: |
+          PGPASSWORD=medikal_dev psql -h localhost -U medikal -d medikal_dev \
+            -c 'CREATE DATABASE medikal_test OWNER medikal;'
+
+      - name: Migrasyonları uygula
+        run: npx prisma migrate deploy
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Birim testler
+        run: npm test
+
+      - name: Playwright tarayıcılarını kur
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E testler
+        run: npm run test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

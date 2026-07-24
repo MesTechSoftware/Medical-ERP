@@ -12,7 +12,8 @@ import { z } from "zod";
 const isWholeKurus = (v: number) =>
   Math.abs(v * 100 - Math.round(v * 100)) < 1e-6;
 
-// 10 milyar TL üst sınırı: makul olmayan/taşma girdilerini eler.
+// 1 milyar TL üst sınırı: makul olmayan girdileri eler. (Taşma koruması değil —
+// tutarlar BigInt kuruş olarak saklanır; bu sınır tamamen "akla yatkınlık" içindir.)
 const MAX_TL = 1_000_000_000;
 
 /** Ödeme tutarı: > 0, tam kuruş, makul sınır. (z.number() NaN/Infinity'yi eler.) */

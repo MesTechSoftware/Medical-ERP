@@ -20,7 +20,9 @@ export default function ProductForm({
   defaults?: {
     name?: string;
     code?: string;
-    salePriceTL?: number;
+    netListPriceTL?: number;
+    netMinPriceTL?: number;
+    vatRate?: number;
     status?: string;
   };
   submitLabel: string;
@@ -35,14 +37,35 @@ export default function ProductForm({
     <form action={formAction} className="max-w-lg space-y-4">
       <Field label="Ürün Adı" name="name" required defaultValue={defaults?.name} />
       <Field label="Ürün Kodu" name="code" required defaultValue={defaults?.code} />
+      {/* Fiyatlar NET (KDV hariç) girilir — kanonik değer nettir (FR-19). */}
       <Field
-        label="Satış Fiyatı (₺)"
-        name="salePrice"
+        label="Liste Fiyatı — KDV hariç (₺)"
+        name="netListPrice"
         type="number"
         step="0.01"
         min="0"
         required
-        defaultValue={defaults?.salePriceTL}
+        defaultValue={defaults?.netListPriceTL}
+      />
+      <Field
+        label="Taban Fiyat — KDV hariç (₺)"
+        name="netMinPrice"
+        type="number"
+        step="0.01"
+        min="0"
+        required
+        defaultValue={defaults?.netMinPriceTL ?? 0}
+      />
+      <p className="-mt-2 text-xs text-slate-500">
+        Satıcı bu fiyatın altına inemez; sunucu tarafında reddedilir.
+      </p>
+      <Field
+        label="KDV Oranı (%)"
+        name="vatRate"
+        type="number"
+        min="0"
+        required
+        defaultValue={defaults?.vatRate ?? 20}
       />
       {showInitialStock && (
         <Field

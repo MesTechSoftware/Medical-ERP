@@ -1,10 +1,17 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// E2E testleri, gerçek dev.db'ye dokunmamak için AYRI bir test.db'ye karşı,
-// dev'in 3000'inden ayrı bir portta (3100) çalışır. webServer her koşudan önce
-// test.db'yi seed'ler ve o env ile Next dev sunucusunu ayağa kaldırır.
+// E2E testleri, dev veritabanına dokunmamak için AYRI bir PostgreSQL
+// veritabanına (medikal_test) karşı, dev'in 3000'inden ayrı bir portta (3100)
+// çalışır. webServer her koşudan önce şemayı sıfırlar, seed'ler ve o env ile
+// Next dev sunucusunu ayağa kaldırır.
+//
+// Yerel kurulum: `docker compose up -d` (medikal_test otomatik oluşturulur).
 const PORT = 3100;
 const baseURL = `http://localhost:${PORT}`;
+
+const TEST_DATABASE_URL =
+  process.env.TEST_DATABASE_URL ??
+  "postgresql://medikal:medikal_dev@localhost:5432/medikal_test?schema=public";
 
 export default defineConfig({
   testDir: "e2e",
@@ -20,14 +27,15 @@ export default defineConfig({
     screenshot: "only-on-failure",
   },
 
-  // test.db'yi her koşuda sıfırdan kur: dosyayı sil → migrasyonları uygula
-  // (forward-only, yıkıcı reset yok) → seed → o env ile dev sunucusunu başlat.
+  // Test veritabanını her koşuda sıfırdan kur: şemayı düşür + migrasyonları
+  // uygula → seed → o env ile dev sunucusunu başlat.
+  // NOT: Prisma 7'de `migrate reset` seed'i ARTIK kendisi çalıştırmıyor
+  // (bu yüzden `--skip-seed` seçeneği de kaldırıldı) — seed açıkça çağrılmalı.
   webServer: {
     command: [
-      "rm -f test.db test.db-journal",
-      'DATABASE_URL="file:./test.db" npx prisma migrate deploy',
-      'DATABASE_URL="file:./test.db" npm run db:seed',
-      `DATABASE_URL="file:./test.db" PORT=${PORT} npm run dev`,
+      `DATABASE_URL="${TEST_DATABASE_URL}" npx prisma migrate reset --force`,
+      `DATABASE_URL="${TEST_DATABASE_URL}" npm run db:seed`,
+      `DATABASE_URL="${TEST_DATABASE_URL}" PORT=${PORT} npm run dev`,
     ].join(" && "),
     url: baseURL,
     reuseExistingServer: false,
@@ -57,6 +65,15 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         storageState: "playwright/.auth/seller.json",
+      },
+    },
+    {
+      name: "dealer",
+      testMatch: "dealer/**/*.spec.ts",
+      dependencies: ["setup"],
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: "playwright/.auth/dealer.json",
       },
     },
   ],

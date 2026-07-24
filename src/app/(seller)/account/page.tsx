@@ -1,134 +1,153 @@
+import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireSeller } from "@/lib/session";
-import { getSellerCari } from "@/lib/cari";
 import { formatTRY } from "@/lib/money";
 import { formatDate } from "@/lib/format";
-import {
-  PageHeader,
-  Card,
-  StatCard,
-  StatusBadge,
-  EmptyRow,
-  PAYMENT_METHOD_LABELS,
-} from "@/components/ui";
+import { getAgingSummary } from "@/lib/doctor-cari";
+import { AGING_LABELS, AGING_ORDER, agingBucket } from "@/lib/allocation";
+import { weightedDiscount } from "@/lib/reports";
+import { PageHeader, Card, StatCard, EmptyRow } from "@/components/ui";
 
+/**
+ * FR-27: Satıcı panelinde KENDİ doktorlarının vadesi yaklaşan/geçen alacakları.
+ *
+ * BRK-01: Satıcı artık şirkete borçlu DEĞİL (D-01). Bu ekran eskiden satıcının
+ * kendi borcunu gösteriyordu; artık tahsilat SORUMLULUĞUNU gösteriyor.
+ */
 export default async function AccountPage() {
   const session = await requireSeller();
   const sellerId = session.user.id;
 
-  const [cari, orders, payments] = await Promise.all([
-    getSellerCari(sellerId),
+  const [orders, aging, doctorCount] = await Promise.all([
     prisma.order.findMany({
-      where: { sellerId },
-      orderBy: { orderDate: "desc" },
-      take: 20,
+      where: { sellerId, status: { not: "CANCELLED" } },
+      orderBy: { dueDate: "asc" },
+      include: {
+        doctor: { select: { fullName: true } },
+        allocations: {
+          where: { payment: { status: "AKTIF" } },
+          select: { amount: true },
+        },
+      },
     }),
-    prisma.payment.findMany({
-      where: { sellerId },
-      orderBy: { date: "desc" },
-      take: 20,
-    }),
+    getAgingSummary({ sellerId }),
+    prisma.doctor.count({ where: { ownerSellerId: sellerId } }),
   ]);
+
+  // FR-61: ortalama iskonto (tutar ağırlıklı).
+  const items = await prisma.orderItem.findMany({
+    where: { order: { sellerId, status: { not: "CANCELLED" } } },
+    select: { listPriceAtSale: true, netUnitPrice: true, quantity: true },
+  });
+  const ortalamaIskonto = weightedDiscount(items);
+
+  const open = orders
+    .map((o) => ({
+      ...o,
+      outstanding:
+        o.grossTotal - o.allocations.reduce((s, a) => s + a.amount, 0n),
+    }))
+    .filter((o) => o.outstanding > 0n);
+
+  const totalOpen = open.reduce((s, o) => s + o.outstanding, 0n);
+  const overdue = open.filter((o) => agingBucket(o.dueDate) !== "NOT_DUE");
+  const totalOverdue = overdue.reduce((s, o) => s + o.outstanding, 0n);
 
   return (
     <div>
       <PageHeader
         title="Hesabım"
-        description="Cari hesap durumunuz ve geçmiş"
+        description="Sorumlu olduğunuz tahsilatlar ve portföy durumu"
       />
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <StatCard label="Toplam Satış" value={formatTRY(cari.toplamSatis)} />
-        <StatCard label="Toplam Ödeme" value={formatTRY(cari.toplamOdeme)} />
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard label="Doktor Sayısı" value={String(doctorCount)} />
+        <StatCard label="Toplam Açık Alacak" value={formatTRY(totalOpen)} />
         <StatCard
-          label="Şirkete Güncel Borç"
-          value={formatTRY(cari.guncelBakiye)}
-          tone={cari.guncelBakiye > 0 ? "danger" : "success"}
-          hint={cari.guncelBakiye > 0 ? "Ödenmemiş bakiye" : "Bakiye kapalı"}
+          label="Vadesi Geçmiş"
+          value={formatTRY(totalOverdue)}
+          tone={totalOverdue > 0n ? "danger" : "success"}
+          hint={`${overdue.length} sipariş`}
         />
+        <StatCard label="Ortalama İskonto" value={`%${ortalamaIskonto}`} />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <h2 className="mb-4 text-sm font-semibold text-slate-900">
-            Son Siparişler
-          </h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
-                  <th className="px-3 py-2 font-medium">Tarih</th>
-                  <th className="px-3 py-2 font-medium">Doktor</th>
-                  <th className="px-3 py-2 text-right font-medium">Tutar</th>
-                  <th className="px-3 py-2 font-medium">Durum</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders.length === 0 && (
-                  <EmptyRow colSpan={4} text="Sipariş yok." />
-                )}
-                {orders.map((o) => (
+      <div className="mb-6 grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
+        {AGING_ORDER.map((b) => (
+          <StatCard
+            key={b}
+            label={AGING_LABELS[b]}
+            value={formatTRY(aging[b])}
+            tone={b === "D90_PLUS" && aging[b] > 0n ? "danger" : "default"}
+          />
+        ))}
+      </div>
+
+      <Card>
+        <h2 className="mb-4 text-sm font-semibold text-slate-900">
+          Açık Alacaklar (vadeye göre)
+        </h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
+                <th className="px-3 py-2 font-medium">Vade</th>
+                <th className="px-3 py-2 font-medium">Doktor</th>
+                <th className="px-3 py-2 text-right font-medium">
+                  Sipariş (KDV dahil)
+                </th>
+                <th className="px-3 py-2 text-right font-medium">Kalan</th>
+                <th className="px-3 py-2 font-medium">Durum</th>
+                <th className="px-3 py-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {open.length === 0 && (
+                <EmptyRow colSpan={6} text="Açık alacağınız yok." />
+              )}
+              {open.map((o) => {
+                const bucket = agingBucket(o.dueDate);
+                const late = bucket !== "NOT_DUE";
+                return (
                   <tr
                     key={o.id}
                     className="border-b border-slate-100 last:border-0"
                   >
-                    <td className="px-3 py-2 whitespace-nowrap text-slate-500">
-                      {formatDate(o.orderDate)}
-                    </td>
-                    <td className="px-3 py-2 text-slate-900">{o.doctorName}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">
-                      {formatTRY(o.totalAmount)}
-                    </td>
-                    <td className="px-3 py-2">
-                      <StatusBadge status={o.status} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-
-        <Card>
-          <h2 className="mb-4 text-sm font-semibold text-slate-900">
-            Ödeme Geçmişi
-          </h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
-                  <th className="px-3 py-2 font-medium">Tarih</th>
-                  <th className="px-3 py-2 font-medium">Yöntem</th>
-                  <th className="px-3 py-2 text-right font-medium">Tutar</th>
-                  <th className="px-3 py-2 font-medium">Açıklama</th>
-                </tr>
-              </thead>
-              <tbody>
-                {payments.length === 0 && (
-                  <EmptyRow colSpan={4} text="Ödeme yok." />
-                )}
-                {payments.map((p) => (
-                  <tr
-                    key={p.id}
-                    className="border-b border-slate-100 last:border-0"
-                  >
-                    <td className="px-3 py-2 whitespace-nowrap text-slate-500">
-                      {formatDate(p.date)}
+                    <td
+                      className={
+                        "px-3 py-2 whitespace-nowrap " +
+                        (late ? "font-medium text-red-600" : "text-slate-500")
+                      }
+                    >
+                      {formatDate(o.dueDate)}
                     </td>
                     <td className="px-3 py-2 text-slate-900">
-                      {PAYMENT_METHOD_LABELS[p.method] ?? p.method}
+                      {o.doctor.fullName}
                     </td>
-                    <td className="px-3 py-2 text-right tabular-nums">
-                      {formatTRY(p.amount)}
+                    <td className="px-3 py-2 text-right tabular-nums text-slate-500">
+                      {formatTRY(o.grossTotal)}
                     </td>
-                    <td className="px-3 py-2 text-slate-500">{p.note}</td>
+                    <td className="px-3 py-2 text-right font-medium tabular-nums">
+                      {formatTRY(o.outstanding)}
+                    </td>
+                    <td className="px-3 py-2 text-xs">
+                      {AGING_LABELS[bucket]}
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      <Link
+                        href={`/my-orders/${o.id}`}
+                        className="text-sm font-medium text-slate-600 hover:text-slate-900"
+                      >
+                        Detay
+                      </Link>
+                    </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      </div>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </Card>
     </div>
   );
 }

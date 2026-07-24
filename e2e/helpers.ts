@@ -4,6 +4,7 @@ import { type Page, expect } from "@playwright/test";
 export const USERS = {
   admin: { email: "admin@medikal.local", password: "admin123" },
   seller: { email: "ahmet@medikal.local", password: "satici123" },
+  dealer: { email: "bayi@medikal.local", password: "bayi123" },
 } as const;
 
 // Seed'lenen satıcı adları (cari/ödeme testleri için).

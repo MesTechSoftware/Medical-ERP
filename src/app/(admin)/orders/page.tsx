@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db";
 import { formatTRY } from "@/lib/money";
 import { formatDate } from "@/lib/format";
 import { PageHeader, Card, StatusBadge, EmptyRow } from "@/components/ui";
+import Pagination from "@/components/Pagination";
+import { getPagination, pageCount } from "@/lib/pagination";
 import { OrderStatus } from "@/generated/prisma/enums";
 
 const STATUS_FILTERS: { value: string; label: string }[] = [
@@ -21,20 +23,28 @@ function isOrderStatus(v: string): v is OrderStatus {
 export default async function OrdersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; page?: string; per?: string }>;
 }) {
-  const { status } = await searchParams;
+  const sp = await searchParams;
+  const { status } = sp;
   const where =
     status && isOrderStatus(status) ? { status } : {};
 
-  const orders = await prisma.order.findMany({
-    where,
-    orderBy: { orderDate: "desc" },
-    include: {
-      seller: { select: { name: true } },
-      _count: { select: { items: true } },
-    },
-  });
+  const { page, perPage, skip, take } = getPagination(sp);
+  const [orders, total] = await Promise.all([
+    prisma.order.findMany({
+      where,
+      orderBy: { orderDate: "desc" },
+      skip,
+      take,
+      include: {
+        seller: { select: { name: true } },
+        doctor: { select: { fullName: true, clinic: true } },
+        _count: { select: { items: true } },
+      },
+    }),
+    prisma.order.count({ where }),
+  ]);
 
   return (
     <div>
@@ -91,13 +101,13 @@ export default async function OrdersPage({
                   </td>
                   <td className="px-4 py-3 text-slate-900">{o.seller.name}</td>
                   <td className="px-4 py-3 font-medium text-slate-900">
-                    {o.doctorName}
+                    {o.doctor.fullName}
                   </td>
                   <td className="px-4 py-3 text-slate-500">
-                    {o.hospital ?? "—"}
+                    {o.doctor.clinic}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums">
-                    {formatTRY(o.totalAmount)}
+                    {formatTRY(o.grossTotal)}
                   </td>
                   <td className="px-4 py-3">
                     <StatusBadge status={o.status} />
@@ -116,6 +126,14 @@ export default async function OrdersPage({
           </table>
         </div>
       </Card>
+
+      <Pagination
+        page={page}
+        totalPages={pageCount(total, perPage)}
+        total={total}
+        basePath="/orders"
+        params={{ status }}
+      />
     </div>
   );
 }

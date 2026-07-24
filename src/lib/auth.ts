@@ -21,11 +21,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!email || !password) return null;
 
         // Brute-force koruması (tek enforcement noktası: ham endpoint dahil).
-        if (checkLock(email).locked) return null;
+        if ((await checkLock(email)).locked) return null;
 
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user || user.status !== "ACTIVE") {
-          recordFailure(email);
+          await recordFailure(email);
           await createAuditLog({
             action: AUDIT_ACTIONS.AUTH_LOGIN_FAILURE,
             entityType: "Auth",
@@ -36,7 +36,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const ok = await bcrypt.compare(password, user.passwordHash);
         if (!ok) {
-          recordFailure(email);
+          await recordFailure(email);
           await createAuditLog({
             action: AUDIT_ACTIONS.AUTH_LOGIN_FAILURE,
             entityType: "Auth",
@@ -45,7 +45,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        reset(email);
+        await reset(email);
         await createAuditLog({
           actorId: user.id,
           action: AUDIT_ACTIONS.AUTH_LOGIN_SUCCESS,
