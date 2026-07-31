@@ -1,6 +1,6 @@
 # Proje Durumu — Medikal Satış Operasyon Yönetim Sistemi
 
-_Son güncelleme: 2026-07-24 · Sürüm: 2.2 · Durum: v2 fazları tamamlandı (temiz sayfa, canlı veri yok)_
+_Son güncelleme: 2026-07-31 · Sürüm: 2.2 · Durum: v2 fazları tamamlandı (temiz sayfa, canlı veri yok)_
 
 Merkezi depodaki medikal ürünlerin ~10 satıcı üzerinden doktorlara ulaştırıldığı bir firmanın
 operasyonlarını tek sistemde toplayan full-stack web uygulaması. v2 ile kapsam; **doktor cari
@@ -114,15 +114,18 @@ Enum'lar: `Role`, `EntityStatus`, `OrderStatus`, `StockMovementType`, `PaymentMe
   PostgreSQL 17 servisi ile: `npm ci` → `prisma generate` → test DB → `prisma migrate deploy` →
   **typecheck + lint + birim testler + Playwright e2e**. Şu an **yeşil**.
 - **Birim test:** **134 test** (vitest, 10 dosya) — `money`, `vat`, `phone`, `doctor`, `allocation`,
-  `commission`, `congress-ledger`, `reports`, `pagination`, `audit` saf fonksiyonları.
-- **E2E:** ~**65 test** (Playwright; `admin`/`seller`/`dealer`/`guest` projeleri, storageState auth),
-  18 spec dosyası. Oturum iptali, prim dönemi, kongre FIFO, bayi paneli, doktor devri dahil.
+  `commission`, `congress-ledger`, `reports`, `pagination`, `audit` saf fonksiyonları. Yerelde
+  2026-07-31'de koşuldu: 134/134 geçti.
+- **E2E:** **66 test** (Playwright; `admin`/`seller`/`dealer`/`guest` projeleri, storageState auth),
+  18 spec dosyası + `auth.setup.ts`. Oturum iptali, prim dönemi, kongre FIFO, bayi paneli, doktor
+  devri dahil.
 
 ## Çalıştırma
 
 ```bash
 npm install
 npm run db:up            # PostgreSQL (docker compose)
+npx prisma generate      # client gitignored — taze klonda zorunlu
 npx prisma migrate deploy
 npm run db:seed          # demo verisi
 npm run dev              # http://localhost:3000
