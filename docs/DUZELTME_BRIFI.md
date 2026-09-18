@@ -1,7 +1,7 @@
 # Düzeltme Brifi — Adım 2
 
 > **🔄 16.09.2026 (2) — ADR-005 ve X-11…X-15 notu.**
-> - **F-06:** `Product.stock` kalkıyor (`ADR/ADR-005`). Testin sınadığı şey artık koşullu
+> - **F-06:** `Product.stock` kalkıyor (`docs/adr/ADR-005`). Testin sınadığı şey artık koşullu
 >   `updateMany` değil, **ürün satırı kilidi** ve `NEGATIF_STOK` kaydıdır. Görev 1B madde 8'de bu tanımla yazılır.
 > - **F-02:** bakiyenin kaynağı artık `CariHareket` tablosudur (KARARLAR X-11).
 > - **F-11:** senaryo, sahiplik ve prim oranı için X-13 ve X-14'e dayanır.

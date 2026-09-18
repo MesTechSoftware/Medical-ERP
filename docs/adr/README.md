@@ -2,11 +2,11 @@
 
 <!-- Belge sınıfı: 4 · Kayıt (YOL_HARITASI.md §7.1-A) · Tetikleyici: mimari "nasıl" kararı verildiğinde -->
 
-> Açılış: **15 Eylül 2026.** *(16.09.2026: ADR-005 eklendi.)* Konum: **depo kök dizini** (`ADR/`) — bütün atıflar bu yola göre yazıldı; Faz 1A **C0**'da git'e eklenir. Klasör `YOL_HARITASI.md` §1'de *"açılacak"* olarak duruyordu.
+> Açılış: **15 Eylül 2026.** *(16.09.2026: ADR-005 eklendi.)* Konum: **`docs/adr/`** — bütün atıflar bu yola göre yazılıdır *(redaksiyon 18.09.2026: klasör kök dizinden `docs/` altına alındı, atıflar toplu güncellendi)*; Faz 1A **C0**'da git'e eklenir. Klasör `YOL_HARITASI.md` §1'de *"açılacak"* olarak duruyordu.
 > Açılmasının sebebi, `FAZ1_UYGULAMA_KAPSAMI.md` §D.0'ın üç mimari karar üretmiş olmasıdır.
 > Belge rejimi bunu iki yerde yasaklar:
 > - §7.1-A: *plan bir karar üretemez.*
-> - §7.1-B: *mimari seçim (nasıl) → `ADR/`, KARARLAR'a girmez.*
+> - §7.1-B: *mimari seçim (nasıl) → `docs/adr/`, KARARLAR'a girmez.*
 >
 > Üç karar buraya taşındı; §D.0 artık yalnız atıf ve plan sonucu taşır.
 
@@ -26,7 +26,7 @@ Uygulamada soruları **sırayla** sor. İlk "evet" cevabı yeri belirler.
 | 1 | Müşterinin gördüğü **davranışı**, **kapsamı**, **fiyatı** veya **sözleşmeyi** değiştiriyor mu? | `KARARLAR.md` |
 | 2 | Şemaya bir **kavram** ekliyor ya da çıkarıyor mu? (KARARLAR §0.1 kolon testi) | `KARARLAR.md` |
 | 3 | Bir **kabul kriteri** doğuruyor mu? (X-7 §(7)) | `KARARLAR.md` + `KABUL_KRITERLERI.md` |
-| 4 | Yalnız *"aynı davranışı teknik olarak **nasıl** kuracağız?"* sorusuna mı cevap veriyor? | **`ADR/`** |
+| 4 | Yalnız *"aynı davranışı teknik olarak **nasıl** kuracağız?"* sorusuna mı cevap veriyor? | **`docs/adr/`** |
 | 5 | Yalnız *"hangi sırayla?"* sorusuna mı cevap veriyor? | Plan dosyası (`FAZ1_UYGULAMA_KAPSAMI.md` §D) |
 
 **Örnekler:**

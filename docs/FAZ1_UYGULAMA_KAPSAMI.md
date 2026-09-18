@@ -1,7 +1,7 @@
 # Faz 1 Uygulama Kapsamı — KARARLAR §4'ün iş dökümü
 
 > **Sınıf 2 · Plan** (`YOL_HARITASI.md` §7.1-A). Bu dosya **karar üretmez**. Her satırın kaynağı
-> `KARARLAR.md`'dir; çelişkide KARARLAR kazanır. Mimari *"nasıl"* kararları `ADR/`'dedir.
+> `KARARLAR.md`'dir; çelişkide KARARLAR kazanır. Mimari *"nasıl"* kararları `docs/adr/`'dedir.
 >
 > **Bölümler:** §A geri çekme listesi (söküm takibi, commit hash'i **yalnız burada**) ·
 > §B yeni yazılacaklar · §C açık madde defteri · §D 1A commit dizisi ve 1B sırası ·
@@ -69,10 +69,10 @@
 | **GÇ-11** | `SystemSetting` + `settings.ts` (admin ayarı beklentisi) · *16.09:* **vade üst sınırı kontrolü** (`getDueSettings`, `createOrder`, `changeDueDate`) | Config **`policy.ts`**'te, **açılmaz** (§B.7) · vadede **sistem sınırı yok** | §0.1.1 · KARARLAR §2 madde 16 | **C7** | **CM** — `SystemSetting` | ⬜ | — |
 | **GÇ-12** | Sipariş = tek parça sevkiyat | **Kısmi sevkiyat**; borç ve prim sevkiyatta doğar | A-3 | 1B madde 7 | **CM** | ⬜ — *1A sonunda `şema ✅ / davranış 1B` yazılır (§D.2)* | — |
 | **GÇ-13** | `BigInt` kuruş + `money.ts` `divRound` | **`Decimal`** + `formatla()` + lint kuralı | **X-5** | **CM** | **CM** | ⬜ | — |
-| **GÇ-14** | `LoginAttempt` tablosu ve onu okuyan/yazan deneme sınırı kodu | Bellek içi sayaç. Eşikler `policy.ts`'te (`auth.girisDenemeSiniri`, `auth.girisKilitDakika`). Denemeler container log'una | **X-9** · E-2 §(5)/(8) · `ADR/ADR-004` | **C7b** | **CM** | ⬜ | — |
+| **GÇ-14** | `LoginAttempt` tablosu ve onu okuyan/yazan deneme sınırı kodu | Bellek içi sayaç. Eşikler `policy.ts`'te (`auth.girisDenemeSiniri`, `auth.girisKilitDakika`). Denemeler container log'una | **X-9** · E-2 §(5)/(8) · `docs/adr/ADR-004` | **C7b** | **CM** | ⬜ | — |
 | **GÇ-15** | `Product.netListPrice` — ürün kartındaki liste fiyatı ve onu okuyan/yazan kod | **Varsayılan fiyat listesinin satırı** (`pricing.varsayilanFiyatListesiKodu`). Okuyanlar `cozumleBirimFiyat()` ilk sürümüne bağlanır | **X-10** · B-5 · B-6 | **CM** (§D.1 not 3) | **CM** | ⬜ | — |
 | **GÇ-16** *(16.09)* | Prim **dönem kapatma** + `HESAPLANDI → ONAYLANDI → ÖDENDİ` durumları + sonraki döneme düzeltme kaydı (`closePeriod`, `CommissionPeriod`, `CommissionAdjustment`, enum `CommissionStatus`) — FR-34/35/36 | Kilit yok. Geçmiş dönem ters kayıtla değişmez; ters kayıt kendi belge tarihinde doğar. Ödeme ve onay sistem dışıdır | **X-1** §(6)/(7) + *kapsam dışı, kalıcı* | **C4** (ekranlarla birlikte) | **CM** | ⬜ | — |
-| **GÇ-17** *(16.09)* | Negatif stoğun **sert reddi** (RULE-01, FR-43) **ve saklı stok miktarı** — `Product.stock` + koşullu `updateMany` + `_sum.stock` | Stok hareketlerden türer (`hesaplaStok()`); eşzamanlılık ürün satırı kilidiyle. **Yumuşak kısıt:** negatife düşüş engellenmez; `OnayBlogu` izi 1B'de (R-10) | **B-4** · A-8 · `ADR/ADR-005` | **CM** (§D.1 not 3-c) | **CM** | ⬜ | — |
+| **GÇ-17** *(16.09)* | Negatif stoğun **sert reddi** (RULE-01, FR-43) **ve saklı stok miktarı** — `Product.stock` + koşullu `updateMany` + `_sum.stock` | Stok hareketlerden türer (`hesaplaStok()`); eşzamanlılık ürün satırı kilidiyle. **Yumuşak kısıt:** negatife düşüş engellenmez; `OnayBlogu` izi 1B'de (R-10) | **B-4** · A-8 · `docs/adr/ADR-005` | **CM** (§D.1 not 3-c) | **CM** | ⬜ | — |
 | **GÇ-18** *(16.09)* | **Saklı KDV ve toplam alanları:** `OrderItem.vatAmount` · `lineNetTotal` · `lineGrossTotal` · `Order.netTotal` · `vatTotal` · `grossTotal` | Türetilir — `hesaplaSatirTutarlari()`; belge toplamı Σ satır. İlk sürüm `CM`'de (§D.1 not 3) | **C-6** §(3)/(5) | **CM** (kuyruk) | **CM** | ⬜ | — |
 | **GÇ-19** *(16.09)* | **Siparişteki vade tarihi** (`Order.dueDate`) | Vade **cari harekettedir** ve sevkiyat tarihinden işler. Siparişte yalnız `odeme_vadesi_gun` durur | **A-7** · **X-11** §(4) | **CM** (kuyruk) | **CM** | ⬜ | — |
 | **GÇ-20** *(16.09)* | **Tahsilattaki fatura numarası** (`DoctorPayment.invoiceNo`) | Fatura numarası kolonu konmaz (fatura–belge ilişkisi N-N). §D.2 anti-şema listesindeki `harici_fatura_no` karşılığıdır | **C-1** §(4) · X-6 | **CM** (kuyruk) | **CM** | ⬜ | — |
@@ -84,7 +84,7 @@
 > KARARLAR §4 *"Faz 1 şema özeti"*nin **iş dökümü**. Karar metni burada tekrarlanmaz; her
 > satır kaynağına atıf yapar.
 > **Şema adları:** buradaki Türkçe tablo/kolon adları **kavramsaldır**. Şemadaki İngilizce
-> karşılık `ADR/ADR-001` ekinden alınır; ek `CM`'de tamamlanır.
+> karşılık `docs/adr/ADR-001` ekinden alınır; ek `CM`'de tamamlanır.
 > **Kolonlar:** `Şema` = hangi commit'te şemaya girer · `Davranış` = §D.3'teki 1B maddesi.
 
 ### §B.1 · Tablolar — **15** *(X-10 ile 11 → 13 · X-11/X-12 ile → 15)*
@@ -99,7 +99,7 @@
 | `BelgeSayac` | A-14 | CM | — | 1B madde 2 (`uretBelgeNo`) |
 | `StokDuzeltme` · `StokDuzeltmeSatir` | B-7 | CM | — | 1B madde 7 |
 | `StokDuzeltmeSebep` | B-7 | CM | ✅ | 1B madde 7 |
-| oturum tablosu | E-2 · `ADR/ADR-003` | CM | — | 1B madde 4 |
+| oturum tablosu | E-2 · `docs/adr/ADR-003` | CM | — | 1B madde 4 |
 | dışa aktarım kütüğü | D-5 | CM | — | 1B madde 6 |
 | `FiyatListesi` · `FiyatListesiSatir` | **X-10** · B-5 · B-6 | CM | ✅ varsayılan liste | ilk sürüm CM (§D.1 not 3) · 1B madde 5 · 7 |
 | `CariHareket` | **X-11** · A-6 · A-7 | CM | — | 1B madde 1 (`hesaplaDoktorBakiye`) · 2 · 7 |
@@ -153,8 +153,8 @@ Hepsinin şeması `CM`'dedir. Tüm belgelerde `belge_no` (global UNIQUE, salt ok
 | sevkiyat satırı | sipariş satırı bağı · miktar (tam sayı) · **`prim_orani`** (donmuş; `BAYI` ve bedelsizde boş) | A-3 · X-5 §(8) · **X-14** §(3) |
 | vade değişiklik izi (bugünkü `DueDateChange`) | bağı **cari harekete** taşınır; eski/yeni tarih · kişi · zaman · gerekçe | **X-15** §(1) |
 | `Doktor` | `telefon` **NOT NULL + normalize + UNIQUE** (bugünkü `phoneNormalized`) · `klinik`, `bolge` **nullable** (`DOKTOR` için uygulama kuralıyla zorunlu) | **X-15** §(2)/(3) |
-| `Product` | `stock` **kalkar** | `ADR/ADR-005` · GÇ-17 |
-| oturum tablosu | `lastSeenAt` + token hash (ayrıntı `ADR/ADR-003`, §D.4) | E-2 |
+| `Product` | `stock` **kalkar** | `docs/adr/ADR-005` · GÇ-17 |
+| oturum tablosu | `lastSeenAt` + token hash (ayrıntı `docs/adr/ADR-003`, §D.4) | E-2 |
 | `ImportParti` | parti numarası · veri türü · kullanıcı · zaman · `dosya_adi` (`varchar(255)`, nullable) · geri alma zamanı / kişi / gerekçe | **X-12** · E-3 |
 | `Doktor` · `Urun` · `FiyatListesiSatir` · `StockMovement` | içe aktarım parti FK (nullable) | **X-12** §(2) |
 | tüm belgeler | `belge_no` · `guncelleme_tarihi` | K-4 · A-14 |
@@ -171,7 +171,7 @@ Hepsinin şeması `CM`'dedir. Tüm belgelerde `belge_no` (global UNIQUE, salt ok
   - miktar tam sayı
   - `BigInt` kuruş yok.
 
-### §B.4 · Yeni tipler ve katalog değerleri *(normatif — `ADR/ADR-001`)*
+### §B.4 · Yeni tipler ve katalog değerleri *(normatif — `docs/adr/ADR-001`)*
 
 | Tür | Değerler | Kaynak |
 |---|---|---|
@@ -201,7 +201,7 @@ Hepsinin şeması `CM`'dedir. Tüm belgelerde `belge_no` (global UNIQUE, salt ok
 **Yasak liste** (şemada **olmayacaklar**) → §D.2 anti-şema testi. Kaynak: KARARLAR §4 *"Kısıtlar"*.
 Burada kopyalanmaz.
 
-### §B.6 · Tek çağrı noktası fonksiyonları — **11** *(normatif ad — `ADR/ADR-001`)*
+### §B.6 · Tek çağrı noktası fonksiyonları — **11** *(normatif ad — `docs/adr/ADR-001`)*
 
 Bayi için **ayrı fonksiyon yazılmaz** (X-8 §(2)). Liste **11'de kapalıdır** (§1.3).
 
@@ -210,7 +210,7 @@ Bayi için **ayrı fonksiyon yazılmaz** (X-8 §(2)). Liste **11'de kapalıdır*
 | 1 | **sayılan belgeler filtresi** — altı dışlama: `TEKLIF` · `ACILIS` · `KonsinyeCikis` · `VADE_FARKI` · `StokTransfer` · `StokDuzeltme` (+ bedelsiz satırlar) | A-5 · B-7 · K-4 | **1B madde 1 — ilk iş** |
 | 2 | `hesaplaDoktorBakiye(doktor, tarih?)` | K-2 · C-2 · E-1 | 1B madde 1 · F-02 (madde 8) |
 | 3 | `hesaplaDoktorRisk()` | A-12 | 1B madde 1 |
-| 4 | `hesaplaStok(urun, konum?, tarih?)` | B-4 · K-10 · C-2 · `ADR/ADR-005` | **ilk sürüm `CM`** — saklı stok kalkar (§D.1 not 3-c) · kilit biçimi ve `NEGATIF_STOK` izi **1B madde 1** |
+| 4 | `hesaplaStok(urun, konum?, tarih?)` | B-4 · K-10 · C-2 · `docs/adr/ADR-005` | **ilk sürüm `CM`** — saklı stok kalkar (§D.1 not 3-c) · kilit biçimi ve `NEGATIF_STOK` izi **1B madde 1** |
 | 5 | `cozumleBirimFiyat()` | B-5 · B-6 · **X-10** | **ilk sürüm `CM`** (liste seçimi) · tamamı **1B madde 5** (barem, tarih, X-4 `SERT`) — §D.1 not 3 |
 | 6 | `acikBlokVarMi()` / `blokKontrolleriniCalistir()` | A-8 | 1B madde 1 |
 | 7 | `calistirDisaAktarim(kod, parametreler)` | K-4 · D-5 | 1B madde 6 |
@@ -224,7 +224,7 @@ Bayi için **ayrı fonksiyon yazılmaz** (X-8 §(2)). Liste **11'de kapalıdır*
 - `bugun()` · `gunAraligi()` · `takvimYili()` — E-1, `CM` (`format.ts` `timeZone`)
 - modül tarafında `hesaplaButceBakiye()` — K-6, Faz 3+
 
-### §B.7 · `policy.ts` anahtarları — **23** *(normatif ad — `ADR/ADR-001`; 16.09: X-14 ile 22 → 23)*
+### §B.7 · `policy.ts` anahtarları — **23** *(normatif ad — `docs/adr/ADR-001`; 16.09: X-14 ile 22 → 23)*
 
 İskelet **C7**'de yazılır; değeri belli olmayanlar `null` bırakılır.
 *"Belirlenir, açılmaz"*: kullanıcıya ayar ekranı yoktur (GÇ-11).
@@ -260,7 +260,7 @@ Bayi için **ayrı fonksiyon yazılmaz** (X-8 §(2)). Liste **11'de kapalıdır*
 ## §C · Açık madde defteri
 
 > **Kural:** Uygulama sırasında çıkan her **karar boşluğu** buraya yazılır ve **KARARLAR'da**
-> kapatılır. Mimari *"nasıl"* soruları `ADR/`'de kapatılır; sıra soruları §D'de. Plan dosyası
+> kapatılır. Mimari *"nasıl"* soruları `docs/adr/`'de kapatılır; sıra soruları §D'de. Plan dosyası
 > boşluğu kendisi doldurmaz (`YOL_HARITASI.md` §7.1-A). Harfler **yeniden kullanılmaz**.
 
 | # | Soru | Durum | Kayıt |
@@ -271,22 +271,22 @@ Bayi için **ayrı fonksiyon yazılmaz** (X-8 §(2)). Liste **11'de kapalıdır*
 | §C-d | K-1 metnindeki *"tahsilat oranı"* kalıntısı | ✅ 13.09.2026 — redakte edildi | KARARLAR K-1 · X-6 §(10) |
 | §C-e | F-11 kabul senaryosunun rakamları geri çekilen mekanizmalara dayanıyor | 🔵 **uygulama kalemi** — karar var (X-7) | 1B madde 9 · `KABUL_KRITERLERI.md`'ye göre yeniden yazılır |
 | §C-f | PRD taramasının sırası | ✅ 15.09.2026 — **sıra kısıtı**, §D.0. **Taramanın kendisi iş olarak sürüyor → §E** | §D.1 Şerit A |
-| §C-g | E-2 oturum yolu | ✅ 15.09.2026 — yol (b) | `ADR/ADR-003` |
+| §C-g | E-2 oturum yolu | ✅ 15.09.2026 — yol (b) | `docs/adr/ADR-003` |
 | §C-h · §C-i · §C-k | *16.09 yeniden kurulumunda **kayıt bulunamadı***. Hiçbir belge bu harflere atıf yapmıyor; kapanmış ya da başka maddeye katılmış sayılır | ❔ | Eski dosya bulunursa buraya işlenir |
 | §C-j | Audit sanitize kapsamı | ✅ 15.09.2026 — **`CM`'in teslim şartı** | §D.0 |
-| §C-l | İsimlendirme rejimi | ✅ 15.09.2026 — karma | `ADR/ADR-001` |
-| §C-m | Migration stratejisi | ✅ 15.09.2026 — fresh init | `ADR/ADR-002` |
+| §C-l | İsimlendirme rejimi | ✅ 15.09.2026 — karma | `docs/adr/ADR-001` |
+| §C-m | Migration stratejisi | ✅ 15.09.2026 — fresh init | `docs/adr/ADR-002` |
 | §C-n | `OPERASYON` ekran matrisi | 🔵 **uygulama kalemi** — karar var (D-2 §(4)) | 1B madde 3 (X-1 ile tek commit) |
 | §C-o | Bayi yönetim ekranları ve tabloları (C5 ↔ D-2 §(6) ↔ A-9 ↔ X-2) | ✅ 15.09.2026 | KARARLAR **X-8** |
-| §C-p | `LoginAttempt` ↔ E-2 §(8) | ✅ 15.09.2026 | KARARLAR **X-9** · `ADR/ADR-004` |
+| §C-p | `LoginAttempt` ↔ E-2 §(8) | ✅ 15.09.2026 | KARARLAR **X-9** · `docs/adr/ADR-004` |
 | §C-q | Fiyat listesinin cariye bağlanışı | ✅ 15.09.2026 — cariye atanan liste | KARARLAR **X-10** |
 | §C-r | `CariHareket` şemada nedir? | ✅ 16.09.2026 — yeni tablo | KARARLAR **X-11** (§5.14) |
 | §C-s | `ImportParti` tablosu sayımda yok | ✅ 16.09.2026 — yeni tablo | KARARLAR **X-12** (§5.15) |
-| §C-t | Anti-şema listesinin iki uygulama boşluğu. Ayrıntı aşağıda | ✅ 16.09.2026 — **karar değil, listenin tamamlanması** | §D.2 · `ADR/ADR-001` ek |
+| §C-t | Anti-şema listesinin iki uygulama boşluğu. Ayrıntı aşağıda | ✅ 16.09.2026 — **karar değil, listenin tamamlanması** | §D.2 · `docs/adr/ADR-001` ek |
 | §C-u | Satıcı–doktor sahipliği — görünürlük, atama, devir, pasif satıcı, hakedişin aidiyeti *(§E: FR-03…08)* | ✅ 16.09.2026 — izolasyon korunur; D-2 §(3) redakte | KARARLAR **X-13** (§5.16) |
 | §C-v | Prim oranının yeri ve dondurulması *(§E: FR-30, FR-31)* | ✅ 16.09.2026 — config + satıcıya özel oran, sevkiyata donar | KARARLAR **X-14** (§5.17) |
 | §C-w | Vade tarihi değişikliği · mükerrer cari engeli · cari kartı zorunlu alanları *(§E: FR-22, FR-09, FR-01, FR-39)* | ✅ 16.09.2026 — ikisi de korunur | KARARLAR **X-15** (§5.18) |
-| §C-x | `Product.stock` kalır mı? *("nasıl" sorusu)* | ✅ 16.09.2026 — kalkar, stok hareketlerden türer | `ADR/ADR-005` |
+| §C-x | `Product.stock` kalır mı? *("nasıl" sorusu)* | ✅ 16.09.2026 — kalkar, stok hareketlerden türer | `docs/adr/ADR-005` |
 
 **§C-r — `CariHareket`** *(✅ X-11 ile kapandı; tarihçe)*
 
@@ -351,7 +351,7 @@ Kalkarsa GÇ-17'nin kod tarafı da `CM`'e kayar.
 > kriteri **sayıya** bağlandı. *Bu tur kapsam üretmedi, sıra üretti.*
 >
 > **Güncelleme 15.09.2026 (2. tur) — belge rejimi uyumu.** *Kapsam ve sıra değişmedi.*
-> (1) §D.0'daki üç **"nasıl"** kararı **`ADR/`'ye taşındı** (ADR-001 · ADR-002 · ADR-003);
+> (1) §D.0'daki üç **"nasıl"** kararı **`docs/adr/`'ye taşındı** (ADR-001 · ADR-002 · ADR-003);
 > §D.0 artık yalnız plan sonucu ve atıf taşır — `YOL_HARITASI.md` §7.1-A: *plan bir karar
 > üretemez*. (2) Şerit A aritmetiği düzeltildi: **22 FR** `TRACEABILITY.md` §6.4'ten gelir,
 > RULE'ler hesaba katıldı → **~60 madde**. (3) Şerit B'de *"Ölen test"* kolonu **"Etkilenen
@@ -407,7 +407,7 @@ Kalkarsa GÇ-17'nin kod tarafı da `CM`'e kayar.
 
 > **İzleme kuralı — iki izleyici, tek yazım yeri.**
 > **§A** = söküm durumu ve **commit hash'i**. **§D** = sıra ve gerekçe.
-> **`ADR/`** = mimari *"nasıl"* kararları; §D bir mimari seçimi **yeniden yazmaz, atıf yapar**.
+> **`docs/adr/`** = mimari *"nasıl"* kararları; §D bir mimari seçimi **yeniden yazmaz, atıf yapar**.
 > Commit hash'i **yalnız §A'ya** yazılır, §D'de tekrarlanmaz. *Gerekçe: aynı listenin iki
 > yerde yaşaması §7-6'nın uyardığı desendir — biri bayatlar.*
 
@@ -421,13 +421,13 @@ Kalkarsa GÇ-17'nin kod tarafı da `CM`'e kayar.
 
 | # | Soru | Kayıt | Plan sonucu |
 |---|---|---|---|
-| **§C-l** | İsimlendirme rejimi | ✅ **`ADR/ADR-001`** — karma rejim | KARARLAR §4'teki Türkçe **tablo/kolon** adları kavramsaldır (KARARLAR §4 redaksiyon notu, 15.09). Enum değerleri, belge önekleri, 11 fonksiyon ve `policy.ts` anahtarları **normatiftir**. **Ad eşleme tablosu `CM`'de doldurulur**; anti-şema testi (C8) ondan beslenir |
-| **§C-m** | Migration stratejisi | ✅ **`ADR/ADR-002`** — fresh init | `20260723175607_init_v2` silinir, tek yeni `init` üretilir. Canlı/pilot veri **yok** (teyit edildi). `README.md:19,76`, `playwright.config.ts:35-37`, `ci.yml:58-59` gözden geçirilir |
-| **§C-g** | E-2 oturumu | ✅ **`ADR/ADR-003`** — yol (b), opak token | `next-auth` tamamen sökülür; **çerez imzalama ve `AUTH_SECRET` düşer** (`.env.example:10`, `ci.yml:17`). **Şema 1A'da, uygulama 1B'de** (§D.3) |
+| **§C-l** | İsimlendirme rejimi | ✅ **`docs/adr/ADR-001`** — karma rejim | KARARLAR §4'teki Türkçe **tablo/kolon** adları kavramsaldır (KARARLAR §4 redaksiyon notu, 15.09). Enum değerleri, belge önekleri, 11 fonksiyon ve `policy.ts` anahtarları **normatiftir**. **Ad eşleme tablosu `CM`'de doldurulur**; anti-şema testi (C8) ondan beslenir |
+| **§C-m** | Migration stratejisi | ✅ **`docs/adr/ADR-002`** — fresh init | `20260723175607_init_v2` silinir, tek yeni `init` üretilir. Canlı/pilot veri **yok** (teyit edildi). `README.md:19,76`, `playwright.config.ts:35-37`, `ci.yml:58-59` gözden geçirilir |
+| **§C-g** | E-2 oturumu | ✅ **`docs/adr/ADR-003`** — yol (b), opak token | `next-auth` tamamen sökülür; **çerez imzalama ve `AUTH_SECRET` düşer** (`.env.example:10`, `ci.yml:17`). **Şema 1A'da, uygulama 1B'de** (§D.3) |
 | **§C-f** | PRD taraması | ✅ **sıra kısıtı** — §D'de kalır | **Migration'dan önce bitmek zorunda.** Tarama yeni şema kalemi doğurabilir; migration tek atıştır |
 | **§C-j** | Audit sanitize kapsamı | ✅ **sıra kısıtı** — §D'de kalır | **Migration'ın teslim şartı.** `vkn_tckn` + `fatura_*` seti A-13 ile aynı migration'da geliyor. Bugünkü `SENSITIVE_KEYS` altı anahtar (`audit.ts:102-109`) ve VKN/TCKN içermiyor; sonraya kalırsa **ilk `createAuditLog` çağrısı VKN'yi açık yazar** |
 | **§C-o** | Bayi yönetim ekranları ve tabloları | ✅ **KARARLAR X-8** (15.09) | Bayi `Doktor` satırı (`hesap_sinifi = BAYI`). C5 **tam söküm**; beş `Dealer*` tablosu `CM`'de çıkar; 1B'de tek cari ekranı (madde 3 ve 7) |
-| **§C-p** | `LoginAttempt` ↔ E-2 §(8) | ✅ **KARARLAR X-9** (15.09) · mekanizma **`ADR/ADR-004`** | Yeni commit **C7b**; tablo `CM`'de çıkar; **GÇ-14** |
+| **§C-p** | `LoginAttempt` ↔ E-2 §(8) | ✅ **KARARLAR X-9** (15.09) · mekanizma **`docs/adr/ADR-004`** | Yeni commit **C7b**; tablo `CM`'de çıkar; **GÇ-14** |
 | **§C-q** | Fiyat listesinin cariye bağlanışı | ✅ **KARARLAR X-10** (15.09) — (a) cariye atanan liste | İki yeni tablo + `Doktor.fiyat_listesi_id` `CM`'e girer; `Product.netListPrice` kalkar (**GÇ-15**); `cozumleBirimFiyat()` ilk sürümü `CM`'de |
 
 > **§C defterinde** §C-l · m · g · f · j · **o · p · q** **kapandı** olarak işaretlidir (atıf: bu tablo).
@@ -469,7 +469,7 @@ Tarama karar boşluğu aradığı için Claude Code'a bırakılmaz.
 
 | # | Commit | İçerik | Etkilenen test | Not |
 |---|---|---|---|---|
-| **C0** | **Hijyen** | **İlk iş:** `docs/` ve **`ADR/`** git'e eklenir *(bugün izlenmiyor — `TRACEABILITY.md` ve `DENETIM_BULGULARI.md` sürüm kontrolü dışında)*. **`ADR/` kök dizine konur** — bütün atıflar `ADR/...` biçiminde yazıldı; `docs/` altına konursa atıflar `docs/ADR/...` olarak toplu güncellenir · `docker-compose.yml` portu **5432**'ye hizalanır *(`.env.example:6`, `playwright.config.ts:14`, `ci.yml:15-16` zaten 5432)* · `excalidraw.log` gitignore · `DENETIM_BRIFI_1.md` sınıflandırılır · **proje belgeleri repoya eklenir** *(16.09)*: `KARARLAR.md`, `YOL_HARITASI.md`, `FAZ1_UYGULAMA_KAPSAMI.md`, `DUZELTME_BRIFI.md`, `IS_AKISI_OZETI.md` ve `MEVCUT_SISTEM_DURUMU.md` bugün repoda **yok** (`MEVCUT_SISTEM_DURUMU.md` §1.1). Atıflar yolsuz yazıldığı için bu dosyalar **kök dizine** konur; `PROJE_DURUMU.md` ve `PRD_V2.md` zaten oradadır. `docs/` yalnız bugün orada duran iki dosyayı taşır · **`UYGULAMA_PLANI.md`** (kök, 450 satır) **`arsiv/`'e taşınır** — KARARLAR X-7 §(1) onu zaten arşiv statüsünde sayıyor | — | Kod değişikliği yok. Çıkış: `git status --short` **boş** ve `git ls-files docs ADR` **boş değil** |
+| **C0** | **Hijyen** | **İlk iş:** `docs/` ve **`docs/adr/`** git'e eklenir *(bugün izlenmiyor — `TRACEABILITY.md` ve `DENETIM_BULGULARI.md` sürüm kontrolü dışında)*. **`docs/adr/`** — *redaksiyon 18.09.2026:* özgün metin ADR dizinini **kök dizine** koyuyordu (atıflar yolsuz yazılmıştı); dizin `docs/` altına alındı ve bütün atıflar `docs/adr/...` biçiminde toplu güncellendi · `docker-compose.yml` portu **5432**'ye hizalanır *(`.env.example:6`, `playwright.config.ts:14`, `ci.yml:15-16` zaten 5432)* · `excalidraw.log` gitignore · `DENETIM_BRIFI_1.md` sınıflandırılır · **proje belgeleri repoya eklenir** *(16.09)*: `KARARLAR.md`, `YOL_HARITASI.md`, `FAZ1_UYGULAMA_KAPSAMI.md`, `DUZELTME_BRIFI.md`, `IS_AKISI_OZETI.md` ve `MEVCUT_SISTEM_DURUMU.md` bugün repoda **yok** (`MEVCUT_SISTEM_DURUMU.md` §1.1). *Redaksiyon 18.09.2026:* özgün metin bu dosyaları **kök dizine** koyuyordu; `PROJE_DURUMU.md` ve `PRD_V2.md` ile birlikte hepsi **`docs/` altında** toplandı · **`UYGULAMA_PLANI.md`** (450 satır) **`docs/arsiv/`'e taşınır** — KARARLAR X-7 §(1) onu zaten arşiv statüsünde sayıyor | — | Kod değişikliği yok. Çıkış: `git status --short` **boş** ve `git ls-files docs` **boş değil** |
 | **C1** | **F-00 altyapı** | Üçüncü veritabanı `medikal_itest` (`docker/init-test-db.sql` + `ci.yml` adımı) · vitest **`projects`** ayrımı: `unit` (`src/**/*.test.ts`) + `integration` (`src/**/*.itest.ts`) · `globalSetup` = `migrate deploy` · test başı **TRUNCATE** fixture'ı (`workers: 1`, hız sorun değil) · CI'a adım | — | E2E `medikal_test`'i her koşuda `migrate reset` ediyor (`playwright.config.ts:35`); **paylaşılamaz**. Bugün DB'ye dokunan birim test **0** |
 | **C2** | **GÇ-4 + GÇ-5** kongre sökümü | `congress-service.ts` (281 sat.) · `congress-ledger.ts` · `scripts/expire-congress-balances.ts` + `job:expire` · `(admin)/congresses/**` · `(seller)/my-congresses/**` · `doctors/[id]` defter bölümü + `adjustCongressBalance` | **silinir:** birim 27 (`congress-ledger.test.ts`) · e2e 10 (`congress.spec`, `congress-edit.spec`) + `doctor-detail` 3 | **Önce kongre gider** — prim ve tahsilat kodu ona bağlı |
 | **C3** | **GÇ-3** mahsup sökümü | `allocation.ts` · `collections/actions.ts` FIFO çağrıları (`:77`, `:170`) · `allocations` ilişki okumaları (8 dosya) · `reports-service.ts:36` | **silinir:** birim 23 (`allocation.test.ts`) · e2e 4 (`collections.spec`) | Yaşlandırma **Faz 2+**; `agingBucket`/`summarizeAging` da gider (X-6) |
@@ -477,7 +477,7 @@ Tarama karar boşluğu aradığı için Claude Code'a bırakılmaz.
 | **C5** | **GÇ-6** bayi sökümü — **tam** *(X-8)* | **Panel:** `(dealer)` route group (5 sayfa) · `dealer-session.ts` · `auth.setup.ts` bayi adımı + `playwright.config.ts` `dealer` projesi · **Yönetim:** `(admin)/dealers/**` + `/dealer-shipments` · `dealer-cari.ts` · `dealer-shipment.ts` · `recordDealerPayment` · **Okuyanlar:** rapor sayfasındaki kanal karşılaştırması (`getChannelReport`) · dashboard'daki kanal ciro ve bayi alacağı kartları · **Seed:** `prisma/seed.ts` bayi kayıtları ve `bayi@` hesabı | **silinir:** e2e 10 (`dealer.spec` 5 + `panel.spec` 4 + setup 1) + kanal raporu/dashboard testleri *(sayı C5'te ölçülür; §D.2 e2e hedefi bu ölçümle kesinleşir)* | Bayi **`Doktor` satırıdır** (X-8); yönetimi 1B'de tek cari ekranından (madde 7). Panel Faz 3+ opsiyonel modül (D-2 §(6)). Tablolar **`CM`'e kadar şemada kalır, okunmaz** — kod söküm burada, şema söküm `CM`'de (C6 `netMinPrice` deseni). **X-2'nin hatası bu commit'te kodla birlikte gider**; ilkesi 1B madde 2'de test edilir |
 | **C6** | **GÇ-9 + GÇ-8** KDV toggle ve taban fiyat | `vat-mode.ts` · `VatToggle.tsx` · `reports/page.tsx` toggle · `OrderForm` KDV düğmeleri (`:181-202`) ve `belowMin` kilidi · `products/actions.ts:33-36` sunucu reddi · `my-orders/actions.ts:99-102` | **silinir:** e2e 6 (`pricing.spec` 3 + `reports.spec` 2 + `products.spec` 1) | `netMinPrice`'ın **şema** tarafı `CM`'de. Yerini **taban etiketi zorunluluğu** alır (1B, Ü-3) |
 | **C7** | **GÇ-11** config noktaları | `settings.ts` + `SystemSetting` okuma/yazma çağrıları sökülür · **`policy.ts` iskeleti** (§B.7'nin **23** anahtarı *— 15.09: X-9 ile iki, X-10 ile bir · 16.09: X-14 ile bir anahtar eklendi*; doldurulacaklar `null`) · `DEFAULT_COMMISSION_RATE` sabiti `finance.primOraniVarsayilan`'a taşınır (X-14) | — | `SystemSetting`'e yazan çağrı noktası bugün **0** (`setSetting` çağrılmıyor). Ayar ekranı yalnız **tanım tabloları** için anlamlı |
-| **C7b** | **GÇ-14** deneme sınırı taşıması *(X-9 — 15.09)* | `LoginAttempt` okuma/yazma çağrıları → **bellek içi sayaç** (`ADR/ADR-004`) · deneme olayları container log'una (E-2 §(8)) · bugünkü **anahtar, eşik ve kilit süresi** koddan okunur → `policy.ts` `auth.girisDenemeSiniri` · `auth.girisKilitDakika` doldurulur · sayaç mantığına **birim testi** (sahte saat, E-1) | **eklenir:** sayaç birim testleri · etkilenen mevcut test C7b'de ölçülür | Tablo **`CM`'e kadar şemada kalır, okunmaz**. *Neden `CM`'de değil:* `CM` zaten 1A'nın en büyük commit'i (R-1); davranış değişikliği ayrı commit'te sınanır |
+| **C7b** | **GÇ-14** deneme sınırı taşıması *(X-9 — 15.09)* | `LoginAttempt` okuma/yazma çağrıları → **bellek içi sayaç** (`docs/adr/ADR-004`) · deneme olayları container log'una (E-2 §(8)) · bugünkü **anahtar, eşik ve kilit süresi** koddan okunur → `policy.ts` `auth.girisDenemeSiniri` · `auth.girisKilitDakika` doldurulur · sayaç mantığına **birim testi** (sahte saat, E-1) | **eklenir:** sayaç birim testleri · etkilenen mevcut test C7b'de ölçülür | Tablo **`CM`'e kadar şemada kalır, okunmaz**. *Neden `CM`'de değil:* `CM` zaten 1A'nın en büyük commit'i (R-1); davranış değişikliği ayrı commit'te sınanır |
 | **CM** | 🔴 **Tek migration + parasal tip** *(1A'nın en büyük commit'i)* | `init_v2` silinir → tek yeni `init` · **§B.1** **15** tablo (oturum tablosu, dışa aktarım kütüğü, *15.09 — X-10* `FiyatListesi`/`FiyatListesiSatir` ve *16.09 — X-11/X-12* `CariHareket`/`ImportParti` dahil) · **§B.2** 4 belge · **§B.3** 40+ kolon · **E-1** `timestamptz`/`date` ayrımı (bugün 41 kolonun tamamı `TIMESTAMP(3)`) · **X-5 `Decimal`** + `money.ts` sarmalayıcısı + `formatla()` + **lint kuralı** + para testlerinin yeniden yazımı · **GÇ-7** enum üç değer ve mekanik yeniden adlandırma · **GÇ-10**, **GÇ-12** şema tarafı · **X-8** beş `Dealer*` tablosu çıkar + `HesapSinifi` enum + `Doktor.hesap_sinifi` (NOT NULL, varsayılansız) · **X-9 / GÇ-14** `LoginAttempt` çıkar · **X-10** `FiyatListesi` + `FiyatListesiSatir` + `Doktor.fiyat_listesi_id` (nullable) · **GÇ-15** `Product.netListPrice` çıkar · **şemadan çıkan 14 tablo** (§A üst notu) · **X-11 `CariHareket` + X-12 `ImportParti`** (tablolar, katalog enum'ları, beş tabloya parti FK) · **GÇ-18/19/20** alan çıkışları · **X-13/X-14/X-15 şema etkileri** (siparişte satıcı nullable · `Kullanici.prim_orani` · sevkiyat satırı + donmuş `prim_orani` · vade izinin cari harekete bağlanması · telefon NOT NULL UNIQUE · klinik/bölge nullable) · **ADR-005** `Product.stock` çıkar · **§C-j** `SENSITIVE_KEYS` genişletmesi · **TZ=`Europe/Istanbul`** (`docker-compose.yml`, `ci.yml`, `.env.example`) + `format.ts`'e `timeZone` + `stock/page.tsx:5-13` kopya `formatDate` silinir | **yeniden yazılır:** birim 22 (`money.test` 7 + `vat.test` 15) | ⬇️ Aşağıdaki üç not **bağlayıcıdır** · ✅ *16.09: karar engeli yok — C0…C7b'den sonra başlar* |
 | **C8** | **Anti-şema testi** | `information_schema`'ya sorgu atan tek test | — | Repoda bugün `$queryRaw` **0**, `information_schema` **0** — kod tabanının ilk ham SQL'i |
 | **C9** | **Seed ayrımı** | `db:seed` = **referans veri** (canlıda da çalışır) — **varsayılan fiyat listesi** `pricing.varsayilanFiyatListesiKodu` koduyla bu seed'de açılır *(X-10)* · `db:seed:demo` = yalnız geliştirme | — | Bugün ayrım yok; 353 satır, 21 tablo siler, 61 kayıt basar |
@@ -530,7 +530,7 @@ parametrelerini taşır. Koşullu `updateMany` kolonla birlikte gider; bu yüzde
 > **X-1 ile tek commit** olmak zorundadır (D-2 §(4)). 1A'da `OPERASYON` şemada vardır,
 > davranışı yoktur.
 
-> ⚠️ **§C-g'nin 1A/1B sınırı** *(mekanizma: `ADR/ADR-003`)*. Oturum tablosu ve `Kullanici.aktif` / `parola_hash` /
+> ⚠️ **§C-g'nin 1A/1B sınırı** *(mekanizma: `docs/adr/ADR-003`)*. Oturum tablosu ve `Kullanici.aktif` / `parola_hash` /
 > `parola_degistirmeli` kolonları **`CM`'e girer** (şema kalemidir). **Mekanizmanın
 > uygulanması 1B'dedir** (§D.3 madde 4). Bunun kabul edilen sonucu: 1A boyunca uygulama
 > hâlâ Auth.js JWT ile çalışır, oturum tablosu **boş ve kullanılmaz durur**, `AUTH_SECRET`
@@ -616,7 +616,7 @@ parametrelerini taşır. Koşullu `updateMany` kolonla birlikte gider; bu yüzde
 2. **A-14 `uretBelgeNo()` + `BelgeSayac`** → ardından **X-2 blocker** *(sırası zorunlu. X-2 artık kod düzeltmesi değil **bütün tahsilat yollarının** — `BAYI` dahil — kabul testidir: ödeme kaydı ve `uretBelgeNo()` aynı transaction'da; KARARLAR X-8 §(7))*
 3. **X-1 + D-2 tek commit** *(D-2 §(4): ayrı yapılırsa ikincisi birincisini bozar)* —
    **`OPERASYON` ekran matrisi burada doğar** (§C-n) · **`BAYI` açma yetkisi de bu matriste yazılır** (X-8 §(5)); `SATICI` `BAYI` göremez ve açamaz (X-8 §(3))
-4. **E-2 kimlik katmanı — Yol (b)** *(`ADR/ADR-003`)* → **X-3/X-4 hata yüzeyi** → **Ü-3 taban etiketi** →
+4. **E-2 kimlik katmanı — Yol (b)** *(`docs/adr/ADR-003`)* → **X-3/X-4 hata yüzeyi** → **Ü-3 taban etiketi** →
    **A-15** → **X-6 §(6) vade uyarısı**
 5. **C-6 `hesaplaSatirTutarlari()`** + **B-5/B-6 `cozumleBirimFiyat()`** *(X-5 ham aritmetiğin iki adresi · `CM`'deki ilk sürüm burada tamamlanır: barem, tarih, X-4 `SERT` — X-10 §(3))*
 6. **D-5 dışa aktarım + kütük**, **K-4 §(6) fatura hazırlık veri seti**
@@ -886,7 +886,7 @@ en yüksek olanlardır.
 **Taramanın doğurdukları:**
 - **Üç eksik karar** → KARARLAR X-13 · X-14 · X-15 (§C-u/v/w) — ✅ aynı gün kapandı.
 - **Beş eksik geri çekme satırı** → §A GÇ-16…GÇ-20. Kararlar eskiydi, kayıt eksik kalmıştı.
-- **Bir ADR sorusu** → §C-x (`Product.stock`) — ✅ `ADR/ADR-005`.
+- **Bir ADR sorusu** → §C-x (`Product.stock`) — ✅ `docs/adr/ADR-005`.
 - **`TRACEABILITY.md` §6.4'e eklenecek ⛔ satırları** — aynada 16.09 notuyla işlendi:
   - tam düşenler: FR-34 · FR-35 · FR-36 · FR-43
   - kısmen düşenler: FR-10 · FR-17 · FR-21 · FR-23 · FR-29 · FR-37 · FR-55 · FR-60 · FR-61 · FR-63 · RULE-13
@@ -894,5 +894,5 @@ en yüksek olanlardır.
 **Kapanış durumu:**
 - ✅ **KAPANDI — 16.09.2026.** 59/59 sonuç kodlu; açık ❌ yok.
 - §C-f'nin işi bitti; KARARLAR §6'daki PRD kutusu işaretli.
-- `PRD_V2.md` proje bilgisinden çıkarılabilir; repoda **C10**'da `arsiv/`'e gider.
+- `PRD_V2.md` proje bilgisinden çıkarılabilir; repoda **C10**'da `docs/arsiv/`'e gider.
 - Bu defter C10'da `KABUL_KRITERLERI.md` iskeletinin girdisidir ve kayıt olarak kalır.

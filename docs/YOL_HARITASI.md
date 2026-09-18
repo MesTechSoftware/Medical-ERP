@@ -34,8 +34,8 @@
 >
 > **🔄 15.09.2026 — §D commit dizisi senkronizasyonu (karar üretmedi).** `FAZ1_UYGULAMA_KAPSAMI.md`
 > §D, `MEVCUT_SISTEM_DURUMU.md` ölçümleri üzerine **commit bazlı** yazıldı; §C-l · §C-m · §C-g
-> kapandı ve **`ADR/`'ye** yazıldı, §C-f · §C-j sıra kısıtı oldu. Bu dosyada düzeltilenler:
-> **§1** doküman haritasına `MEVCUT_SISTEM_DURUMU.md` ve açılan `ADR/` eklendi · **§3** çıkış
+> kapandı ve **`docs/adr/`'ye** yazıldı, §C-f · §C-j sıra kısıtı oldu. Bu dosyada düzeltilenler:
+> **§1** doküman haritasına `MEVCUT_SISTEM_DURUMU.md` ve açılan `docs/adr/` eklendi · **§3** çıkış
 > kriterindeki kırık atıf (*"§D-1A madde 8"* → **C8**) ve kapanmış §C kutusu düzeltildi, 1A
 > çıkışının §D.2'de olduğu yazıldı, §3.1'de düşen görevlerin satırları işaretlendi · **§5.1 G-4**
 > `AUTH_SECRET` düşüşüne göre daraltıldı · **§7.1** sınıf tablosuna `MEVCUT_SISTEM_DURUMU.md`
@@ -122,7 +122,7 @@ veri üstünde migration'ı pahalı olduğundan Faz 1'de netleşmeli.
 | **`FAZ1_UYGULAMA_KAPSAMI.md`** | **KARARLAR §4'ün iş dökümü** — geri çekilecekler (**söküm takibi: `Durum`/`Commit` kolonları**) · yeni yazılacaklar · açık madde defteri · **§D: 1A commit dizisi ve 1B sırası** | 🟢 **canlı · Faz 1'in çalışma listesi** |
 | **`KABUL_KRITERLERI.md`** | Doğrulanabilir davranış cümleleri — **karar içermez**; numaralandırma karar kimliğinden (`A-3-1`) | ⬜ **Faz 1A'da açılacak** (X-7) |
 | **`SOZLESME_EKI.md`** | C-1 teyit metni — **on bir madde + zamanlama kolonu**; imzalanacak ek | ⬜ **açılacak · hukukçu kontrolü beklemede** (K-7 §5) |
-| **`ADR/`** | Mimari karar kayıtları — yalnız *"nasıl"* sorusu | 🟢 **açıldı (15.09.2026)** · ADR-001 isimlendirme · ADR-002 fresh init · ADR-003 oturum · ADR-004 deneme sayacı · **ADR-005 stok miktarı türetilir** *(16.09)* · **sınır kuralı `ADR/README.md`'de** |
+| **`docs/adr/`** | Mimari karar kayıtları — yalnız *"nasıl"* sorusu | 🟢 **açıldı (15.09.2026)** · ADR-001 isimlendirme · ADR-002 fresh init · ADR-003 oturum · ADR-004 deneme sayacı · **ADR-005 stok miktarı türetilir** *(16.09)* · **sınır kuralı `docs/adr/README.md`'de** |
 | **`IS_AKISI_OZETI.md`** | Sistem iş diliyle ne yapıyor + eksik gereksinim kontrol listesi | 🟢 canlı · **Sınıf 3 · Ayna** *(14.09.2026'da atandı — §7.1-A)* |
 | **`PROJE_DURUMU.md`** | Teknik envanter — ne var, hangi sürüm | 🟢 canlı *(2 belge hatası düzeltildi 11.09)* |
 | **`MEVCUT_SISTEM_DURUMU.md`** | Teknik envanter **ölçümü** — 14.09.2026, HEAD `3825241`; §D commit dizisinin sayı kaynağı | 📌 **kayıt · Sınıf 4** *(15.09.2026'da atandı — §7.1-A)*. Sürekli ayna `PROJE_DURUMU.md`'dir |
@@ -242,7 +242,7 @@ Bunlar karar değil, **uygulamadır**; Faz 1'de düzeltmelerle birlikte yapılı
 | **A-15** | Nakit tahsilatta tevsik uyarısı (bilgi kademesi, `finance.nakitTevsikLimiti`) | — | §3.1.c |
 | **Ü-3** | KDV tabanı + **taban etiketi zorunluluğu**; toggle kurulum düzeyi, Faz 1'de kapalı | — | §5.3 |
 | **E-1** | Zaman dilimi tek dönüşüm modülü (UTC saklama, `Europe/Istanbul` yorum, `new Date()` yasak) | tip disiplini | §5.5 |
-| **E-2** | Kimlik/oturum katmanı — kapalı hesap modeli, DB oturumu, 4/12 saat; `son_giris_at` **konmaz** · mekanizma **`ADR/ADR-003`** (opak token; `next-auth` sökülür) | ⚠️ **ekler** (`aktif`, `parola_hash`, `parola_degistirmeli` + oturum tablosu) | §5.6 |
+| **E-2** | Kimlik/oturum katmanı — kapalı hesap modeli, DB oturumu, 4/12 saat; `son_giris_at` **konmaz** · mekanizma **`docs/adr/ADR-003`** (opak token; `next-auth` sökülür) | ⚠️ **ekler** (`aktif`, `parola_hash`, `parola_degistirmeli` + oturum tablosu) | §5.6 |
 | **E-3** | Dosya eki **kapsam dışı**; `ImportParti.dosya_adi` salt kayıt; K-9 §A-3 düzeltilir | — | §5.7 |
 | **D-5 (Ü-5)** | Dışa aktarım kütüğü — altı veri seti, yalnız `YONETICI`, her aktarım loglanır | ⚠️ **ekler** | §3.4.b |
 | **B-7** | `StokDuzeltme` + `StokDuzeltmeSatir` + `StokDuzeltmeSebep` + `DZL` öneki | ⚠️ **ekler (3 tablo)** — *karar 29.08'de kapandı, şema hâlâ yazılmadı* | §3.2.a |
@@ -268,21 +268,21 @@ eklenen, daha önce karara bağlanmış ama görev olarak hiçbir yerde yazılı
 | **K-9 / §1.3** | `modulAcikMi()` tek okuma noktası · modül klasörü sınırı (tek yönlü bağımlılık) | — | §1.6 / §1.3 |
 | **Sayılan belgeler filtresi** | **Faz 1'in tek en kritik ortak fonksiyonu** — altı dışlama, inline `where` yasağı | — | §4, A-5 |
 | **X-8** *(15.09)* | Bayi = `Doktor` satırı (`hesap_sinifi = BAYI`) · bayi işlemleri genel belge akışları · tek cari ekranı · bayiye satıcı atanmaz, prim doğmaz | ⚠️ **ekler + çıkarır** (enum + kolon · 5 `Dealer*` tablosu) | §5.11 |
-| **X-9** *(15.09)* | `LoginAttempt` kalkar · deneme sınırı bellek içi (`ADR/ADR-004`) · eşikler `policy.ts`'te | ⚠️ **çıkarır** | §5.12 |
+| **X-9** *(15.09)* | `LoginAttempt` kalkar · deneme sınırı bellek içi (`docs/adr/ADR-004`) · eşikler `policy.ts`'te | ⚠️ **çıkarır** | §5.12 |
 | **X-10** *(15.09)* | Cariye atanan fiyat listesi · boş atama = varsayılan liste · varsayılana düşülmez · atama yalnız `YONETICI` · elle fiyat serbest | ⚠️ **ekler + çıkarır** (2 tablo + FK · `Product.netListPrice`) | §5.13 |
 | **X-11** *(16.09)* | `CariHareket` yeni çekirdek tablo · `ACL`/`VDF` bu tabloda · tutar pozitif, yön ayrı · belge ile aynı transaction | ⚠️ **ekler** | §5.14 |
 | **X-12** *(16.09)* | `ImportParti` yeni çekirdek tablo · içe aktarılan kayıtlar parti FK taşır · açılış stoğu geri alınmaz | ⚠️ **ekler** | §5.15 |
 | **X-13** *(16.09)* | Satıcı yalnız kendi doktorlarını görür (D-2 §(3) redakte) · siparişin satıcısı sipariş anındaki sahip · devir izli · pasif satıcının doktorları sahipsiz | ⚠️ **değiştirir** (siparişte satıcı nullable) | §5.16 |
 | **X-14** *(16.09)* | `finance.primOraniVarsayilan` + satıcıya özel oran · oran sevkiyat satırına donar | ⚠️ **ekler** | §5.17 |
 | **X-15** *(16.09)* | Vade değişikliği izli (yalnız `YONETICI`) · telefon zorunlu ve benzersiz · `BAYI`'de klinik/bölge boş olabilir | ⚠️ **değiştirir** | §5.18 |
-| **ADR-005** *(16.09)* | `Product.stock` kalkar; stok hareketlerden türer, eşzamanlılık satır kilidiyle | ⚠️ **çıkarır** | `ADR/ADR-005` |
+| **ADR-005** *(16.09)* | `Product.stock` kalkar; stok hareketlerden türer, eşzamanlılık satır kilidiyle | ⚠️ **çıkarır** | `docs/adr/ADR-005` |
 
 **Çalışma kuralı:** Her bug için **önce testi yaz, kırmızı olduğunu gör**, sonra düzelt.
 Bu turdaki hatalar tam olarak "test yokken sessizce yanlış çalışan" sınıfı. Yeni maddelerde de aynı disiplin.
 
 **Faz 1 çıkış kriteri** *(= 1B sonu. **Faz 1A'nın çıkış kriteri ayrıdır ve sayıya bağlıdır:
 `FAZ1_UYGULAMA_KAPSAMI.md` §D.2** — burada kopyalanmaz)*:
-- [x] **`FAZ1_UYGULAMA_KAPSAMI.md` §C açık maddeleri kapatıldı** — C-a parasal tip · C-b `PaymentAllocation` · C-c PRD **13.09.2026** (KARARLAR X-5 · X-6 · X-7); §C-l · §C-m · §C-g **15.09.2026** (`ADR/`); §C-f · §C-j sıra kısıtı olarak §D'de
+- [x] **`FAZ1_UYGULAMA_KAPSAMI.md` §C açık maddeleri kapatıldı** — C-a parasal tip · C-b `PaymentAllocation` · C-c PRD **13.09.2026** (KARARLAR X-5 · X-6 · X-7); §C-l · §C-m · §C-g **15.09.2026** (`docs/adr/`); §C-f · §C-j sıra kısıtı olarak §D'de
 - [x] **§D.7-1 ve §D.7-2 kapatıldı** — KARARLAR **X-8** (bayi = `Doktor` satırı) · **X-9** (`LoginAttempt` kalkar) — **15.09.2026**
 - [x] **§D.7-3 kapatıldı** — KARARLAR **X-10** (cariye atanan fiyat listesi) — **15.09.2026**
 - [x] **§C-r · §C-s kapatıldı** — KARARLAR **X-11** (`CariHareket`) · **X-12** (`ImportParti`) — **16.09.2026**
@@ -382,7 +382,7 @@ Uygulamanın TypeScript fonksiyonlarını **kullanmadan** yazılır — yoksa ay
 | G-1 | **UAT** — Anka West'in kendi personeliyle, gerçek bir haftanın verisiyle. Roller ayrı: satıcı, depo, muhasebe, yönetici. Çıktı: `docs/UAT.md` |
 | G-2 | **Veri devri** — ürün, doktor, bayi *(X-8: doktor şablonunda `hesap_sinifi = BAYI` satırı)*, stok sayımı, açılış bakiyeleri. **Şablon KARARLAR K-7** (`VergiOrani` kodu + ÜTS sütunu + ayrı `ACILIS` stoğu şablonu); veri standardizasyonu **ayrı kalem** |
 | G-3 | **TLS/HTTPS** kurulumu (HSTS bunu varsayıyor) |
-| G-4 | **Secret yönetimi** — DB credential güvenli üretim/saklama. ⚠️ *15.09.2026:* `AUTH_SECRET` **1B madde 4'te düşer** (`ADR/ADR-003`) ve Faz 3'e ulaşmaz. Oturum token'ları DB'de yalnız **hash** olarak durur — secret değildir |
+| G-4 | **Secret yönetimi** — DB credential güvenli üretim/saklama. ⚠️ *15.09.2026:* `AUTH_SECRET` **1B madde 4'te düşer** (`docs/adr/ADR-003`) ve Faz 3'e ulaşmaz. Oturum token'ları DB'de yalnız **hash** olarak durur — secret değildir |
 | G-5 | **Gerçek yedekle restore tatbikatı** — en az bir kez, veri yerinde doğrulanarak (K-9 §A-4) |
 | G-6 | **`docs/RUNBOOK.md`** gerçek ortamda dry-run |
 | G-7 | **KVKK paketi** — saklama/silme politikası + veri işleyen sözleşmesi (**KARARLAR K-9 §A / C-7**'ye bağlı) |
@@ -467,7 +467,7 @@ Her dosya bir **soruya** cevap verir. Sınıfı, güncelleme tetikleyicisini bel
 | **1 · Karar** | *Ne yapmaya karar verdik?* | `KARARLAR.md` | **Karar verildiğinde** — kod değişince değil |
 | **2 · Plan** | *Ne zaman, hangi sırayla?* | `YOL_HARITASI.md` · `FAZ1_UYGULAMA_KAPSAMI.md` · `DUZELTME_BRIFI.md` · `KABUL_KRITERLERI.md` | **Karar değişince** ve **faz geçişinde** |
 | **3 · Ayna** | *Bugün fiilen ne var?* | `PROJE_DURUMU.md` · `TRACEABILITY.md` · **`IS_AKISI_OZETI.md`** | **Kod değişince** — karar değişince değil |
-| **4 · Kayıt** | *O gün ne olmuştu?* | `DENETIM_BULGULARI.md` · **`MEVCUT_SISTEM_DURUMU.md`** · `arsiv/` · `ADR/` | **Yalnız üst notu**; gövde **dondurulur** |
+| **4 · Kayıt** | *O gün ne olmuştu?* | `DENETIM_BULGULARI.md` · **`MEVCUT_SISTEM_DURUMU.md`** · `docs/arsiv/` · `docs/adr/` | **Yalnız üst notu**; gövde **dondurulur** |
 
 > ⚠️ **14.09.2026 eklemesi — `IS_AKISI_OZETI.md`.** Bu dosya §1'de 🟢 canlı işaretliydi ve
 > kendi başlığı *"Bölüm 1–5 bugünün fotoğrafıdır"* diyordu, ama bu tabloda, §B tetikleyici
@@ -483,8 +483,8 @@ Her dosya bir **soruya** cevap verir. Sınıfı, güncelleme tetikleyicisini bel
 > sınıfta olursa iki ayrı "teknik envanter" yaşar ve biri bayatlar. Yeni ölçüm gerekirse
 > **tarihli yeni bir kayıt** açılır.
 
-> ⚠️ **15.09.2026 eklemesi — `ADR/`.** Plan dosyası mimari karar üretirse (§D.0'da oldu) karar
-> **ADR'ye taşınır**, plan yalnız atıf ve sıra taşır. Sınır kuralı `ADR/README.md`'dedir.
+> ⚠️ **15.09.2026 eklemesi — `docs/adr/`.** Plan dosyası mimari karar üretirse (§D.0'da oldu) karar
+> **ADR'ye taşınır**, plan yalnız atıf ve sıra taşır. Sınır kuralı `docs/adr/README.md`'dedir.
 
 **Sınıflar arası tek yön vardır:** Karar → Plan → Ayna. Ters yön yasaktır.
 *Ayna bir kararı değiştiremez; plan bir karar üretemez.* (§7-6'nın mekanik hâli.)
@@ -503,7 +503,7 @@ Her dosya bir **soruya** cevap verir. Sınıfı, güncelleme tetikleyicisini bel
 | **Kod değişti (özellik)** | `PROJE_DURUMU.md` · `TRACEABILITY.md` · **`IS_AKISI_OZETI.md`** | Envanter + matris + iş dili anlatımı. Karar dosyalarına dokunulmaz |
 | **Kod değişti (söküm)** | §A `Durum`/`Commit` + `PROJE_DURUMU.md` | ⛔ satırı **silinir**, GÇ satırı ✅ olur |
 | **Faz geçişi** | `YOL_HARITASI.md` §8 + çıkış kriterleri · **tüm 🟦 listesi** | §0.6: *"her faz geçişinde 🟦 listesi tek tek gözden geçirilir"* |
-| **Mimari seçim (nasıl)** | `ADR/` | KARARLAR'a **girmez** — sınır kuralı `ADR/README.md`'de. Plan dosyası ADR'ye **atıf yapar**, metni kopyalamaz |
+| **Mimari seçim (nasıl)** | `docs/adr/` | KARARLAR'a **girmez** — sınır kuralı `docs/adr/README.md`'de. Plan dosyası ADR'ye **atıf yapar**, metni kopyalamaz |
 | **Müşteri cevabı geldi** | `KARARLAR.md` 🟦 → ✅ | Varsayılan teyit edilir **veya değişir**; değişirse plan sınıfı da güncellenir |
 | **Kilitlenme anı geçti** | `KARARLAR.md` | §0.6: **kilitlenme anı geçmiş 🟦 otomatik ✅ sayılır** |
 
@@ -540,8 +540,8 @@ Her iş turunun (commit grubu / haftalık kapanış) sonunda sırayla sorulur.
 | `IS_AKISI_OZETI.md` | Kod değiştiyse 10 dk | **Sınıf 3** — davranış iş diliyle; yalnız Bölüm 1–5 |
 | `TRACEABILITY.md` | Faz sonunda toplu | Tur başına tek tek güncellenmez |
 | `KABUL_KRITERLERI.md` | Kriter başına 5 dk | Testten **önce** yazılır |
-| `ADR/` | Karar başına ~15 dk | Gövde dondurulur; değişiklik = **yeni ADR** |
-| `DENETIM_BULGULARI.md` · `MEVCUT_SISTEM_DURUMU.md` · `arsiv/` | Dokunulmaz | Yalnız üst durum notu |
+| `docs/adr/` | Karar başına ~15 dk | Gövde dondurulur; değişiklik = **yeni ADR** |
+| `DENETIM_BULGULARI.md` · `MEVCUT_SISTEM_DURUMU.md` · `docs/arsiv/` | Dokunulmaz | Yalnız üst durum notu |
 
 **Toplam ~1 saat/hafta.** İki kişilik ekipte bu sürdürülebilir; bundan fazlası
 sürdürülemez ve belge yine kodun gerisine düşer.
@@ -565,7 +565,7 @@ Bulgular `FAZ1_UYGULAMA_KAPSAMI.md` §C'ye (açık madde defteri) yazılır, KAR
 | Faz | Süre | Bitiş | Durum |
 |---|---|---|---|
 | Faz 0 — Karar | ~1 hafta | Kararlar `KARARLAR.md`'de | ✅ **kapandı (09.09.2026)** |
-| **Faz 1A — Söküm + şema** | tahmin edilebilir — **tarih artık verilebilir** — karar engeli kalmadı *(16.09: Şerit A, X-8…X-15, ADR-005 ✅)* *(X-10 15.09'da kapandı)* | **`FAZ1_UYGULAMA_KAPSAMI.md` §D.2** — sayıya bağlı çıkış kriteri *(burada kopyalanmaz)* · §C-g ✅ 15.09.2026 (`ADR/ADR-003`) | ← **şu an** |
+| **Faz 1A — Söküm + şema** | tahmin edilebilir — **tarih artık verilebilir** — karar engeli kalmadı *(16.09: Şerit A, X-8…X-15, ADR-005 ✅)* *(X-10 15.09'da kapandı)* | **`FAZ1_UYGULAMA_KAPSAMI.md` §D.2** — sayıya bağlı çıkış kriteri *(burada kopyalanmaz)* · §C-g ✅ 15.09.2026 (`docs/adr/ADR-003`) | ← **şu an** |
 | **Faz 1B — Yeniden inşa** | 🔵 **1A bitince tahmin edilir** | 11 fonksiyon · belge akışları · X-1/D-2/X-3/X-4/Ü-3/E-1/E-2/D-5 · `TRACEABILITY` yeniden kuruldu | ⏳ |
 | Faz 2 — Ürünleştirme | 🔵 **1B bitince tahmin edilir** *(eski tahmin ~3–4 hafta)* | Çoğaltılabilir, izlenebilir ürün | ⏳ |
 | Faz 3 — Canlıya alma | 🔵 **1B bitince tahmin edilir** *(eski tahmin ~3–4 hafta)* | Anka West canlıda | ⏳ |
