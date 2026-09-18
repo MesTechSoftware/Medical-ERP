@@ -1,3 +1,5 @@
+> ⛔ ARŞİV (KARARLAR X-7 §(1)). Yerine: YOL_HARITASI.md + FAZ1_UYGULAMA_KAPSAMI.md
+
 # Uygulama Planı — Medikal Satış Operasyon v2.2
 
 **Kaynak spec:** [PRD_V2.md](./PRD_V2.md) (v2.2) · **Tarih:** 23 Temmuz 2026
