@@ -15,7 +15,7 @@ _Son güncelleme: 2026-09-16 · Sürüm: 2.5 · Durum: v2 fazları tamamlandı (
 > (3) parasal tip çelişkisi (`BigInt` kuruş ↔ `Decimal`) **açık madde** olarak işaretlendi.
 >
 > **🔄 §D / ADR senkronizasyonu — 15.09.2026 (kod değişmedi, envanter değişmedi).**
-> `FAZ1_UYGULAMA_KAPSAMI.md` §D ve `ADR/`'de kapanan maddeler bu dosyadaki ⛔ işaretlerine
+> `FAZ1_UYGULAMA_KAPSAMI.md` §D ve `docs/adr/`'de kapanan maddeler bu dosyadaki ⛔ işaretlerine
 > işlendi: kimlik doğrulama yolu (**ADR-003**), migration stratejisi (**ADR-002**), ad rejimi
 > (**ADR-001**), seed ayrımı (**C9**). `MEVCUT_SISTEM_DURUMU.md` (14.09 ölçümü, HEAD `3825241`)
 > ile iki ayna farkı giderildi: **e2e sayısı 66** ve **`docs/` sürüm kontrolü dışında**.
@@ -49,14 +49,14 @@ detayı için `README.md`'ye, faz faz uygulama için ~~`UYGULAMA_PLANI.md`~~ ⛔
 | Framework        | Next.js **16.2.10** (App Router, Server Components + Actions)  |
 | Dil / UI         | TypeScript 5, React **19.2.4**, Tailwind CSS 4 (CSS-first)     |
 | Veritabanı       | **PostgreSQL** + Prisma **7.8** (zorunlu driver adapter: `@prisma/adapter-pg` + `pg`) |
-| Kimlik doğrulama | Auth.js / NextAuth **v5 beta**, Credentials + bcryptjs, JWT ⛔ *(yol belirlendi: `next-auth` **tamamen sökülür** — `ADR/ADR-003`)* |
+| Kimlik doğrulama | Auth.js / NextAuth **v5 beta**, Credentials + bcryptjs, JWT ⛔ *(yol belirlendi: `next-auth` **tamamen sökülür** — `docs/adr/ADR-003`)* |
 | Doğrulama        | Zod 4                                                          |
 | Test             | **vitest** (birim) + **Playwright 1.61** (e2e)                 |
 | İkonlar          | `lucide-react` (sidebar / mobil nav)                          |
 
 > ⛔ **JWT oturumu geri çekilecek** — E-2 §(4) **veritabanı oturumu** şart koşuyor: rol ve aktiflik
 > her istekte kaynaktan okunur, token'da dondurulmaz (KARARLAR §5.6).
-> **15.09.2026 — mekanizma `ADR/ADR-003`:** Auth.js/`next-auth` bağımlılığı **tamamen** kalkar;
+> **15.09.2026 — mekanizma `docs/adr/ADR-003`:** Auth.js/`next-auth` bağımlılığı **tamamen** kalkar;
 > oturum kimliği 256-bit rastgele **opak token**, DB'de SHA-256 hash'i. **`AUTH_SECRET` düşer**
 > (`.env.example:10`, `ci.yml:17`). Sıra: oturum tablosu `CM`'de (1A), mekanizma 1B madde 4'te —
 > **1A boyunca uygulama bugünkü JWT ile çalışır** (R-4).
@@ -77,7 +77,7 @@ detayı için `README.md`'ye, faz faz uygulama için ~~`UYGULAMA_PLANI.md`~~ ⛔
 ## Veri Modeli (`prisma/schema.prisma`)
 
 **25 model + 11 enum**, tek migration (`20260723175607_init_v2`).
-⛔ **§C-m / `ADR/ADR-002`:** bu klasör `CM`'de **silinir**, yerine tek yeni `init` üretilir (fresh init — canlı/pilot veri yok).
+⛔ **§C-m / `docs/adr/ADR-002`:** bu klasör `CM`'de **silinir**, yerine tek yeni `init` üretilir (fresh init — canlı/pilot veri yok).
 
 > ⛔ işaretli kalemler **KARARLAR ile geçersizleşti**; Faz 1'de geri çekilecek veya yeniden
 > tanımlanacak. Gerekçe ve sıra: `FAZ1_UYGULAMA_KAPSAMI.md` §A.
@@ -246,7 +246,7 @@ MVP durum dosyasında (2026-07-17/21) ertelenen kritik işler v2 kapsamında kap
 
 - ✅ **Oturum iptali** — `requireSession()` her istekte canlı DB kontrolü yapar (React `cache`);
   pasife alınan kullanıcı anında erişimini kaybeder (e2e: `session-revocation.spec.ts`).
-  ⛔ **Mekanizma değişiyor** (`ADR/ADR-003`); spec bugün JWT + `status` kontrolünü sınıyor ve
+  ⛔ **Mekanizma değişiyor** (`docs/adr/ADR-003`); spec bugün JWT + `status` kontrolünü sınıyor ve
   **1B madde 4'te yeniden yazılır** (`FAZ1_UYGULAMA_KAPSAMI.md` §D.4).
 - ✅ **Stok yarışı** — PostgreSQL + koşullu `updateMany` (RULE-01).
 - ✅ **Para tavanı** — tüm para alanları `BigInt` kuruş; Int32 tavanı ortadan kalktı.
@@ -268,7 +268,7 @@ MVP durum dosyasında (2026-07-17/21) ertelenen kritik işler v2 kapsamında kap
 > `20260723175607_init_v2`. Aşağıdaki liste **KARARLAR §4 "Faz 1 şema özeti"nin tamamıdır.**
 > Tam iş dökümü: `FAZ1_UYGULAMA_KAPSAMI.md` §B.
 >
-> 📐 **Ad rejimi (15.09.2026 — `ADR/ADR-001`):** aşağıdaki Türkçe tablo/kolon adları
+> 📐 **Ad rejimi (15.09.2026 — `docs/adr/ADR-001`):** aşağıdaki Türkçe tablo/kolon adları
 > **kavramsaldır**; şemada İngilizce `camelCase` karşılıkları kullanılır. Enum değerleri, belge
 > önekleri ve fonksiyon adları **olduğu gibi** (Türkçe) kalır.
 >

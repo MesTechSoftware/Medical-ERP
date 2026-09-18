@@ -91,7 +91,7 @@ Karar değildir. 1B madde 4'te çözülür → `FAZ1_UYGULAMA_KAPSAMI.md` §D.4:
 7. Çerez bayrakları (`HttpOnly` · `Secure` · `SameSite`).
 
 **Bağlı karar:** Başarısız giriş sınırının (E-2 §(5)) sayacı → ✅ **KARARLAR X-9** (15.09.2026):
-`LoginAttempt` kalkar; sayaç bellek içidir → **`ADR/ADR-004`**. Bu ADR oturumu, ADR-004 deneme
+`LoginAttempt` kalkar; sayaç bellek içidir → **`docs/adr/ADR-004`**. Bu ADR oturumu, ADR-004 deneme
 sayacını anlatır; ikisi 1B madde 4'te birlikte sınanır.
 
 ## Geçerlilik sınırı

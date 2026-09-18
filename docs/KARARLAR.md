@@ -42,7 +42,7 @@
 > ⚠️ **X-5 şemayı değiştirir, X-6 şemadan çıkarır.**
 >
 > **15.09.2026 turu — redaksiyon (yeni karar yok).** `FAZ1_UYGULAMA_KAPSAMI.md` §D'nin commit
-> dizisi turunda üç **"nasıl"** kararı verildi ve **`ADR/`'ye** yazıldı (ADR-001 isimlendirme ·
+> dizisi turunda üç **"nasıl"** kararı verildi ve **`docs/adr/`'ye** yazıldı (ADR-001 isimlendirme ·
 > ADR-002 fresh init · ADR-003 oturum mekanizması). Hiçbiri bu kitaptaki bir kararı değiştirmez;
 > ama üç yerde metin yanıltıcı kalmıştı ve işlendi: **(a)** §4 E-2 satırındaki *"Auth.js
 > veritabanı oturumu"* ifadesi → E-2'nin özü (oturum veritabanında) aynen geçerli, mekanizma
@@ -105,7 +105,7 @@
 >   benzersizdir. `BAYI` satırında klinik ve bölge boş kalabilir.
 >
 > **PRD taraması kapandı** (59/59, açık ❌ yok). `PRD_V2.md` arşive gidebilir.
-> Aynı turda `Product.stock` için **`ADR/ADR-005`** yazıldı: kolon kalkar. Bu bir "nasıl" kararıdır,
+> Aynı turda `Product.stock` için **`docs/adr/ADR-005`** yazıldı: kolon kalkar. Bu bir "nasıl" kararıdır,
 > bu kitabı değiştirmez. **Faz 1A'nın önünde açık karar kalmadı.**
 >
 > Tarama ayrıca bu kitabın geçersiz kıldığı ama geri çekme listesinde olmayan **beş yetenek** buldu.
@@ -2802,7 +2802,7 @@ yetkisiyle gelmez (Odoo'da `Export` hakkı gruptan ayrı verilir). Gerekçe her 
 | **E-1** | 7 gün ve 15 gün **takvim günüdür**; iş günü/tatil takvimi **kalıcı kapsam dışı** | K-4 §6-d, K-6 §7 |
 | **E-1** | Ofset değişirse **kod değişmez** — IANA verisi güncellenir | §0.7, kalıcı |
 | **E-2** | **`Kullanici.aktif` (NOT NULL, `true`) · `parola_hash` · `parola_degistirmeli`** | **Faz 1, şema** |
-| **E-2** | **Yeni tablo: oturum** (veritabanı oturumu) — JWT'de rol dondurulmaz · *redaksiyon 15.09.2026: özgün metin "Auth.js veritabanı oturumu" idi; mekanizma `ADR/ADR-003` — `next-auth` sökülür, opak token* | Faz 1, şema, **kritik** |
+| **E-2** | **Yeni tablo: oturum** (veritabanı oturumu) — JWT'de rol dondurulmaz · *redaksiyon 15.09.2026: özgün metin "Auth.js veritabanı oturumu" idi; mekanizma `docs/adr/ADR-003` — `next-auth` sökülür, opak token* | Faz 1, şema, **kritik** |
 | **E-2** | Pasifleştirme **açık oturumları anında sonlandırır** | D-2 §3, KVKK, kritik |
 | **E-2** | Self-servis kayıt **yok**; hesabı `YONETICI` açar — yetki + gerekçe + log | §0.3, D-2 |
 | **E-2** | İlk `YONETICI` **seed edilir**; **kurulum sihirbazı ekranı yazılmaz** | K-8 §(1) |
@@ -2906,7 +2906,7 @@ yetkisiyle gelmez (Odoo'da `Export` hakkı gruptan ayrı verilir). Gerekçe her 
 | **X-15** | `vade_tarihi` sonradan değişebilir — yalnız `YONETICI`, gerekçe zorunlu, **iz tablosu cari harekete bağlı** (bugünkü vade değişiklik tablosu kalır) | A-7, X-11, şema |
 | **X-15** | Telefon **NOT NULL + normalize hâliyle UNIQUE** (A-13 `telefon` bu alandır) · klinik/bölge `DOKTOR` için zorunlu, `BAYI` için boş olabilir · bayiye ayrı kod/yetkili alanı yok | A-13, X-8, şema |
 
-> 📐 **Ad rejimi — redaksiyon 15.09.2026 (`ADR/ADR-001`).** Aşağıdaki özetteki ve bu kitabın
+> 📐 **Ad rejimi — redaksiyon 15.09.2026 (`docs/adr/ADR-001`).** Aşağıdaki özetteki ve bu kitabın
 > genelindeki **tablo ve kolon adları kavramsaldır**: şemada İngilizce `camelCase` karşılıkları
 > kullanılır, eşleme ADR-001'dedir. **Normatif olan** — yani koda ve şemaya aynen giren — adlar:
 > enum değerleri (`YONETICI`, `TUZEL_KISI`, kural kodları …), belge önekleri, **11 tek çağrı
@@ -2964,7 +2964,7 @@ oran `Decimal(5,2)` · **miktar tam sayı** · **`BigInt` kuruş kullanılmaz**
 - **X-14:** `Kullanici.prim_orani` (nullable) + sevkiyat satırında donmuş `prim_orani`.
 - **X-15:** vade değişiklik izi **kalır**, cari harekete bağlanır; `Doktor.telefon` NOT NULL UNIQUE;
   `klinik`/`bolge` nullable.
-- *(Ürün tablosunda stok miktarı kolonu yoktur — `ADR/ADR-005`; mekanizma kararıdır.)*
+- *(Ürün tablosunda stok miktarı kolonu yoktur — `docs/adr/ADR-005`; mekanizma kararıdır.)*
 ⚠️ **15.09.2026 turu:** **X-8** bir enum + bir kolon ekler, beş `Dealer*` tablosunu çıkarır; **X-9** `LoginAttempt`'i çıkarır. İkisi de **Faz 1A migration'ında** netleşir.
 **08.09.2026 ikinci oturumu (X-1 · A-15 · X-3) şemaya hiçbir şey eklemedi.**
 ⚠️ **13.09.2026 turu şemayı iki yönde değiştirdi:** **X-5** parasal tipi `BigInt`ten `Decimal`e
@@ -4125,7 +4125,7 @@ Bugünkü şemada da karşılığı yok: cari, `Order` ve `DoctorPayment` üzeri
 > - Prim ve ciro sorgularında `ACILIS` ve `VADE_FARKI` sayılan belgeler filtresiyle dışlanır.
 >
 > ---
-> **🟦 Varsayılan kaydı — tip ve yön kataloğu** *(normatif ad — `ADR/ADR-001`; §1.3 çekirdek katalog)*
+> **🟦 Varsayılan kaydı — tip ve yön kataloğu** *(normatif ad — `docs/adr/ADR-001`; §1.3 çekirdek katalog)*
 >
 > | Alan | İçerik |
 > |---|---|
@@ -4176,7 +4176,7 @@ yazıyor. E-3 §(4) de `ImportParti.dosya_adi` kolonunu koyuyor. Ama `ImportPart
 > **(4) Dosya saklanmaz** (E-3 §(2)).
 >
 > ---
-> **🟦 Varsayılan kaydı — veri türü kataloğu** *(normatif ad — `ADR/ADR-001`)*
+> **🟦 Varsayılan kaydı — veri türü kataloğu** *(normatif ad — `docs/adr/ADR-001`)*
 >
 > | Alan | İçerik |
 > |---|---|
@@ -4214,7 +4214,7 @@ X-1 §(7). Ama görünürlüğü, atanması, devri ve pasif satıcı durumu yaz�
 > sonraki sevkiyatlarını **taşımaz**. Geçmiş dönem raporu devirden etkilenmez (X-1 §(6)).
 >
 > **(5) Devir** yalnız `YONETICI` işidir; gerekçe zorunludur. Her devir **iz tablosuna** yazılır:
-> eski ve yeni sahip, kişi, zaman, gerekçe. Bugünkü devir tablosu kalır (ad eşlemesi `ADR/ADR-001`).
+> eski ve yeni sahip, kişi, zaman, gerekçe. Bugünkü devir tablosu kalır (ad eşlemesi `docs/adr/ADR-001`).
 > Devir **loglanır** (RULE-13).
 >
 > **(6) Pasif satıcı.** Satıcı pasifleştirilince (E-2) doktorları **sahipsiz** kalır; yeniden
@@ -4471,7 +4471,7 @@ müşteri adaylarıyla görüşülür; her görüşmede **iki standart soru** so
       kodu kaldırıldı
 - [ ] **`PRD_V2.md` arşive taşındı** (tarama sonrası); ona atıf yapan `TRACEABILITY.md` ve
       `DUZELTME_BRIFI.md` **yeni kaynağa** yönlendirildi (X-7 §(1))
-- [x] **`ADR/README.md` sınır kuralı yazıldı** *(15.09.2026 — `ADR/README.md` §1)*: *"Bir karar müşteriye, fiyata, sözleşmeye veya
+- [x] **`docs/adr/README.md` sınır kuralı yazıldı** *(15.09.2026 — `docs/adr/README.md` §1)*: *"Bir karar müşteriye, fiyata, sözleşmeye veya
       kapsama dokunuyorsa KARARLAR'a yazılır; yalnız 'nasıl' sorusuna cevap veriyorsa ADR'ye.
       ADR hiçbir koşulda KARARLAR'ı geçersiz kılmaz."*
 - [ ] **`SOZLESME_EKI.md` hazırlandı** — on bir madde + **zamanlama kolonu** (her maddenin

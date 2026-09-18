@@ -5,8 +5,10 @@ operasyonlarını tek sistemde yöneten full-stack web uygulaması. **v2** kapsa
 sipariş · kargo · **doktor cari hesabı, vade ve tahsilat · satıcı primi · kongre bakiyesi defteri ·
 bayi kanalı** + KDV altyapısı ve raporlama.
 
-Projenin o anki fiili durumu için `PROJE_DURUMU.md`, gereksinim detayı için `PRD_V2.md`, faz faz
-uygulama için `UYGULAMA_PLANI.md`.
+Bütün proje dokümanları `docs/` altındadır: fiili durum için `docs/PROJE_DURUMU.md`, gereksinim
+detayı için `docs/PRD_V2.md`, faz faz uygulama için `docs/YOL_HARITASI.md` ve
+`docs/FAZ1_UYGULAMA_KAPSAMI.md`, mimari kararlar için `docs/adr/`. Dondurulmuş belgeler
+`docs/arsiv/` altındadır.
 
 ## Teknoloji
 
