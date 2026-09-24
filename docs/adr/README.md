@@ -2,7 +2,7 @@
 
 <!-- Belge sınıfı: 4 · Kayıt (YOL_HARITASI.md §7.1-A) · Tetikleyici: mimari "nasıl" kararı verildiğinde -->
 
-> Açılış: **15 Eylül 2026.** *(16.09.2026: ADR-005 eklendi.)* Konum: **`docs/adr/`** — bütün atıflar bu yola göre yazılıdır *(redaksiyon 18.09.2026: klasör kök dizinden `docs/` altına alındı, atıflar toplu güncellendi)*; Faz 1A **C0**'da git'e eklenir. Klasör `YOL_HARITASI.md` §1'de *"açılacak"* olarak duruyordu.
+> Açılış: **15 Eylül 2026.** *(16.09.2026: ADR-005 eklendi. 24.09.2026: **ADR-008** eklendi — `006` ve `007` numaraları `docs/KARAR ONERISI.md` içindeki taslaklara ayrılmıştır, §5 gereği yeniden kullanılmaz.)* Konum: **`docs/adr/`** — bütün atıflar bu yola göre yazılıdır *(redaksiyon 18.09.2026: klasör kök dizinden `docs/` altına alındı, atıflar toplu güncellendi)*; Faz 1A **C0**'da git'e eklenir. Klasör `YOL_HARITASI.md` §1'de *"açılacak"* olarak duruyordu.
 > Açılmasının sebebi, `FAZ1_UYGULAMA_KAPSAMI.md` §D.0'ın üç mimari karar üretmiş olmasıdır.
 > Belge rejimi bunu iki yerde yasaklar:
 > - §7.1-A: *plan bir karar üretemez.*
@@ -89,3 +89,4 @@ Uygulamada soruları **sırayla** sor. İlk "evet" cevabı yeri belirler.
 | [ADR-003](./ADR-003-oturum-opak-token.md) | Oturum mekanizması — opak token, `next-auth` sökülür | ✅ Kabul edildi | 15.09.2026 | §C-g |
 | [ADR-004](./ADR-004-giris-deneme-sayaci.md) | Giriş denemesi sınırı — bellek içi sayaç | ✅ Kabul edildi | 15.09.2026 | §C-p · KARARLAR X-9 |
 | [ADR-005](./ADR-005-stok-miktari-turetilir.md) | Stok miktarı — saklanmaz, hareketlerden türetilir | ✅ Kabul edildi | 16.09.2026 | §C-x · KARARLAR B-4 |
+| [ADR-008](./ADR-008-kilit-sirasi.md) | Kilit sırası — tek küresel sıra | ✅ Kabul edildi | 24.09.2026 | §C-bb · KARARLAR A-14 §(3) |

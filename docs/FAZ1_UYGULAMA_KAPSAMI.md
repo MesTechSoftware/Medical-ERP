@@ -689,8 +689,12 @@ import (D-6) · dışa aktarım (D-5) · kabul senaryosu (F-11) · servis katman
 >
 > **15.09 4. tur:** ilk üç soru kapandı (X-8, X-9, X-10).
 > **16.09: X-11…X-15 açıldı ve aynı gün kapandı; ADR-005 yazıldı. Açık soru yok.**
+> **24.09: bir soru yeniden açıldı — `CM` artık engelsiz değil.** X-17 (sahipliğin tek yazma yolu)
+> `Doktor` üzerinde bir `CHECK` kısıtı doğuruyor ve **karar verilmiş değil** (`docs/KARAR ONERISI.md` §2).
+> Kısıt `CM`'e yetişmezse ikinci bir migration gerekir; bu da **§D.2'nin "tek klasör" çıkış kriterini**
+> ihlal eder. Karar: **X-17 `CM`'den önce kapanır**, kısıt tek migration'a girer.
 > **Şimdi başlayabilecekler:** Şerit A · C0 · C1 · C2 · C3 · C4 · C5 *(tam)* · C6 · C7 · C7b.
-> **`CM`:** karar engeli yok; C0…C7b bittikten sonra başlar.
+> **`CM`:** **tek açık kalem X-17'dir**; C0…C7b bittikten sonra ve X-17 kapandıktan sonra başlar.
 
 | # | Soru | Durum |
 |---|---|---|
@@ -703,6 +707,7 @@ import (D-6) · dışa aktarım (D-5) · kabul senaryosu (F-11) · servis katman
 | **§D.7-7** → §C-v | Prim oranı *(16.09, PRD taraması)* | ✅ **KARARLAR X-14** — config + özel oran, sevkiyata donar |
 | **§D.7-8** → §C-w | Vade değişikliği · mükerrer cari *(16.09, PRD taraması)* | ✅ **KARARLAR X-15** — ikisi de korunur |
 | **§D.7-9** → §C-x | `Product.stock` *(16.09 — nasıl sorusu)* | ✅ **ADR-005** — kolon kalkar |
+| **§D.7-10** → §C-z | Sahipliği beş yol yazıyor; `BAYI` sahipsizliği kısıtı *(19.09 incelemesi, bulgu 3)* | ⬜ **AÇIK — `CM`'i bloklar.** Öneri hazır (X-17); şemaya etkisi `Doktor` üzerinde tek `CHECK`. **24.09 kararı: `CM`'den önce kapanır** — C0…C7b süresi içinde |
 
 #### §D.7-3 ayrıntısı *(tarihçe — karar KARARLAR §5.13'tedir)*
 
