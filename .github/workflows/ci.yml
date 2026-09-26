@@ -14,6 +14,7 @@ env:
   # CI'da hem uygulama hem e2e aynı PostgreSQL servisini kullanır.
   DATABASE_URL: postgresql://medikal:medikal_dev@localhost:5432/medikal_dev?schema=public
   TEST_DATABASE_URL: postgresql://medikal:medikal_dev@localhost:5432/medikal_test?schema=public
+  ITEST_DATABASE_URL: postgresql://medikal:medikal_dev@localhost:5432/medikal_itest?schema=public
   AUTH_SECRET: ci-only-secret-not-used-in-production
 
 jobs:
@@ -50,10 +51,13 @@ jobs:
       - name: Prisma client üret
         run: npx prisma generate
 
-      - name: e2e test veritabanını oluştur
+      # docker/init-test-db.sql yalnız yerel container'ın ilk kurulumunda
+      # çalışır; CI servisinde veritabanları burada açılır.
+      - name: Test veritabanlarını oluştur
         run: |
           PGPASSWORD=medikal_dev psql -h localhost -U medikal -d medikal_dev \
-            -c 'CREATE DATABASE medikal_test OWNER medikal;'
+            -c 'CREATE DATABASE medikal_test OWNER medikal;' \
+            -c 'CREATE DATABASE medikal_itest OWNER medikal;'
 
       - name: Migrasyonları uygula
         run: npx prisma migrate deploy
@@ -66,6 +70,11 @@ jobs:
 
       - name: Birim testler
         run: npm test
+
+      # Entegrasyon şeridi kendi veritabanını (medikal_itest) kullanır ve
+      # şemayı globalSetup'ta uygular; ayrı bir migrate adımı gerekmez.
+      - name: Entegrasyon testler
+        run: npm run test:integration
 
       - name: Playwright tarayıcılarını kur
         run: npx playwright install --with-deps chromium
