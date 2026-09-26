@@ -9,11 +9,6 @@ import { allocateFIFO } from "@/lib/allocation";
 import { getOpenOrders } from "@/lib/doctor-cari";
 import { getDueSettings, addDays } from "@/lib/settings";
 import { queueCancellationAdjustments } from "@/lib/commission-service";
-import { netPortionOfAllocation } from "@/lib/commission";
-import {
-  earnFromPayment,
-  reverseEarnForPayment,
-} from "@/lib/congress-service";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { PaymentMethod } from "@/generated/prisma/enums";
 
@@ -31,7 +26,7 @@ function parseMethod(v: FormDataEntryValue | null): PaymentMethod {
  *   (a) tahsilat kaydı yazılır,
  *   (b) FIFO mahsuplaşma yapılır (D-18),
  *   (c) doktor bakiyesi bunlardan HESAPLANIR (ayrı kolon yok — RULE-08).
- * Faz C2 prim matrahını, Faz E kongre EARN hareketini aynı transaction'a ekleyecek.
+ * Kongre kazanımı C2'de söküldü (GÇ-4).
  *
  * Herhangi bir adım hata verirse hiçbiri yazılmaz.
  */
@@ -83,29 +78,6 @@ export async function recordCollection(
         });
       }
 
-      // (d) Kongre kazanımı — doktorun hak edişi (D-11, %100), matrah NET (D-17).
-      // Mahsup edilmeyen (avans) kısım kazanım doğurmaz: kongre hakkı
-      // TAHSİL EDİLİP BİR SİPARİŞE SAYILAN tutardan doğar (D-09).
-      const allocatedOrders = await tx.order.findMany({
-        where: { id: { in: allocations.map((a) => a.orderId) } },
-        select: { id: true, netTotal: true, grossTotal: true },
-      });
-      const orderById = new Map(allocatedOrders.map((o) => [o.id, o]));
-      const netCollected = allocations.reduce((sum, a) => {
-        const o = orderById.get(a.orderId);
-        return o
-          ? sum + netPortionOfAllocation(a.amount, o.netTotal, o.grossTotal)
-          : sum;
-      }, 0n);
-
-      await earnFromPayment(tx, {
-        doctorId,
-        paymentId: payment.id,
-        netAmount: netCollected,
-        paidAt: payment.paidAt,
-        createdBy: session.user.id,
-      });
-
       return payment.id;
     });
   } catch {
@@ -152,20 +124,10 @@ export async function cancelCollection(
   if (!before) return { error: "Tahsilat bulunamadı." };
   if (before.status === "IPTAL") return { error: "Bu tahsilat zaten iptal." };
 
-  let negativeBalance = 0n;
   await prisma.$transaction(async (tx) => {
     // FR-35 / RULE-05: kapanmış döneme ait iptal, matrah düzeltmesi olarak
     // SONRAKİ döneme yazılır. Mahsuplar silinmeden ÖNCE hesaplanmalı.
     await queueCancellationAdjustments(tx, before, session.user.id);
-
-    // FR-29/D-23: kongre kazanımı da ters kayıtla geri alınır. Kazanım zaten
-    // harcanmışsa bakiye negatife düşer ve admin bilgilendirilir.
-    const { negative } = await reverseEarnForPayment(
-      tx,
-      paymentId,
-      session.user.id
-    );
-    negativeBalance = negative;
 
     await tx.paymentAllocation.deleteMany({ where: { paymentId } });
     await tx.doctorPayment.update({
@@ -190,12 +152,7 @@ export async function cancelCollection(
 
   revalidatePath("/collections");
   revalidatePath("/doctors");
-  return {
-    ok:
-      negativeBalance > 0n
-        ? "Tahsilat iptal edildi. DİKKAT: bu tahsilattan doğan kongre bakiyesinin bir kısmı zaten harcanmış; doktorun bakiyesi negatife düştü."
-        : "Tahsilat iptal edildi; mahsuplar ve kongre kazanımı geri alındı.",
-  };
+  return { ok: "Tahsilat iptal edildi; mahsuplar geri alındı." };
 }
 
 /**

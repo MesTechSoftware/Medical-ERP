@@ -11,7 +11,6 @@ import {
   AGING_ORDER,
   agingBucket,
 } from "@/lib/allocation";
-import { availableBalance, expiringSoon } from "@/lib/congress-ledger";
 import {
   PageHeader,
   Card,
@@ -20,19 +19,10 @@ import {
   EmptyRow,
   PAYMENT_METHOD_LABELS,
 } from "@/components/ui";
-import AdjustForm from "./AdjustForm";
-
-const LEDGER_LABELS: Record<string, string> = {
-  EARN: "Kazanım",
-  SPEND: "Harcama",
-  ADJUST: "Düzeltme",
-  EXPIRE: "Süre doldu",
-};
 
 /**
  * FR-10: Doktor detayı — cari bakiye, vadesi gelen/geçen borç, sipariş ve
- * tahsilat geçmişi, kongre bakiyesi ve HAREKET DEFTERİ.
- * FR-57: Admin gerekçeli manuel `ADJUST` girebilir (audit'e yazılır).
+ * tahsilat geçmişi. Kongre defteri C2'de söküldü (GÇ-5).
  */
 export default async function DoctorDetailPage({
   params,
@@ -48,7 +38,7 @@ export default async function DoctorDetailPage({
   });
   if (!doctor) notFound();
 
-  const [cari, aging, orders, payments, ledger] = await Promise.all([
+  const [cari, aging, orders, payments] = await Promise.all([
     getDoctorCari(id),
     getAgingSummary({ doctorId: id }),
     prisma.order.findMany({
@@ -68,23 +58,8 @@ export default async function DoctorDetailPage({
       orderBy: { paidAt: "desc" },
       take: 30,
     }),
-    prisma.congressLedger.findMany({
-      where: { doctorId: id },
-      orderBy: { createdAt: "desc" },
-      take: 100,
-      include: {
-        registration: {
-          select: { package: { select: { name: true } } },
-        },
-      },
-    }),
   ]);
 
-  const lots = ledger.filter(
-    (l) => (l.type === "EARN" || l.type === "ADJUST") && l.remainingAmount > 0n
-  );
-  const congressBalance = availableBalance(lots);
-  const soon = expiringSoon(lots, 60);
   const gecikmis = AGING_ORDER.filter((b) => b !== "NOT_DUE").reduce(
     (s, b) => s + aging[b],
     0n
@@ -125,79 +100,6 @@ export default async function DoctorDetailPage({
           <StatCard key={b} label={AGING_LABELS[b]} value={formatTRY(aging[b])} />
         ))}
       </div>
-
-      {/* Kongre bakiyesi + hareket defteri (FR-10, FR-57) */}
-      <Card>
-        <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-sm font-semibold text-slate-900">
-            Kongre Bakiyesi
-          </h2>
-          <div className="text-sm">
-            <span className="font-semibold tabular-nums">
-              {formatTRY(congressBalance)}
-            </span>
-            {soon > 0n && (
-              <span className="ml-2 text-xs text-red-600">
-                {formatTRY(soon)} 60 gün içinde dolacak
-              </span>
-            )}
-          </div>
-        </div>
-
-        <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
-          <p className="mb-2 text-xs text-slate-600">
-            Manuel düzeltme (FR-57). Gerekçe zorunludur ve denetim iznine yazılır.
-          </p>
-          <AdjustForm doctorId={id} />
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
-                <th className="px-3 py-2 font-medium">Tarih</th>
-                <th className="px-3 py-2 font-medium">Hareket</th>
-                <th className="px-3 py-2 text-right font-medium">Tutar</th>
-                <th className="px-3 py-2 text-right font-medium">Kalan</th>
-                <th className="px-3 py-2 font-medium">Son Kullanma</th>
-                <th className="px-3 py-2 font-medium">Açıklama</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ledger.length === 0 && (
-                <EmptyRow colSpan={6} text="Kongre hareketi yok." />
-              )}
-              {ledger.map((l) => (
-                <tr key={l.id} className="border-b border-slate-100 last:border-0">
-                  <td className="px-3 py-2 whitespace-nowrap text-slate-500">
-                    {formatDate(l.createdAt)}
-                  </td>
-                  <td className="px-3 py-2 text-slate-900">
-                    {LEDGER_LABELS[l.type] ?? l.type}
-                  </td>
-                  <td
-                    className={
-                      "px-3 py-2 text-right tabular-nums " +
-                      (l.amount < 0n ? "text-red-600" : "text-green-700")
-                    }
-                  >
-                    {formatTRY(l.amount)}
-                  </td>
-                  <td className="px-3 py-2 text-right tabular-nums text-slate-500">
-                    {l.remainingAmount > 0n ? formatTRY(l.remainingAmount) : "—"}
-                  </td>
-                  <td className="px-3 py-2 text-slate-500">
-                    {l.expiresAt ? formatDate(l.expiresAt) : "—"}
-                  </td>
-                  <td className="px-3 py-2 text-slate-500">
-                    {l.registration?.package.name ?? l.note ?? "—"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <Card>

@@ -5,7 +5,7 @@ import { Client } from "pg";
  * Faz F — raporlar.
  *
  * FR-62 satıcı performansı · FR-63 doktor sıralaması ·
- * FR-60 kanal karşılaştırma + kongre yükümlülüğü · FR-64 KDV Dahil/Hariç toggle.
+ * FR-60 kanal karşılaştırma · FR-64 KDV Dahil/Hariç toggle.
  */
 
 const connectionString =
@@ -34,7 +34,8 @@ test("rapor sayfası satıcı ve doktor tablolarını gösterir (FR-62/FR-63)", 
   ).toBeVisible();
   await expect(page.getByText("Satıcı Kanalı Ciro")).toBeVisible();
   await expect(page.getByText("Bayi Kanalı Ciro")).toBeVisible();
-  await expect(page.getByText("Açık Kongre Bakiyesi")).toBeVisible();
+  // GÇ-4: kongre yükümlülüğü kartı C2'de söküldü.
+  await expect(page.getByText("Açık Kongre Bakiyesi")).toHaveCount(0);
 });
 
 test("🔴 FR-64: KDV toggle ciroyu net ↔ brüt arasında değiştirir", async ({

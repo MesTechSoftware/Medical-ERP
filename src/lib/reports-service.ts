@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/db";
 import { collectionRate, weightedDiscount } from "@/lib/reports";
-import { availableBalance, type LedgerLot } from "@/lib/congress-ledger";
 import { agingBucket } from "@/lib/allocation";
 import type { VatMode } from "@/lib/vat-mode";
 
@@ -65,14 +64,13 @@ export async function getSellerReports(mode: VatMode): Promise<SellerReport[]> {
   return reports;
 }
 
-/** Doktor ciro sıralaması + kongre bakiye + gecikmiş borç (FR-63). */
+/** Doktor ciro sıralaması + gecikmiş borç (FR-63). */
 export type DoctorReport = {
   doctorId: string;
   fullName: string;
   sellerName: string | null;
   ciro: bigint;
   gecikmisBorc: bigint;
-  kongreBakiye: bigint;
 };
 
 export async function getDoctorReports(
@@ -94,10 +92,6 @@ export async function getDoctorReports(
           },
         },
       },
-      congressLedger: {
-        where: { type: { in: ["EARN", "ADJUST"] }, remainingAmount: { gt: 0 } },
-        select: { id: true, earnedAt: true, expiresAt: true, remainingAmount: true },
-      },
     },
   });
 
@@ -114,7 +108,6 @@ export async function getDoctorReports(
         ? s + rest
         : s;
     }, 0n);
-    const kongreBakiye = availableBalance(d.congressLedger as LedgerLot[], now);
 
     return {
       doctorId: d.id,
@@ -122,7 +115,6 @@ export async function getDoctorReports(
       sellerName: d.ownerSeller?.name ?? null,
       ciro,
       gecikmisBorc,
-      kongreBakiye,
     };
   });
 
@@ -166,17 +158,4 @@ export async function getChannelReport(mode: VatMode): Promise<ChannelReport> {
     bayiCiro: shipSum,
     bayiTahsilat: dealerPay._sum.amount ?? 0n,
   };
-}
-
-/** Açık kongre bakiyesi toplamı — potansiyel yükümlülük (FR-60). */
-export async function getCongressLiability(): Promise<bigint> {
-  const lots = await prisma.congressLedger.findMany({
-    where: {
-      type: { in: ["EARN", "ADJUST"] },
-      remainingAmount: { gt: 0 },
-      OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
-    },
-    select: { remainingAmount: true },
-  });
-  return lots.reduce((s, l) => s + l.remainingAmount, 0n);
 }

@@ -1,7 +1,6 @@
 import AppShell, { type NavItem } from "@/components/AppShell";
 import { requireSeller } from "@/lib/session";
 import {
-  CalendarDays,
   Percent,
   ShoppingBag,
   Stethoscope,
@@ -12,7 +11,6 @@ const navItems: NavItem[] = [
   { href: "/my-orders", label: "Siparişlerim", icon: ShoppingBag },
   { href: "/my-doctors", label: "Doktorlarım", icon: Stethoscope },
   { href: "/my-commissions", label: "Primlerim", icon: Percent },
-  { href: "/my-congresses", label: "Kongreler", icon: CalendarDays },
   { href: "/account", label: "Hesabım", icon: UserCircle },
 ];
 
