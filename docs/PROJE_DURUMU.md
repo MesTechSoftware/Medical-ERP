@@ -219,8 +219,14 @@ Enum'lar: `Role`, `EntityStatus`, `OrderStatus`, `StockMovementType`, `PaymentMe
   `commission`, `congress-ledger`, `reports`, `pagination`, `audit` saf fonksiyonları.
 - **E2E:** **66 test** *(14.09 ölçümü; önceki "~65" tahmindi)* (Playwright; `admin`/`seller`/`dealer`/`guest` projeleri, storageState auth),
   18 spec dosyası. Oturum iptali, prim dönemi, kongre FIFO, bayi paneli, doktor devri dahil.
-- **Test DB:** e2e `medikal_test`'i **her koşuda `migrate reset`** eder. Veritabanına dokunan
-  birim/entegrasyon testi **0**. Ayrı entegrasyon DB'si (`medikal_itest`) Faz 1A **C1**'de gelir.
+- **Entegrasyon test:** **2 test** (vitest `integration` şeridi, 1 dosya) — `src/lib/db.itest.ts`
+  altyapıyı sınar (şema uygulandı · yazılabilir · testler TRUNCATE ile izole). İş kuralı
+  entegrasyon testleri **C2'den itibaren** gelir. *(26.09.2026 — C1)*
+- **Test DB:** **üç veritabanı.** `medikal_dev` (geliştirme) · `medikal_test` (e2e, her koşuda
+  `migrate reset`) · **`medikal_itest`** (entegrasyon; şema `globalSetup`'ta `migrate deploy`,
+  izolasyon test başına `TRUNCATE`). Şerit ayrımı: `npm test` = birim (DB gerekmez) ·
+  `npm run test:integration` = entegrasyon. Sigorta: `DATABASE_URL` `medikal_itest` içermiyorsa
+  şerit **koşmayı reddeder** (`test/integration/setup.ts`). *(26.09.2026 — C1, F-00)*
 
 ## Çalıştırma
 
