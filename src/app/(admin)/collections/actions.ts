@@ -5,8 +5,6 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { tlToKurus } from "@/lib/money";
 import { amountTLSchema } from "@/lib/validation";
-import { allocateFIFO } from "@/lib/allocation";
-import { getOpenOrders } from "@/lib/doctor-cari";
 import { getDueSettings, addDays } from "@/lib/settings";
 import { queueCancellationAdjustments } from "@/lib/commission-service";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
@@ -22,13 +20,9 @@ function parseMethod(v: FormDataEntryValue | null): PaymentMethod {
 /**
  * 🔴 Tahsilat kaydı — sistemin MERKEZÎ olayı (RULE-12).
  *
- * Tek transaction içinde:
- *   (a) tahsilat kaydı yazılır,
- *   (b) FIFO mahsuplaşma yapılır (D-18),
- *   (c) doktor bakiyesi bunlardan HESAPLANIR (ayrı kolon yok — RULE-08).
- * Kongre kazanımı C2'de söküldü (GÇ-4).
- *
- * Herhangi bir adım hata verirse hiçbiri yazılmaz.
+ * Tahsilat kaydı yazılır; doktor bakiyesi hareketlerden HESAPLANIR (ayrı
+ * kolon yok — RULE-08). Tahsilat hiçbir siparişle eşleştirilmez: FIFO mahsup
+ * C3'te söküldü (GÇ-3, X-6), kongre kazanımı C2'de (GÇ-4).
  */
 export async function recordCollection(
   _prev: CollectionState,
@@ -44,42 +38,25 @@ export async function recordCollection(
   }
 
   const amount = tlToKurus(amountTL);
-  const openOrders = await getOpenOrders(doctorId);
-
-  // FIFO: vadesi en eski siparişten başlayarak mahsup (D-18).
-  const { allocations, unallocated } = allocateFIFO(amount, openOrders);
 
   let paymentId = "";
   try {
-    paymentId = await prisma.$transaction(async (tx) => {
-      const payment = await tx.doctorPayment.create({
-        data: {
-          doctorId,
-          amount,
-          method: parseMethod(formData.get("method")),
-          paidAt: formData.get("paidAt")
-            ? new Date(String(formData.get("paidAt")))
-            : new Date(),
-          referenceNo:
-            ((formData.get("referenceNo") as string) || "").trim() || null,
-          invoiceNo: ((formData.get("invoiceNo") as string) || "").trim() || null,
-          note: ((formData.get("note") as string) || "").trim() || null,
-          recordedBy: session.user.id,
-        },
-      });
-
-      if (allocations.length > 0) {
-        await tx.paymentAllocation.createMany({
-          data: allocations.map((a) => ({
-            paymentId: payment.id,
-            orderId: a.orderId,
-            amount: a.amount,
-          })),
-        });
-      }
-
-      return payment.id;
+    const payment = await prisma.doctorPayment.create({
+      data: {
+        doctorId,
+        amount,
+        method: parseMethod(formData.get("method")),
+        paidAt: formData.get("paidAt")
+          ? new Date(String(formData.get("paidAt")))
+          : new Date(),
+        referenceNo:
+          ((formData.get("referenceNo") as string) || "").trim() || null,
+        invoiceNo: ((formData.get("invoiceNo") as string) || "").trim() || null,
+        note: ((formData.get("note") as string) || "").trim() || null,
+        recordedBy: session.user.id,
+      },
     });
+    paymentId = payment.id;
   } catch {
     return { error: "Tahsilat kaydedilemedi." };
   }
@@ -89,24 +66,18 @@ export async function recordCollection(
     action: AUDIT_ACTIONS.COLLECTION_CREATE,
     entityType: "DoctorPayment",
     entityId: paymentId,
-    after: { doctorId, amount, allocations, unallocated },
+    after: { doctorId, amount },
   });
 
   revalidatePath("/collections");
   revalidatePath("/doctors");
 
-  return {
-    ok:
-      unallocated > 0n
-        ? "Tahsilat kaydedildi. Açık borcu aşan kısım avans olarak kaldı."
-        : "Tahsilat kaydedildi ve siparişlere mahsup edildi.",
-  };
+  return { ok: "Tahsilat kaydedildi." };
 }
 
 /**
- * FR-29: Tahsilat iptali. Ters kayıt mantığı: tahsilat `IPTAL` işaretlenir ve
- * mahsupları silinir — böylece bakiye ve yaşlandırma otomatik geri döner
- * (bakiye hareketlerden hesaplandığı için ayrı düzeltme gerekmez, RULE-08).
+ * FR-29: Tahsilat iptali. Ters kayıt mantığı: tahsilat `IPTAL` işaretlenir;
+ * bakiye hareketlerden hesaplandığı için kendiliğinden geri döner (RULE-08).
  */
 export async function cancelCollection(
   _prev: CollectionState,
@@ -126,10 +97,9 @@ export async function cancelCollection(
 
   await prisma.$transaction(async (tx) => {
     // FR-35 / RULE-05: kapanmış döneme ait iptal, matrah düzeltmesi olarak
-    // SONRAKİ döneme yazılır. Mahsuplar silinmeden ÖNCE hesaplanmalı.
+    // SONRAKİ döneme yazılır. (Prim kodu C4'te sökülür — GÇ-1/GÇ-16.)
     await queueCancellationAdjustments(tx, before, session.user.id);
 
-    await tx.paymentAllocation.deleteMany({ where: { paymentId } });
     await tx.doctorPayment.update({
       where: { id: paymentId },
       data: {
@@ -152,7 +122,7 @@ export async function cancelCollection(
 
   revalidatePath("/collections");
   revalidatePath("/doctors");
-  return { ok: "Tahsilat iptal edildi; mahsuplar geri alındı." };
+  return { ok: "Tahsilat iptal edildi." };
 }
 
 /**

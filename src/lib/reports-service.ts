@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/db";
 import { collectionRate, weightedDiscount } from "@/lib/reports";
-import { agingBucket } from "@/lib/allocation";
 import type { VatMode } from "@/lib/vat-mode";
 
 /** Satıcı performans karşılaştırması (FR-62). */
@@ -32,11 +31,10 @@ export async function getSellerReports(mode: VatMode): Promise<SellerReport[]> {
           where: { order: { sellerId: s.id, status: { not: "CANCELLED" } } },
           select: { listPriceAtSale: true, netUnitPrice: true, quantity: true },
         }),
-        prisma.paymentAllocation.aggregate({
-          where: {
-            payment: { status: "AKTIF" },
-            order: { sellerId: s.id },
-          },
+        // Tahsilat siparişe eşlenmez (X-6); satıcıya doktorun sorumlusu
+        // üzerinden sayılır. Dönem ve devir kuralı 1B'de (X-1 §(2), X-13).
+        prisma.doctorPayment.aggregate({
+          where: { status: "AKTIF", doctor: { ownerSellerId: s.id } },
           _sum: { amount: true },
         }),
         prisma.doctor.count({ where: { ownerSellerId: s.id } }),
@@ -64,13 +62,12 @@ export async function getSellerReports(mode: VatMode): Promise<SellerReport[]> {
   return reports;
 }
 
-/** Doktor ciro sıralaması + gecikmiş borç (FR-63). */
+/** Doktor ciro sıralaması (FR-63). Gecikmiş borç tutarı C3'te söküldü (X-6 §(7)). */
 export type DoctorReport = {
   doctorId: string;
   fullName: string;
   sellerName: string | null;
   ciro: bigint;
-  gecikmisBorc: bigint;
 };
 
 export async function getDoctorReports(
@@ -85,36 +82,22 @@ export async function getDoctorReports(
         select: {
           netTotal: true,
           grossTotal: true,
-          dueDate: true,
-          allocations: {
-            where: { payment: { status: "AKTIF" } },
-            select: { amount: true },
-          },
         },
       },
     },
   });
 
-  const now = new Date();
   const rows = doctors.map((d) => {
     const ciro = d.orders.reduce(
       (s, o) => s + (mode === "NET" ? o.netTotal : o.grossTotal),
       0n
     );
-    const gecikmisBorc = d.orders.reduce((s, o) => {
-      const paid = o.allocations.reduce((t, a) => t + a.amount, 0n);
-      const rest = o.grossTotal - paid;
-      return rest > 0n && agingBucket(o.dueDate, now) !== "NOT_DUE"
-        ? s + rest
-        : s;
-    }, 0n);
 
     return {
       doctorId: d.id,
       fullName: d.fullName,
       sellerName: d.ownerSeller?.name ?? null,
       ciro,
-      gecikmisBorc,
     };
   });
 

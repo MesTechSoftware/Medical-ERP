@@ -2,12 +2,9 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { formatTRY } from "@/lib/money";
 import { formatDate } from "@/lib/format";
-import { getAgingSummary } from "@/lib/doctor-cari";
-import { AGING_LABELS, AGING_ORDER } from "@/lib/allocation";
 import {
   PageHeader,
   Card,
-  StatCard,
   EmptyRow,
   PAYMENT_METHOD_LABELS,
 } from "@/components/ui";
@@ -24,7 +21,7 @@ export default async function CollectionsPage({
   await requireAdmin();
   const { page, perPage, skip, take } = getPagination(await searchParams);
 
-  const [doctors, payments, total, aging] = await Promise.all([
+  const [doctors, payments, total] = await Promise.all([
     prisma.doctor.findMany({
       where: { status: "ACTIVE" },
       orderBy: { fullName: "asc" },
@@ -36,36 +33,17 @@ export default async function CollectionsPage({
       take,
       include: {
         doctor: { select: { fullName: true } },
-        allocations: { select: { amount: true } },
       },
     }),
     prisma.doctorPayment.count(),
-    getAgingSummary(),
   ]);
-
-  const agingTotal = AGING_ORDER.reduce((s, b) => s + aging[b], 0n);
 
   return (
     <div>
       <PageHeader
         title="Tahsilatlar"
-        description="Doktorlardan yapılan tahsilatlar ve alacak yaşlandırma"
+        description="Doktorlardan yapılan tahsilatlar"
       />
-
-      {/* FR-26: yaşlandırma özeti */}
-      <div className="mb-6 grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
-        {AGING_ORDER.map((b) => (
-          <StatCard
-            key={b}
-            label={AGING_LABELS[b]}
-            value={formatTRY(aging[b])}
-            tone={b === "D90_PLUS" && aging[b] > 0n ? "danger" : "default"}
-          />
-        ))}
-      </div>
-      <p className="mb-6 text-sm text-slate-500">
-        Toplam açık alacak: <strong>{formatTRY(agingTotal)}</strong>
-      </p>
 
       <Card>
         <h2 className="mb-4 text-sm font-semibold text-slate-900">
@@ -93,20 +71,15 @@ export default async function CollectionsPage({
                   <th className="px-4 py-2 font-medium">Yöntem</th>
                   <th className="px-4 py-2 font-medium">Referans</th>
                   <th className="px-4 py-2 text-right font-medium">Tutar</th>
-                  <th className="px-4 py-2 text-right font-medium">Mahsup</th>
                   <th className="px-4 py-2 font-medium">Durum</th>
                   <th className="px-4 py-2"></th>
                 </tr>
               </thead>
               <tbody>
                 {payments.length === 0 && (
-                  <EmptyRow colSpan={8} text="Henüz tahsilat kaydı yok." />
+                  <EmptyRow colSpan={7} text="Henüz tahsilat kaydı yok." />
                 )}
                 {payments.map((p) => {
-                  const allocated = p.allocations.reduce(
-                    (s, a) => s + a.amount,
-                    0n
-                  );
                   const cancelled = p.status === "IPTAL";
                   return (
                     <tr
@@ -130,9 +103,6 @@ export default async function CollectionsPage({
                       </td>
                       <td className="px-4 py-3 text-right tabular-nums">
                         {formatTRY(p.amount)}
-                      </td>
-                      <td className="px-4 py-3 text-right tabular-nums text-slate-500">
-                        {formatTRY(allocated)}
                       </td>
                       <td className="px-4 py-3">
                         {cancelled ? "İptal" : "Aktif"}

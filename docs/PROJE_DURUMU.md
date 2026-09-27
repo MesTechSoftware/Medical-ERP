@@ -118,16 +118,16 @@ Enum'lar: `Role`, `EntityStatus`, `OrderStatus`, `StockMovementType`, `PaymentMe
 Üç rol bazlı route grubu: `(admin)`, `(seller)`, `(dealer)` — ayrı layout'lar (41 sayfa).
 
 **Admin** (`src/app/(admin)/`)
-- ✅ Dashboard — özet stat kartları, kritik stok, satıcı/cari özetleri, KDV dahil/hariç toggle
+- ✅ Dashboard — özet stat kartları, kritik stok, KDV dahil/hariç toggle · açık alacak, yaşlandırma ve satıcı bazlı alacak tablosu **söküldü** *(28.09.2026 — C3)*
   ⛔ *X-8: kanal ciro ve bayi alacağı kartları `Dealer*` okuyor — C5'te sökülür*
 - ✅ Ürünler — liste / yeni / düzenle (taban fiyat + net liste + KDV oranı)
   ⛔ *X-10: net liste fiyatı ürün kartından çıkar, varsayılan fiyat listesine taşınır (GÇ-15); 1B'de ayrı fiyat listesi ekranı*
 - ✅ Stok — giriş + hareketler
 - ✅ Satıcılar — liste / yeni / düzenle / detay (prim oranı dahil)
-- ✅ Doktorlar — liste / detay (cari, aging, açık siparişler) + satıcı devri — *korunur (X-13)*
+- ✅ Doktorlar — liste / detay (cari, sipariş/tahsilat geçmişi) + satıcı devri — *korunur (X-13)* · yaşlandırma, vadesi geçmiş tutar ve sipariş başına kalan **söküldü** *(28.09.2026 — C3)*
 - ✅ Siparişler — liste / detay + durum yönetimi
 - ✅ Kargo — sevkiyat yönetimi
-- ✅ Tahsilatlar — doktor tahsilatı + FIFO mahsuplaşma ⛔ GÇ-3; kongre EARN entegrasyonu **söküldü** *(27.09.2026 — C2)*
+- ✅ Tahsilatlar — doktor tahsilatı; siparişe eşlenmez. FIFO mahsup ve yaşlandırma **söküldü** *(28.09.2026 — C3)*; kongre EARN entegrasyonu **söküldü** *(27.09.2026 — C2)*
 - ✅ Primler — açık dönem önizleme + dönem kapanışı (kapanınca dondurulur) + iptal düzeltmesi
   ⛔ GÇ-1: matrah **sevkiyat bazlı** olacak; dönem **zorunlu aralık parametresi** alacak (X-1 §(2))
   ⛔ **GÇ-16:** dönem kapanışı, dondurma ve iptal düzeltmesi kalkar (X-1 kapsam dışı)
@@ -138,7 +138,7 @@ Enum'lar: `Role`, `EntityStatus`, `OrderStatus`, `StockMovementType`, `PaymentMe
 - ✅ Bayiler — liste / yeni / detay (bayi fiyat listesi, ödeme, cari) — **kalır** (bayi = cari tipi)
   ⛔ **X-8 (15.09):** ekran Faz 1A **C5**'te sökülür; 1B'de bayiler **tek cari ekranından** (`hesap_sinifi` süzgeci) yönetilir
 - ✅ Bayi Sevkiyat — bayi sevkiyat taleplerinin onayı — **kalır**; talep artık bayiden değil firmadan gelir ⛔ GÇ-6 · ⛔ **X-8:** C5'te sökülür; bayi sevkiyatı genel `SVK` akışıdır, ayrı talep mekanizması yoktur
-- ✅ Raporlar — **dört rapor**: (1) satıcı performans karşılaştırması (FR-62), (2) doktor ciro sıralaması + gecikmiş borç (FR-63; kongre bakiyesi kolonu C2'de söküldü), (3) **kanal karşılaştırma — satıcı vs bayi** ⛔ *X-8: `Dealer*` okuyan sorgu C5'te sökülür; kırılım `hesap_sinifi`'nden türer* (`getChannelReport`, FR daha önce "üç" diye eksik sayılmıştı), (4) yaşlandırma (FR-26). Hepsi KDV dahil/hariç toggle'ına bağlı ⛔ GÇ-9. *(X-1 ile **"tahsilat oranı" metriği kalıcı olarak
+- ✅ Raporlar — **dört rapor**: (1) satıcı performans karşılaştırması (FR-62), (2) doktor ciro sıralaması (FR-63; kongre bakiyesi C2'de, gecikmiş borç C3'te söküldü), (3) **kanal karşılaştırma — satıcı vs bayi** ⛔ *X-8: `Dealer*` okuyan sorgu C5'te sökülür; kırılım `hesap_sinifi`'nden türer* (`getChannelReport`, FR daha önce "üç" diye eksik sayılmıştı), ~~(4) yaşlandırma (FR-26)~~ C3'te söküldü (X-6 §(5)). Satıcı tahsilatı artık doktorun sorumlusu üzerinden toplanır *(28.09.2026 — C3)*. Hepsi KDV dahil/hariç toggle'ına bağlı ⛔ GÇ-9. *(X-1 ile **"tahsilat oranı" metriği kalıcı olarak
   kaldırılıyor**; yerine **iki mutlak sayı** — dönem cirosu (matrah) ve dönem tahsilatı (brüt) —
   tabanı ekranda yazılı gelir. Dönem **zorunlu aralık parametresidir**. Prim raporunu `OPERASYON`
   **görmez** (X-1 §(8): prim ücret ekidir). Faz 1 uygulama işi, D-2 ile **tek commit**.)*
@@ -149,7 +149,7 @@ Enum'lar: `Role`, `EntityStatus`, `OrderStatus`, `StockMovementType`, `PaymentMe
 - ✅ Doktorlarım — liste / yeni / **düzenle** (yalnız kendi portföyü, RULE-02)
 - ✅ Primlerim — dönem bazlı prim durumu
 - ❌ Kongreler — **söküldü** *(27.09.2026 — C2)*
-- ✅ Hesabım
+- ✅ Hesabım — doktor sayısı + ortalama iskonto; açık alacak listesi ve yaşlandırma **söküldü** *(28.09.2026 — C3)*
 
 **Bayi** (`src/app/(dealer)/` — URL öneki `/bayi`) — ⛔ **GÇ-6: route group'un tamamı geri çekilir**
 - ✅ Panel — kendi özetini görüntüler
@@ -194,7 +194,7 @@ Enum'lar: `Role`, `EntityStatus`, `OrderStatus`, `StockMovementType`, `PaymentMe
 - **KDV:** per-satır yuvarlama, Σ satır = sipariş toplamı; net/brüt dönüşümleri `vat.ts`.
   ✅ **KARARLAR C-6 ile birebir uyumlu** — tek `hesaplaSatirTutarlari()` altında toplanacak,
   inline `fiyat * miktar` yasaklanacak.
-- **Vade:** admin üst sınır belirler; **FIFO mahsup** en eski vadeden başlar ⛔ GÇ-3; aging kovaları
+- **Vade:** admin üst sınır belirler; FIFO mahsup ve aging kovaları **söküldü** *(28.09.2026 — C3)*;
   ⛔ **X-6: yaşlandırma Faz 2+'ya taşındı.** Faz 1'de gösterilen: `hesaplaDoktorBakiye()` çıktısı
   (tek işaretli, brüt, yön + taban etiketli) ve **bilgi kademesi uyarısı** *"vadesi geçmiş hareket
   var"* + en eski vade tarihi (`VADESI_GECMIS_HAREKET`). 🔴 **Vadesi geçmiş TUTAR gösterilmez** —
@@ -217,14 +217,16 @@ Enum'lar: `Role`, `EntityStatus`, `OrderStatus`, `StockMovementType`, `PaymentMe
 - **CI (GitHub Actions, `.github/workflows/ci.yml`):** `push:main` + tüm PR'larda çalışır.
   PostgreSQL 17 servisi ile: `npm ci` → `prisma generate` → test DB → `prisma migrate deploy` →
   **typecheck + lint + birim testler + Playwright e2e**. Şu an **yeşil**.
-- **Birim test:** **107 test** (vitest, 9 dosya) — `money`, `vat`, `phone`, `doctor`, `allocation`,
-  `commission`, `reports`, `pagination`, `audit` saf fonksiyonları. *(27.09.2026 — C2: `congress-ledger` 27 test silindi)*
-- **E2E:** **53 test** *(27.09.2026 — C2: 66'dan kongre 10 + `doctor-detail` FR-57 3 test silindi)* (Playwright; `admin`/`seller`/`dealer`/`guest` projeleri, storageState auth),
+- **Birim test:** **84 test** (vitest, 8 dosya) — `money`, `vat`, `phone`, `doctor`,
+  `commission`, `reports`, `pagination`, `audit` saf fonksiyonları. *(C2: `congress-ledger` 27 · C3: `allocation` 23 test silindi)*
+- **E2E:** **51 test** *(C2: 66'dan kongre 10 + `doctor-detail` FR-57 3 · C3: `collections` FIFO + yaşlandırma 2 test silindi)* (Playwright; `admin`/`seller`/`dealer`/`guest` projeleri, storageState auth),
   16 spec dosyası. Oturum iptali, prim dönemi, bayi paneli, doktor devri dahil.
-- **Entegrasyon test:** **8 test** (vitest `integration` şeridi, 2 dosya) — `src/lib/db.itest.ts`
+- **Entegrasyon test:** **12 test** (vitest `integration` şeridi, 3 dosya) — `src/lib/db.itest.ts`
   altyapıyı sınar (şema uygulandı · yazılabilir · testler TRUNCATE ile izole) *(26.09.2026 — C1)* ·
   `collections.itest.ts` tahsilatın söküm boyunca kalan davranışını tutar: kuruş kaydı, hesaplanan
-  cari (RULE-08), audit, iptal (FR-29), kongre hareketi **yazmaz** *(27.09.2026 — C2)*.
+  cari (RULE-08), audit, iptal (FR-29), kongre hareketi **yazmaz** *(27.09.2026 — C2)*, mahsup satırı
+  **yazmaz**, borçtan büyük tahsilat bakiyeyi eksiye çevirir (K-2) · `reports-service.itest.ts` satıcı
+  tahsilatının doktor sorumlusu üzerinden toplandığını sınar *(28.09.2026 — C3)*.
 - **Test DB:** **üç veritabanı.** `medikal_dev` (geliştirme) · `medikal_test` (e2e, her koşuda
   `migrate reset`) · **`medikal_itest`** (entegrasyon; şema `globalSetup`'ta `migrate deploy`,
   izolasyon test başına `TRUNCATE`). Şerit ayrımı: `npm test` = birim (DB gerekmez) ·
@@ -267,7 +269,7 @@ MVP durum dosyasında (2026-07-17/21) ertelenen kritik işler v2 kapsamında kap
 - ✅ **CI** — GitHub Actions'ta tsc + lint + birim + e2e.
 - ✅ **Sayfalama** — liste sayfalarında `getPagination` (`Pagination` bileşeni).
 - ✅ **db.ts fail-fast** — `DATABASE_URL` yoksa başlangıçta hata fırlatır (sessiz yanlış-DB yok).
-- ✅ **Birim testler** — saf fonksiyonlar için 107 test *(C2 sonrası)*.
+- ✅ **Birim testler** — saf fonksiyonlar için 84 test *(C3 sonrası)*.
 
 ## Faz 1 migration'ında eklenecek şema (Faz 0'da karara bağlandı, **henüz koda girmedi**)
 

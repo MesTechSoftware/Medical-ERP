@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { getAgingSummary } from "@/lib/doctor-cari";
-import { AGING_LABELS, AGING_ORDER } from "@/lib/allocation";
 import { formatTRY } from "@/lib/money";
 import { formatDate } from "@/lib/format";
 import {
@@ -22,8 +20,7 @@ export default async function SellerDetailPage({
   const seller = await prisma.user.findFirst({ where: { id, role: "SELLER" } });
   if (!seller) notFound();
 
-  const [aging, orders, doctors] = await Promise.all([
-    getAgingSummary({ sellerId: id }),
+  const [orders, doctors] = await Promise.all([
     prisma.order.findMany({
       where: { sellerId: id },
       orderBy: { orderDate: "desc" },
@@ -36,9 +33,6 @@ export default async function SellerDetailPage({
       select: { id: true, fullName: true, clinic: true, region: true },
     }),
   ]);
-
-  const acikAlacak = AGING_ORDER.reduce((s, b) => s + aging[b], 0n);
-  const gecikmis = acikAlacak - aging.NOT_DUE;
 
   return (
     <div>
@@ -55,22 +49,9 @@ export default async function SellerDetailPage({
         }
       />
 
-      {/* D-01: satıcı borçlu DEĞİL; bunlar doktorların şirkete borcudur. */}
+      {/* Açık alacak, yaşlandırma ve vadesi geçmiş tutar C3'te söküldü (GÇ-3, X-6). */}
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
         <StatCard label="Doktor Sayısı" value={String(doctors.length)} />
-        <StatCard label="Açık Alacak" value={formatTRY(acikAlacak)} />
-        <StatCard
-          label="Vadesi Geçmiş"
-          value={formatTRY(gecikmis)}
-          tone={gecikmis > 0n ? "danger" : "success"}
-          hint="Tahsilat sorumluluğu"
-        />
-      </div>
-
-      <div className="mb-6 grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
-        {AGING_ORDER.map((b) => (
-          <StatCard key={b} label={AGING_LABELS[b]} value={formatTRY(aging[b])} />
-        ))}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

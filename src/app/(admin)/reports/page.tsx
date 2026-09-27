@@ -102,7 +102,7 @@ export default async function ReportsPage() {
         </div>
       </Card>
 
-      {/* FR-63: doktor ciro sıralaması + gecikmiş borç */}
+      {/* FR-63: doktor ciro sıralaması */}
       <div className="mt-6">
         <Card>
           <h2 className="mb-4 text-sm font-semibold text-slate-900">
@@ -115,14 +115,11 @@ export default async function ReportsPage() {
                   <th className="px-3 py-2 font-medium">Doktor</th>
                   <th className="px-3 py-2 font-medium">Satıcı</th>
                   <th className="px-3 py-2 text-right font-medium">Ciro</th>
-                  <th className="px-3 py-2 text-right font-medium">
-                    Gecikmiş Borç
-                  </th>
                 </tr>
               </thead>
               <tbody>
                 {doctors.length === 0 && (
-                  <EmptyRow colSpan={4} text="Doktor yok." />
+                  <EmptyRow colSpan={3} text="Doktor yok." />
                 )}
                 {doctors.map((d) => (
                   <tr key={d.doctorId} className="border-b border-slate-100 last:border-0">
@@ -134,15 +131,6 @@ export default async function ReportsPage() {
                     </td>
                     <td className="px-3 py-2 text-right tabular-nums">
                       {formatTRY(d.ciro)}
-                    </td>
-                    <td className="px-3 py-2 text-right tabular-nums">
-                      <span
-                        className={
-                          d.gecikmisBorc > 0n ? "text-red-600" : "text-slate-400"
-                        }
-                      >
-                        {d.gecikmisBorc > 0n ? formatTRY(d.gecikmisBorc) : "—"}
-                      </span>
                     </td>
                   </tr>
                 ))}

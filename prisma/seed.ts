@@ -257,7 +257,7 @@ async function main() {
   });
 
   // --- Örnek tahsilatlar (doktordan ŞİRKETE — D-01) ---
-  // Biri KISMİ (FR-25 test edilebilsin), FIFO ile en eski vadeye mahsup edilir.
+  // Biri KISMİ (FR-25). Tahsilat siparişe eşlenmez — mahsup yok (X-6).
   const firstDoctor = byDoctor("Selin Aksoy");
   const openOrder = await prisma.order.findFirst({
     where: { doctorId: firstDoctor.id, status: { not: "CANCELLED" } },
@@ -265,7 +265,7 @@ async function main() {
   });
   if (openOrder) {
     const partial = openOrder.grossTotal / 3n; // kısmi tahsilat
-    const payment = await prisma.doctorPayment.create({
+    await prisma.doctorPayment.create({
       data: {
         doctorId: firstDoctor.id,
         amount: partial,
@@ -274,9 +274,6 @@ async function main() {
         note: "Kısmi tahsilat (seed)",
         recordedBy: admin.id,
       },
-    });
-    await prisma.paymentAllocation.create({
-      data: { paymentId: payment.id, orderId: openOrder.id, amount: partial },
     });
   }
 

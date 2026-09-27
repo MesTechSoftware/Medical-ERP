@@ -1,7 +1,5 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { getSellerReceivables } from "@/lib/doctor-cari";
-import { formatTRY } from "@/lib/money";
 import {
   PageHeader,
   LinkButton,
@@ -18,19 +16,25 @@ export default async function SellersPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const { error } = await searchParams;
-  const [sellers, receivables] = await Promise.all([
+  const [sellers, doctorCounts] = await Promise.all([
     prisma.user.findMany({
       where: { role: "SELLER" },
       orderBy: { name: "asc" },
     }),
-    getSellerReceivables(),
+    prisma.doctor.groupBy({
+      by: ["ownerSellerId"],
+      _count: { _all: true },
+    }),
   ]);
+  const doktorSayisi = new Map(
+    doctorCounts.map((g) => [g.ownerSellerId, g._count._all])
+  );
 
   return (
     <div>
       <PageHeader
         title="Satıcılar"
-        description="Satıcı yönetimi ve tahsilat sorumluluğu"
+        description="Satıcı yönetimi"
         action={<LinkButton href="/sellers/new">Yeni Satıcı</LinkButton>}
       />
 
@@ -49,22 +53,15 @@ export default async function SellersPage({
                 <th className="px-4 py-2 font-medium">Satıcı</th>
                 <th className="px-4 py-2 font-medium">İletişim</th>
                 <th className="px-4 py-2 text-right font-medium">Doktor</th>
-                <th className="px-4 py-2 text-right font-medium">Açık Alacak</th>
-                <th className="px-4 py-2 text-right font-medium">Vadesi Geçmiş</th>
                 <th className="px-4 py-2 font-medium">Durum</th>
                 <th className="px-4 py-2 text-right font-medium">İşlem</th>
               </tr>
             </thead>
             <tbody>
               {sellers.length === 0 && (
-                <EmptyRow colSpan={7} text="Henüz satıcı eklenmemiş." />
+                <EmptyRow colSpan={5} text="Henüz satıcı eklenmemiş." />
               )}
               {sellers.map((s) => {
-                const r = receivables.get(s.id) ?? {
-                  acikAlacak: 0n,
-                  gecikmis: 0n,
-                  doktorSayisi: 0,
-                };
                 return (
                   <tr
                     key={s.id}
@@ -85,19 +82,7 @@ export default async function SellersPage({
                       )}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums">
-                      {r.doktorSayisi}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums">
-                      {formatTRY(r.acikAlacak)}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums font-semibold">
-                      <span
-                        className={
-                          r.gecikmis > 0n ? "text-red-600" : "text-slate-900"
-                        }
-                      >
-                        {formatTRY(r.gecikmis)}
-                      </span>
+                      {doktorSayisi.get(s.id) ?? 0}
                     </td>
                     <td className="px-4 py-3">
                       <StatusBadge status={s.status} />

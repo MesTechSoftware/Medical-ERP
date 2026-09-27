@@ -5,12 +5,7 @@ import { requireAdmin } from "@/lib/session";
 import { formatTRY } from "@/lib/money";
 import { formatDate } from "@/lib/format";
 import { formatPhone } from "@/lib/phone";
-import { getDoctorCari, getAgingSummary } from "@/lib/doctor-cari";
-import {
-  AGING_LABELS,
-  AGING_ORDER,
-  agingBucket,
-} from "@/lib/allocation";
+import { getDoctorCari } from "@/lib/doctor-cari";
 import {
   PageHeader,
   Card,
@@ -21,8 +16,9 @@ import {
 } from "@/components/ui";
 
 /**
- * FR-10: Doktor detayı — cari bakiye, vadesi gelen/geçen borç, sipariş ve
- * tahsilat geçmişi. Kongre defteri C2'de söküldü (GÇ-5).
+ * FR-10: Doktor detayı — cari bakiye, sipariş ve tahsilat geçmişi.
+ * Kongre defteri C2'de (GÇ-5), yaşlandırma ve vadesi geçmiş tutar C3'te
+ * söküldü (GÇ-3, X-6 §(5)/(7)).
  */
 export default async function DoctorDetailPage({
   params,
@@ -38,19 +34,14 @@ export default async function DoctorDetailPage({
   });
   if (!doctor) notFound();
 
-  const [cari, aging, orders, payments] = await Promise.all([
+  const [cari, orders, payments] = await Promise.all([
     getDoctorCari(id),
-    getAgingSummary({ doctorId: id }),
     prisma.order.findMany({
       where: { doctorId: id },
       orderBy: { orderDate: "desc" },
       take: 30,
       include: {
         seller: { select: { name: true } },
-        allocations: {
-          where: { payment: { status: "AKTIF" } },
-          select: { amount: true },
-        },
       },
     }),
     prisma.doctorPayment.findMany({
@@ -59,11 +50,6 @@ export default async function DoctorDetailPage({
       take: 30,
     }),
   ]);
-
-  const gecikmis = AGING_ORDER.filter((b) => b !== "NOT_DUE").reduce(
-    (s, b) => s + aging[b],
-    0n
-  );
 
   return (
     <div>
@@ -74,7 +60,7 @@ export default async function DoctorDetailPage({
         } · ${formatPhone(doctor.phoneNormalized)}`}
       />
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Sorumlu Satıcı"
           value={doctor.ownerSeller?.name ?? "Sahipsiz"}
@@ -88,17 +74,6 @@ export default async function DoctorDetailPage({
           tone={cari.bakiye > 0n ? "danger" : "success"}
           hint={cari.bakiye > 0n ? "Şirkete borçlu" : "Bakiye kapalı"}
         />
-        <StatCard
-          label="Vadesi Geçmiş"
-          value={formatTRY(gecikmis)}
-          tone={gecikmis > 0n ? "danger" : "success"}
-        />
-      </div>
-
-      <div className="mb-6 grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
-        {AGING_ORDER.map((b) => (
-          <StatCard key={b} label={AGING_LABELS[b]} value={formatTRY(aging[b])} />
-        ))}
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
@@ -113,32 +88,20 @@ export default async function DoctorDetailPage({
                   <th className="px-3 py-2 font-medium">Vade</th>
                   <th className="px-3 py-2 font-medium">Satıcı</th>
                   <th className="px-3 py-2 text-right font-medium">Tutar</th>
-                  <th className="px-3 py-2 text-right font-medium">Kalan</th>
                   <th className="px-3 py-2 font-medium">Durum</th>
                 </tr>
               </thead>
               <tbody>
                 {orders.length === 0 && (
-                  <EmptyRow colSpan={5} text="Sipariş yok." />
+                  <EmptyRow colSpan={4} text="Sipariş yok." />
                 )}
                 {orders.map((o) => {
-                  const paid = o.allocations.reduce((s, a) => s + a.amount, 0n);
-                  const rest = o.grossTotal - paid;
-                  const late =
-                    rest > 0n &&
-                    o.status !== "CANCELLED" &&
-                    agingBucket(o.dueDate) !== "NOT_DUE";
                   return (
                     <tr
                       key={o.id}
                       className="border-b border-slate-100 last:border-0"
                     >
-                      <td
-                        className={
-                          "px-3 py-2 whitespace-nowrap " +
-                          (late ? "font-medium text-red-600" : "text-slate-500")
-                        }
-                      >
+                      <td className="px-3 py-2 whitespace-nowrap text-slate-500">
                         {formatDate(o.dueDate)}
                       </td>
                       <td className="px-3 py-2 text-slate-500">
@@ -146,9 +109,6 @@ export default async function DoctorDetailPage({
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums">
                         {formatTRY(o.grossTotal)}
-                      </td>
-                      <td className="px-3 py-2 text-right tabular-nums">
-                        {rest > 0n ? formatTRY(rest) : "—"}
                       </td>
                       <td className="px-3 py-2">
                         <StatusBadge status={o.status} />

@@ -1,8 +1,4 @@
 import { prisma } from "@/lib/db";
-import {
-  summarizeAging,
-  type AgingBucket,
-} from "@/lib/allocation";
 
 /**
  * Bayi cari hesabı — TEK KAYNAK.
@@ -73,35 +69,4 @@ export async function getAllDealersCari(): Promise<Map<string, DealerCari>> {
     });
   }
   return result;
-}
-
-/**
- * Bayi yaşlandırması (FR-46). Basit model: onaylı sevkiyatların vadesine göre
- * kalan borç. Bayi tahsilatı sipariş bazında mahsuplaşmaz (doktordan farklı);
- * bu yüzden en eski sevkiyatlardan itibaren toplam ödeme düşülür.
- */
-export async function getDealerAging(
-  dealerId: string
-): Promise<Record<AgingBucket, bigint>> {
-  const [shipments, paid] = await Promise.all([
-    prisma.dealerShipment.findMany({
-      where: { dealerId, ...APPROVED, dueDate: { not: null } },
-      orderBy: { dueDate: "asc" },
-      select: { dueDate: true, grossTotal: true },
-    }),
-    prisma.dealerPayment.aggregate({
-      where: { dealerId },
-      _sum: { amount: true },
-    }),
-  ]);
-
-  // Ödemeyi en eski sevkiyattan başlayarak düş (FIFO benzeri kapatma).
-  let remainingPayment = paid._sum.amount ?? 0n;
-  const open = shipments.map((s) => {
-    const applied = remainingPayment < s.grossTotal ? remainingPayment : s.grossTotal;
-    remainingPayment -= applied;
-    return { dueDate: s.dueDate!, outstanding: s.grossTotal - applied };
-  });
-
-  return summarizeAging(open);
 }
