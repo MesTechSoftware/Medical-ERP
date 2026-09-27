@@ -6,7 +6,6 @@ import { requireAdmin } from "@/lib/session";
 import { tlToKurus } from "@/lib/money";
 import { amountTLSchema } from "@/lib/validation";
 import { getDueSettings, addDays } from "@/lib/settings";
-import { queueCancellationAdjustments } from "@/lib/commission-service";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { PaymentMethod } from "@/generated/prisma/enums";
 
@@ -90,25 +89,19 @@ export async function cancelCollection(
 
   const before = await prisma.doctorPayment.findUnique({
     where: { id: paymentId },
-    include: { allocations: true },
   });
   if (!before) return { error: "Tahsilat bulunamadı." };
   if (before.status === "IPTAL") return { error: "Bu tahsilat zaten iptal." };
 
-  await prisma.$transaction(async (tx) => {
-    // FR-35 / RULE-05: kapanmış döneme ait iptal, matrah düzeltmesi olarak
-    // SONRAKİ döneme yazılır. (Prim kodu C4'te sökülür — GÇ-1/GÇ-16.)
-    await queueCancellationAdjustments(tx, before, session.user.id);
-
-    await tx.doctorPayment.update({
-      where: { id: paymentId },
-      data: {
-        status: "IPTAL",
-        cancelledAt: new Date(),
-        cancelledBy: session.user.id,
-        cancelReason: reason,
-      },
-    });
+  // Prim düzeltmesi (FR-35) C4'te söküldü — dönem kilidi yok (X-1 §(6)).
+  await prisma.doctorPayment.update({
+    where: { id: paymentId },
+    data: {
+      status: "IPTAL",
+      cancelledAt: new Date(),
+      cancelledBy: session.user.id,
+      cancelReason: reason,
+    },
   });
 
   await createAuditLog({

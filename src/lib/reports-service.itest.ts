@@ -5,7 +5,7 @@ import { getSellerReports } from "@/lib/reports-service";
 
 // Satıcı raporundaki tahsilat C3'te mahsup satırından (PaymentAllocation)
 // koparıldı: artık satıcının sorumlu olduğu doktorların AKTİF tahsilatları
-// toplanır (X-6 — tahsilat siparişe eşlenmez). Oran C4'te gider (GÇ-2).
+// toplanır (X-6 — tahsilat siparişe eşlenmez). Tahsilat oranı C4'te söküldü (GÇ-2).
 
 async function satici(name: string, email: string) {
   return prisma.user.create({

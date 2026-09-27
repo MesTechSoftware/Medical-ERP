@@ -14,14 +14,6 @@ export function ratePercent(part: bigint, whole: bigint): number {
 }
 
 /**
- * Tahsilat oranı: tahsil edilen / faturalanan (brüt). FR-62.
- * Satıcının tahsilat performansını gösterir; primi etkilemez (D-25).
- */
-export function collectionRate(collected: bigint, billed: bigint): number {
-  return ratePercent(collected, billed);
-}
-
-/**
  * Ortalama iskonto: kalemlerin net satış tutarı ağırlıklı ortalama iskonto.
  * `Σ(iskontolu fark) / Σ(liste tutarı)`. Kalem bazlı basit ortalama değil,
  * TUTAR AĞIRLIKLI — büyük siparişler ortalamayı daha çok etkiler.

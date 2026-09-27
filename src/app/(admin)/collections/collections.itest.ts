@@ -8,9 +8,9 @@ import { getDoctorCari } from "@/lib/doctor-cari";
 // sonrası aynı kalmak zorunda olan kısım. KARARLAR'a göre RULE-12'nin dört
 // bileşeninden üçü Faz 1'de düşüyor (mahsuplaşma GÇ-3 · prim matrahı GÇ-1 ·
 // kongre kazanımı GÇ-4); "geriye tahsilat kaydı + cari hareket kalır".
-// Bu test tam olarak o kalanı tutar. Kongre defteri C2'de, mahsup C3'te
-// söküldü; tabloları CM'e kadar şemada durduğu için tahsilatın onlara
-// YAZMADIĞI sınanır.
+// Bu test tam olarak o kalanı tutar. Kongre defteri C2'de, mahsup C3'te,
+// prim düzeltmesi C4'te söküldü; tabloları CM'e kadar şemada durduğu için
+// tahsilatın onlara YAZMADIĞI sınanır.
 const h = vi.hoisted(() => ({ adminId: "" }));
 
 // Server action'ın iki çerçeve bağımlılığı var; ikisi de iş kuralı taşımıyor.
@@ -148,6 +148,33 @@ describe("tahsilat — dayanıklı davranış", () => {
     expect(logs).toHaveLength(1);
     expect(logs[0].entityId).toBe(payment.id);
     expect(await prisma.congressLedger.count()).toBe(0);
+  });
+
+  it("iptal, kapanmış prim dönemi olsa bile prim düzeltmesi yazmaz (C4 — GÇ-16, X-1 §(6))", async () => {
+    await recordCollection({}, tahsilatFormu(doctorId));
+    const payment = await prisma.doctorPayment.findFirstOrThrow({ where: { doctorId } });
+
+    // Eski kod bu dönem kapalıyken iptalde CommissionAdjustment yazıyordu.
+    await prisma.commissionPeriod.create({
+      data: {
+        sellerId: h.adminId,
+        year: 2026,
+        month: 9,
+        baseAmount: 0n,
+        ratePercent: 5,
+        commissionAmount: 0n,
+        closedBy: h.adminId,
+      },
+    });
+
+    const fd = new FormData();
+    fd.set("paymentId", payment.id);
+    await cancelCollection({}, fd);
+
+    expect(
+      (await prisma.doctorPayment.findUniqueOrThrow({ where: { id: payment.id } })).status
+    ).toBe("IPTAL");
+    expect(await prisma.commissionAdjustment.count()).toBe(0);
   });
 
   it("siparişe mahsup satırı yazmaz (C3 — GÇ-3, X-6: tahsilat eşlenmez)", async () => {

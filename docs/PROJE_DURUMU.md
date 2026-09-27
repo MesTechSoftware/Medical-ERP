@@ -128,9 +128,10 @@ Enum'lar: `Role`, `EntityStatus`, `OrderStatus`, `StockMovementType`, `PaymentMe
 - ✅ Siparişler — liste / detay + durum yönetimi
 - ✅ Kargo — sevkiyat yönetimi
 - ✅ Tahsilatlar — doktor tahsilatı; siparişe eşlenmez. FIFO mahsup ve yaşlandırma **söküldü** *(28.09.2026 — C3)*; kongre EARN entegrasyonu **söküldü** *(27.09.2026 — C2)*
-- ✅ Primler — açık dönem önizleme + dönem kapanışı (kapanınca dondurulur) + iptal düzeltmesi
-  ⛔ GÇ-1: matrah **sevkiyat bazlı** olacak; dönem **zorunlu aralık parametresi** alacak (X-1 §(2))
-  ⛔ **GÇ-16:** dönem kapanışı, dondurma ve iptal düzeltmesi kalkar (X-1 kapsam dışı)
+- ❌ Primler — **söküldü** *(28.09.2026 — C4)* (GÇ-1 + GÇ-16): ekran, `commission-service.ts`, dönem kapanışı,
+  onay/ödeme durumları, iptal düzeltmesi. Yeni prim (matrah **sevkiyat bazlı**, dönem zorunlu aralık)
+  **1B'de** yazılır (X-1 §(2)/(7), A-3). `CommissionPeriod`/`CommissionAdjustment` **`CM`'e kadar
+  şemada durur, okunmaz**. `DEFAULT_COMMISSION_RATE` C7'de `policy.ts`'e taşınır (X-14)
 - ❌ Kongreler — **söküldü** *(27.09.2026 — C2, GÇ-4/GÇ-5)*: ekranlar, `congress-service.ts`,
   `congress-ledger.ts`, doktor detayındaki defter + manuel düzeltme (FR-57), dashboard ve rapordaki
   kongre bakiyesi. Dört `Congress*` tablosu **`CM`'e kadar şemada durur, okunmaz**. Modül Faz 3+'ta
@@ -138,7 +139,7 @@ Enum'lar: `Role`, `EntityStatus`, `OrderStatus`, `StockMovementType`, `PaymentMe
 - ✅ Bayiler — liste / yeni / detay (bayi fiyat listesi, ödeme, cari) — **kalır** (bayi = cari tipi)
   ⛔ **X-8 (15.09):** ekran Faz 1A **C5**'te sökülür; 1B'de bayiler **tek cari ekranından** (`hesap_sinifi` süzgeci) yönetilir
 - ✅ Bayi Sevkiyat — bayi sevkiyat taleplerinin onayı — **kalır**; talep artık bayiden değil firmadan gelir ⛔ GÇ-6 · ⛔ **X-8:** C5'te sökülür; bayi sevkiyatı genel `SVK` akışıdır, ayrı talep mekanizması yoktur
-- ✅ Raporlar — **dört rapor**: (1) satıcı performans karşılaştırması (FR-62), (2) doktor ciro sıralaması (FR-63; kongre bakiyesi C2'de, gecikmiş borç C3'te söküldü), (3) **kanal karşılaştırma — satıcı vs bayi** ⛔ *X-8: `Dealer*` okuyan sorgu C5'te sökülür; kırılım `hesap_sinifi`'nden türer* (`getChannelReport`, FR daha önce "üç" diye eksik sayılmıştı), ~~(4) yaşlandırma (FR-26)~~ C3'te söküldü (X-6 §(5)). Satıcı tahsilatı artık doktorun sorumlusu üzerinden toplanır *(28.09.2026 — C3)*. Hepsi KDV dahil/hariç toggle'ına bağlı ⛔ GÇ-9. *(X-1 ile **"tahsilat oranı" metriği kalıcı olarak
+- ✅ Raporlar — **dört rapor**: (1) satıcı performans karşılaştırması (FR-62), (2) doktor ciro sıralaması (FR-63; kongre bakiyesi C2'de, gecikmiş borç C3'te söküldü), (3) **kanal karşılaştırma — satıcı vs bayi** ⛔ *X-8: `Dealer*` okuyan sorgu C5'te sökülür; kırılım `hesap_sinifi`'nden türer* (`getChannelReport`, FR daha önce "üç" diye eksik sayılmıştı), ~~(4) yaşlandırma (FR-26)~~ C3'te söküldü (X-6 §(5)). Satıcı tahsilatı artık doktorun sorumlusu üzerinden toplanır *(28.09.2026 — C3)*; **tahsilat oranı kolonu söküldü** *(28.09.2026 — C4)*. Hepsi KDV dahil/hariç toggle'ına bağlı ⛔ GÇ-9. *(X-1 ile **"tahsilat oranı" metriği kalıcı olarak
   kaldırılıyor**; yerine **iki mutlak sayı** — dönem cirosu (matrah) ve dönem tahsilatı (brüt) —
   tabanı ekranda yazılı gelir. Dönem **zorunlu aralık parametresidir**. Prim raporunu `OPERASYON`
   **görmez** (X-1 §(8): prim ücret ekidir). Faz 1 uygulama işi, D-2 ile **tek commit**.)*
@@ -147,7 +148,7 @@ Enum'lar: `Role`, `EntityStatus`, `OrderStatus`, `StockMovementType`, `PaymentMe
 **Satıcı** (`src/app/(seller)/`)
 - ✅ Siparişlerim — liste / yeni / detay
 - ✅ Doktorlarım — liste / yeni / **düzenle** (yalnız kendi portföyü, RULE-02)
-- ✅ Primlerim — dönem bazlı prim durumu
+- ❌ Primlerim — **söküldü** *(28.09.2026 — C4)*
 - ❌ Kongreler — **söküldü** *(27.09.2026 — C2)*
 - ✅ Hesabım — doktor sayısı + ortalama iskonto; açık alacak listesi ve yaşlandırma **söküldü** *(28.09.2026 — C3)*
 
@@ -181,6 +182,7 @@ Enum'lar: `Role`, `EntityStatus`, `OrderStatus`, `StockMovementType`, `PaymentMe
 - **RULE-02** Bir doktorun tek sahibi satıcı olur; sahibi olmayan satıcı sipariş açamaz (sunucu tarafı).
 - **RULE-05** Kapanmış prim dönemi değişmez; sonraki iptaller sonraki döneme negatif yansır.
   ⛔ **GÇ-16** — X-1 §(6): kilit ve düzeltme kaydı yok; ters kayıt kendi belge tarihinde doğar.
+  Mekanizma C4'te söküldü *(28.09.2026 — C4)*; prim kuralları 1B'ye kadar **testsizdir** (R-3).
 - **RULE-08** Cari bakiye saklanmaz, hesaplanır (tek kaynak).
 - **RULE-09** Aynı kongre bakiyesi iki kez harcanamaz — koşullu `updateMany` ile rezervasyon.
 - **RULE-11** Kongre bakiyesi FIFO harcanır; kısmi harcama yok.
@@ -217,16 +219,17 @@ Enum'lar: `Role`, `EntityStatus`, `OrderStatus`, `StockMovementType`, `PaymentMe
 - **CI (GitHub Actions, `.github/workflows/ci.yml`):** `push:main` + tüm PR'larda çalışır.
   PostgreSQL 17 servisi ile: `npm ci` → `prisma generate` → test DB → `prisma migrate deploy` →
   **typecheck + lint + birim testler + Playwright e2e**. Şu an **yeşil**.
-- **Birim test:** **84 test** (vitest, 8 dosya) — `money`, `vat`, `phone`, `doctor`,
-  `commission`, `reports`, `pagination`, `audit` saf fonksiyonları. *(C2: `congress-ledger` 27 · C3: `allocation` 23 test silindi)*
-- **E2E:** **51 test** *(C2: 66'dan kongre 10 + `doctor-detail` FR-57 3 · C3: `collections` FIFO + yaşlandırma 2 test silindi)* (Playwright; `admin`/`seller`/`dealer`/`guest` projeleri, storageState auth),
-  16 spec dosyası. Oturum iptali, prim dönemi, bayi paneli, doktor devri dahil.
-- **Entegrasyon test:** **12 test** (vitest `integration` şeridi, 3 dosya) — `src/lib/db.itest.ts`
+- **Birim test:** **60 test** (vitest, 7 dosya) — `money`, `vat`, `phone`, `doctor`,
+  `reports`, `pagination`, `audit` saf fonksiyonları. *(C2: `congress-ledger` 27 · C3: `allocation` 23 · C4: `commission` 21 + `reports` `collectionRate` 3 test silindi)*
+- **E2E:** **47 test** *(C2: 66'dan kongre 10 + `doctor-detail` FR-57 3 · C3: `collections` FIFO + yaşlandırma 2 · C4: `commissions` 4 test silindi)* (Playwright; `admin`/`seller`/`dealer`/`guest` projeleri, storageState auth),
+  15 spec dosyası. Oturum iptali, bayi paneli, doktor devri dahil.
+- **Entegrasyon test:** **13 test** (vitest `integration` şeridi, 3 dosya) — `src/lib/db.itest.ts`
   altyapıyı sınar (şema uygulandı · yazılabilir · testler TRUNCATE ile izole) *(26.09.2026 — C1)* ·
   `collections.itest.ts` tahsilatın söküm boyunca kalan davranışını tutar: kuruş kaydı, hesaplanan
   cari (RULE-08), audit, iptal (FR-29), kongre hareketi **yazmaz** *(27.09.2026 — C2)*, mahsup satırı
   **yazmaz**, borçtan büyük tahsilat bakiyeyi eksiye çevirir (K-2) · `reports-service.itest.ts` satıcı
-  tahsilatının doktor sorumlusu üzerinden toplandığını sınar *(28.09.2026 — C3)*.
+  tahsilatının doktor sorumlusu üzerinden toplandığını sınar *(28.09.2026 — C3)* · iptal prim düzeltmesi
+  **yazmaz** *(28.09.2026 — C4)*.
 - **Test DB:** **üç veritabanı.** `medikal_dev` (geliştirme) · `medikal_test` (e2e, her koşuda
   `migrate reset`) · **`medikal_itest`** (entegrasyon; şema `globalSetup`'ta `migrate deploy`,
   izolasyon test başına `TRUNCATE`). Şerit ayrımı: `npm test` = birim (DB gerekmez) ·
@@ -269,7 +272,7 @@ MVP durum dosyasında (2026-07-17/21) ertelenen kritik işler v2 kapsamında kap
 - ✅ **CI** — GitHub Actions'ta tsc + lint + birim + e2e.
 - ✅ **Sayfalama** — liste sayfalarında `getPagination` (`Pagination` bileşeni).
 - ✅ **db.ts fail-fast** — `DATABASE_URL` yoksa başlangıçta hata fırlatır (sessiz yanlış-DB yok).
-- ✅ **Birim testler** — saf fonksiyonlar için 84 test *(C3 sonrası)*.
+- ✅ **Birim testler** — saf fonksiyonlar için 60 test *(C4 sonrası)*.
 
 ## Faz 1 migration'ında eklenecek şema (Faz 0'da karara bağlandı, **henüz koda girmedi**)
 
