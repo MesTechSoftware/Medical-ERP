@@ -2,7 +2,6 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { getAgingSummary, getSellerReceivables } from "@/lib/doctor-cari";
 import { getAllDealersCari } from "@/lib/dealer-cari";
-import { getCongressLiability } from "@/lib/reports-service";
 import { AGING_LABELS, AGING_ORDER } from "@/lib/allocation";
 import { formatTRY } from "@/lib/money";
 import { PageHeader, Card, StatCard, EmptyRow } from "@/components/ui";
@@ -25,7 +24,6 @@ export default async function DashboardPage() {
     receivables,
     aging,
     dealersCari,
-    congressLiability,
   ] = await Promise.all([
     prisma.product.aggregate({ _sum: { stock: true } }),
     prisma.product.findMany({
@@ -52,7 +50,6 @@ export default async function DashboardPage() {
     getSellerReceivables(),
     getAgingSummary(),
     getAllDealersCari(),
-    getCongressLiability(),
   ]);
 
   // Bayi kanalı toplamları (D-06: kongreye/prime dokunmaz, ayrı gösterilir).
@@ -116,12 +113,6 @@ export default async function DashboardPage() {
           label="Bayi Alacağı"
           value={formatTRY(bayiBorc)}
           tone={bayiBorc > 0n ? "danger" : "success"}
-        />
-        <StatCard
-          label="Açık Kongre Bakiyesi"
-          value={formatTRY(congressLiability)}
-          tone={congressLiability > 0n ? "danger" : "default"}
-          hint="Potansiyel yükümlülük"
         />
       </div>
 

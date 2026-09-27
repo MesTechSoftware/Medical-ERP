@@ -5,7 +5,6 @@ import { formatTRY } from "@/lib/money";
 import { VAT_MODE_COOKIE, parseVatMode } from "@/lib/vat-mode";
 import {
   getChannelReport,
-  getCongressLiability,
   getDoctorReports,
   getSellerReports,
 } from "@/lib/reports-service";
@@ -19,12 +18,11 @@ export default async function ReportsPage() {
   await requireAdmin();
   const mode = parseVatMode((await cookies()).get(VAT_MODE_COOKIE)?.value);
 
-  const [sellers, doctors, channel, congressLiability, dealerDebt] =
+  const [sellers, doctors, channel, dealerDebt] =
     await Promise.all([
       getSellerReports(mode),
       getDoctorReports(mode, 25),
       getChannelReport(mode),
-      getCongressLiability(),
       prisma.dealerShipment
         .aggregate({
           where: { status: "ONAYLANDI" },
@@ -44,15 +42,9 @@ export default async function ReportsPage() {
       />
 
       {/* FR-60: kanal karşılaştırma + potansiyel yükümlülükler */}
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard label="Satıcı Kanalı Ciro" value={formatTRY(channel.saticiCiro)} />
         <StatCard label="Bayi Kanalı Ciro" value={formatTRY(channel.bayiCiro)} />
-        <StatCard
-          label="Açık Kongre Bakiyesi"
-          value={formatTRY(congressLiability)}
-          tone={congressLiability > 0n ? "danger" : "default"}
-          hint="Potansiyel yükümlülük"
-        />
         <StatCard label="Bayi Açık Sevkiyat" value={formatTRY(dealerDebt)} />
       </div>
 
@@ -110,7 +102,7 @@ export default async function ReportsPage() {
         </div>
       </Card>
 
-      {/* FR-63: doktor ciro sıralaması + kongre + gecikmiş borç */}
+      {/* FR-63: doktor ciro sıralaması + gecikmiş borç */}
       <div className="mt-6">
         <Card>
           <h2 className="mb-4 text-sm font-semibold text-slate-900">
@@ -126,14 +118,11 @@ export default async function ReportsPage() {
                   <th className="px-3 py-2 text-right font-medium">
                     Gecikmiş Borç
                   </th>
-                  <th className="px-3 py-2 text-right font-medium">
-                    Kongre Bakiye
-                  </th>
                 </tr>
               </thead>
               <tbody>
                 {doctors.length === 0 && (
-                  <EmptyRow colSpan={5} text="Doktor yok." />
+                  <EmptyRow colSpan={4} text="Doktor yok." />
                 )}
                 {doctors.map((d) => (
                   <tr key={d.doctorId} className="border-b border-slate-100 last:border-0">
@@ -154,9 +143,6 @@ export default async function ReportsPage() {
                       >
                         {d.gecikmisBorc > 0n ? formatTRY(d.gecikmisBorc) : "—"}
                       </span>
-                    </td>
-                    <td className="px-3 py-2 text-right tabular-nums text-slate-500">
-                      {formatTRY(d.kongreBakiye)}
                     </td>
                   </tr>
                 ))}

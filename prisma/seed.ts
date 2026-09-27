@@ -280,25 +280,6 @@ async function main() {
     });
   }
 
-  // --- Kongreler ve paketler (Faz E) ---
-  const congress = await prisma.congress.create({
-    data: {
-      name: "Antalya Kardiyoloji Kongresi",
-      description: "Yıllık ulusal kongre",
-      location: "Antalya",
-      startDate: addDays(new Date(), 90),
-      endDate: addDays(new Date(), 93),
-      quota: 50,
-      status: "YAYINDA",
-    },
-  });
-  await prisma.congressPackage.createMany({
-    data: [
-      { congressId: congress.id, name: "Tam Paket", value: tl(200000), quota: 10 },
-      { congressId: congress.id, name: "Katılım", value: tl(50), quota: 20 },
-    ],
-  });
-
   // --- Bayiler (Faz D) ---
   const dealerLoginPass = await bcrypt.hash("bayi123", 10);
   const dealerUser = await prisma.user.create({
