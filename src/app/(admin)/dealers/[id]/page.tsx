@@ -3,8 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { formatTRY } from "@/lib/money";
 import { formatDate } from "@/lib/format";
-import { getDealerCari, getDealerAging } from "@/lib/dealer-cari";
-import { AGING_LABELS, AGING_ORDER } from "@/lib/allocation";
+import { getDealerCari } from "@/lib/dealer-cari";
 import {
   PageHeader,
   Card,
@@ -37,9 +36,8 @@ export default async function DealerDetailPage({
   });
   if (!dealer) notFound();
 
-  const [cari, aging, prices, products, shipments, payments] = await Promise.all([
+  const [cari, prices, products, shipments, payments] = await Promise.all([
     getDealerCari(id),
-    getDealerAging(id),
     prisma.dealerPrice.findMany({
       where: { dealerId: id },
       orderBy: { product: { name: "asc" } },
@@ -62,8 +60,6 @@ export default async function DealerDetailPage({
     }),
   ]);
 
-  const acikAlacak = AGING_ORDER.reduce((s, b) => s + aging[b], 0n);
-
   return (
     <div>
       <PageHeader
@@ -80,7 +76,7 @@ export default async function DealerDetailPage({
         <StatusBadge status={dealer.status} />
       </div>
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-4">
+      <div className="mb-6 grid gap-4 sm:grid-cols-3">
         <StatCard label="Toplam Sevkiyat" value={formatTRY(cari.toplamSevkiyat)} />
         <StatCard label="Toplam Ödeme" value={formatTRY(cari.toplamOdeme)} />
         <StatCard
@@ -88,13 +84,6 @@ export default async function DealerDetailPage({
           value={formatTRY(cari.bakiye)}
           tone={cari.bakiye > 0n ? "danger" : "success"}
         />
-        <StatCard label="Açık Alacak" value={formatTRY(acikAlacak)} />
-      </div>
-
-      <div className="mb-6 grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
-        {AGING_ORDER.map((b) => (
-          <StatCard key={b} label={AGING_LABELS[b]} value={formatTRY(aging[b])} />
-        ))}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

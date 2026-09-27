@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { getAgingSummary, getSellerReceivables } from "@/lib/doctor-cari";
 import { getAllDealersCari } from "@/lib/dealer-cari";
-import { AGING_LABELS, AGING_ORDER } from "@/lib/allocation";
 import { formatTRY } from "@/lib/money";
 import { PageHeader, Card, StatCard, EmptyRow } from "@/components/ui";
 
@@ -20,9 +18,6 @@ export default async function DashboardPage() {
     preparingCount,
     salesAgg,
     collectedAgg,
-    sellers,
-    receivables,
-    aging,
     dealersCari,
   ] = await Promise.all([
     prisma.product.aggregate({ _sum: { stock: true } }),
@@ -42,13 +37,6 @@ export default async function DashboardPage() {
       where: { status: "AKTIF" },
       _sum: { amount: true },
     }),
-    prisma.user.findMany({
-      where: { role: "SELLER" },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true },
-    }),
-    getSellerReceivables(),
-    getAgingSummary(),
     getAllDealersCari(),
   ]);
 
@@ -63,21 +51,6 @@ export default async function DashboardPage() {
   const toplamStok = stockAgg._sum.stock ?? 0;
   const toplamCiro = salesAgg._sum.grossTotal ?? 0n;
   const toplamTahsilat = collectedAgg._sum.amount ?? 0n;
-  const acikAlacak = AGING_ORDER.reduce((s, b) => s + aging[b], 0n);
-
-  const sellerPerf = sellers
-    .map((s) => ({
-      name: s.name,
-      r: receivables.get(s.id) ?? {
-        acikAlacak: 0n,
-        gecikmis: 0n,
-        doktorSayisi: 0,
-      },
-    }))
-    // BigInt farkı Number'a sığmayabileceği için karşılaştırma ile sıralanır.
-    .sort((a, b) =>
-      b.r.acikAlacak === a.r.acikAlacak ? 0 : b.r.acikAlacak > a.r.acikAlacak ? 1 : -1
-    );
 
   return (
     <div>
@@ -103,11 +76,6 @@ export default async function DashboardPage() {
       <div className="mb-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard label="Satıcı Kanalı Ciro" value={formatTRY(toplamCiro)} hint="KDV dahil" />
         <StatCard label="Toplam Tahsilat" value={formatTRY(toplamTahsilat)} />
-        <StatCard
-          label="Açık Alacak (Doktor)"
-          value={formatTRY(acikAlacak)}
-          tone={acikAlacak > 0n ? "danger" : "success"}
-        />
         <StatCard label="Bayi Kanalı Ciro" value={formatTRY(bayiCiro)} hint="KDV dahil" />
         <StatCard
           label="Bayi Alacağı"
@@ -116,17 +84,6 @@ export default async function DashboardPage() {
         />
       </div>
 
-      {/* FR-60: yaşlandırma özeti */}
-      <div className="mb-6 grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
-        {AGING_ORDER.map((b) => (
-          <StatCard
-            key={b}
-            label={AGING_LABELS[b]}
-            value={formatTRY(aging[b])}
-            tone={b === "D90_PLUS" && aging[b] > 0n ? "danger" : "default"}
-          />
-        ))}
-      </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Kritik stok */}
@@ -169,55 +126,6 @@ export default async function DashboardPage() {
             >
               Stok Yönetimi →
             </Link>
-          </div>
-        </Card>
-
-        {/* Satıcı tahsilat sorumluluğu */}
-        <Card>
-          <h2 className="mb-4 text-sm font-semibold text-slate-900">
-            Satıcı Bazlı Tahsilat Sorumluluğu
-          </h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
-                  <th className="px-3 py-2 font-medium">Satıcı</th>
-                  <th className="px-3 py-2 text-right font-medium">Doktor</th>
-                  <th className="px-3 py-2 text-right font-medium">Açık Alacak</th>
-                  <th className="px-3 py-2 text-right font-medium">Gecikmiş</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sellerPerf.length === 0 && (
-                  <EmptyRow colSpan={4} text="Satıcı yok." />
-                )}
-                {sellerPerf.map((s) => (
-                  <tr
-                    key={s.name}
-                    className="border-b border-slate-100 last:border-0"
-                  >
-                    <td className="px-3 py-2 font-medium text-slate-900">
-                      {s.name}
-                    </td>
-                    <td className="px-3 py-2 text-right tabular-nums">
-                      {s.r.doktorSayisi}
-                    </td>
-                    <td className="px-3 py-2 text-right tabular-nums">
-                      {formatTRY(s.r.acikAlacak)}
-                    </td>
-                    <td className="px-3 py-2 text-right font-semibold tabular-nums">
-                      <span
-                        className={
-                          s.r.gecikmis > 0n ? "text-red-600" : "text-slate-900"
-                        }
-                      >
-                        {formatTRY(s.r.gecikmis)}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         </Card>
       </div>

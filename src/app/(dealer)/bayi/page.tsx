@@ -2,8 +2,7 @@ import { prisma } from "@/lib/db";
 import { requireDealerAccount } from "@/lib/dealer-session";
 import { formatTRY } from "@/lib/money";
 import { formatDate } from "@/lib/format";
-import { getDealerCari, getDealerAging } from "@/lib/dealer-cari";
-import { AGING_LABELS, AGING_ORDER } from "@/lib/allocation";
+import { getDealerCari } from "@/lib/dealer-cari";
 import { PageHeader, Card, StatCard, EmptyRow, LinkButton } from "@/components/ui";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -17,18 +16,14 @@ const STATUS_LABELS: Record<string, string> = {
 export default async function DealerHomePage() {
   const { dealer } = await requireDealerAccount();
 
-  const [cari, aging, recent] = await Promise.all([
+  const [cari, recent] = await Promise.all([
     getDealerCari(dealer.id),
-    getDealerAging(dealer.id),
     prisma.dealerShipment.findMany({
       where: { dealerId: dealer.id },
       orderBy: { requestedAt: "desc" },
       take: 5,
     }),
   ]);
-
-  const acikAlacak = AGING_ORDER.reduce((s, b) => s + aging[b], 0n);
-  const gecikmis = acikAlacak - aging.NOT_DUE;
 
   return (
     <div>
@@ -48,18 +43,6 @@ export default async function DealerHomePage() {
           value={formatTRY(cari.bakiye)}
           tone={cari.bakiye > 0n ? "danger" : "success"}
         />
-      </div>
-
-      {gecikmis > 0n && (
-        <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Vadesi geçmiş <strong>{formatTRY(gecikmis)}</strong> borcunuz var.
-        </div>
-      )}
-
-      <div className="mb-6 grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
-        {AGING_ORDER.map((b) => (
-          <StatCard key={b} label={AGING_LABELS[b]} value={formatTRY(aging[b])} />
-        ))}
       </div>
 
       <Card>

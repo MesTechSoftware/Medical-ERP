@@ -8,9 +8,9 @@ import { getDoctorCari } from "@/lib/doctor-cari";
 // sonrası aynı kalmak zorunda olan kısım. KARARLAR'a göre RULE-12'nin dört
 // bileşeninden üçü Faz 1'de düşüyor (mahsuplaşma GÇ-3 · prim matrahı GÇ-1 ·
 // kongre kazanımı GÇ-4); "geriye tahsilat kaydı + cari hareket kalır".
-// Bu test tam olarak o kalanı tutar — bu yüzden mahsup satırlarını BİLEREK
-// sınamaz: onlar C3'te tanım gereği yok olacak. Kongre defteri C2'de söküldü;
-// tablosu CM'e kadar şemada durduğu için tahsilatın ona YAZMADIĞI sınanır.
+// Bu test tam olarak o kalanı tutar. Kongre defteri C2'de, mahsup C3'te
+// söküldü; tabloları CM'e kadar şemada durduğu için tahsilatın onlara
+// YAZMADIĞI sınanır.
 const h = vi.hoisted(() => ({ adminId: "" }));
 
 // Server action'ın iki çerçeve bağımlılığı var; ikisi de iş kuralı taşımıyor.
@@ -148,6 +148,26 @@ describe("tahsilat — dayanıklı davranış", () => {
     expect(logs).toHaveLength(1);
     expect(logs[0].entityId).toBe(payment.id);
     expect(await prisma.congressLedger.count()).toBe(0);
+  });
+
+  it("siparişe mahsup satırı yazmaz (C3 — GÇ-3, X-6: tahsilat eşlenmez)", async () => {
+    // Doktorun açık siparişi var; eski kod burada FIFO mahsup yazıyordu.
+    await recordCollection({}, tahsilatFormu(doctorId));
+
+    expect(await prisma.doctorPayment.count()).toBe(1);
+    expect(await prisma.paymentAllocation.count()).toBe(0);
+  });
+
+  it("borçtan büyük tahsilat da tek kayıttır — bakiye eksiye döner (K-2: avans ayrı tutulmaz)", async () => {
+    const fd = tahsilatFormu(doctorId);
+    fd.set("amount", "12000"); // borç 11.000,00
+
+    await recordCollection({}, fd);
+
+    const cari = await getDoctorCari(doctorId);
+    expect(cari.bakiye).toBe(-100_000n);
+    expect(await prisma.doctorPayment.count()).toBe(1);
+    expect(await prisma.paymentAllocation.count()).toBe(0);
   });
 
   it("geçersiz tutarı reddeder ve hiçbir şey yazmaz", async () => {

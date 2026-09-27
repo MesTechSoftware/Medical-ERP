@@ -2,8 +2,9 @@ import { test, expect } from "@playwright/test";
 import { Client } from "pg";
 
 /**
- * FR-10: Doktor detayı — cari, vade, sipariş/tahsilat geçmişi.
- * Kongre defteri ve FR-57 manuel düzeltme C2'de söküldü (GÇ-5, K-6).
+ * FR-10: Doktor detayı — cari, sipariş/tahsilat geçmişi.
+ * Kongre defteri ve FR-57 manuel düzeltme C2'de (GÇ-5, K-6), yaşlandırma ve
+ * vadesi geçmiş tutar C3'te söküldü (GÇ-3, X-6 §(5)/(7)).
  */
 
 const connectionString =
@@ -27,14 +28,13 @@ async function pickDoctor() {
   return d;
 }
 
-test("FR-10: doktor detayı cari ve yaşlandırmayı gösterir, kongre defteri yok", async ({
+test("FR-10: doktor detayı cariyi gösterir; kongre defteri ve vadesi geçmiş tutar yok", async ({
   page,
 }) => {
   const doctor = await pickDoctor();
   await page.goto(`/doctors/${doctor.id}`);
 
   await expect(page.getByText("Cari Bakiye")).toBeVisible();
-  await expect(page.getByText("Vadesi Geçmiş").first()).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Sipariş Geçmişi" })
   ).toBeVisible();
@@ -43,4 +43,6 @@ test("FR-10: doktor detayı cari ve yaşlandırmayı gösterir, kongre defteri y
   ).toBeVisible();
   // GÇ-5: doktorda teşvik anlamı taşıyan bakiye gösterilmez.
   await expect(page.getByText("Kongre Bakiyesi")).toHaveCount(0);
+  // X-6 §(7): vadesi geçmiş TUTAR gösterilmez — kalıcı.
+  await expect(page.getByText("Vadesi Geçmiş")).toHaveCount(0);
 });
