@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { getAllDealersCari } from "@/lib/dealer-cari";
 import { formatTRY } from "@/lib/money";
 import { PageHeader, Card, StatCard, EmptyRow } from "@/components/ui";
 
@@ -18,7 +17,6 @@ export default async function DashboardPage() {
     preparingCount,
     salesAgg,
     collectedAgg,
-    dealersCari,
   ] = await Promise.all([
     prisma.product.aggregate({ _sum: { stock: true } }),
     prisma.product.findMany({
@@ -37,16 +35,7 @@ export default async function DashboardPage() {
       where: { status: "AKTIF" },
       _sum: { amount: true },
     }),
-    getAllDealersCari(),
   ]);
-
-  // Bayi kanalı toplamları (D-06: kongreye/prime dokunmaz, ayrı gösterilir).
-  let bayiCiro = 0n;
-  let bayiBorc = 0n;
-  for (const c of dealersCari.values()) {
-    bayiCiro += c.toplamSevkiyat;
-    bayiBorc += c.bakiye;
-  }
 
   const toplamStok = stockAgg._sum.stock ?? 0;
   const toplamCiro = salesAgg._sum.grossTotal ?? 0n;
@@ -73,15 +62,10 @@ export default async function DashboardPage() {
       </div>
 
       {/* Finansal metrikler (D-01: satıcı borcu kavramı YOK) */}
-      <div className="mb-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard label="Satıcı Kanalı Ciro" value={formatTRY(toplamCiro)} hint="KDV dahil" />
+      {/* Bayi kanal kartları C5'te söküldü — bayi bir cari tipidir (X-8). */}
+      <div className="mb-4 grid gap-4 sm:grid-cols-2">
+        <StatCard label="Toplam Ciro" value={formatTRY(toplamCiro)} hint="KDV dahil" />
         <StatCard label="Toplam Tahsilat" value={formatTRY(toplamTahsilat)} />
-        <StatCard label="Bayi Kanalı Ciro" value={formatTRY(bayiCiro)} hint="KDV dahil" />
-        <StatCard
-          label="Bayi Alacağı"
-          value={formatTRY(bayiBorc)}
-          tone={bayiBorc > 0n ? "danger" : "success"}
-        />
       </div>
 
 

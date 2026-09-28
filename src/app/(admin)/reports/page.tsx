@@ -1,10 +1,9 @@
 import { cookies } from "next/headers";
-import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { formatTRY } from "@/lib/money";
 import { VAT_MODE_COOKIE, parseVatMode } from "@/lib/vat-mode";
 import {
-  getChannelReport,
+  getCiroTotal,
   getDoctorReports,
   getSellerReports,
 } from "@/lib/reports-service";
@@ -18,18 +17,11 @@ export default async function ReportsPage() {
   await requireAdmin();
   const mode = parseVatMode((await cookies()).get(VAT_MODE_COOKIE)?.value);
 
-  const [sellers, doctors, channel, dealerDebt] =
-    await Promise.all([
-      getSellerReports(mode),
-      getDoctorReports(mode, 25),
-      getChannelReport(mode),
-      prisma.dealerShipment
-        .aggregate({
-          where: { status: "ONAYLANDI" },
-          _sum: { grossTotal: true },
-        })
-        .then((r) => r._sum.grossTotal ?? 0n),
-    ]);
+  const [sellers, doctors, ciro] = await Promise.all([
+    getSellerReports(mode),
+    getDoctorReports(mode, 25),
+    getCiroTotal(mode),
+  ]);
 
   const modeLabel = mode === "NET" ? "KDV hariç" : "KDV dahil";
 
@@ -41,11 +33,9 @@ export default async function ReportsPage() {
         action={<VatToggle current={mode} />}
       />
 
-      {/* FR-60: kanal karşılaştırma + potansiyel yükümlülükler */}
+      {/* FR-60: kanal karşılaştırması C5'te söküldü (X-8) */}
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard label="Satıcı Kanalı Ciro" value={formatTRY(channel.saticiCiro)} />
-        <StatCard label="Bayi Kanalı Ciro" value={formatTRY(channel.bayiCiro)} />
-        <StatCard label="Bayi Açık Sevkiyat" value={formatTRY(dealerDebt)} />
+        <StatCard label="Toplam Ciro" value={formatTRY(ciro)} />
       </div>
 
       {/* FR-62: satıcı performans karşılaştırması */}

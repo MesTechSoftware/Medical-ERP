@@ -5,6 +5,6 @@ import { homeFor } from "@/lib/roles";
 export default async function Home() {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  // Üç yollu: ADMIN → /dashboard, SELLER → /my-orders, DEALER → /bayi (BRK-10).
+  // ADMIN → /dashboard, SELLER → /my-orders (BRK-10). Bayi giriş yapmaz (X-8).
   redirect(homeFor(session.user.role));
 }

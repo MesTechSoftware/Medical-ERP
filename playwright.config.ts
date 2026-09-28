@@ -67,14 +67,5 @@ export default defineConfig({
         storageState: "playwright/.auth/seller.json",
       },
     },
-    {
-      name: "dealer",
-      testMatch: "dealer/**/*.spec.ts",
-      dependencies: ["setup"],
-      use: {
-        ...devices["Desktop Chrome"],
-        storageState: "playwright/.auth/dealer.json",
-      },
-    },
   ],
 });

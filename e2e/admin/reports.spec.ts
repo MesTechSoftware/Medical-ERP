@@ -5,7 +5,7 @@ import { Client } from "pg";
  * Faz F — raporlar.
  *
  * FR-62 satıcı performansı · FR-63 doktor sıralaması ·
- * FR-60 kanal karşılaştırma · FR-64 KDV Dahil/Hariç toggle.
+ * FR-60 toplam ciro (kanal karşılaştırması C5'te söküldü) · FR-64 KDV Dahil/Hariç toggle.
  */
 
 const connectionString =
@@ -32,8 +32,9 @@ test("rapor sayfası satıcı ve doktor tablolarını gösterir (FR-62/FR-63)", 
   await expect(
     page.getByRole("heading", { name: /Doktor Ciro Sıralaması/ })
   ).toBeVisible();
-  await expect(page.getByText("Satıcı Kanalı Ciro")).toBeVisible();
-  await expect(page.getByText("Bayi Kanalı Ciro")).toBeVisible();
+  await expect(page.getByText("Toplam Ciro")).toBeVisible();
+  // X-8: kanal karşılaştırması C5'te söküldü.
+  await expect(page.getByText("Bayi Kanalı Ciro")).toHaveCount(0);
   // GÇ-4: kongre yükümlülüğü kartı C2'de söküldü.
   await expect(page.getByText("Açık Kongre Bakiyesi")).toHaveCount(0);
 });
@@ -60,7 +61,7 @@ test("🔴 FR-64: KDV toggle ciroyu net ↔ brüt arasında değiştirir", async
     );
 
   await page.goto("/reports");
-  const card = page.getByText("Satıcı Kanalı Ciro").locator("..");
+  const card = page.getByText("Toplam Ciro").locator("..");
 
   // KDV Hariç (NET): kart NET tutarı göstermeli. toContainText otomatik bekler.
   await page.getByRole("button", { name: "KDV Hariç" }).click();

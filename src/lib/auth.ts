@@ -24,7 +24,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if ((await checkLock(email)).locked) return null;
 
         const user = await prisma.user.findUnique({ where: { email } });
-        if (!user || user.status !== "ACTIVE") {
+        // D-2 §(6) / X-8: bayi sisteme giriş yapmaz — panel C5'te söküldü.
+        if (!user || user.status !== "ACTIVE" || user.role === "DEALER") {
           await recordFailure(email);
           await createAuditLog({
             action: AUDIT_ACTIONS.AUTH_LOGIN_FAILURE,

@@ -277,48 +277,9 @@ async function main() {
     });
   }
 
-  // --- Bayiler (Faz D) ---
-  const dealerLoginPass = await bcrypt.hash("bayi123", 10);
-  const dealerUser = await prisma.user.create({
-    data: {
-      name: "Anadolu Medikal Ltd.",
-      email: "bayi@medikal.local",
-      passwordHash: dealerLoginPass,
-      role: "DEALER",
-    },
-  });
-  const dealer = await prisma.dealer.create({
-    data: {
-      code: "BAYI-001",
-      title: "Anadolu Medikal Ltd.",
-      taxOffice: "Kızılay",
-      taxNo: "1234567890",
-      contactName: "Deniz Aslan",
-      phone: "0312 444 55 66",
-      userId: dealerUser.id,
-    },
-  });
-  // Login'siz ikinci bayi (admin-only yönetilen).
-  await prisma.dealer.create({
-    data: { code: "BAYI-002", title: "Ege Sağlık A.Ş.", contactName: "Merve Kaya" },
-  });
-  // Bayiye özel fiyat listesi (listenin ~%90'ı).
-  for (const code of ["MED-001", "MED-002", "MED-006"]) {
-    const prod = byCode(code);
-    await prisma.dealerPrice.create({
-      data: {
-        dealerId: dealer.id,
-        productId: prod.id,
-        netPrice: (prod.netListPrice * 9n) / 10n,
-        vatRate: prod.vatRate,
-      },
-    });
-  }
-
   console.log("Seed tamamlandı.");
   console.log(`  Admin:   ${admin.email} / admin123`);
   console.log(`  Satıcı:  ${sellers.map((s) => s.email).join(", ")} / satici123`);
-  console.log(`  Bayi:    ${dealerUser.email} / bayi123`);
 }
 
 main()
