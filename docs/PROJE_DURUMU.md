@@ -115,11 +115,11 @@ Enum'lar: `Role`, `EntityStatus`, `OrderStatus`, `StockMovementType`, `PaymentMe
 
 ## Yapılmış Ekranlar
 
-Üç rol bazlı route grubu: `(admin)`, `(seller)`, `(dealer)` — ayrı layout'lar (41 sayfa).
+İki rol bazlı route grubu: `(admin)`, `(seller)` — ayrı layout'lar. `(dealer)` grubu C5'te söküldü *(28.09.2026 — C5)*.
 
 **Admin** (`src/app/(admin)/`)
 - ✅ Dashboard — özet stat kartları, kritik stok, KDV dahil/hariç toggle · açık alacak, yaşlandırma ve satıcı bazlı alacak tablosu **söküldü** *(28.09.2026 — C3)*
-  ⛔ *X-8: kanal ciro ve bayi alacağı kartları `Dealer*` okuyor — C5'te sökülür*
+  · bayi kanal ciro ve bayi alacağı kartları **söküldü** *(28.09.2026 — C5)*
 - ✅ Ürünler — liste / yeni / düzenle (taban fiyat + net liste + KDV oranı)
   ⛔ *X-10: net liste fiyatı ürün kartından çıkar, varsayılan fiyat listesine taşınır (GÇ-15); 1B'de ayrı fiyat listesi ekranı*
 - ✅ Stok — giriş + hareketler
@@ -136,10 +136,10 @@ Enum'lar: `Role`, `EntityStatus`, `OrderStatus`, `StockMovementType`, `PaymentMe
   `congress-ledger.ts`, doktor detayındaki defter + manuel düzeltme (FR-57), dashboard ve rapordaki
   kongre bakiyesi. Dört `Congress*` tablosu **`CM`'e kadar şemada durur, okunmaz**. Modül Faz 3+'ta
   **uyum kütüğü** olarak yeniden yazılır (K-6, `modules.congress = false`)
-- ✅ Bayiler — liste / yeni / detay (bayi fiyat listesi, ödeme, cari) — **kalır** (bayi = cari tipi)
-  ⛔ **X-8 (15.09):** ekran Faz 1A **C5**'te sökülür; 1B'de bayiler **tek cari ekranından** (`hesap_sinifi` süzgeci) yönetilir
-- ✅ Bayi Sevkiyat — bayi sevkiyat taleplerinin onayı — **kalır**; talep artık bayiden değil firmadan gelir ⛔ GÇ-6 · ⛔ **X-8:** C5'te sökülür; bayi sevkiyatı genel `SVK` akışıdır, ayrı talep mekanizması yoktur
-- ✅ Raporlar — **dört rapor**: (1) satıcı performans karşılaştırması (FR-62), (2) doktor ciro sıralaması (FR-63; kongre bakiyesi C2'de, gecikmiş borç C3'te söküldü), (3) **kanal karşılaştırma — satıcı vs bayi** ⛔ *X-8: `Dealer*` okuyan sorgu C5'te sökülür; kırılım `hesap_sinifi`'nden türer* (`getChannelReport`, FR daha önce "üç" diye eksik sayılmıştı), ~~(4) yaşlandırma (FR-26)~~ C3'te söküldü (X-6 §(5)). Satıcı tahsilatı artık doktorun sorumlusu üzerinden toplanır *(28.09.2026 — C3)*; **tahsilat oranı kolonu söküldü** *(28.09.2026 — C4)*. Hepsi KDV dahil/hariç toggle'ına bağlı ⛔ GÇ-9. *(X-1 ile **"tahsilat oranı" metriği kalıcı olarak
+- ❌ Bayiler ve Bayi Sevkiyat — **söküldü** *(28.09.2026 — C5)* (GÇ-6, X-8): yönetim ekranları, `dealer-cari.ts`,
+  `dealer-shipment.ts`, bayi ödemesi. 1B'de bayi **`Doktor` satırıdır** (`hesap_sinifi = BAYI`) ve tek cari
+  ekranından yönetilir; sevkiyat genel `SVK` akışıdır. Beş `Dealer*` tablosu **`CM`'e kadar şemada durur, okunmaz**
+- ✅ Raporlar — **dört rapor**: (1) satıcı performans karşılaştırması (FR-62), (2) doktor ciro sıralaması (FR-63; kongre bakiyesi C2'de, gecikmiş borç C3'te söküldü), ~~(3) kanal karşılaştırma — satıcı vs bayi~~ C5'te söküldü, yerinde **toplam ciro** kartı kalır; kırılım 1B'de `hesap_sinifi`'nden türer (X-8), ~~(4) yaşlandırma (FR-26)~~ C3'te söküldü (X-6 §(5)). Satıcı tahsilatı artık doktorun sorumlusu üzerinden toplanır *(28.09.2026 — C3)*; **tahsilat oranı kolonu söküldü** *(28.09.2026 — C4)*. Hepsi KDV dahil/hariç toggle'ına bağlı ⛔ GÇ-9. *(X-1 ile **"tahsilat oranı" metriği kalıcı olarak
   kaldırılıyor**; yerine **iki mutlak sayı** — dönem cirosu (matrah) ve dönem tahsilatı (brüt) —
   tabanı ekranda yazılı gelir. Dönem **zorunlu aralık parametresidir**. Prim raporunu `OPERASYON`
   **görmez** (X-1 §(8): prim ücret ekidir). Faz 1 uygulama işi, D-2 ile **tek commit**.)*
@@ -152,17 +152,15 @@ Enum'lar: `Role`, `EntityStatus`, `OrderStatus`, `StockMovementType`, `PaymentMe
 - ❌ Kongreler — **söküldü** *(27.09.2026 — C2)*
 - ✅ Hesabım — doktor sayısı + ortalama iskonto; açık alacak listesi ve yaşlandırma **söküldü** *(28.09.2026 — C3)*
 
-**Bayi** (`src/app/(dealer)/` — URL öneki `/bayi`) — ⛔ **GÇ-6: route group'un tamamı geri çekilir**
-- ✅ Panel — kendi özetini görüntüler
-- ✅ Sevkiyat Talebi — talep oluşturur (admin onaylar)
-- ✅ Sevkiyatlar / Ödemeler / Fiyat Listem — salt görüntüleme
+**Bayi** — ❌ **`(dealer)` route group'u, `dealer-session.ts` ve `bayi@` hesabı söküldü** *(28.09.2026 — C5)* (GÇ-6).
+`Role.DEALER` enum'da `CM`'e kadar durur (GÇ-7); bu rolde bir hesap **giriş yapamaz** (`auth.ts`).
 - ℹ️ Bayi **asla prim/kongreye dokunmaz** (RULE-15).
 - ⛔ **KARARLAR D-2 §(6):** bayi sisteme **giriş yapmaz**; panel **Faz 3+ opsiyonel modül, yalnız
   Sınıf 1** (dış kullanıcı, internete açık hesap, parola sıfırlama, destek yükü). Faz 1'de bayi
   carisine **`Kullanici` bağlanmaz**; bugünkü beş sayfa ve `DEALER` rolü kaldırılır.
 
 **Ortak / altyapı**
-- ✅ Kök yönlendirme (role göre `/dashboard` · `/my-orders` · `/bayi`), Login, Privacy/KVKK
+- ✅ Kök yönlendirme (role göre `/dashboard` · `/my-orders`), Login, Privacy/KVKK
 - ✅ `error.tsx` / `loading.tsx` / `not-found.tsx` (kök seviyede mevcut)
 - ✅ `scripts/backup.ts` (`pg_dump`, host/container fallback) · *`scripts/expire-congress-balances.ts` + `job:expire` C2'de söküldü*
 
@@ -221,15 +219,15 @@ Enum'lar: `Role`, `EntityStatus`, `OrderStatus`, `StockMovementType`, `PaymentMe
   **typecheck + lint + birim testler + Playwright e2e**. Şu an **yeşil**.
 - **Birim test:** **60 test** (vitest, 7 dosya) — `money`, `vat`, `phone`, `doctor`,
   `reports`, `pagination`, `audit` saf fonksiyonları. *(C2: `congress-ledger` 27 · C3: `allocation` 23 · C4: `commission` 21 + `reports` `collectionRate` 3 test silindi)*
-- **E2E:** **47 test** *(C2: 66'dan kongre 10 + `doctor-detail` FR-57 3 · C3: `collections` FIFO + yaşlandırma 2 · C4: `commissions` 4 test silindi)* (Playwright; `admin`/`seller`/`dealer`/`guest` projeleri, storageState auth),
-  15 spec dosyası. Oturum iptali, bayi paneli, doktor devri dahil.
-- **Entegrasyon test:** **13 test** (vitest `integration` şeridi, 3 dosya) — `src/lib/db.itest.ts`
+- **E2E:** **38 test** *(C2: 66'dan kongre 10 + `doctor-detail` FR-57 3 · C3: `collections` FIFO + yaşlandırma 2 · C4: `commissions` 4 · C5: `dealer` 5 + `panel` 4 + bayi setup 1 silindi, bayi girişi reddi 1 eklendi)* (Playwright; `admin`/`seller`/`guest` projeleri, storageState auth),
+  13 spec dosyası. Oturum iptali, doktor devri dahil.
+- **Entegrasyon test:** **14 test** (vitest `integration` şeridi, 3 dosya) — `src/lib/db.itest.ts`
   altyapıyı sınar (şema uygulandı · yazılabilir · testler TRUNCATE ile izole) *(26.09.2026 — C1)* ·
   `collections.itest.ts` tahsilatın söküm boyunca kalan davranışını tutar: kuruş kaydı, hesaplanan
   cari (RULE-08), audit, iptal (FR-29), kongre hareketi **yazmaz** *(27.09.2026 — C2)*, mahsup satırı
   **yazmaz**, borçtan büyük tahsilat bakiyeyi eksiye çevirir (K-2) · `reports-service.itest.ts` satıcı
   tahsilatının doktor sorumlusu üzerinden toplandığını sınar *(28.09.2026 — C3)* · iptal prim düzeltmesi
-  **yazmaz** *(28.09.2026 — C4)*.
+  **yazmaz** *(28.09.2026 — C4)* · toplam ciro KDV moduna göre ve iptal hariç toplanır *(28.09.2026 — C5)*.
 - **Test DB:** **üç veritabanı.** `medikal_dev` (geliştirme) · `medikal_test` (e2e, her koşuda
   `migrate reset`) · **`medikal_itest`** (entegrasyon; şema `globalSetup`'ta `migrate deploy`,
   izolasyon test başına `TRUNCATE`). Şerit ayrımı: `npm test` = birim (DB gerekmez) ·
@@ -251,8 +249,8 @@ npm run test:e2e         # e2e (Playwright)
 ```
 
 Demo hesapları (yalnızca geliştirme, üretime taşınmamalı): `admin@medikal.local`/`admin123`,
-`ahmet@…`/`satici123`, `bayi@medikal.local`/`bayi123`.
-⛔ `bayi@…` hesabı GÇ-6 ile kalkar; **C9'dan sonra** demo hesapları yalnız `db:seed:demo`'dadır.
+`ahmet@…`/`satici123`. *`bayi@…` hesabı C5'te seed'den çıktı (GÇ-6).*
+**C9'dan sonra** demo hesapları yalnız `db:seed:demo`'dadır.
 
 ## Önceki Yol Haritasının Durumu (v2'de çözülenler)
 

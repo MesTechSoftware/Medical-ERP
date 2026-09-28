@@ -51,10 +51,3 @@ export async function requireSeller() {
   if (session.user.role !== "SELLER") redirect(homeFor(session.user.role));
   return session;
 }
-
-/** DEALER değilse kendi ana sayfasına yönlendirir (bayi paneli guard'ı). */
-export async function requireDealer() {
-  const session = await requireSession();
-  if (session.user.role !== "DEALER") redirect(homeFor(session.user.role));
-  return session;
-}

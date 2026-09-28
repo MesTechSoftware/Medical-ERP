@@ -10,8 +10,6 @@ import {
   CreditCard,
   ShieldCheck,
   Stethoscope,
-  Store,
-  PackageCheck,
   BarChart3,
 } from "lucide-react";
 
@@ -24,8 +22,6 @@ const navItems: NavItem[] = [
   { href: "/orders", label: "Siparişler", icon: ClipboardList },
   { href: "/shipping", label: "Kargo", icon: Truck },
   { href: "/collections", label: "Tahsilatlar", icon: CreditCard },
-  { href: "/dealers", label: "Bayiler", icon: Store },
-  { href: "/dealer-shipments", label: "Bayi Sevkiyat", icon: PackageCheck },
   { href: "/reports", label: "Raporlar", icon: BarChart3 },
   { href: "/audit-logs", label: "Audit Log", icon: ShieldCheck },
 ];

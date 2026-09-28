@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { prisma } from "@/lib/db";
-import { getSellerReports } from "@/lib/reports-service";
+import { getCiroTotal, getSellerReports } from "@/lib/reports-service";
 
 // Satıcı raporundaki tahsilat C3'te mahsup satırından (PaymentAllocation)
 // koparıldı: artık satıcının sorumlu olduğu doktorların AKTİF tahsilatları
@@ -64,5 +64,31 @@ describe("satıcı raporu — tahsilat (C3)", () => {
     expect(r.ciro).toBe(0n);
     expect(r.tahsilat).toBe(42_00n);
     expect(await prisma.paymentAllocation.count()).toBe(0);
+  });
+});
+
+describe("toplam ciro (C5 — kanal karşılaştırmasının yerine)", () => {
+  it("KDV moduna göre net/brüt toplar; iptal edilen sipariş sayılmaz", async () => {
+    const ali = await satici("Ali", "ali@medikal.local");
+    const d1 = await doktor("Dr. A", "+905320000001", ali.id);
+    const siparis = (netTotal: bigint, grossTotal: bigint, status?: "CANCELLED") =>
+      prisma.order.create({
+        data: {
+          sellerId: ali.id,
+          doctorId: d1.id,
+          netTotal,
+          vatTotal: grossTotal - netTotal,
+          grossTotal,
+          dueDate: new Date("2026-10-15T00:00:00.000Z"),
+          ...(status ? { status } : {}),
+        },
+      });
+
+    await siparis(1_000_00n, 1_100_00n);
+    await siparis(500_00n, 600_00n);
+    await siparis(9_999_00n, 9_999_00n, "CANCELLED");
+
+    expect(await getCiroTotal("NET")).toBe(1_500_00n);
+    expect(await getCiroTotal("GROSS")).toBe(1_700_00n);
   });
 });

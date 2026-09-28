@@ -103,39 +103,15 @@ export async function getDoctorReports(
   return rows.slice(0, limit);
 }
 
-/** Kanal karşılaştırması: Satıcı kanalı vs Bayi kanalı ciro (FR-60). */
-export type ChannelReport = {
-  saticiCiro: bigint;
-  saticiTahsilat: bigint;
-  bayiCiro: bigint;
-  bayiTahsilat: bigint;
-};
-
-export async function getChannelReport(mode: VatMode): Promise<ChannelReport> {
+/**
+ * Toplam ciro (iptal hariç, seçili KDV moduna göre). Kanal karşılaştırması
+ * C5'te söküldü: bayi bir cari tipidir, kırılım 1B'de `hesap_sinifi`'nden (X-8).
+ */
+export async function getCiroTotal(mode: VatMode): Promise<bigint> {
   const field = mode === "NET" ? "netTotal" : "grossTotal";
-  const [orders, doctorPay, shipments, dealerPay] = await Promise.all([
-    prisma.order.aggregate({
-      where: { status: { not: "CANCELLED" } },
-      _sum: { [field]: true } as { netTotal?: true; grossTotal?: true },
-    }),
-    prisma.doctorPayment.aggregate({
-      where: { status: "AKTIF" },
-      _sum: { amount: true },
-    }),
-    prisma.dealerShipment.aggregate({
-      where: { status: "ONAYLANDI" },
-      _sum: { [field]: true } as { netTotal?: true; grossTotal?: true },
-    }),
-    prisma.dealerPayment.aggregate({ _sum: { amount: true } }),
-  ]);
-
-  const orderSum = (orders._sum as Record<string, bigint | null>)[field] ?? 0n;
-  const shipSum = (shipments._sum as Record<string, bigint | null>)[field] ?? 0n;
-
-  return {
-    saticiCiro: orderSum,
-    saticiTahsilat: doctorPay._sum.amount ?? 0n,
-    bayiCiro: shipSum,
-    bayiTahsilat: dealerPay._sum.amount ?? 0n,
-  };
+  const orders = await prisma.order.aggregate({
+    where: { status: { not: "CANCELLED" } },
+    _sum: { [field]: true } as { netTotal?: true; grossTotal?: true },
+  });
+  return (orders._sum as Record<string, bigint | null>)[field] ?? 0n;
 }
