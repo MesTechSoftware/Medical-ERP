@@ -1,14 +1,13 @@
 import { prisma } from "@/lib/db";
-import { collectionRate, weightedDiscount } from "@/lib/reports";
+import { weightedDiscount } from "@/lib/reports";
 import type { VatMode } from "@/lib/vat-mode";
 
-/** Satıcı performans karşılaştırması (FR-62). */
+/** Satıcı performans karşılaştırması (FR-62). Tahsilat oranı C4'te söküldü — kalıcı (X-1 §(1)). */
 export type SellerReport = {
   sellerId: string;
   name: string;
   ciro: bigint; // seçili KDV moduna göre
   tahsilat: bigint;
-  tahsilatOrani: number; // % (brüt üzerinden)
   ortalamaIskonto: number; // %
   doktorSayisi: number;
 };
@@ -44,7 +43,6 @@ export async function getSellerReports(mode: VatMode): Promise<SellerReport[]> {
         (sum, o) => sum + (mode === "NET" ? o.netTotal : o.grossTotal),
         0n
       );
-      const brut = orders.reduce((sum, o) => sum + o.grossTotal, 0n);
       const tahsilat = collected._sum.amount ?? 0n;
 
       return {
@@ -52,7 +50,6 @@ export async function getSellerReports(mode: VatMode): Promise<SellerReport[]> {
         name: s.name,
         ciro,
         tahsilat,
-        tahsilatOrani: collectionRate(tahsilat, brut),
         ortalamaIskonto: weightedDiscount(items),
         doktorSayisi,
       };

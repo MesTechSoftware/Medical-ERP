@@ -60,14 +60,13 @@ export default async function ReportsPage() {
                 <th className="px-3 py-2 font-medium">Satıcı</th>
                 <th className="px-3 py-2 text-right font-medium">Ciro</th>
                 <th className="px-3 py-2 text-right font-medium">Tahsilat</th>
-                <th className="px-3 py-2 text-right font-medium">Tahsilat %</th>
                 <th className="px-3 py-2 text-right font-medium">Ort. İskonto</th>
                 <th className="px-3 py-2 text-right font-medium">Doktor</th>
               </tr>
             </thead>
             <tbody>
               {sellers.length === 0 && (
-                <EmptyRow colSpan={6} text="Satıcı yok." />
+                <EmptyRow colSpan={5} text="Satıcı yok." />
               )}
               {sellers.map((s) => (
                 <tr key={s.sellerId} className="border-b border-slate-100 last:border-0">
@@ -79,15 +78,6 @@ export default async function ReportsPage() {
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums">
                     {formatTRY(s.tahsilat)}
-                  </td>
-                  <td className="px-3 py-2 text-right tabular-nums">
-                    <span
-                      className={
-                        s.tahsilatOrani < 50 ? "text-red-600" : "text-slate-900"
-                      }
-                    >
-                      %{s.tahsilatOrani}
-                    </span>
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums text-slate-500">
                     %{s.ortalamaIskonto}

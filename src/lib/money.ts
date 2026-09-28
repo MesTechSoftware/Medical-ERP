@@ -29,8 +29,7 @@ export function kurusToTl(kurus: bigint | number): number {
  * Tam sayı bölme, yarımı sıfırdan uzağa yuvarlar (round-half-away-from-zero).
  * `(2n + d) / 2d` biçimi, `d/2`'nin tam sayı bölmesinde hassasiyet kaybetmesini önler.
  *
- * Parasal orantı hesaplarının TEK yuvarlama noktası: KDV (vat.ts) ve prim
- * matrahı (commission.ts) aynı kuralı kullansın diye burada tutulur.
+ * Parasal orantı hesaplarının TEK yuvarlama noktası (KDV — vat.ts).
  */
 export function divRound(numerator: bigint, denominator: bigint): bigint {
   if (denominator === 0n) throw new Error("Sıfıra bölme.");

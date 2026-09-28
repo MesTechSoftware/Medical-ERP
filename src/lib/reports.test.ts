@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   ciroField,
-  collectionRate,
   ratePercent,
   weightedDiscount,
 } from "@/lib/reports";
@@ -20,20 +19,6 @@ describe("ratePercent", () => {
 
   it("payı bölenden büyükse >100 döner", () => {
     expect(ratePercent(150n, 100n)).toBe(150);
-  });
-});
-
-describe("collectionRate — FR-62", () => {
-  it("tahsil edilen / faturalanan yüzdesi", () => {
-    expect(collectionRate(700_00n, 1000_00n)).toBe(70);
-  });
-
-  it("hiç fatura yoksa 0", () => {
-    expect(collectionRate(0n, 0n)).toBe(0);
-  });
-
-  it("tam tahsilat %100", () => {
-    expect(collectionRate(500_00n, 500_00n)).toBe(100);
   });
 });
 
