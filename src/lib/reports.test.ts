@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  ciroField,
   ratePercent,
   weightedDiscount,
 } from "@/lib/reports";
@@ -53,12 +52,5 @@ describe("weightedDiscount", () => {
 
   it("boş listede %0 (sıfıra bölme yok)", () => {
     expect(weightedDiscount([])).toBe(0);
-  });
-});
-
-describe("ciroField — FR-64 KDV toggle", () => {
-  it("NET modda net, GROSS modda brüt alanını seçer", () => {
-    expect(ciroField("NET")).toBe("netTotal");
-    expect(ciroField("GROSS")).toBe("grossTotal");
   });
 });

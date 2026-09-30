@@ -1,41 +1,36 @@
-import { cookies } from "next/headers";
 import { requireAdmin } from "@/lib/session";
 import { formatTRY } from "@/lib/money";
-import { VAT_MODE_COOKIE, parseVatMode } from "@/lib/vat-mode";
 import {
   getCiroTotal,
   getDoctorReports,
   getSellerReports,
 } from "@/lib/reports-service";
 import { PageHeader, Card, StatCard, EmptyRow } from "@/components/ui";
-import VatToggle from "@/components/VatToggle";
 
 /**
- * FR-62/FR-63/FR-60: Raporlar. Tümünde KDV Dahil/Hariç görünüm seçeneği (FR-64).
+ * FR-62/FR-63/FR-60: Raporlar. KDV toggle'ı C6'da söküldü (GÇ-9, Ü-3 §(3)):
+ * ciro daima KDV hariç (matrah), tahsilat daima KDV dahil (brüt); her
+ * tutarın tabanı başlığında yazılıdır (Ü-3 §(6)/(7)).
  */
 export default async function ReportsPage() {
   await requireAdmin();
-  const mode = parseVatMode((await cookies()).get(VAT_MODE_COOKIE)?.value);
 
   const [sellers, doctors, ciro] = await Promise.all([
-    getSellerReports(mode),
-    getDoctorReports(mode, 25),
-    getCiroTotal(mode),
+    getSellerReports(),
+    getDoctorReports(25),
+    getCiroTotal(),
   ]);
-
-  const modeLabel = mode === "NET" ? "KDV hariç" : "KDV dahil";
 
   return (
     <div>
       <PageHeader
         title="Raporlar"
-        description={`Ciro ve performans (${modeLabel})`}
-        action={<VatToggle current={mode} />}
+        description="Ciro ve performans"
       />
 
       {/* FR-60: kanal karşılaştırması C5'te söküldü (X-8) */}
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard label="Toplam Ciro" value={formatTRY(ciro)} />
+        <StatCard label="Toplam Ciro" value={formatTRY(ciro)} hint="KDV hariç" />
       </div>
 
       {/* FR-62: satıcı performans karşılaştırması */}
@@ -48,8 +43,8 @@ export default async function ReportsPage() {
             <thead>
               <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
                 <th className="px-3 py-2 font-medium">Satıcı</th>
-                <th className="px-3 py-2 text-right font-medium">Ciro</th>
-                <th className="px-3 py-2 text-right font-medium">Tahsilat</th>
+                <th className="px-3 py-2 text-right font-medium">Ciro (KDV hariç)</th>
+                <th className="px-3 py-2 text-right font-medium">Tahsilat (KDV dahil)</th>
                 <th className="px-3 py-2 text-right font-medium">Ort. İskonto</th>
                 <th className="px-3 py-2 text-right font-medium">Doktor</th>
               </tr>
@@ -94,7 +89,7 @@ export default async function ReportsPage() {
                 <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
                   <th className="px-3 py-2 font-medium">Doktor</th>
                   <th className="px-3 py-2 font-medium">Satıcı</th>
-                  <th className="px-3 py-2 text-right font-medium">Ciro</th>
+                  <th className="px-3 py-2 text-right font-medium">Ciro (KDV hariç)</th>
                 </tr>
               </thead>
               <tbody>

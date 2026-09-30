@@ -4,8 +4,7 @@ import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
 import { FormError, SubmitButton } from "@/components/form";
 import { formatTRY, kurusToTl, tlToKurus } from "@/lib/money";
-import { grossFromNet, lineTotals, netFromGross, sumLineTotals } from "@/lib/vat";
-import { VAT_MODE_COOKIE, type VatMode } from "@/lib/vat-mode";
+import { lineTotals, sumLineTotals } from "@/lib/vat";
 import { createOrder, type OrderFormState } from "./actions";
 
 type Product = {
@@ -13,14 +12,9 @@ type Product = {
   name: string;
   code: string;
   netListPrice: bigint; // kuruş, KDV hariç
-  netMinPrice: bigint; // kuruş, KDV hariç
   vatRate: number; // %
   stock: number;
 };
-
-function persistVatMode(mode: VatMode) {
-  document.cookie = `${VAT_MODE_COOKIE}=${mode}; path=/; max-age=31536000; SameSite=Lax`;
-}
 
 /** Boş bırakılan fiyat = ürünün liste fiyatı. */
 type Row = { key: number; productId: string; quantity: number; priceText: string };
@@ -35,11 +29,9 @@ export type DoctorOption = {
 export default function OrderForm({
   products,
   doctors,
-  initialVatMode = "NET",
 }: {
   products: Product[];
   doctors: DoctorOption[];
-  initialVatMode?: VatMode;
 }) {
   const [state, formAction] = useActionState<OrderFormState, FormData>(
     createOrder,
@@ -49,39 +41,22 @@ export default function OrderForm({
     { key: 1, productId: "", quantity: 1, priceText: "" },
   ]);
 
-  // FR-18: KDV Dahil/Hariç tercihi hatırlanır (çerezden gelir).
-  const [vatMode, setVatMode] = useState<VatMode>(initialVatMode);
-
   const productMap = useMemo(
     () => new Map(products.map((p) => [p.id, p])),
     [products]
   );
 
-  /** Girilen metni, seçili moda göre NET kuruşa çevirir. Boşsa liste fiyatı. */
+  /**
+   * Girilen metni NET kuruşa çevirir. Boşsa liste fiyatı. Fiyat girişi daima
+   * KDV hariçtir — toggle C6'da söküldü (Ü-3 §(3), `pricing.fiyatGirisiKdvDahil = false`).
+   */
   function netKurusOf(row: Row, p: Product | undefined): bigint {
     if (!p) return 0n;
     const text = row.priceText.trim();
     if (text === "") return p.netListPrice;
     const tl = Number(text);
     if (!Number.isFinite(tl) || tl < 0) return 0n;
-    const k = tlToKurus(tl);
-    return vatMode === "NET" ? k : netFromGross(k, p.vatRate);
-  }
-
-  /** Mod değişince girilen değerleri yeniden yaz — NET değer korunur. */
-  function switchVatMode(next: VatMode) {
-    setRows((rs) =>
-      rs.map((r) => {
-        if (r.priceText.trim() === "") return r;
-        const p = productMap.get(r.productId);
-        if (!p) return r;
-        const net = netKurusOf(r, p);
-        const shown = next === "NET" ? net : grossFromNet(net, p.vatRate);
-        return { ...r, priceText: String(kurusToTl(shown)) };
-      })
-    );
-    setVatMode(next);
-    persistVatMode(next);
+    return tlToKurus(tl);
   }
 
   const computed = rows.map((row) => {
@@ -97,7 +72,6 @@ export default function OrderForm({
       netUnit,
       totals,
       overStock: p ? row.quantity > p.stock : false,
-      belowMin: p ? netUnit < p.netMinPrice : false,
     };
   });
 
@@ -112,7 +86,7 @@ export default function OrderForm({
       netUnitPriceTL: kurusToTl(c.netUnit),
     }));
 
-  const hasBlockingError = computed.some((c) => c.belowMin || c.overStock);
+  const hasBlockingError = computed.some((c) => c.overStock);
 
   function addRow() {
     setRows((rs) => [
@@ -126,8 +100,6 @@ export default function OrderForm({
   function updateRow(key: number, patch: Partial<Row>) {
     setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)));
   }
-
-  const priceLabel = vatMode === "NET" ? "Birim (net)" : "Birim (KDV dahil)";
 
   return (
     <form action={formAction} className="space-y-6">
@@ -177,29 +149,6 @@ export default function OrderForm({
             Sipariş Kalemleri
           </h2>
           <div className="flex items-center gap-3">
-            {/* FR-18: KDV Dahil / KDV Hariç görünüm seçeneği */}
-            <div
-              className="inline-flex overflow-hidden rounded-lg border border-slate-300"
-              role="group"
-              aria-label="KDV görünümü"
-            >
-              {(["NET", "GROSS"] as const).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => switchVatMode(m)}
-                  aria-pressed={vatMode === m}
-                  className={
-                    "px-3 py-1 text-xs font-medium " +
-                    (vatMode === m
-                      ? "bg-slate-900 text-white"
-                      : "bg-white text-slate-600 hover:bg-slate-50")
-                  }
-                >
-                  {m === "NET" ? "KDV Hariç" : "KDV Dahil"}
-                </button>
-              ))}
-            </div>
             <button
               type="button"
               onClick={addRow}
@@ -211,7 +160,7 @@ export default function OrderForm({
         </div>
 
         <div className="space-y-2">
-          {computed.map(({ row, product: p, netUnit, totals, overStock, belowMin }) => (
+          {computed.map(({ row, product: p, totals, overStock }) => (
             <div
               key={row.key}
               className="flex flex-wrap items-end gap-2 rounded-lg border border-slate-200 p-2"
@@ -266,40 +215,26 @@ export default function OrderForm({
                 />
               </div>
 
-              {/* FR-12: satıcı birim fiyatı değiştirebilir; taban fiyat sunucuda zorlanır. */}
+              {/* FR-12: satıcı birim fiyatı değiştirebilir. Taban fiyat reddi C6'da
+                  söküldü (GÇ-8, A-10); yerine taban etiketi 1B'de gelir. */}
               <div className="w-32">
                 <label
                   htmlFor={`price-${row.key}`}
                   className="mb-1 block text-xs text-slate-500"
                 >
-                  {priceLabel}
+                  Birim (KDV hariç)
                 </label>
                 <input
                   id={`price-${row.key}`}
                   type="number"
                   step="0.01"
                   min={0}
-                  placeholder={
-                    p
-                      ? String(
-                          kurusToTl(
-                            vatMode === "NET"
-                              ? p.netListPrice
-                              : grossFromNet(p.netListPrice, p.vatRate)
-                          )
-                        )
-                      : "—"
-                  }
+                  placeholder={p ? String(kurusToTl(p.netListPrice)) : "—"}
                   value={row.priceText}
                   onChange={(e) =>
                     updateRow(row.key, { priceText: e.target.value })
                   }
-                  className={
-                    "w-full rounded-lg border px-3 py-2 text-sm tabular-nums outline-none " +
-                    (belowMin
-                      ? "border-red-400 focus:border-red-500"
-                      : "border-slate-300 focus:border-slate-500")
-                  }
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm tabular-nums outline-none focus:border-slate-500"
                 />
               </div>
 
@@ -312,11 +247,9 @@ export default function OrderForm({
               </div>
 
               <div className="w-28 text-right">
-                <span className="mb-1 block text-xs text-slate-500">Tutar</span>
+                <span className="mb-1 block text-xs text-slate-500">Tutar (KDV hariç)</span>
                 <div className="py-2 text-sm font-medium tabular-nums text-slate-900">
-                  {formatTRY(
-                    vatMode === "NET" ? totals.lineNetTotal : totals.lineGrossTotal
-                  )}
+                  {formatTRY(totals.lineNetTotal)}
                 </div>
               </div>
 
@@ -332,12 +265,6 @@ export default function OrderForm({
               {overStock && (
                 <p className="w-full text-xs text-red-600">
                   Stok yetersiz (mevcut: {p?.stock}).
-                </p>
-              )}
-              {belowMin && p && (
-                <p className="w-full text-xs text-red-600">
-                  Birim fiyat taban fiyatın altında: {formatTRY(p.netMinPrice)} (net).
-                  Girilen: {formatTRY(netUnit)} (net).
                 </p>
               )}
             </div>

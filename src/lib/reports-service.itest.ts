@@ -47,7 +47,7 @@ describe("satıcı raporu — tahsilat (C3)", () => {
     await tahsilat(d3.id, 70_000n, veli.id);
     await tahsilat(sahipsiz.id, 5_000n, ali.id);
 
-    const rapor = await getSellerReports("GROSS");
+    const rapor = await getSellerReports();
     const byName = new Map(rapor.map((r) => [r.name, r]));
 
     expect(byName.get("Ali")?.tahsilat).toBe(350_050n);
@@ -59,7 +59,7 @@ describe("satıcı raporu — tahsilat (C3)", () => {
     const d1 = await doktor("Dr. A", "+905320000001", ali.id);
     await tahsilat(d1.id, 42_00n, ali.id);
 
-    const [r] = await getSellerReports("GROSS");
+    const [r] = await getSellerReports();
 
     expect(r.ciro).toBe(0n);
     expect(r.tahsilat).toBe(42_00n);
@@ -67,8 +67,8 @@ describe("satıcı raporu — tahsilat (C3)", () => {
   });
 });
 
-describe("toplam ciro (C5 — kanal karşılaştırmasının yerine)", () => {
-  it("KDV moduna göre net/brüt toplar; iptal edilen sipariş sayılmaz", async () => {
+describe("ciro — daima matrah (C5 toplam ciro · C6 toggle sökümü, Ü-3 C sınıfı)", () => {
+  it("toplam ve satıcı cirosu KDV hariç toplanır; iptal edilen sipariş sayılmaz", async () => {
     const ali = await satici("Ali", "ali@medikal.local");
     const d1 = await doktor("Dr. A", "+905320000001", ali.id);
     const siparis = (netTotal: bigint, grossTotal: bigint, status?: "CANCELLED") =>
@@ -88,7 +88,8 @@ describe("toplam ciro (C5 — kanal karşılaştırmasının yerine)", () => {
     await siparis(500_00n, 600_00n);
     await siparis(9_999_00n, 9_999_00n, "CANCELLED");
 
-    expect(await getCiroTotal("NET")).toBe(1_500_00n);
-    expect(await getCiroTotal("GROSS")).toBe(1_700_00n);
+    expect(await getCiroTotal()).toBe(1_500_00n);
+    const [r] = await getSellerReports();
+    expect(r.ciro).toBe(1_500_00n);
   });
 });
