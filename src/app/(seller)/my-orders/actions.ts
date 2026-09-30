@@ -7,7 +7,7 @@ import { prisma } from "@/lib/db";
 import { requireSeller } from "@/lib/session";
 import { priceTLSchema, quantitySchema } from "@/lib/validation";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
-import { tlToKurus, formatTRY } from "@/lib/money";
+import { tlToKurus } from "@/lib/money";
 import { discountRate, lineTotals, sumLineTotals } from "@/lib/vat";
 import { canSellerOrderForDoctor } from "@/lib/doctor";
 import { getDueSettings, addDays } from "@/lib/settings";
@@ -95,13 +95,8 @@ export async function createOrder(
             ? tlToKurus(line.netUnitPriceTL)
             : product.netListPrice;
 
-        // RULE-03: taban fiyatın (net) altına inilemez — SUNUCU TARAFINDA zorlanır.
-        if (netUnitPrice < product.netMinPrice) {
-          throw new Error(
-            `${product.name} için birim fiyat taban fiyatın altında olamaz ` +
-              `(taban: ${formatTRY(product.netMinPrice)} + KDV hariç).`
-          );
-        }
+        // RULE-03 taban fiyat reddi C6'da söküldü: iskonto tavanı yok, liste üstü
+        // satış serbest (GÇ-8, A-10 · Ü-3 §(10)). Taban etiketi 1B'de gelir.
 
         // Stok düşümü ATOMİK: koşul WHERE'de, veritabanında değerlendirilir.
         // Önce okuyup JS'te karşılaştırmak (check-then-act) iki eşzamanlı

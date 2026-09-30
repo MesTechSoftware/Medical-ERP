@@ -30,8 +30,3 @@ export function weightedDiscount(
   }
   return ratePercent(discountTotal, listTotal);
 }
-
-/** KDV görünümüne göre ciro alanını seçer (FR-64). */
-export function ciroField(mode: "NET" | "GROSS"): "netTotal" | "grossTotal" {
-  return mode === "NET" ? "netTotal" : "grossTotal";
-}

@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/db";
 import { weightedDiscount } from "@/lib/reports";
-import type { VatMode } from "@/lib/vat-mode";
 
 /** Satıcı performans karşılaştırması (FR-62). Tahsilat oranı C4'te söküldü — kalıcı (X-1 §(1)). */
 export type SellerReport = {
@@ -12,7 +11,9 @@ export type SellerReport = {
   doktorSayisi: number;
 };
 
-export async function getSellerReports(mode: VatMode): Promise<SellerReport[]> {
+// Ciro daima MATRAHTIR (KDV hariç): satıcı raporu ve dönem cirosu Ü-3 C sınıfıdır,
+// toggle konmaz (Ü-3 §(5)). Tahsilat daima BRÜTTÜR (B sınıfı, Ü-3 §(4)).
+export async function getSellerReports(): Promise<SellerReport[]> {
   const sellers = await prisma.user.findMany({
     where: { role: "SELLER" },
     orderBy: { name: "asc" },
@@ -39,10 +40,7 @@ export async function getSellerReports(mode: VatMode): Promise<SellerReport[]> {
         prisma.doctor.count({ where: { ownerSellerId: s.id } }),
       ]);
 
-      const ciro = orders.reduce(
-        (sum, o) => sum + (mode === "NET" ? o.netTotal : o.grossTotal),
-        0n
-      );
+      const ciro = orders.reduce((sum, o) => sum + o.netTotal, 0n);
       const tahsilat = collected._sum.amount ?? 0n;
 
       return {
@@ -67,10 +65,7 @@ export type DoctorReport = {
   ciro: bigint;
 };
 
-export async function getDoctorReports(
-  mode: VatMode,
-  limit = 50
-): Promise<DoctorReport[]> {
+export async function getDoctorReports(limit = 50): Promise<DoctorReport[]> {
   const doctors = await prisma.doctor.findMany({
     include: {
       ownerSeller: { select: { name: true } },
@@ -85,10 +80,7 @@ export async function getDoctorReports(
   });
 
   const rows = doctors.map((d) => {
-    const ciro = d.orders.reduce(
-      (s, o) => s + (mode === "NET" ? o.netTotal : o.grossTotal),
-      0n
-    );
+    const ciro = d.orders.reduce((s, o) => s + o.netTotal, 0n);
 
     return {
       doctorId: d.id,
@@ -104,14 +96,13 @@ export async function getDoctorReports(
 }
 
 /**
- * Toplam ciro (iptal hariç, seçili KDV moduna göre). Kanal karşılaştırması
+ * Toplam ciro — matrah, iptal hariç (Ü-3 C sınıfı). Kanal karşılaştırması
  * C5'te söküldü: bayi bir cari tipidir, kırılım 1B'de `hesap_sinifi`'nden (X-8).
  */
-export async function getCiroTotal(mode: VatMode): Promise<bigint> {
-  const field = mode === "NET" ? "netTotal" : "grossTotal";
+export async function getCiroTotal(): Promise<bigint> {
   const orders = await prisma.order.aggregate({
     where: { status: { not: "CANCELLED" } },
-    _sum: { [field]: true } as { netTotal?: true; grossTotal?: true },
+    _sum: { netTotal: true },
   });
-  return (orders._sum as Record<string, bigint | null>)[field] ?? 0n;
+  return orders._sum.netTotal ?? 0n;
 }

@@ -30,10 +30,6 @@ function parseProductForm(formData: FormData) {
     return { error: "Geçerli bir taban fiyat giriniz." as const };
   if (!Number.isInteger(vatRate) || vatRate < 0 || vatRate > 100)
     return { error: "KDV oranı 0-100 arasında tam sayı olmalıdır." as const };
-  if (minPriceTL > listPriceTL)
-    return {
-      error: "Taban fiyat liste fiyatından yüksek olamaz." as const,
-    };
 
   return {
     data: {

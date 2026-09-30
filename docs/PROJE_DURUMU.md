@@ -118,9 +118,9 @@ Enum'lar: `Role`, `EntityStatus`, `OrderStatus`, `StockMovementType`, `PaymentMe
 İki rol bazlı route grubu: `(admin)`, `(seller)` — ayrı layout'lar. `(dealer)` grubu C5'te söküldü *(28.09.2026 — C5)*.
 
 **Admin** (`src/app/(admin)/`)
-- ✅ Dashboard — özet stat kartları, kritik stok, KDV dahil/hariç toggle · açık alacak, yaşlandırma ve satıcı bazlı alacak tablosu **söküldü** *(28.09.2026 — C3)*
+- ✅ Dashboard — özet stat kartları, kritik stok · açık alacak, yaşlandırma ve satıcı bazlı alacak tablosu **söküldü** *(28.09.2026 — C3)*
   · bayi kanal ciro ve bayi alacağı kartları **söküldü** *(28.09.2026 — C5)*
-- ✅ Ürünler — liste / yeni / düzenle (taban fiyat + net liste + KDV oranı)
+- ✅ Ürünler — liste / yeni / düzenle (taban fiyat + net liste + KDV oranı) · "taban > liste" reddi **söküldü** *(28.09.2026 — C6)*; taban fiyat alanı `CM`'e kadar durur, hiçbir yerde zorlanmaz (GÇ-8)
   ⛔ *X-10: net liste fiyatı ürün kartından çıkar, varsayılan fiyat listesine taşınır (GÇ-15); 1B'de ayrı fiyat listesi ekranı*
 - ✅ Stok — giriş + hareketler
 - ✅ Satıcılar — liste / yeni / düzenle / detay (prim oranı dahil)
@@ -139,14 +139,14 @@ Enum'lar: `Role`, `EntityStatus`, `OrderStatus`, `StockMovementType`, `PaymentMe
 - ❌ Bayiler ve Bayi Sevkiyat — **söküldü** *(28.09.2026 — C5)* (GÇ-6, X-8): yönetim ekranları, `dealer-cari.ts`,
   `dealer-shipment.ts`, bayi ödemesi. 1B'de bayi **`Doktor` satırıdır** (`hesap_sinifi = BAYI`) ve tek cari
   ekranından yönetilir; sevkiyat genel `SVK` akışıdır. Beş `Dealer*` tablosu **`CM`'e kadar şemada durur, okunmaz**
-- ✅ Raporlar — **dört rapor**: (1) satıcı performans karşılaştırması (FR-62), (2) doktor ciro sıralaması (FR-63; kongre bakiyesi C2'de, gecikmiş borç C3'te söküldü), ~~(3) kanal karşılaştırma — satıcı vs bayi~~ C5'te söküldü, yerinde **toplam ciro** kartı kalır; kırılım 1B'de `hesap_sinifi`'nden türer (X-8), ~~(4) yaşlandırma (FR-26)~~ C3'te söküldü (X-6 §(5)). Satıcı tahsilatı artık doktorun sorumlusu üzerinden toplanır *(28.09.2026 — C3)*; **tahsilat oranı kolonu söküldü** *(28.09.2026 — C4)*. Hepsi KDV dahil/hariç toggle'ına bağlı ⛔ GÇ-9. *(X-1 ile **"tahsilat oranı" metriği kalıcı olarak
+- ✅ Raporlar — **dört rapor**: (1) satıcı performans karşılaştırması (FR-62), (2) doktor ciro sıralaması (FR-63; kongre bakiyesi C2'de, gecikmiş borç C3'te söküldü), ~~(3) kanal karşılaştırma — satıcı vs bayi~~ C5'te söküldü, yerinde **toplam ciro** kartı kalır; kırılım 1B'de `hesap_sinifi`'nden türer (X-8), ~~(4) yaşlandırma (FR-26)~~ C3'te söküldü (X-6 §(5)). Satıcı tahsilatı artık doktorun sorumlusu üzerinden toplanır *(28.09.2026 — C3)*; **tahsilat oranı kolonu söküldü** *(28.09.2026 — C4)*. KDV toggle'ı **söküldü** *(28.09.2026 — C6)* (GÇ-9, Ü-3 §(3)): ciro daima **KDV hariç** (C sınıfı), tahsilat daima **KDV dahil** (B sınıfı); tabanlar kolon başlığında yazılı. *(X-1 ile **"tahsilat oranı" metriği kalıcı olarak
   kaldırılıyor**; yerine **iki mutlak sayı** — dönem cirosu (matrah) ve dönem tahsilatı (brüt) —
   tabanı ekranda yazılı gelir. Dönem **zorunlu aralık parametresidir**. Prim raporunu `OPERASYON`
   **görmez** (X-1 §(8): prim ücret ekidir). Faz 1 uygulama işi, D-2 ile **tek commit**.)*
 - ✅ Audit Log — kritik işlemlerin denetim kaydı (salt okunur, filtre)
 
 **Satıcı** (`src/app/(seller)/`)
-- ✅ Siparişlerim — liste / yeni / detay
+- ✅ Siparişlerim — liste / yeni / detay · fiyat girişi daima **KDV hariç**; KDV düğmeleri ve taban fiyat kilidi **söküldü** *(28.09.2026 — C6)*
 - ✅ Doktorlarım — liste / yeni / **düzenle** (yalnız kendi portföyü, RULE-02)
 - ❌ Primlerim — **söküldü** *(28.09.2026 — C4)*
 - ❌ Kongreler — **söküldü** *(27.09.2026 — C2)*
@@ -201,7 +201,7 @@ Enum'lar: `Role`, `EntityStatus`, `OrderStatus`, `StockMovementType`, `PaymentMe
   dağıtım gerektirir, X-6 §(2) ile yasak.
 - **Kongre expiry:** tahsilata bağlı hak ediş, **rolling 12 ay** (29 Şubat → 28'e sabitlenir).
   ⛔ **GÇ-4: mekanizmanın tamamı kaldırılıyor** (K-6 §(2)).
-- **⚠️ RULE-03 (taban fiyat altı reddedilir) burada listelenmemişti ama kodda var** — ⛔ GÇ-8:
+- **RULE-03 (taban fiyat altı reddedilir) — söküldü** *(28.09.2026 — C6)* (GÇ-8): arayüz kilidi ve sunucu reddi kalktı.
   KARARLAR **A-10** iskonto tavanını `null` yapıyor, **Ü-3 §(10)** liste üstü satışı da serbest
   bırakıp negatif iskonto olarak kaydediyor. Sistem **maliyet/geliş fiyatı tutmaz — kalıcı**.
 
@@ -217,17 +217,18 @@ Enum'lar: `Role`, `EntityStatus`, `OrderStatus`, `StockMovementType`, `PaymentMe
 - **CI (GitHub Actions, `.github/workflows/ci.yml`):** `push:main` + tüm PR'larda çalışır.
   PostgreSQL 17 servisi ile: `npm ci` → `prisma generate` → test DB → `prisma migrate deploy` →
   **typecheck + lint + birim testler + Playwright e2e**. Şu an **yeşil**.
-- **Birim test:** **60 test** (vitest, 7 dosya) — `money`, `vat`, `phone`, `doctor`,
-  `reports`, `pagination`, `audit` saf fonksiyonları. *(C2: `congress-ledger` 27 · C3: `allocation` 23 · C4: `commission` 21 + `reports` `collectionRate` 3 test silindi)*
-- **E2E:** **38 test** *(C2: 66'dan kongre 10 + `doctor-detail` FR-57 3 · C3: `collections` FIFO + yaşlandırma 2 · C4: `commissions` 4 · C5: `dealer` 5 + `panel` 4 + bayi setup 1 silindi, bayi girişi reddi 1 eklendi)* (Playwright; `admin`/`seller`/`guest` projeleri, storageState auth),
-  13 spec dosyası. Oturum iptali, doktor devri dahil.
-- **Entegrasyon test:** **14 test** (vitest `integration` şeridi, 3 dosya) — `src/lib/db.itest.ts`
+- **Birim test:** **59 test** (vitest, 7 dosya) — `money`, `vat`, `phone`, `doctor`,
+  `reports`, `pagination`, `audit` saf fonksiyonları. *(C2: `congress-ledger` 27 · C3: `allocation` 23 · C4: `commission` 21 + `reports` `collectionRate` 3 · C6: `ciroField` 1 test silindi)*
+- **E2E:** **33 test** *(C2: 66'dan kongre 10 + `doctor-detail` FR-57 3 · C3: `collections` FIFO + yaşlandırma 2 · C4: `commissions` 4 · C5: `dealer` 5 + `panel` 4 + bayi setup 1 silindi, bayi girişi reddi 1 eklendi · C6: `pricing` 3 + `reports` toggle 2 + `products` taban 1 silindi, ciro KDV hariç 1 eklendi)* (Playwright; `admin`/`seller`/`guest` projeleri, storageState auth),
+  12 spec dosyası. Oturum iptali, doktor devri dahil.
+- **Entegrasyon test:** **17 test** (vitest `integration` şeridi, 4 dosya) — `src/lib/db.itest.ts`
   altyapıyı sınar (şema uygulandı · yazılabilir · testler TRUNCATE ile izole) *(26.09.2026 — C1)* ·
   `collections.itest.ts` tahsilatın söküm boyunca kalan davranışını tutar: kuruş kaydı, hesaplanan
   cari (RULE-08), audit, iptal (FR-29), kongre hareketi **yazmaz** *(27.09.2026 — C2)*, mahsup satırı
   **yazmaz**, borçtan büyük tahsilat bakiyeyi eksiye çevirir (K-2) · `reports-service.itest.ts` satıcı
   tahsilatının doktor sorumlusu üzerinden toplandığını sınar *(28.09.2026 — C3)* · iptal prim düzeltmesi
-  **yazmaz** *(28.09.2026 — C4)* · toplam ciro KDV moduna göre ve iptal hariç toplanır *(28.09.2026 — C5)*.
+  **yazmaz** *(28.09.2026 — C4)* · toplam ciro iptal hariç toplanır *(28.09.2026 — C5)*, daima KDV hariç *(28.09.2026 — C6)* ·
+  `orders.itest.ts` tabanın altındaki ve liste üstündeki fiyatla siparişin kabul edilip fiyatın dondurulduğunu sınar *(28.09.2026 — C6)*.
 - **Test DB:** **üç veritabanı.** `medikal_dev` (geliştirme) · `medikal_test` (e2e, her koşuda
   `migrate reset`) · **`medikal_itest`** (entegrasyon; şema `globalSetup`'ta `migrate deploy`,
   izolasyon test başına `TRUNCATE`). Şerit ayrımı: `npm test` = birim (DB gerekmez) ·
@@ -270,7 +271,7 @@ MVP durum dosyasında (2026-07-17/21) ertelenen kritik işler v2 kapsamında kap
 - ✅ **CI** — GitHub Actions'ta tsc + lint + birim + e2e.
 - ✅ **Sayfalama** — liste sayfalarında `getPagination` (`Pagination` bileşeni).
 - ✅ **db.ts fail-fast** — `DATABASE_URL` yoksa başlangıçta hata fırlatır (sessiz yanlış-DB yok).
-- ✅ **Birim testler** — saf fonksiyonlar için 60 test *(C4 sonrası)*.
+- ✅ **Birim testler** — saf fonksiyonlar için 59 test *(C6 sonrası)*.
 
 ## Faz 1 migration'ında eklenecek şema (Faz 0'da karara bağlandı, **henüz koda girmedi**)
 
