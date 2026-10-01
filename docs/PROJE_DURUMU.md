@@ -106,7 +106,7 @@ ticari ilişki (fiyat listesi, sevkiyat, ödeme) **kalır**, firma tarafından g
 tablosunda **`hesap_sinifi = BAYI`** satırıdır. Sevkiyat ve ödeme genel belge akışlarına
 (`SVK`/`THS`) katılır. Bayiye özel fiyat **cariye atanan fiyat listesidir** (X-10).
 
-**Altyapı:** SystemSetting — okuma/yazma **söküldü** *(30.09.2026 — C7)* (GÇ-11); config `src/lib/policy.ts`'te (§B.7, 23 anahtar, açılmaz), tablo `CM`'de çıkar · LoginAttempt (rate-limit) ⛔ **GÇ-14 (X-9):** tablo kalkar; deneme sınırı **bellek içi** sayaçla (ADR-004 — Faz 1A C7b, tablo `CM`'de),
+**Altyapı:** SystemSetting — okuma/yazma **söküldü** *(30.09.2026 — C7)* (GÇ-11); config `src/lib/policy.ts`'te (§B.7, 23 anahtar, açılmaz), tablo `CM`'de çıkar · LoginAttempt — okuma/yazma **söküldü** *(01.10.2026 — C7b)* (GÇ-14, X-9); deneme sınırı **bellek içi** sayaçla (ADR-004 — `src/lib/rate-limit.ts`, eşikler `policy.auth`), tablo `CM`'de çıkar,
 AuditLog (merkezî sanitize'lı denetim izi).
 
 Enum'lar: `Role`, `EntityStatus`, `OrderStatus`, `StockMovementType`, `PaymentMethod`,
@@ -217,11 +217,11 @@ Enum'lar: `Role`, `EntityStatus`, `OrderStatus`, `StockMovementType`, `PaymentMe
 - **CI (GitHub Actions, `.github/workflows/ci.yml`):** `push:main` + tüm PR'larda çalışır.
   PostgreSQL 17 servisi ile: `npm ci` → `prisma generate` → test DB → `prisma migrate deploy` →
   **typecheck + lint + birim testler + Playwright e2e**. Şu an **yeşil**.
-- **Birim test:** **62 test** (vitest, 8 dosya) — `money`, `vat`, `phone`, `doctor`,
-  `reports`, `pagination`, `audit`, `policy` *(C7: §B.7 sözleşmesi, +3)* saf fonksiyonları. *(C2: `congress-ledger` 27 · C3: `allocation` 23 · C4: `commission` 21 + `reports` `collectionRate` 3 · C6: `ciroField` 1 test silindi)*
+- **Birim test:** **76 test** (vitest, 9 dosya) — `money`, `vat`, `phone`, `doctor`,
+  `reports`, `pagination`, `audit`, `policy` *(C7: §B.7 sözleşmesi, +3)*, `rate-limit` *(C7b: sahte saatle sayaç, +14)* saf fonksiyonları. *(C2: `congress-ledger` 27 · C3: `allocation` 23 · C4: `commission` 21 + `reports` `collectionRate` 3 · C6: `ciroField` 1 test silindi)*
 - **E2E:** **33 test** *(C2: 66'dan kongre 10 + `doctor-detail` FR-57 3 · C3: `collections` FIFO + yaşlandırma 2 · C4: `commissions` 4 · C5: `dealer` 5 + `panel` 4 + bayi setup 1 silindi, bayi girişi reddi 1 eklendi · C6: `pricing` 3 + `reports` toggle 2 + `products` taban 1 silindi, ciro KDV hariç 1 eklendi)* (Playwright; `admin`/`seller`/`guest` projeleri, storageState auth),
   12 spec dosyası. Oturum iptali, doktor devri dahil.
-- **Entegrasyon test:** **20 test** (vitest `integration` şeridi, 4 dosya) — `src/lib/db.itest.ts`
+- **Entegrasyon test:** **21 test** (vitest `integration` şeridi, 5 dosya) — `src/lib/db.itest.ts`
   altyapıyı sınar (şema uygulandı · yazılabilir · testler TRUNCATE ile izole) *(26.09.2026 — C1)* ·
   `collections.itest.ts` tahsilatın söküm boyunca kalan davranışını tutar: kuruş kaydı, hesaplanan
   cari (RULE-08), audit, iptal (FR-29), kongre hareketi **yazmaz** *(27.09.2026 — C2)*, mahsup satırı
@@ -229,7 +229,8 @@ Enum'lar: `Role`, `EntityStatus`, `OrderStatus`, `StockMovementType`, `PaymentMe
   tahsilatının doktor sorumlusu üzerinden toplandığını sınar *(28.09.2026 — C3)* · iptal prim düzeltmesi
   **yazmaz** *(28.09.2026 — C4)* · toplam ciro iptal hariç toplanır *(28.09.2026 — C5)*, daima KDV hariç *(28.09.2026 — C6)* ·
   `orders.itest.ts` tabanın altındaki ve liste üstündeki fiyatla siparişin kabul edilip fiyatın dondurulduğunu sınar *(28.09.2026 — C6)*
-  ve vadenin 30 günden hesaplandığını sınar · vade değişikliğinde üst sınır yok, sipariş tarihinden önceki vade reddedilir *(30.09.2026 — C7)*.
+  ve vadenin 30 günden hesaplandığını sınar · vade değişikliğinde üst sınır yok, sipariş tarihinden önceki vade reddedilir *(30.09.2026 — C7)* ·
+  `rate-limit.itest.ts` giriş sayacının veritabanına yazmadığını sınar *(01.10.2026 — C7b)*.
 - **Test DB:** **üç veritabanı.** `medikal_dev` (geliştirme) · `medikal_test` (e2e, her koşuda
   `migrate reset`) · **`medikal_itest`** (entegrasyon; şema `globalSetup`'ta `migrate deploy`,
   izolasyon test başına `TRUNCATE`). Şerit ayrımı: `npm test` = birim (DB gerekmez) ·
@@ -272,7 +273,7 @@ MVP durum dosyasında (2026-07-17/21) ertelenen kritik işler v2 kapsamında kap
 - ✅ **CI** — GitHub Actions'ta tsc + lint + birim + e2e.
 - ✅ **Sayfalama** — liste sayfalarında `getPagination` (`Pagination` bileşeni).
 - ✅ **db.ts fail-fast** — `DATABASE_URL` yoksa başlangıçta hata fırlatır (sessiz yanlış-DB yok).
-- ✅ **Birim testler** — saf fonksiyonlar için 62 test *(C7 sonrası)*.
+- ✅ **Birim testler** — saf fonksiyonlar için 76 test *(C7b sonrası)*.
 
 ## Faz 1 migration'ında eklenecek şema (Faz 0'da karara bağlandı, **henüz koda girmedi**)
 
@@ -391,8 +392,8 @@ alanları (GÇ-18) · `Order.dueDate` (GÇ-19) · `DoctorPayment.invoiceNo` (GÇ
   yeniden yazımı **Faz 3+ opsiyonel modül** (K-6 §(2), KARARLAR §1.7).
 - **Bayi paneli** — **Faz 3+ opsiyonel modül, yalnız Sınıf 1** (D-2 §(6)); bayi ticari
   ilişkisi çekirdekte kalır — **`Doktor` satırı olarak** (X-8).
-- **Rate-limit** şu an **PostgreSQL** tabanlı (`LoginAttempt`); Redis'e taşıma ölçekle birlikte
-  değerlendirilecek.
+- **Rate-limit** **bellek içi** sayaç *(01.10.2026 — C7b)* — 5 başarısız denemede 10 dakika kilit (`policy.auth`);
+  her deneme container log'una kimlikle yazılır, e-posta yazılmaz (E-2 §(8), X-3).
   ⛔ **X-9 (15.09):** tablo kalkar, sayaç **bellek içi** (ADR-004). Paylaşılan sayaç ancak aynı
   kurulumda birden fazla süreç çalıştırılacağı gün **yeni kararla** gelir (X-9 §(4)).
 - **Bildirim** — opsiyonel modül; Faz 1'de yalnız **boş olay noktaları** tanımlanır

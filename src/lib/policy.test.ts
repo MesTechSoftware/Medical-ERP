@@ -57,6 +57,8 @@ describe("policy.ts — §B.7 sözleşmesi", () => {
     expect(policy.zaman.saatDilimi).toBe("Europe/Istanbul");
     expect(policy.auth.oturumHareketsizlikSaat).toBe(4);
     expect(policy.auth.oturumMutlakSaat).toBe(12);
+    expect(policy.auth.girisDenemeSiniri).toBe(5);
+    expect(policy.auth.girisKilitDakika).toBe(10);
   });
 
   it("belge önekleri §B.4'teki dokuz önektir, tekrarsız", () => {

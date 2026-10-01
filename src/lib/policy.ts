@@ -69,10 +69,10 @@ export const policy = {
     oturumHareketsizlikSaat: 4,
     /** #19 — Kaymaz (E-2). */
     oturumMutlakSaat: 12,
-    /** #20 — Bugünkü koddan; C7b'de dolar (X-9). */
-    girisDenemeSiniri: null,
-    /** #21 — Bugünkü koddan; C7b'de dolar (X-9). */
-    girisKilitDakika: null,
+    /** #20 — Art arda başarısız deneme eşiği. Eski `LoginAttempt` kodundan (X-9, ADR-004). */
+    girisDenemeSiniri: 5,
+    /** #21 — Eşik aşılınca kilit süresi (dakika). Eski `LoginAttempt` kodundan (X-9, ADR-004). */
+    girisKilitDakika: 10,
   },
   import: {
     /** #22 — Kesin değer devreye almada; 1B madde 7 (D-6) öncesi dolar (E-3). */
