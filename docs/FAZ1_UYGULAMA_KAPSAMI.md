@@ -63,8 +63,8 @@
 | **GÇ-5** | Doktor bazlı kongre/teşvik bakiyesi — doktor detayındaki defter bölümü + `adjustCongressBalance` | Doktorda teşvik anlamı taşıyan alan veya hesap **yok** | K-6 §(4) · §1.3 | **C2** | GÇ-4 ile | ⬜ | `59b9d3c` (kod) |
 | **GÇ-6** | `Role.DEALER` + `(dealer)` paneli **ve** beş `Dealer*` tablosu (`Dealer`, `DealerPrice`, `DealerShipment`, `DealerShipmentItem`, `DealerPayment`) + bayi yönetim ekranları (`(admin)/dealers/**`, `/dealer-shipments`) + `dealer-cari.ts` · `dealer-shipment.ts` · `recordDealerPayment` + bayi okuyan rapor/dashboard parçaları | Bayi **`Doktor` satırı**, `hesap_sinifi = BAYI`. İşlemleri genel belge akışlarıdır. 1B'de tek cari ekranı | D-2 §(6) · **X-8** | **C5** | **CM** | ⬜ | `f2b17da` (kod) |
 | **GÇ-7** | `Role` = `ADMIN` / `SELLER` / `DEALER` | `YONETICI` / `OPERASYON` / `SATICI`. 1A'da **mekanik** yeniden adlandırma; `OPERASYON` davranışı 1B madde 3'te | D-2 §(1) | **CM** (kuyruk) | **CM** | ⬜ | — |
-| **GÇ-8** | `netMinPrice` taban fiyat + RULE-03 sert reddi (`OrderForm` `belowMin`, `products/actions.ts:33-36`, `my-orders/actions.ts:99-102`) | İskonto tavanı yok (`pricing.iskontoTavani = null`); liste üstü satış serbest. Yerine taban **etiketi** (1B, Ü-3) | A-10 · Ü-3 §(10) | **C6** | **CM** | ⬜ | — |
-| **GÇ-9** | KDV dahil/hariç toggle + çerez tercihi (`vat-mode.ts`, `VatToggle.tsx`, `reports/page.tsx`, `OrderForm` KDV düğmeleri) | Taban etiketi zorunluluğu. Toggle kurulum düzeyidir, Faz 1'de görünmez | Ü-3 §(1)/(3)/(6) | **C6** | — | ⬜ | — |
+| **GÇ-8** | `netMinPrice` taban fiyat + RULE-03 sert reddi (`OrderForm` `belowMin`, `products/actions.ts:33-36`, `my-orders/actions.ts:99-102`) | İskonto tavanı yok (`pricing.iskontoTavani = null`); liste üstü satış serbest. Yerine taban **etiketi** (1B, Ü-3) | A-10 · Ü-3 §(10) | **C6** | **CM** | ⬜ | `e804016` (kod) |
+| **GÇ-9** | KDV dahil/hariç toggle + çerez tercihi (`vat-mode.ts`, `VatToggle.tsx`, `reports/page.tsx`, `OrderForm` KDV düğmeleri) | Taban etiketi zorunluluğu. Toggle kurulum düzeyidir, Faz 1'de görünmez | Ü-3 §(1)/(3)/(6) | **C6** | — | ✅ | `e804016` |
 | **GÇ-10** | `Product.vatRate` (Int) | `Urun.vergi_orani_id` → `VergiOrani` tanım tablosu. `hesaplaSatirTutarlari()` 1B madde 5'te | C-6 §(2) | **CM** (okuma noktaları, kuyruk) | **CM** | ⬜ | — |
 | **GÇ-11** | `SystemSetting` + `settings.ts` (admin ayarı beklentisi) · *16.09:* **vade üst sınırı kontrolü** (`getDueSettings`, `createOrder`, `changeDueDate`) | Config **`policy.ts`**'te, **açılmaz** (§B.7) · vadede **sistem sınırı yok** | §0.1.1 · KARARLAR §2 madde 16 | **C7** | **CM** — `SystemSetting` | ⬜ | — |
 | **GÇ-12** | Sipariş = tek parça sevkiyat | **Kısmi sevkiyat**; borç ve prim sevkiyatta doğar | A-3 | 1B madde 7 | **CM** | ⬜ — *1A sonunda `şema ✅ / davranış 1B` yazılır (§D.2)* | — |
@@ -231,7 +231,7 @@ Bayi için **ayrı fonksiyon yazılmaz** (X-8 §(2)). Liste **11'de kapalıdır*
 
 | # | Anahtar | Değer | Ne zaman dolar | Kaynak |
 |---|---|---|---|---|
-| 1 | `finance.odemeVadesiGunVarsayilan` | *KARARLAR'da yazılı değil* — ilgili 1B maddesinden önce sorulur | 1B | A-7 |
+| 1 | `finance.odemeVadesiGunVarsayilan` | `30` — bugünkü kod değeri *(30.09.2026 kullanıcı teyidi; devreye almada yazılı teyit)* | **C7** | A-7 · KARARLAR §4 config listesi |
 | 2 | `finance.vadeFarkiOrani` | `null` | — | A-7 |
 | 3 | `finance.vadeFarkiGunSayimBazi` | *yazılı değil* | 1B | A-7 |
 | 4 | `finance.kredilimitiBloklar` | `false` | C7 | A-12 |

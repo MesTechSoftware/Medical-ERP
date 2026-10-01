@@ -19,7 +19,7 @@ vi.mock("@/lib/session", () => ({
 }));
 vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
 
-const { recordCollection, cancelCollection } = await import("./actions");
+const { recordCollection, cancelCollection, changeDueDate } = await import("./actions");
 
 const SIPARIS_BRUT = 1_100_000n; // 11.000,00 TL (net 10.000 + %10 KDV)
 const TAHSILAT_TL = 5_000; // 5.000,00 TL
@@ -206,5 +206,45 @@ describe("tahsilat — dayanıklı davranış", () => {
     expect(sonuc.error).toBeDefined();
     expect(await prisma.doctorPayment.count()).toBe(0);
     expect(await prisma.auditLog.count()).toBe(0);
+  });
+});
+
+describe("vade değişikliği — sistem sınırı yok (C7 — GÇ-11, KARARLAR §2 madde 16)", () => {
+  let orderId = "";
+
+  beforeEach(async () => {
+    const { order } = await seed();
+    orderId = order.id;
+  });
+
+  function vadeFormu(newDueDate: string) {
+    const fd = new FormData();
+    fd.set("orderId", orderId);
+    fd.set("newDueDate", newDueDate);
+    fd.set("reason", "Doktor talebi");
+    return fd;
+  }
+
+  it("eski 180 günlük sınırın çok ötesine uzatılabilir; iz ve audit yazılır", async () => {
+    const sonuc = await changeDueDate({}, vadeFormu("2029-12-31"));
+    expect(sonuc.error).toBeUndefined();
+
+    const order = await prisma.order.findUniqueOrThrow({ where: { id: orderId } });
+    expect(order.dueDate.toISOString().slice(0, 10)).toBe("2029-12-31");
+
+    const iz = await prisma.dueDateChange.findMany({ where: { orderId } });
+    expect(iz).toHaveLength(1);
+    expect(iz[0].reason).toBe("Doktor talebi");
+
+    expect(
+      await prisma.auditLog.count({ where: { action: AUDIT_ACTIONS.DUE_DATE_CHANGE } })
+    ).toBe(1);
+  });
+
+  it("sipariş tarihinden önceki vade yine reddedilir (sınır değil, tutarlılık)", async () => {
+    const sonuc = await changeDueDate({}, vadeFormu("2000-01-01"));
+
+    expect(sonuc.error).toBeDefined();
+    expect(await prisma.dueDateChange.count()).toBe(0);
   });
 });

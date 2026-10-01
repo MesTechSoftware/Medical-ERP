@@ -97,6 +97,16 @@ describe("sipariş — taban fiyat reddi yok (C6)", () => {
     expect(item.netUnitPrice).toBe(1_250_00n);
   });
 
+  it("vade = sipariş anı + policy.finance.odemeVadesiGunVarsayilan (30 gün, C7)", async () => {
+    const once = Date.now();
+    await createOrder({}, siparisFormu(doctorId, productId));
+
+    const order = await prisma.order.findFirstOrThrow();
+    const gun = (order.dueDate.getTime() - once) / 86_400_000;
+    expect(gun).toBeGreaterThan(29.9);
+    expect(gun).toBeLessThan(30.1);
+  });
+
   it("fiyat girilmezse liste fiyatı kullanılır", async () => {
     await createOrder({}, siparisFormu(doctorId, productId));
 

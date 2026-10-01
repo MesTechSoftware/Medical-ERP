@@ -10,7 +10,8 @@ import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { tlToKurus } from "@/lib/money";
 import { discountRate, lineTotals, sumLineTotals } from "@/lib/vat";
 import { canSellerOrderForDoctor } from "@/lib/doctor";
-import { getDueSettings, addDays } from "@/lib/settings";
+import { addDays } from "@/lib/date";
+import { policy } from "@/lib/policy";
 
 export type OrderFormState = { error?: string };
 
@@ -61,10 +62,9 @@ export async function createOrder(
     return { error: "En az bir ürün ve geçerli miktar giriniz." };
   const lines: LineInput[] = parsedLines.data;
 
-  // FR-21: her siparişe vade tarihi girilir; varsayılan gün sayısı admin
-  // parametresidir (D-20).
-  const { defaultDueDays } = await getDueSettings();
-  const dueDate = addDays(new Date(), defaultDueDays);
+  // FR-21: her siparişe vade tarihi girilir; varsayılan gün sayısı kurulum
+  // düzeyi config'tir, ayar ekranı yoktur (GÇ-11, A-7).
+  const dueDate = addDays(new Date(), policy.finance.odemeVadesiGunVarsayilan);
 
   let created: { id: string; grossTotal: bigint };
   try {
