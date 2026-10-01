@@ -66,7 +66,7 @@
 | **GÇ-8** | `netMinPrice` taban fiyat + RULE-03 sert reddi (`OrderForm` `belowMin`, `products/actions.ts:33-36`, `my-orders/actions.ts:99-102`) | İskonto tavanı yok (`pricing.iskontoTavani = null`); liste üstü satış serbest. Yerine taban **etiketi** (1B, Ü-3) | A-10 · Ü-3 §(10) | **C6** | **CM** | ⬜ | `e804016` (kod) |
 | **GÇ-9** | KDV dahil/hariç toggle + çerez tercihi (`vat-mode.ts`, `VatToggle.tsx`, `reports/page.tsx`, `OrderForm` KDV düğmeleri) | Taban etiketi zorunluluğu. Toggle kurulum düzeyidir, Faz 1'de görünmez | Ü-3 §(1)/(3)/(6) | **C6** | — | ✅ | `e804016` |
 | **GÇ-10** | `Product.vatRate` (Int) | `Urun.vergi_orani_id` → `VergiOrani` tanım tablosu. `hesaplaSatirTutarlari()` 1B madde 5'te | C-6 §(2) | **CM** (okuma noktaları, kuyruk) | **CM** | ⬜ | — |
-| **GÇ-11** | `SystemSetting` + `settings.ts` (admin ayarı beklentisi) · *16.09:* **vade üst sınırı kontrolü** (`getDueSettings`, `createOrder`, `changeDueDate`) | Config **`policy.ts`**'te, **açılmaz** (§B.7) · vadede **sistem sınırı yok** | §0.1.1 · KARARLAR §2 madde 16 | **C7** | **CM** — `SystemSetting` | ⬜ | — |
+| **GÇ-11** | `SystemSetting` + `settings.ts` (admin ayarı beklentisi) · *16.09:* **vade üst sınırı kontrolü** (`getDueSettings`, `createOrder`, `changeDueDate`) | Config **`policy.ts`**'te, **açılmaz** (§B.7) · vadede **sistem sınırı yok** | §0.1.1 · KARARLAR §2 madde 16 | **C7** | **CM** — `SystemSetting` | ⬜ | `fedc2cc` (kod) |
 | **GÇ-12** | Sipariş = tek parça sevkiyat | **Kısmi sevkiyat**; borç ve prim sevkiyatta doğar | A-3 | 1B madde 7 | **CM** | ⬜ — *1A sonunda `şema ✅ / davranış 1B` yazılır (§D.2)* | — |
 | **GÇ-13** | `BigInt` kuruş + `money.ts` `divRound` | **`Decimal`** + `formatla()` + lint kuralı | **X-5** | **CM** | **CM** | ⬜ | — |
 | **GÇ-14** | `LoginAttempt` tablosu ve onu okuyan/yazan deneme sınırı kodu | Bellek içi sayaç. Eşikler `policy.ts`'te (`auth.girisDenemeSiniri`, `auth.girisKilitDakika`). Denemeler container log'una | **X-9** · E-2 §(5)/(8) · `docs/adr/ADR-004` | **C7b** | **CM** | ⬜ | — |
@@ -250,8 +250,8 @@ Bayi için **ayrı fonksiyon yazılmaz** (X-8 §(2)). Liste **11'de kapalıdır*
 | 17 | `zaman.saatDilimi` | `Europe/Istanbul` (ofset değil, dilim adı) | **C7 — 1A çıkışı** | E-1 |
 | 18 | `auth.oturumHareketsizlikSaat` | `4` (kayar) | **C7 — 1A çıkışı** | E-2 |
 | 19 | `auth.oturumMutlakSaat` | `12` (kaymaz) | **C7 — 1A çıkışı** | E-2 |
-| 20 | `auth.girisDenemeSiniri` | bugünkü koddan | **C7b — 1A çıkışı** | **X-9** |
-| 21 | `auth.girisKilitDakika` | bugünkü koddan | **C7b — 1A çıkışı** | **X-9** |
+| 20 | `auth.girisDenemeSiniri` | `5` — eski `LoginAttempt` kodundan *(C7b'de dolduruldu)* | **C7b — 1A çıkışı** | **X-9** |
+| 21 | `auth.girisKilitDakika` | `10` — eski `LoginAttempt` kodundan *(C7b'de dolduruldu)* | **C7b — 1A çıkışı** | **X-9** |
 | 22 | `import.azamiDosyaBoyutMb` | kesin değer devreye almada | **1B madde 7 (D-6) öncesi** — 1A çıkışında değil | E-3 |
 | 23 | `finance.primOraniVarsayilan` | `5.00` — bugünkü `DEFAULT_COMMISSION_RATE`; devreye almada yazılı teyit | **C7 — 1A çıkışı** | **X-14** §(1) |
 
@@ -590,6 +590,14 @@ parametrelerini taşır. Koşullu `updateMany` kolonla birlikte gider; bu yüzde
   *15.09 3. tur: C4'ün 32 testi **silinir** olarak kesinleşti (önceki beyan: silinir 50 · yeniden
   yazılır 54 · 1A sonu ~84). C7b'nin ekleyeceği sayaç testleri bu tabloya **eklenir**, beyan
   C7b'de güncellenir. E2E ~28, C5 ve C7b ölçümleriyle kesinleşir.*
+
+  *C7b ölçümü (01.10.2026) — C2…C7b sonrası fiilî sayılar:* **Birim 76** = 134 − 75 silinen
+  (`congress-ledger` 27 · `allocation` 23 · `commission` 21 · `reports` `collectionRate` 3 ·
+  `ciroField` 1) + 17 eklenen (`policy` 3 · giriş sayacı 14). Beyandan sapma: `reports.test`'in
+  hâlâ kullanılan fonksiyonları sınayan 8 testi **tutuldu** (C4 PR'ı). `CM`'de yeniden yazılacak
+  22 test (`money` 7 + `vat` 15) bu sayının içindedir. · **E2E 33** = 66 − 35 silinen + 2 eklenen
+  (bayi girişi reddi · ciro KDV hariç); C3'te `collections.spec`'in FR-29/FR-25 testleri tutuldu.
+  · **Entegrasyon 21** — beyanda yoktu, C1 ile geldi.
 
   ⚠️ **Dokunulmadan kalan 30 birim testi** (`doctor`, `pagination`, `phone`, `audit`)
   sistemin kanıtı değildir. 1A çıkışında bu fark **yazılı olarak** kabul edilir; kapanması

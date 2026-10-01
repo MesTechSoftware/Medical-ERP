@@ -2,7 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
-import { checkLock, recordFailure, reset } from "@/lib/rate-limit";
+import { checkLock, logAttempt, recordFailure, reset } from "@/lib/rate-limit";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import type { Role } from "@/generated/prisma/enums";
 
@@ -21,12 +21,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!email || !password) return null;
 
         // Brute-force koruması (tek enforcement noktası: ham endpoint dahil).
-        if ((await checkLock(email)).locked) return null;
+        if (checkLock(email).locked) {
+          logAttempt(null, "kilitli");
+          return null;
+        }
 
         const user = await prisma.user.findUnique({ where: { email } });
         // D-2 §(6) / X-8: bayi sisteme giriş yapmaz — panel C5'te söküldü.
         if (!user || user.status !== "ACTIVE" || user.role === "DEALER") {
-          await recordFailure(email);
+          recordFailure(email);
+          logAttempt(user?.id ?? null, "hatali_kimlik");
           await createAuditLog({
             action: AUDIT_ACTIONS.AUTH_LOGIN_FAILURE,
             entityType: "Auth",
@@ -37,7 +41,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const ok = await bcrypt.compare(password, user.passwordHash);
         if (!ok) {
-          await recordFailure(email);
+          recordFailure(email);
+          logAttempt(user.id, "hatali_kimlik");
           await createAuditLog({
             action: AUDIT_ACTIONS.AUTH_LOGIN_FAILURE,
             entityType: "Auth",
@@ -46,7 +51,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        await reset(email);
+        reset(email);
+        logAttempt(user.id, "basarili");
         await createAuditLog({
           actorId: user.id,
           action: AUDIT_ACTIONS.AUTH_LOGIN_SUCCESS,
