@@ -4,9 +4,9 @@ import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { DEFAULT_VAT_RATE, lineTotals, sumLineTotals } from "../src/lib/vat";
 import { normalizePhone } from "../src/lib/phone";
-import { addDays } from "../src/lib/settings";
+import { addDays } from "../src/lib/date";
+import { policy } from "../src/lib/policy";
 
-const DEFAULT_DUE_DAYS = 30;
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
@@ -172,7 +172,7 @@ async function main() {
         sellerId: opts.sellerId,
         doctorId: byDoctor(opts.doctorName).id,
         status: opts.status,
-        dueDate: addDays(new Date(), DEFAULT_DUE_DAYS),
+        dueDate: addDays(new Date(), policy.finance.odemeVadesiGunVarsayilan),
         netTotal,
         vatTotal,
         grossTotal,

@@ -5,7 +5,6 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { tlToKurus } from "@/lib/money";
 import { amountTLSchema } from "@/lib/validation";
-import { getDueSettings, addDays } from "@/lib/settings";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { PaymentMethod } from "@/generated/prisma/enums";
 
@@ -120,7 +119,8 @@ export async function cancelCollection(
 
 /**
  * FR-22 / D-02: Vade tarihi değiştirme. Her değişiklik geçmişe ve audit'e yazılır.
- * D-20: üst sınırı admin belirler — sınırsız uzatma YOKTUR.
+ * Vadede sistem sınırı YOKTUR (KARARLAR §2 madde 16) — üst sınır kontrolü C7'de
+ * söküldü (GÇ-11).
  */
 export async function changeDueDate(
   _prev: CollectionState,
@@ -143,15 +143,6 @@ export async function changeDueDate(
 
   if (newDueDate < order.orderDate) {
     return { error: "Vade, sipariş tarihinden önce olamaz." };
-  }
-
-  // D-20: admin tarafından belirlenen üst sınır.
-  const { maxDueDays } = await getDueSettings();
-  const latestAllowed = addDays(order.orderDate, maxDueDays);
-  if (newDueDate > latestAllowed) {
-    return {
-      error: `Vade, sipariş tarihinden en fazla ${maxDueDays} gün sonrası olabilir.`,
-    };
   }
 
   const oldDueDate = order.dueDate;

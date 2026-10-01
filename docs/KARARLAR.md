@@ -2998,7 +2998,7 @@ Hiçbiri inline tekrarlanmaz.
 *(Modül tarafında ayrıca `hesaplaButceBakiye()` (K-6) vardır; çekirdek listesine girmez.)*
 
 **Config noktaları (belirlenir, açılmaz):**
-`finance.odemeVadesiGunVarsayilan` · `finance.vadeFarkiOrani` (`null`) ·
+**`finance.odemeVadesiGunVarsayilan` (`30` — bugünkü kod değeri; 30.09.2026 kullanıcı teyidi, devreye almada yazılı teyit)** · `finance.vadeFarkiOrani` (`null`) ·
 `finance.vadeFarkiGunSayimBazi` · `finance.kredilimitiBloklar` (`false`) ·
 `finance.faturaBilgisiZorunlu` (`false`) · **`finance.nakitTevsikLimiti` (`null` — A-15)** ·
 `pricing.iskontoTavani` (`null`) ·

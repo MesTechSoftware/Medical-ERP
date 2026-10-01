@@ -106,7 +106,7 @@ ticari ilişki (fiyat listesi, sevkiyat, ödeme) **kalır**, firma tarafından g
 tablosunda **`hesap_sinifi = BAYI`** satırıdır. Sevkiyat ve ödeme genel belge akışlarına
 (`SVK`/`THS`) katılır. Bayiye özel fiyat **cariye atanan fiyat listesidir** (X-10).
 
-**Altyapı:** SystemSetting (vade üst sınırı vb. admin ayarları) ⛔ GÇ-11, LoginAttempt (rate-limit) ⛔ **GÇ-14 (X-9):** tablo kalkar; deneme sınırı **bellek içi** sayaçla (ADR-004 — Faz 1A C7b, tablo `CM`'de),
+**Altyapı:** SystemSetting — okuma/yazma **söküldü** *(30.09.2026 — C7)* (GÇ-11); config `src/lib/policy.ts`'te (§B.7, 23 anahtar, açılmaz), tablo `CM`'de çıkar · LoginAttempt (rate-limit) ⛔ **GÇ-14 (X-9):** tablo kalkar; deneme sınırı **bellek içi** sayaçla (ADR-004 — Faz 1A C7b, tablo `CM`'de),
 AuditLog (merkezî sanitize'lı denetim izi).
 
 Enum'lar: `Role`, `EntityStatus`, `OrderStatus`, `StockMovementType`, `PaymentMethod`,
@@ -131,7 +131,7 @@ Enum'lar: `Role`, `EntityStatus`, `OrderStatus`, `StockMovementType`, `PaymentMe
 - ❌ Primler — **söküldü** *(28.09.2026 — C4)* (GÇ-1 + GÇ-16): ekran, `commission-service.ts`, dönem kapanışı,
   onay/ödeme durumları, iptal düzeltmesi. Yeni prim (matrah **sevkiyat bazlı**, dönem zorunlu aralık)
   **1B'de** yazılır (X-1 §(2)/(7), A-3). `CommissionPeriod`/`CommissionAdjustment` **`CM`'e kadar
-  şemada durur, okunmaz**. `DEFAULT_COMMISSION_RATE` C7'de `policy.ts`'e taşınır (X-14)
+  şemada durur, okunmaz**. `DEFAULT_COMMISSION_RATE` → `policy.finance.primOraniVarsayilan` *(30.09.2026 — C7)* (X-14)
 - ❌ Kongreler — **söküldü** *(27.09.2026 — C2, GÇ-4/GÇ-5)*: ekranlar, `congress-service.ts`,
   `congress-ledger.ts`, doktor detayındaki defter + manuel düzeltme (FR-57), dashboard ve rapordaki
   kongre bakiyesi. Dört `Congress*` tablosu **`CM`'e kadar şemada durur, okunmaz**. Modül Faz 3+'ta
@@ -194,7 +194,7 @@ Enum'lar: `Role`, `EntityStatus`, `OrderStatus`, `StockMovementType`, `PaymentMe
 - **KDV:** per-satır yuvarlama, Σ satır = sipariş toplamı; net/brüt dönüşümleri `vat.ts`.
   ✅ **KARARLAR C-6 ile birebir uyumlu** — tek `hesaplaSatirTutarlari()` altında toplanacak,
   inline `fiyat * miktar` yasaklanacak.
-- **Vade:** admin üst sınır belirler; FIFO mahsup ve aging kovaları **söküldü** *(28.09.2026 — C3)*;
+- **Vade:** varsayılan `policy.finance.odemeVadesiGunVarsayilan` = 30 gün; **üst sınır kontrolü söküldü** *(30.09.2026 — C7)* — vadede sistem sınırı yok (KARARLAR §2 madde 16); FIFO mahsup ve aging kovaları **söküldü** *(28.09.2026 — C3)*;
   ⛔ **X-6: yaşlandırma Faz 2+'ya taşındı.** Faz 1'de gösterilen: `hesaplaDoktorBakiye()` çıktısı
   (tek işaretli, brüt, yön + taban etiketli) ve **bilgi kademesi uyarısı** *"vadesi geçmiş hareket
   var"* + en eski vade tarihi (`VADESI_GECMIS_HAREKET`). 🔴 **Vadesi geçmiş TUTAR gösterilmez** —
@@ -217,18 +217,19 @@ Enum'lar: `Role`, `EntityStatus`, `OrderStatus`, `StockMovementType`, `PaymentMe
 - **CI (GitHub Actions, `.github/workflows/ci.yml`):** `push:main` + tüm PR'larda çalışır.
   PostgreSQL 17 servisi ile: `npm ci` → `prisma generate` → test DB → `prisma migrate deploy` →
   **typecheck + lint + birim testler + Playwright e2e**. Şu an **yeşil**.
-- **Birim test:** **59 test** (vitest, 7 dosya) — `money`, `vat`, `phone`, `doctor`,
-  `reports`, `pagination`, `audit` saf fonksiyonları. *(C2: `congress-ledger` 27 · C3: `allocation` 23 · C4: `commission` 21 + `reports` `collectionRate` 3 · C6: `ciroField` 1 test silindi)*
+- **Birim test:** **62 test** (vitest, 8 dosya) — `money`, `vat`, `phone`, `doctor`,
+  `reports`, `pagination`, `audit`, `policy` *(C7: §B.7 sözleşmesi, +3)* saf fonksiyonları. *(C2: `congress-ledger` 27 · C3: `allocation` 23 · C4: `commission` 21 + `reports` `collectionRate` 3 · C6: `ciroField` 1 test silindi)*
 - **E2E:** **33 test** *(C2: 66'dan kongre 10 + `doctor-detail` FR-57 3 · C3: `collections` FIFO + yaşlandırma 2 · C4: `commissions` 4 · C5: `dealer` 5 + `panel` 4 + bayi setup 1 silindi, bayi girişi reddi 1 eklendi · C6: `pricing` 3 + `reports` toggle 2 + `products` taban 1 silindi, ciro KDV hariç 1 eklendi)* (Playwright; `admin`/`seller`/`guest` projeleri, storageState auth),
   12 spec dosyası. Oturum iptali, doktor devri dahil.
-- **Entegrasyon test:** **17 test** (vitest `integration` şeridi, 4 dosya) — `src/lib/db.itest.ts`
+- **Entegrasyon test:** **20 test** (vitest `integration` şeridi, 4 dosya) — `src/lib/db.itest.ts`
   altyapıyı sınar (şema uygulandı · yazılabilir · testler TRUNCATE ile izole) *(26.09.2026 — C1)* ·
   `collections.itest.ts` tahsilatın söküm boyunca kalan davranışını tutar: kuruş kaydı, hesaplanan
   cari (RULE-08), audit, iptal (FR-29), kongre hareketi **yazmaz** *(27.09.2026 — C2)*, mahsup satırı
   **yazmaz**, borçtan büyük tahsilat bakiyeyi eksiye çevirir (K-2) · `reports-service.itest.ts` satıcı
   tahsilatının doktor sorumlusu üzerinden toplandığını sınar *(28.09.2026 — C3)* · iptal prim düzeltmesi
   **yazmaz** *(28.09.2026 — C4)* · toplam ciro iptal hariç toplanır *(28.09.2026 — C5)*, daima KDV hariç *(28.09.2026 — C6)* ·
-  `orders.itest.ts` tabanın altındaki ve liste üstündeki fiyatla siparişin kabul edilip fiyatın dondurulduğunu sınar *(28.09.2026 — C6)*.
+  `orders.itest.ts` tabanın altındaki ve liste üstündeki fiyatla siparişin kabul edilip fiyatın dondurulduğunu sınar *(28.09.2026 — C6)*
+  ve vadenin 30 günden hesaplandığını sınar · vade değişikliğinde üst sınır yok, sipariş tarihinden önceki vade reddedilir *(30.09.2026 — C7)*.
 - **Test DB:** **üç veritabanı.** `medikal_dev` (geliştirme) · `medikal_test` (e2e, her koşuda
   `migrate reset`) · **`medikal_itest`** (entegrasyon; şema `globalSetup`'ta `migrate deploy`,
   izolasyon test başına `TRUNCATE`). Şerit ayrımı: `npm test` = birim (DB gerekmez) ·
@@ -271,7 +272,7 @@ MVP durum dosyasında (2026-07-17/21) ertelenen kritik işler v2 kapsamında kap
 - ✅ **CI** — GitHub Actions'ta tsc + lint + birim + e2e.
 - ✅ **Sayfalama** — liste sayfalarında `getPagination` (`Pagination` bileşeni).
 - ✅ **db.ts fail-fast** — `DATABASE_URL` yoksa başlangıçta hata fırlatır (sessiz yanlış-DB yok).
-- ✅ **Birim testler** — saf fonksiyonlar için 59 test *(C6 sonrası)*.
+- ✅ **Birim testler** — saf fonksiyonlar için 62 test *(C7 sonrası)*.
 
 ## Faz 1 migration'ında eklenecek şema (Faz 0'da karara bağlandı, **henüz koda girmedi**)
 
