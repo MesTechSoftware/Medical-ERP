@@ -122,12 +122,14 @@ Stok **hiçbir koşulda eksiye düşemez** *(RULE-01)* — hem satıcı sipariş
 - Satıcı doktoru kaydeder → **sahiplik otomatik ona kilitlenir** *(RULE-02)*
 - Telefon `+90XXXXXXXXXX` biçimine normalize edilir ve **benzersizdir** — aynı doktor iki satıcıya kaydedilemez
 - Bir doktorun **aynı anda tek sorumlu satıcısı** olur
-- Admin doktoru başka satıcıya **devredebilir**; devir geçmişi ve denetim kaydı tutulur
+- Admin doktoru başka satıcıya **devredebilir** — tek tek ya da listeden **toplu** seçerek; devir geçmişi ve denetim kaydı tutulur
 - **Devir sonrası eski siparişler eski satıcıda kalır** — primi de o alır
-- Satıcı pasife alınırsa doktorları **sahipsiz havuza** düşer
+- Satıcı pasife alınırken yönetici doktorlarını **bir satıcıya devreder ya da bilerek sahipsiz bırakır** — seçim pasifleştirme formunda zorunludur, pasifleştirmeyi geciktirmez *(X-17)*
+- Bayinin sorumlu satıcısı olmaz
 
 > ✅ *16.09: sahiplik, görünürlük, devir ve pasif satıcı bugünkü gibi korunur (**X-13**).
 > Telefon benzersizliği korunur (**X-15**).*
+> ✅ *01.10: sahiplik tek noktadan değişir, devir topludur, pasif satıcının portföyü bekletilmez (**X-17**).*
 
 ### 2.4 Sipariş (Satıcı)
 

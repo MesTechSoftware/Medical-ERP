@@ -152,6 +152,8 @@ Hepsinin şeması `CM`'dedir. Tüm belgelerde `belge_no` (global UNIQUE, salt ok
 | `Siparis` | satıcı alanı **nullable** (`BAYI` siparişinde boş); sipariş anındaki sahip, sonra değişmez | **X-13** §(3) |
 | sevkiyat satırı | sipariş satırı bağı · miktar (tam sayı) · **`prim_orani`** (donmuş; `BAYI` ve bedelsizde boş) | A-3 · X-5 §(8) · **X-14** §(3) |
 | vade değişiklik izi (bugünkü `DueDateChange`) | bağı **cari harekete** taşınır; eski/yeni tarih · kişi · zaman · gerekçe | **X-15** §(1) |
+| devir izi (bugünkü `DoctorAssignment`) | **olay kaydı**: doktor · eski sahip (nullable) · yeni sahip (nullable) · yapan · zaman (`timestamptz`) · gerekçe · başlangıç/bitiş alanları **kalkar** · doktor FK `ON DELETE CASCADE` | **X-17** §(3)/(10) |
+| `Doktor` | sahip FK **`RESTRICT`** (bugün `SET NULL`) · `CHECK (hesap_sinifi = 'DOKTOR' OR sahip IS NULL)` — elle SQL | **X-17** §(2) |
 | `Doktor` | `telefon` **NOT NULL + normalize + UNIQUE** (bugünkü `phoneNormalized`) · `klinik`, `bolge` **nullable** (`DOKTOR` için uygulama kuralıyla zorunlu) | **X-15** §(2)/(3) |
 | `Product` | `stock` **kalkar** | `docs/adr/ADR-005` · GÇ-17 |
 | oturum tablosu | `lastSeenAt` + token hash (ayrıntı `docs/adr/ADR-003`, §D.4) | E-2 |
@@ -181,7 +183,7 @@ Hepsinin şeması `CM`'dedir. Tüm belgelerde `belge_no` (global UNIQUE, salt ok
 | Cari hareket tipi 🟦 | `SEVKIYAT` · `IADE` · `TAHSILAT` · `ACILIS` · `VADE_FARKI` · `TERS_KAYIT` | **X-11** · A-6 · A-7 |
 | Cari hareket yönü 🟦 | `BORC` · `ALACAK` | **X-11** · A-11 deseni |
 | Import veri türü 🟦 | `CARI` · `URUN` · `FIYAT_LISTESI` · `ACILIS_BAKIYESI` · `ACILIS_STOGU` | **X-12** · D-6 |
-| Kural kodu (`varchar`, enum değil — §1.3) | `NEGATIF_STOK` · `KREDI_LIMITI` · `VADESI_GECMIS_HAREKET` | B-4 · A-12 · X-6 |
+| Kural kodu (`varchar`, enum değil — §1.3) | `NEGATIF_STOK` · `KREDI_LIMITI` · `VADESI_GECMIS_HAREKET` · `TUTAR_NEGATIF` · `SAHIP_AKTIF_SATICI_DEGIL` · `BAYI_SAHIP_ATANAMAZ` · `SAHIP_DEGISTI` | B-4 · A-12 · X-6 · D-6 · **X-17** |
 | Belge önekleri | `SIP` · `SVK` · `IAD` · `KNS` · `TRF` · `THS` · `ACL` · `VDF` · `DZL` | A-14 · B-7 |
 
 🟦 = KARARLAR'da **varsayılan kaydı**. Kilitlenme anı `CM`; o güne kadar itiraz yoksa ✅ sayılır (KARARLAR §0.6).
@@ -192,6 +194,8 @@ Hepsinin şeması `CM`'dedir. Tüm belgelerde `belge_no` (global UNIQUE, salt ok
 |---|---|---|---|
 | Fiyat listesi satırı tarih çakışması | sert, **DB** | CM | B-5 · X-10 |
 | `belge_no` global UNIQUE | sert, **DB** | CM | A-14 |
+| `BAYI`'nin sahibi olmaz | sert, **DB** (`CHECK`) | CM | **X-17** §(2) |
+| Sahip aktif `SATICI` | sert (fonksiyon içi) | 1B madde 3 | **X-17** §(2) |
 | VKN/TCKN biçimi (10 = VKN, 11 = TCKN) | sert | 1B madde 7 | A-13 |
 | En az bir aktif `YONETICI` · kendini pasifleştirme yasağı | sert | 1B madde 4 | E-2 |
 | `DZL` geriye tarihlendirilemez | sert | 1B madde 7 | B-7 |
@@ -201,9 +205,9 @@ Hepsinin şeması `CM`'dedir. Tüm belgelerde `belge_no` (global UNIQUE, salt ok
 **Yasak liste** (şemada **olmayacaklar**) → §D.2 anti-şema testi. Kaynak: KARARLAR §4 *"Kısıtlar"*.
 Burada kopyalanmaz.
 
-### §B.6 · Tek çağrı noktası fonksiyonları — **11** *(normatif ad — `docs/adr/ADR-001`)*
+### §B.6 · Tek çağrı noktası fonksiyonları — **12** *(normatif ad — `docs/adr/ADR-001`; 01.10.2026: X-17 ile 11 → 12)*
 
-Bayi için **ayrı fonksiyon yazılmaz** (X-8 §(2)). Liste **11'de kapalıdır** (§1.3).
+Bayi için **ayrı fonksiyon yazılmaz** (X-8 §(2)). Liste **12'de kapalıdır** (§1.3; 12. madde X-17 çekirdek eklemesi).
 
 | # | Fonksiyon | Kaynak | Yazıldığı yer |
 |---|---|---|---|
@@ -218,6 +222,7 @@ Bayi için **ayrı fonksiyon yazılmaz** (X-8 §(2)). Liste **11'de kapalıdır*
 | 9 | `uretBelgeNo(onek, tx)` | A-14 | 1B madde 2 |
 | 10 | `modulAcikMi(kod)` | K-9 · §1.3 | 1B madde 1 |
 | 11 | `kapsamliDoktorlariGetir(kullanici)` | D-2 · **X-13** §(1) (`SATICI`'ya yalnız kendi `DOKTOR` carileri) | 1B madde 3 (X-1 + D-2 tek commit) |
+| 12 | `degistirDoktorSahibi(doktorlar, yeniSahip \| null, gerekce, tx)` | **X-17** (01.10.2026) | **ilk sürüm `CM`** (şema değişikliğiyle bugünkü `createDoctor`/`transferDoctor` yazımları buraya taşınır) · tamamı **1B madde 3** |
 
 **Listeye girmeyen tek çıkışlar** (iş kuralı taşımaz):
 - `formatla()` — X-5, `CM`
@@ -428,6 +433,7 @@ Kalkarsa GÇ-17'nin kod tarafı da `CM`'e kayar.
 | **§C-j** | Audit sanitize kapsamı | ✅ **sıra kısıtı** — §D'de kalır | **Migration'ın teslim şartı.** `vkn_tckn` + `fatura_*` seti A-13 ile aynı migration'da geliyor. Bugünkü `SENSITIVE_KEYS` altı anahtar (`audit.ts:102-109`) ve VKN/TCKN içermiyor; sonraya kalırsa **ilk `createAuditLog` çağrısı VKN'yi açık yazar** |
 | **§C-o** | Bayi yönetim ekranları ve tabloları | ✅ **KARARLAR X-8** (15.09) | Bayi `Doktor` satırı (`hesap_sinifi = BAYI`). C5 **tam söküm**; beş `Dealer*` tablosu `CM`'de çıkar; 1B'de tek cari ekranı (madde 3 ve 7) |
 | **§C-p** | `LoginAttempt` ↔ E-2 §(8) | ✅ **KARARLAR X-9** (15.09) · mekanizma **`docs/adr/ADR-004`** | Yeni commit **C7b**; tablo `CM`'de çıkar; **GÇ-14** |
+| **§C-z** | Sahipliğin yazma yolları ve `BAYI` sahipsizliği | ✅ **KARARLAR X-17** (01.10) | Şema kalemleri `CM`'de: `CHECK` · iz olay biçimi · sahip FK `RESTRICT` · iz FK `CASCADE`. Fonksiyonun ilk sürümü `CM`, tamamı 1B madde 3 |
 | **§C-q** | Fiyat listesinin cariye bağlanışı | ✅ **KARARLAR X-10** (15.09) — (a) cariye atanan liste | İki yeni tablo + `Doktor.fiyat_listesi_id` `CM`'e girer; `Product.netListPrice` kalkar (**GÇ-15**); `cozumleBirimFiyat()` ilk sürümü `CM`'de |
 
 > **§C defterinde** §C-l · m · g · f · j · **o · p · q** **kapandı** olarak işaretlidir (atıf: bu tablo).
@@ -478,7 +484,7 @@ Tarama karar boşluğu aradığı için Claude Code'a bırakılmaz.
 | **C6** | **GÇ-9 + GÇ-8** KDV toggle ve taban fiyat | `vat-mode.ts` · `VatToggle.tsx` · `reports/page.tsx` toggle · `OrderForm` KDV düğmeleri (`:181-202`) ve `belowMin` kilidi · `products/actions.ts:33-36` sunucu reddi · `my-orders/actions.ts:99-102` | **silinir:** e2e 6 (`pricing.spec` 3 + `reports.spec` 2 + `products.spec` 1) | `netMinPrice`'ın **şema** tarafı `CM`'de. Yerini **taban etiketi zorunluluğu** alır (1B, Ü-3) |
 | **C7** | **GÇ-11** config noktaları | `settings.ts` + `SystemSetting` okuma/yazma çağrıları sökülür · **`policy.ts` iskeleti** (§B.7'nin **23** anahtarı *— 15.09: X-9 ile iki, X-10 ile bir · 16.09: X-14 ile bir anahtar eklendi*; doldurulacaklar `null`) · `DEFAULT_COMMISSION_RATE` sabiti `finance.primOraniVarsayilan`'a taşınır (X-14) | — | `SystemSetting`'e yazan çağrı noktası bugün **0** (`setSetting` çağrılmıyor). Ayar ekranı yalnız **tanım tabloları** için anlamlı |
 | **C7b** | **GÇ-14** deneme sınırı taşıması *(X-9 — 15.09)* | `LoginAttempt` okuma/yazma çağrıları → **bellek içi sayaç** (`docs/adr/ADR-004`) · deneme olayları container log'una (E-2 §(8)) · bugünkü **anahtar, eşik ve kilit süresi** koddan okunur → `policy.ts` `auth.girisDenemeSiniri` · `auth.girisKilitDakika` doldurulur · sayaç mantığına **birim testi** (sahte saat, E-1) | **eklenir:** sayaç birim testleri · etkilenen mevcut test C7b'de ölçülür | Tablo **`CM`'e kadar şemada kalır, okunmaz**. *Neden `CM`'de değil:* `CM` zaten 1A'nın en büyük commit'i (R-1); davranış değişikliği ayrı commit'te sınanır |
-| **CM** | 🔴 **Tek migration + parasal tip** *(1A'nın en büyük commit'i)* | `init_v2` silinir → tek yeni `init` · **§B.1** **15** tablo (oturum tablosu, dışa aktarım kütüğü, *15.09 — X-10* `FiyatListesi`/`FiyatListesiSatir` ve *16.09 — X-11/X-12* `CariHareket`/`ImportParti` dahil) · **§B.2** 4 belge · **§B.3** 40+ kolon · **E-1** `timestamptz`/`date` ayrımı (bugün 41 kolonun tamamı `TIMESTAMP(3)`) · **X-5 `Decimal`** + `money.ts` sarmalayıcısı + `formatla()` + **lint kuralı** + para testlerinin yeniden yazımı · **GÇ-7** enum üç değer ve mekanik yeniden adlandırma · **GÇ-10**, **GÇ-12** şema tarafı · **X-8** beş `Dealer*` tablosu çıkar + `HesapSinifi` enum + `Doktor.hesap_sinifi` (NOT NULL, varsayılansız) · **X-9 / GÇ-14** `LoginAttempt` çıkar · **X-10** `FiyatListesi` + `FiyatListesiSatir` + `Doktor.fiyat_listesi_id` (nullable) · **GÇ-15** `Product.netListPrice` çıkar · **şemadan çıkan 14 tablo** (§A üst notu) · **X-11 `CariHareket` + X-12 `ImportParti`** (tablolar, katalog enum'ları, beş tabloya parti FK) · **GÇ-18/19/20** alan çıkışları · **X-13/X-14/X-15 şema etkileri** (siparişte satıcı nullable · `Kullanici.prim_orani` · sevkiyat satırı + donmuş `prim_orani` · vade izinin cari harekete bağlanması · telefon NOT NULL UNIQUE · klinik/bölge nullable) · **ADR-005** `Product.stock` çıkar · **§C-j** `SENSITIVE_KEYS` genişletmesi · **TZ=`Europe/Istanbul`** (`docker-compose.yml`, `ci.yml`, `.env.example`) + `format.ts`'e `timeZone` + `stock/page.tsx:5-13` kopya `formatDate` silinir | **yeniden yazılır:** birim 22 (`money.test` 7 + `vat.test` 15) | ⬇️ Aşağıdaki üç not **bağlayıcıdır** · ✅ *16.09: karar engeli yok — C0…C7b'den sonra başlar* |
+| **CM** | 🔴 **Tek migration + parasal tip** *(1A'nın en büyük commit'i)* | `init_v2` silinir → tek yeni `init` · **§B.1** **15** tablo (oturum tablosu, dışa aktarım kütüğü, *15.09 — X-10* `FiyatListesi`/`FiyatListesiSatir` ve *16.09 — X-11/X-12* `CariHareket`/`ImportParti` dahil) · **§B.2** 4 belge · **§B.3** 40+ kolon · **E-1** `timestamptz`/`date` ayrımı (bugün 41 kolonun tamamı `TIMESTAMP(3)`) · **X-5 `Decimal`** + `money.ts` sarmalayıcısı + `formatla()` + **lint kuralı** + para testlerinin yeniden yazımı · **GÇ-7** enum üç değer ve mekanik yeniden adlandırma · **GÇ-10**, **GÇ-12** şema tarafı · **X-8** beş `Dealer*` tablosu çıkar + `HesapSinifi` enum + `Doktor.hesap_sinifi` (NOT NULL, varsayılansız) · **X-9 / GÇ-14** `LoginAttempt` çıkar · **X-10** `FiyatListesi` + `FiyatListesiSatir` + `Doktor.fiyat_listesi_id` (nullable) · **GÇ-15** `Product.netListPrice` çıkar · **şemadan çıkan 14 tablo** (§A üst notu) · **X-11 `CariHareket` + X-12 `ImportParti`** (tablolar, katalog enum'ları, beş tabloya parti FK) · **GÇ-18/19/20** alan çıkışları · **X-13/X-14/X-15 şema etkileri** (siparişte satıcı nullable · `Kullanici.prim_orani` · sevkiyat satırı + donmuş `prim_orani` · vade izinin cari harekete bağlanması · telefon NOT NULL UNIQUE · klinik/bölge nullable) · **X-17** *(01.10)* `Doktor` `CHECK` (elle SQL, testle doğrulanır) · devir izi olay biçimi · sahip FK `RESTRICT` · `degistirDoktorSahibi()` ilk sürümü · **ADR-005** `Product.stock` çıkar · **§C-j** `SENSITIVE_KEYS` genişletmesi · **TZ=`Europe/Istanbul`** (`docker-compose.yml`, `ci.yml`, `.env.example`) + `format.ts`'e `timeZone` + `stock/page.tsx:5-13` kopya `formatDate` silinir | **yeniden yazılır:** birim 22 (`money.test` 7 + `vat.test` 15) | ⬇️ Aşağıdaki üç not **bağlayıcıdır** · ✅ *16.09: karar engeli yok — C0…C7b'den sonra başlar* |
 | **C8** | **Anti-şema testi** | `information_schema`'ya sorgu atan tek test | — | Repoda bugün `$queryRaw` **0**, `information_schema` **0** — kod tabanının ilk ham SQL'i |
 | **C9** | **Seed ayrımı** | `db:seed` = **referans veri** (canlıda da çalışır) — **varsayılan fiyat listesi** `pricing.varsayilanFiyatListesiKodu` koduyla bu seed'de açılır *(X-10)* · `db:seed:demo` = yalnız geliştirme | — | Bugün ayrım yok; 353 satır, 21 tablo siler, 61 kayıt basar |
 | **C10** | **Belge kapanışı** | `KABUL_KRITERLERI.md` iskeleti (kriter kodları, boş satırlar) · `PRD_V2.md` arşive + atıf yapan dosyaların yönlendirilmesi | — | X-7 §(6). §C-f **bitmiş olmalı** |
@@ -703,6 +709,7 @@ import (D-6) · dışa aktarım (D-5) · kabul senaryosu (F-11) · servis katman
 > ihlal eder. Karar: **X-17 `CM`'den önce kapanır**, kısıt tek migration'a girer.
 > **Şimdi başlayabilecekler:** Şerit A · C0 · C1 · C2 · C3 · C4 · C5 *(tam)* · C6 · C7 · C7b.
 > **`CM`:** **tek açık kalem X-17'dir**; C0…C7b bittikten sonra ve X-17 kapandıktan sonra başlar.
+> **01.10.2026: X-17 kapandı (KARARLAR §5.19). C0…C7b bitti. `CM`'in önünde açık karar yok.**
 
 | # | Soru | Durum |
 |---|---|---|
@@ -715,7 +722,7 @@ import (D-6) · dışa aktarım (D-5) · kabul senaryosu (F-11) · servis katman
 | **§D.7-7** → §C-v | Prim oranı *(16.09, PRD taraması)* | ✅ **KARARLAR X-14** — config + özel oran, sevkiyata donar |
 | **§D.7-8** → §C-w | Vade değişikliği · mükerrer cari *(16.09, PRD taraması)* | ✅ **KARARLAR X-15** — ikisi de korunur |
 | **§D.7-9** → §C-x | `Product.stock` *(16.09 — nasıl sorusu)* | ✅ **ADR-005** — kolon kalkar |
-| **§D.7-10** → §C-z | Sahipliği beş yol yazıyor; `BAYI` sahipsizliği kısıtı *(19.09 incelemesi, bulgu 3)* | ⬜ **AÇIK — `CM`'i bloklar.** Öneri hazır (X-17); şemaya etkisi `Doktor` üzerinde tek `CHECK`. **24.09 kararı: `CM`'den önce kapanır** — C0…C7b süresi içinde |
+| **§D.7-10** → §C-z | Sahipliği beş yol yazıyor; `BAYI` sahipsizliği kısıtı *(19.09 incelemesi, bulgu 3)* | ✅ **KARARLAR X-17** (01.10.2026, §5.19) — tek yazma noktası `degistirDoktorSahibi()` · `BAYI`'de sahip boş (`CHECK`) · iz olay kaydı · sahip FK `RESTRICT` |
 
 #### §D.7-3 ayrıntısı *(tarihçe — karar KARARLAR §5.13'tedir)*
 

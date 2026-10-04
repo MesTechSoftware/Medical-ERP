@@ -9,6 +9,8 @@
 > **§3.2** ve **§3 çıkış kriteri**nde tablo sayısı **11 → 13** · **§8 takvim uyarısı**nda geri çekme
 > listesi *"15.09'da 14"* → **15**, tablo sayısına aynı not ve *"iki engel kaldı"* → **tek engel
 > (Şerit A)**.
+> **✅ 01.10.2026 — X-17 kapandı (KARARLAR §5.19).** Sahipliğin tek yazma noktası ve toplu devir; tek çağrı noktası listesi 11 → 12. **`CM`'in önündeki son açık kalem kapandı.**
+>
 > **✅ 16.09.2026, 4. kısım — X-13 · X-14 · X-15 kapandı; ADR-005 yazıldı. Açık karar yok.**
 > - **X-13:** satıcı yalnız kendi doktorlarını görür; D-2 §(3) redakte edildi.
 > - **X-14:** prim oranı `policy.ts`'te durur (**23 anahtar**); satıcıya özel oran tanımlanabilir; oran sevkiyata donar.
@@ -276,6 +278,7 @@ eklenen, daha önce karara bağlanmış ama görev olarak hiçbir yerde yazılı
 | **X-14** *(16.09)* | `finance.primOraniVarsayilan` + satıcıya özel oran · oran sevkiyat satırına donar | ⚠️ **ekler** | §5.17 |
 | **X-15** *(16.09)* | Vade değişikliği izli (yalnız `YONETICI`) · telefon zorunlu ve benzersiz · `BAYI`'de klinik/bölge boş olabilir | ⚠️ **değiştirir** | §5.18 |
 | **ADR-005** *(16.09)* | `Product.stock` kalkar; stok hareketlerden türer, eşzamanlılık satır kilidiyle | ⚠️ **çıkarır** | `docs/adr/ADR-005` |
+| **X-17** *(01.10)* | Sahiplik tek fonksiyondan değişir (`degistirDoktorSahibi()`, 12. tek çağrı noktası) · devir toplu · pasifleştirmede portföy seçimi zorunlu · `BAYI`'de sahip boş (`CHECK`) · iz olay kaydı | ⚠️ **değiştirir** (`CHECK` · iz biçimi · sahip FK `RESTRICT`) | §5.19 |
 
 **Çalışma kuralı:** Her bug için **önce testi yaz, kırmızı olduğunu gör**, sonra düzelt.
 Bu turdaki hatalar tam olarak "test yokken sessizce yanlış çalışan" sınıfı. Yeni maddelerde de aynı disiplin.

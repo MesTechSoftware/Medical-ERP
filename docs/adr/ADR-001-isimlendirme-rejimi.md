@@ -10,6 +10,8 @@
   yasağı `Product` ile sınırlandı · X-11/X-12'ye bağlı iki satır eklendi. *Aynı gün:* X-11/X-12
   kapandı; satırlar ✅ oldu ve iki 🟦 enum kataloğu Karar tablosuna eklendi. *Son hâli:* X-13…X-15
   ve ADR-005 satırları eklendi; `policy.ts` örneğine `finance.primOraniVarsayilan` girdi.
+- **Ek güncellemesi (01.10.2026 — karar değişmedi):** KARARLAR **X-17** ile tek çağrı noktası
+  listesi 11 → 12 (`degistirDoktorSahibi`); devir izi satırına olay biçimi notu düşüldü.
 
 ## Bağlam
 
@@ -28,7 +30,7 @@ gerekiyordu. Aksi hâlde iki sorun doğar:
 |---|---|---|---|---|
 | Şema **tanımlayıcıları** (tablo, kolon) | İngilizce | `camelCase` (model `PascalCase`) | `User`, `lastSeenAt` | Eşleme tablosuyla (§Ek) |
 | **Enum değerleri** | Türkçe, ASCII | `BUYUK_HARF_ALT_CIZGI` | `YONETICI` · `OPERASYON` · `SATICI` · `TUZEL_KISI` · `GERCEK_KISI` · `DOKTOR` · `BAYI` *(X-8)* · `NEGATIF_STOK` · `VADESI_GECMIS_HAREKET` · `SEVKIYAT`/`TAHSILAT`/`TERS_KAYIT`/`BORC`/`ALACAK` *(X-11 🟦)* · `CARI`/`ACILIS_STOGU` *(X-12 🟦)* | **Normatif** — KARARLAR'daki yazımıyla aynen |
-| **11 tek çağrı noktası fonksiyonu** | Türkçe, ASCII | `camelCase` | `hesaplaDoktorBakiye` · `uretBelgeNo` · `hesaplaSatirTutarlari` · `cozumleBirimFiyat` · `hesaplaStok` · `hesaplaDoktorRisk` … | **Normatif** |
+| **12 tek çağrı noktası fonksiyonu** *(01.10.2026: X-17 ile 11 → 12)* | Türkçe, ASCII | `camelCase` | `hesaplaDoktorBakiye` · `uretBelgeNo` · `hesaplaSatirTutarlari` · `cozumleBirimFiyat` · `hesaplaStok` · `hesaplaDoktorRisk` · `degistirDoktorSahibi` *(X-17)* … | **Normatif** |
 | **`policy.ts` anahtarları** | Türkçe, ASCII | noktalı `camelCase` | `auth.oturumHareketsizlikSaat` · `auth.girisDenemeSiniri` *(X-9)* · `pricing.varsayilanFiyatListesiKodu` *(X-10)* · `finance.primOraniVarsayilan` *(X-14)* · `zaman.saatDilimi` · `finance.nakitTevsikLimiti` | **Normatif** |
 | **Belge önekleri** | Türkçe | büyük harf | `SIP` · `SVK` · `IAD` · `KNS` · `TRF` · `THS` · `ACL` · `VDF` · `DZL` | **Normatif** — müşterinin gördüğü şey |
 
@@ -98,7 +100,7 @@ migration'ıdır; o hâlde yeni ADR gerekir.
 | `ImportParti` (`dosya_adi` dahil) · beş tabloda parti FK | *`CM`'de* | ✅ konur | **X-12** |
 | prim dönemi tabloları | `CommissionPeriod` · `CommissionAdjustment` *(bugünkü adlar)* | 🚫 kalkar | X-1 · GÇ-16 |
 | saklı KDV/toplamlar · sipariş vadesi · tahsilat fatura no | `vatAmount` · `lineNetTotal` · `lineGrossTotal` · `netTotal` · `vatTotal` · `grossTotal` · `Order.dueDate` · `DoctorPayment.invoiceNo` | 🚫 kalkar | C-6 · A-7 · C-1 · GÇ-18/19/20 |
-| devir izi · vade değişiklik izi | `DoctorAssignment` · `DueDateChange` *(bugünkü adlar; ikincisinin bağı cari harekete taşınır)* | ✅ konur | X-13 · X-15 |
+| devir izi · vade değişiklik izi | `DoctorAssignment` · `DueDateChange` *(bugünkü adlar; ikincisinin bağı cari harekete taşınır · 01.10.2026: devir izi **olay kaydı** biçimine geçer — eski/yeni sahip nullable, başlangıç/bitiş alanları kalkar, X-17 §(3))* | ✅ konur | X-13 · X-15 · **X-17** |
 | `Kullanici.prim_orani` · sevkiyat satırı `prim_orani` | `commissionRate` *(bugünkü ad, `Decimal(5,2)`)* · sevkiyat satırı *`CM`'de* | ✅ konur | X-14 |
 | `Siparis` satıcı alanı (nullable) · `Doktor.telefon` (UNIQUE) · `klinik`/`bolge` (nullable) | `sellerId` · `phoneNormalized` · `clinic`/`region` *(bugünkü adlar)* | ✅ konur | X-13 · X-15 |
 | saklı stok miktarı | `Product.stock` *(bugünkü ad)* | 🚫 yasak | ADR-005 · GÇ-17 |
