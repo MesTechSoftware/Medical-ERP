@@ -3,6 +3,7 @@
 > **Tarih:** 19.09.2026 · **Durum:** ⬜ **öneri — karar değildir** (`YOL_HARITASI.md` §7.1-A: plan karar üretemez).
 > **Kaynak:** 19.09 inceleme bulguları (üç bulgu + bayat iddialar) ve bu belgedeki genişletme.
 > **Kullanım:** Onaylanan her bölüm hedef dosyaya **aynen** işlenir (§6 ve §7 tabloları). Ardından bu dosya `arsiv/`e gider.
+> **01.10.2026 — §2 (X-17) karara bağlandı:** KARARLAR **§5.19**'a revize hâliyle işlendi (iz olay kaydı, sahip FK `RESTRICT`, kural kodları, silme/geri alma hükmü). Bu belgedeki §2 ve ADR-007 taslağı **artık geçerli metin değildir**. X-16, X-15 §(5) eki ve ADR-006 öneri olarak kalır.
 > *Satır numaraları proje kopyalarına göredir; depoda kaymış olabilir.*
 
 ---
@@ -128,7 +129,9 @@ Sonuçları:
 
 ## 2. X-17 · Sahipliğin tek yazma yolu ve portföy devri
 
-*KARARLAR §5.20 olarak işlenir.*
+> ✅ **Karara bağlandı (01.10.2026) — KARARLAR §5.19.** Aşağıdaki metin önerinin tarihçesidir; geçerli metin KARARLAR'dadır.
+
+*KARARLAR §5.19 olarak işlendi (01.10.2026).*
 
 **Boşluğun kaynağı:** X-13 §(5)/(6) ve E-2 §(6) devri tek tek ve elle tanımlıyor; pasif satıcının doktorları sahipsiz kalıyor. Toplu devir hiçbir yerde planlı değil: ne 1B madde 3 matrisinde ne §D.5'te var. Ayrılan bir satıcının 38 doktoru, yönetici hepsini tek tek atayana kadar sipariş alamıyor. **Rol değişikliği** (`SATICI` → başka rol) ise hiç yazılı değil.
 
