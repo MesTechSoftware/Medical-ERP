@@ -1,7 +1,15 @@
-// Medikal Satış Operasyon Yönetim Sistemi - veri modeli
-// Para alanları BigInt KURUŞ olarak saklanır (150,50 TL -> 15050n).
-// BigInt tercihi bilinçlidir: PostgreSQL'de Int = 4 bayt = ±21,5 M ₺ tavanı
-// demektir; KDV + kümülatif ciro ile bu tavan gerçek bir risktir.
+// Medikal Satış Operasyon Yönetim Sistemi - veri modeli (Faz 1A · CM)
+//
+// Ad rejimi: docs/adr/ADR-001 — tablo/kolon İngilizce camelCase, enum değerleri
+// Türkçe ASCII (KARARLAR'daki yazımıyla aynen). Kavramsal → şema adı eşlemesi ADR-001 ekindedir.
+//
+// Sayısal tipler (KARARLAR X-5): birim fiyat Decimal(18,4) · tutar Decimal(18,2) ·
+// oran Decimal(5,2) · miktar Int. BigInt kuruş kullanılmaz.
+// Zaman tipleri (KARARLAR E-1): an = timestamptz (UTC) · takvim günü = date.
+//
+// Prisma'nın ifade edemediği kısıtlar migration SQL'ine elle yazılır:
+//   - Doctor: BAYI satırında sahip boş (CHECK) — X-17 §(2)
+//   - PriceListItem: aynı liste + ürün + minQuantity için tarih aralığı çakışmaz (EXCLUDE) — B-5, X-10
 // learn more: https://pris.ly/d/prisma-schema
 
 generator client {
@@ -15,587 +23,748 @@ datasource db {
   provider = "postgresql"
 }
 
+// ─── Kataloglar (kodda kapalı — KARARLAR §0.1.1) ─────────────────────────────
+
+// D-2: üç rol, kapalı katalog. OPERASYON'un davranışı 1B madde 3'te.
 enum Role {
-  ADMIN
-  SELLER
-  DEALER // Bayi paneli girişi (D-05 revize)
+  YONETICI
+  OPERASYON
+  SATICI
+}
+
+// X-8: bayi de cari tablosundadır; ayrım bu alandır. Cari açıldıktan sonra değişmez (X-17 §(2)).
+enum AccountClass {
+  DOKTOR
+  BAYI
+}
+
+// A-13
+enum PartyType {
+  TUZEL_KISI
+  GERCEK_KISI
 }
 
 enum EntityStatus {
-  ACTIVE
-  PASSIVE
+  AKTIF
+  PASIF
+}
+
+// A-5: teklif siparişin ilk aşamasıdır; SIP numarası TEKLIF'te doğar, ONAYLI'da değişmez.
+enum OrderStage {
+  TEKLIF
+  ONAYLI
 }
 
 enum OrderStatus {
-  PENDING // Bekliyor
-  PREPARING // Hazırlanıyor
-  SHIPPED // Kargolandı
-  DELIVERED // Teslim Edildi
-  CANCELLED // İptal Edildi
+  BEKLIYOR
+  HAZIRLANIYOR
+  KARGOLANDI
+  TESLIM_EDILDI
+  IPTAL
 }
 
 enum StockMovementType {
-  IN // Giriş
-  OUT // Çıkış
+  GIRIS
+  CIKIS
 }
 
-enum PaymentMethod {
-  CASH // Nakit
-  TRANSFER // Havale / EFT
-  CARD // Kredi Kartı
-  OTHER // Diğer
+// A-4 · B-4 🟦 — stok konumu tipi (kilitlenme anı: CM). Satış DEPO'dan yapılır;
+// KONSINYE mal hâlâ bizimdir ve doktorda/bayide durur.
+enum StockLocationType {
+  DEPO
+  KONSINYE
 }
 
-model User {
-  id           String       @id @default(cuid())
-  name         String
-  email        String       @unique
-  phone        String?
-  passwordHash String
-  role         Role         @default(SELLER)
-  status       EntityStatus @default(ACTIVE)
-  createdAt    DateTime     @default(now())
-
-  // FR-31: satıcı bazında prim oranı override'ı (null = sistem varsayılanı).
-  commissionRate Float?
-
-  orders                Order[]
-  auditLogs             AuditLog[]
-  commissionPeriods     CommissionPeriod[]
-  commissionAdjustments CommissionAdjustment[]
-  ownedDoctors     Doctor[]
-  doctorAssignments DoctorAssignment[]
-
-  // Bayi login hesabı: DEALER rolündeki kullanıcı bir Dealer'a bağlanır (D-05 revize).
-  dealer Dealer?
+// A-11: ödeme yöntemi tanım tablosunun tipi.
+enum PaymentMethodType {
+  NAKIT
+  BANKA
+  POS
 }
-
-// Nihai müşteri. Tek bir satıcıya kilitlenir (RULE-02).
-model Doctor {
-  id        String  @id @default(cuid())
-  fullName  String
-  title     String? // Prof. Dr., Op. Dr. ...
-  specialty String? // branş
-  clinic    String // klinik/kurum (FR-01)
-  region    String // bölge (FR-01)
-  city      String?
-  email     String?
-
-  // 🔴 FR-09: mükerrer kaydı engelleyen tek mekanizma. Kanonik biçim +90XXXXXXXXXX.
-  phoneNormalized String @unique
-
-  // Sahiplik. Satıcı pasifleştirilirse null'a düşer (FR-08) — doktor
-  // "sahipsiz havuza" gider ve yeniden atanana kadar sipariş girilemez.
-  ownerSeller   User?  @relation(fields: [ownerSellerId], references: [id], onDelete: SetNull)
-  ownerSellerId String?
-
-  status    EntityStatus @default(ACTIVE)
-  createdAt DateTime     @default(now())
-
-  orders             Order[]
-  assignments        DoctorAssignment[]
-  payments           DoctorPayment[]
-  congressLedger     CongressLedger[]
-  congressRegistrations CongressRegistration[]
-
-  @@index([ownerSellerId])
-  @@index([fullName])
-}
-
-// Doktor devir geçmişi (FR-06): kim, ne zaman, neden.
-model DoctorAssignment {
-  id       String @id @default(cuid())
-  doctor   Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
-  doctorId String
-  seller   User   @relation(fields: [sellerId], references: [id])
-  sellerId String
-
-  fromDate   DateTime  @default(now())
-  toDate     DateTime? // null = hâlâ aktif atama
-  assignedBy String // işlemi yapan kullanıcı id'si
-  reason     String?
-
-  @@index([doctorId])
-  @@index([sellerId])
-}
-
-model Product {
-  id   String @id @default(cuid())
-  name String
-  code String @unique
-
-  // Fiyatlar NET (KDV hariç) kuruştur — kanonik değer nettir (RULE-10).
-  netListPrice BigInt // önerilen liste fiyatı (FR-11)
-  netMinPrice  BigInt @default(0) // taban fiyat; altına inilemez (RULE-03)
-  vatRate      Int    @default(20) // % — sistem varsayılanı, ürün bazında override (FR-16)
-
-  stock     Int          @default(0)
-  status    EntityStatus @default(ACTIVE)
-  createdAt DateTime     @default(now())
-
-  orderItems          OrderItem[]
-  stockMovements      StockMovement[]
-  dealerPrices        DealerPrice[]
-  dealerShipmentItems DealerShipmentItem[]
-}
-
-model StockMovement {
-  id        String            @id @default(cuid())
-  product   Product           @relation(fields: [productId], references: [id])
-  productId String
-  type      StockMovementType
-  quantity  Int
-  note      String?
-  order     Order?            @relation(fields: [orderId], references: [id])
-  orderId   String?
-  // Bayi sevkiyatı kaynaklı hareketlerde izleme (formal FK yok; iz amaçlı).
-  dealerShipmentId String?
-  createdAt DateTime          @default(now())
-
-  @@index([productId])
-}
-
-model Order {
-  id       String @id @default(cuid())
-  seller   User   @relation(fields: [sellerId], references: [id])
-  sellerId String
-
-  // BRK-02: serbest metin doktor adı yerine gerçek varlık ilişkisi.
-  // Sipariş geçmişi devirde ESKİ satıcıda kalır (FR-07) — bu yüzden
-  // sellerId, doktorun güncel sahibinden bağımsız olarak saklanır.
-  doctor   Doctor @relation(fields: [doctorId], references: [id])
-  doctorId String
-
-  status OrderStatus @default(PENDING)
-
-  // Sipariş toplamları KALEMLERİN TOPLAMIDIR; yeniden yuvarlanmaz (bkz. src/lib/vat.ts).
-  netTotal   BigInt // KDV hariç
-  vatTotal   BigInt // KDV tutarı
-  grossTotal BigInt // KDV dahil
-
-  // Vade (FR-21). Varsayılan gün sayısı ve üst sınırı admin belirler (D-20).
-  dueDate DateTime
-
-  orderDate DateTime @default(now())
-  createdAt DateTime @default(now())
-
-  items           OrderItem[]
-  shipment        Shipment?
-  stockMovements  StockMovement[]
-  allocations     PaymentAllocation[]
-  dueDateChanges  DueDateChange[]
-
-  @@index([sellerId])
-  @@index([doctorId])
-  @@index([status])
-}
-
-model OrderItem {
-  id        String  @id @default(cuid())
-  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  orderId   String
-  product   Product @relation(fields: [productId], references: [id])
-  productId String
-  quantity Int
-
-  // Sipariş anındaki fiyat/KDV snapshot'ı — sonradan değişmez (RULE-04).
-  netUnitPrice    BigInt // birim net fiyat
-  listPriceAtSale BigInt // o anki liste fiyatı (iskonto raporlaması için)
-  discountRate    Float  @default(0) // % — türetilmiş, gösterim amaçlı (FR-14)
-  vatRate         Int // % — snapshot
-  vatAmount       BigInt // kalem KDV tutarı (kalem bazında yuvarlanır)
-  lineNetTotal    BigInt // netUnitPrice * quantity
-  lineGrossTotal  BigInt // lineNetTotal + vatAmount
-
-  @@index([orderId])
-}
-
-model Shipment {
-  id             String      @id @default(cuid())
-  order          Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  orderId        String      @unique
-  carrier        String?
-  trackingNumber String?
-  shippedAt      DateTime?
-  status         OrderStatus @default(SHIPPED)
-  createdAt      DateTime    @default(now())
-}
-
-// NOT: Eski satıcı-borçlu `Payment` modeli KALDIRILDI (BRK-01, D-01).
-// Satıcı artık şirkete borçlu değil; tahsilat doktordan şirkete yapılır ve
-// `DoctorPayment` içinde tutulur. Bayi ödemeleri Faz D'de `DealerPayment` olacak.
-
-// --- Faz C1: Doktor cari, vade ve tahsilat ---
 
 enum PaymentStatus {
   AKTIF
   IPTAL
 }
 
-// Doktordan ŞİRKETE yapılan tahsilat (D-01). Satıcı nakit tahsil etmez;
-// yalnızca takibinden sorumludur. Eski satıcı-borçlu `Payment` modelinin yerini alır.
-model DoctorPayment {
-  id       String @id @default(cuid())
+// X-11 🟦 — tip ve yön kataloğu (kilitlenme anı: CM).
+enum LedgerEntryType {
+  SEVKIYAT
+  IADE
+  TAHSILAT
+  ACILIS
+  VADE_FARKI
+  TERS_KAYIT
+}
+
+enum LedgerDirection {
+  BORC
+  ALACAK
+}
+
+// X-12 🟦 — import veri türü kataloğu (kilitlenme anı: CM).
+enum ImportDataType {
+  CARI
+  URUN
+  FIYAT_LISTESI
+  ACILIS_BAKIYESI
+  ACILIS_STOGU
+}
+
+// A-8 🟦 — blok kararı (kilitlenme anı: CM).
+enum ApprovalDecision {
+  ONAY
+  RED
+}
+
+// ─── Kullanıcı ve oturum ─────────────────────────────────────────────────────
+
+model User {
+  id                 String   @id @default(cuid())
+  name               String
+  email              String   @unique
+  phone              String?
+  passwordHash       String
+  role               Role     @default(SATICI)
+  // E-2: aktiflik. Kullanıcı silinmez, pasifleştirilir.
+  isActive           Boolean  @default(true)
+  // E-2 §(2)/(3): geçici parolayla açılan hesap ilk girişte parola değiştirir.
+  mustChangePassword Boolean  @default(false)
+  createdAt          DateTime @default(now()) @db.Timestamptz(3)
+
+  // X-14 §(2): satıcıya özel prim oranı (null = finance.primOraniVarsayilan).
+  commissionRate Decimal? @db.Decimal(5, 2)
+
+  sessions        Session[]
+  orders          Order[]
+  auditLogs       AuditLog[]
+  ownedDoctors    Doctor[]           @relation("DoctorOwner")
+  assignmentsFrom DoctorAssignment[] @relation("AssignmentFrom")
+  assignmentsTo   DoctorAssignment[] @relation("AssignmentTo")
+  assignmentsMade DoctorAssignment[] @relation("AssignmentBy")
+  exportLogs      ExportLog[]
+  importBatches   ImportBatch[]      @relation("ImportBatchBy")
+  revertedBatches ImportBatch[]      @relation("ImportBatchRevertedBy")
+}
+
+// E-2 · ADR-003: opak token; DB'de yalnız SHA-256 hash'i durur.
+// 1B madde 4'e kadar tablo boş ve kullanılmaz (§C-g sınırı).
+model Session {
+  id         String    @id @default(cuid())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  tokenHash  String    @unique
+  createdAt  DateTime  @default(now()) @db.Timestamptz(3)
+  lastSeenAt DateTime  @default(now()) @db.Timestamptz(3)
+  revokedAt  DateTime? @db.Timestamptz(3)
+
+  @@index([userId])
+}
+
+// ─── Tanım tabloları (satır silinmez, aktif = false yapılır) ─────────────────
+
+// C-6
+model TaxRate {
+  id        String  @id @default(cuid())
+  code      String  @unique
+  name      String
+  rate      Decimal @db.Decimal(5, 2)
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  products Product[]
+}
+
+// A-11: komisyon oranı ve valör günü tahsilata kopyalanır ve donar.
+model PaymentMethod {
+  id             String            @id @default(cuid())
+  name           String            @unique
+  type           PaymentMethodType
+  commissionRate Decimal           @default(0) @db.Decimal(5, 2)
+  valueDays      Int               @default(0)
+  isActive       Boolean           @default(true)
+  sortOrder      Int               @default(0)
+
+  payments DoctorPayment[]
+}
+
+// D-3: takip URL'si şablonda {takip_no} taşır; entegrasyon Faz 3.
+model Carrier {
+  id                  String  @id @default(cuid())
+  name                String  @unique
+  trackingUrlTemplate String?
+  isActive            Boolean @default(true)
+  sortOrder           Int     @default(0)
+
+  shipments Shipment[]
+}
+
+// A-4 · B-4: konsinye ve çoklu depo stok konumudur. Faz 1'de tek depo seed edilir.
+model StockLocation {
+  id        String            @id @default(cuid())
+  code      String            @unique
+  name      String
+  type      StockLocationType
+  isActive  Boolean           @default(true)
+  sortOrder Int               @default(0)
+
+  movements        StockMovement[]
+  returns          ReturnNote[]
+  consignmentsFrom ConsignmentIssue[]    @relation("ConsignmentFrom")
+  consignmentsTo   ConsignmentIssue[]    @relation("ConsignmentTo")
+  transfersFrom    StockTransfer[]       @relation("TransferFrom")
+  transfersTo      StockTransfer[]       @relation("TransferTo")
+  adjustmentItems  StockAdjustmentItem[]
+}
+
+// B-7 §(2)
+model StockAdjustmentReason {
+  id        String  @id @default(cuid())
+  code      String  @unique
+  name      String
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  items StockAdjustmentItem[]
+}
+
+// A-14 §(3): satır kilidiyle (FOR UPDATE) okunur; MAX+1 yasak.
+model DocumentCounter {
+  prefix    String
+  year      Int
+  lastValue Int
+
+  @@id([prefix, year])
+}
+
+// ─── Cari ────────────────────────────────────────────────────────────────────
+
+// Cari hesap. Ad bilinçli olarak `Doctor` kalır (ADR-001 eki): normatif fonksiyon adları
+// "Doktor" der; bayi satırını accountClass ayırır (X-8).
+model Doctor {
+  id           String       @id @default(cuid())
+  accountClass AccountClass // X-8: NOT NULL, DB varsayılanı yok
+  fullName     String
+  title        String? // Prof. Dr., Op. Dr. ...
+  specialty    String? // branş
+  clinic       String? // X-15 §(3): DOKTOR için uygulama kuralıyla zorunlu
+  region       String? // X-15 §(3): DOKTOR için uygulama kuralıyla zorunlu
+  city         String?
+  email        String?
+
+  // X-15 §(2): zorunlu ve benzersiz. Kanonik biçim +90XXXXXXXXXX.
+  phoneNormalized String @unique
+
+  // X-17: sahip yalnız degistirDoktorSahibi() ile değişir. BAYI'de boş (CHECK, migration SQL).
+  // RESTRICT: kullanıcı silinmez (E-2 §(6)); sahibi fonksiyon dışında boşaltan yol kapanır.
+  ownerSeller   User?   @relation("DoctorOwner", fields: [ownerSellerId], references: [id], onDelete: Restrict)
+  ownerSellerId String?
+
+  // X-10 §(2): boşsa varsayılan liste (pricing.varsayilanFiyatListesiKodu).
+  priceList   PriceList? @relation(fields: [priceListId], references: [id])
+  priceListId String?
+
+  paymentTermDays Int? // A-7
+  creditLimit     Decimal? @db.Decimal(18, 2) // A-12: null = limitsiz
+
+  // A-13: vergi kimliği ve fatura bilgileri — hepsi nullable, belgeye dondurulmaz.
+  partyType       PartyType @default(TUZEL_KISI)
+  taxId           String?   @db.VarChar(11) // vkn_tckn: 10 hane VKN, 11 hane TCKN
+  invoiceTitle    String?
+  taxOffice       String?
+  invoiceAddress  String?
+  invoiceDistrict String?
+  invoiceCity     String?
+  accountingCode  String? // salt kayıt alanı (C-2)
+
+  importBatch   ImportBatch? @relation(fields: [importBatchId], references: [id])
+  importBatchId String?
+
+  status    EntityStatus @default(AKTIF)
+  createdAt DateTime     @default(now()) @db.Timestamptz(3)
+
+  orders       Order[]
+  assignments  DoctorAssignment[]
+  payments     DoctorPayment[]
+  ledger       LedgerEntry[]
+  returns      ReturnNote[]
+  consignments ConsignmentIssue[]
+
+  @@index([ownerSellerId])
+  @@index([fullName])
+}
+
+// Sahiplik izi — olay kaydı (X-17 §(3)). Her geçiş bir satırdır.
+// Doktor silinince (C-3 §(6)) iz de gider; işlem audit log'da kalır (X-17 §(10)).
+model DoctorAssignment {
+  id           String   @id @default(cuid())
+  doctor       Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  doctorId     String
+  fromSeller   User?    @relation("AssignmentFrom", fields: [fromSellerId], references: [id])
+  fromSellerId String?
+  toSeller     User?    @relation("AssignmentTo", fields: [toSellerId], references: [id])
+  toSellerId   String?
+  changedBy    User     @relation("AssignmentBy", fields: [changedById], references: [id])
+  changedById  String
+  changedAt    DateTime @default(now()) @db.Timestamptz(3)
+  reason       String
+
+  @@index([doctorId])
+}
+
+// X-11: borç veya alacak doğuran her olay tek satır. Tutar pozitif, yön ayrı.
+// Tutar, tip ve yön sonradan değişmez; düzeltme ters harekettir.
+model LedgerEntry {
+  id        String          @id @default(cuid())
+  doctor    Doctor          @relation(fields: [doctorId], references: [id])
+  doctorId  String
+  type      LedgerEntryType
+  direction LedgerDirection
+  amount    Decimal         @db.Decimal(18, 2) // KDV dahil (C-6 §(6))
+  dueDate   DateTime?       @db.Date // A-7: borç doğuran harekette dolar
+
+  // Kaynak belgenin numarası; ACL/VDF'de hareketin kendi numarası (X-11 §(2)).
+  documentNo String
+
+  // Kaynak belge bağı (en fazla biri dolu; ACILIS/VADE_FARKI kaynaksızdır).
+  shipment     Shipment?      @relation(fields: [shipmentId], references: [id])
+  shipmentId   String?
+  returnNote   ReturnNote?    @relation(fields: [returnNoteId], references: [id])
+  returnNoteId String?
+  payment      DoctorPayment? @relation(fields: [paymentId], references: [id])
+  paymentId    String?
+
+  // TERS_KAYIT: çevirdiği satır (bir satır en fazla bir kez çevrilir).
+  reversedEntry   LedgerEntry? @relation("Reversal", fields: [reversedEntryId], references: [id])
+  reversedEntryId String?      @unique
+  reversal        LedgerEntry? @relation("Reversal")
+
+  importBatch   ImportBatch? @relation(fields: [importBatchId], references: [id])
+  importBatchId String?
+
+  createdById String
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+
+  dueDateChanges DueDateChange[]
+
+  @@index([doctorId])
+  @@index([documentNo])
+}
+
+// X-15 §(1): vade değişikliği izli; bağı cari harekettedir (yalnız YONETICI).
+model DueDateChange {
+  id            String      @id @default(cuid())
+  ledgerEntry   LedgerEntry @relation(fields: [ledgerEntryId], references: [id])
+  ledgerEntryId String
+
+  oldDueDate DateTime? @db.Date
+  newDueDate DateTime  @db.Date
+  changedBy  String
+  reason     String
+  changedAt  DateTime  @default(now()) @db.Timestamptz(3)
+
+  @@index([ledgerEntryId])
+}
+
+// ─── Ürün ve fiyat ───────────────────────────────────────────────────────────
+
+// Liste fiyatı ürün tablosunda değil, varsayılan listenin satırındadır (X-10 §(5)).
+// Stok miktarı saklanmaz, hareketlerden türer (ADR-005).
+model Product {
+  id   String @id @default(cuid())
+  name String
+  code String @unique
+
+  taxRate   TaxRate @relation(fields: [taxRateId], references: [id])
+  taxRateId String
+
+  importBatch   ImportBatch? @relation(fields: [importBatchId], references: [id])
+  importBatchId String?
+
+  status    EntityStatus @default(AKTIF)
+  createdAt DateTime     @default(now()) @db.Timestamptz(3)
+
+  priceListItems   PriceListItem[]
+  orderItems       OrderItem[]
+  stockMovements   StockMovement[]
+  consignmentItems ConsignmentIssueItem[]
+  transferItems    StockTransferItem[]
+  adjustmentItems  StockAdjustmentItem[]
+}
+
+// X-10 §(1)
+model PriceList {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  items   PriceListItem[]
+  doctors Doctor[]
+}
+
+// B-5 · B-6 · X-10: tarih aralığı yarı açık [validFrom, validTo); boş = süresiz.
+// Çakışma yasağı migration SQL'inde EXCLUDE kısıtıdır.
+model PriceListItem {
+  id          String    @id @default(cuid())
+  priceList   PriceList @relation(fields: [priceListId], references: [id])
+  priceListId String
+  product     Product   @relation(fields: [productId], references: [id])
+  productId   String
+  listPrice   Decimal   @db.Decimal(18, 4) // KDV hariç
+  minQuantity Int       @default(1)
+  validFrom   DateTime? @db.Date
+  validTo     DateTime? @db.Date
+
+  importBatch   ImportBatch? @relation(fields: [importBatchId], references: [id])
+  importBatchId String?
+
+  @@index([priceListId, productId])
+}
+
+// ─── Stok ────────────────────────────────────────────────────────────────────
+
+model StockMovement {
+  id         String            @id @default(cuid())
+  product    Product           @relation(fields: [productId], references: [id])
+  productId  String
+  location   StockLocation     @relation(fields: [locationId], references: [id])
+  locationId String // A-4: zorunlu
+  type       StockMovementType
+  quantity   Int
+  note       String?
+
+  // Kaynak belge bağı — her hareket bir belgeden doğar (B-7). En fazla biri dolu;
+  // açılış stoğu yalnız partiye bağlıdır.
+  // order: bugünkü akış stoğu sipariş anında düşürür. Sevkiyata taşınması 1B madde 7'dir (A-3).
+  order              Order?            @relation(fields: [orderId], references: [id])
+  orderId            String?
+  shipment           Shipment?         @relation(fields: [shipmentId], references: [id])
+  shipmentId         String?
+  returnNote         ReturnNote?       @relation(fields: [returnNoteId], references: [id])
+  returnNoteId       String?
+  consignmentIssue   ConsignmentIssue? @relation(fields: [consignmentIssueId], references: [id])
+  consignmentIssueId String?
+  stockTransfer      StockTransfer?    @relation(fields: [stockTransferId], references: [id])
+  stockTransferId    String?
+  stockAdjustment    StockAdjustment?  @relation(fields: [stockAdjustmentId], references: [id])
+  stockAdjustmentId  String?
+
+  importBatch   ImportBatch? @relation(fields: [importBatchId], references: [id])
+  importBatchId String?
+
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([productId, locationId])
+}
+
+// ─── Belgeler (hepsi belgeNo + updatedAt taşır — K-4, A-14) ──────────────────
+
+// SIP
+model Order {
+  id         String @id @default(cuid())
+  documentNo String @unique
+
+  // X-13 §(3): sipariş anındaki sahip, sonra değişmez. BAYI siparişinde boş.
+  seller   User?   @relation(fields: [sellerId], references: [id])
+  sellerId String?
+
   doctor   Doctor @relation(fields: [doctorId], references: [id])
   doctorId String
 
-  amount        BigInt // kuruş, BRÜT tahsil edilen tutar
-  method        PaymentMethod @default(TRANSFER)
-  paidAt        DateTime      @default(now())
-  referenceNo   String? // dekont / referans no
-  invoiceNo     String? // D-24: Faz 1'de yalnızca alan; e-Fatura entegrasyonu yok
-  note          String?
-  status        PaymentStatus @default(AKTIF)
-  recordedBy    String // işlemi kaydeden kullanıcı id'si
-  cancelledAt   DateTime?
-  cancelledBy   String?
-  cancelReason  String?
-  createdAt     DateTime      @default(now())
+  stage           OrderStage  @default(TEKLIF)
+  status          OrderStatus @default(BEKLIYOR)
+  quoteValidUntil DateTime?   @db.Date // A-5
+  paymentTermDays Int // A-7: vade gün sayısı; vade tarihi cari harekettedir (X-11 §(4))
 
-  allocations PaymentAllocation[]
+  orderDate DateTime @default(now()) @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
-  @@index([doctorId])
-  @@index([status])
-}
+  items          OrderItem[]
+  shipments      Shipment[]
+  stockMovements StockMovement[]
 
-// Mahsuplaşma (FR-24): hangi tahsilatın hangi siparişe ne kadar sayıldığı.
-// Doktor bakiyesi ayrı kolonda TUTULMAZ; bu kayıtlardan hesaplanır (RULE-08).
-model PaymentAllocation {
-  id        String        @id @default(cuid())
-  payment   DoctorPayment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
-  paymentId String
-  order     Order         @relation(fields: [orderId], references: [id])
-  orderId   String
-
-  amount    BigInt // kuruş
-  createdAt DateTime @default(now())
-
-  @@index([paymentId])
-  @@index([orderId])
-}
-
-// Vade değişiklik geçmişi (FR-22, D-02). RULE-13 gereği audit'e de yazılır.
-model DueDateChange {
-  id      String @id @default(cuid())
-  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  orderId String
-
-  oldDueDate DateTime
-  newDueDate DateTime
-  changedBy  String
-  reason     String?
-  changedAt  DateTime @default(now())
-
-  @@index([orderId])
-}
-
-// --- Faz C2: Satıcı primi ---
-
-enum CommissionStatus {
-  HESAPLANDI
-  ONAYLANDI
-  ODENDI
-}
-
-// Kapanmış prim dönemi. Kapanışta matrah/oran/tutar DONDURULUR ve bir daha
-// değişmez (RULE-05); sonraki iptaller `CommissionAdjustment` ile sonraki
-// döneme negatif olarak yansır (FR-35).
-model CommissionPeriod {
-  id       String @id @default(cuid())
-  seller   User   @relation(fields: [sellerId], references: [id])
-  sellerId String
-
-  year  Int
-  month Int // 1-12 (FR-32: takvim ayı)
-
-  baseAmount       BigInt // NET matrah, kuruş (D-17)
-  ratePercent      Float // dondurulmuş oran
-  commissionAmount BigInt // dondurulmuş prim tutarı
-
-  status   CommissionStatus @default(HESAPLANDI)
-  closedAt DateTime         @default(now())
-  closedBy String
-
-  adjustments CommissionAdjustment[]
-
-  @@unique([sellerId, year, month])
   @@index([sellerId])
-}
-
-// Dönem matrahı düzeltmesi (FR-35). Hedef dönem (year/month) ile tutulur:
-// kapanmış bir döneme ait tahsilat iptal edilirse, düzeltme AÇIK olan sonraki
-// döneme yazılır — o dönem henüz bir satır olarak var olmasa bile.
-model CommissionAdjustment {
-  id       String @id @default(cuid())
-  seller   User   @relation(fields: [sellerId], references: [id])
-  sellerId String
-
-  year  Int // hedef dönem
-  month Int
-
-  amount BigInt // ± NET matrah düzeltmesi (kuruş)
-  reason String
-
-  sourcePaymentId String? // iptal edilen tahsilat
-  createdBy       String
-  createdAt       DateTime @default(now())
-
-  // Kapanışta hangi döneme işlendiği; null ise henüz uygulanmadı.
-  appliedPeriod   CommissionPeriod? @relation(fields: [appliedPeriodId], references: [id])
-  appliedPeriodId String?
-
-  @@index([sellerId, year, month])
-}
-
-// --- Faz E: Kongre ve doktor kongre bakiyesi ---
-//
-// §11 UYUMLULUK NOTU: Bu modül, sağlık meslek mensuplarına satın alma hacmine
-// bağlı menfaat sağlıyor ve TİTCK mevzuatı açısından düzenlemeye tabidir.
-// Bu nedenle her kararın denetim izi (RULE-13) zorunlu tutulmuştur.
-
-enum CongressStatus {
-  TASLAK
-  YAYINDA
-  TAMAMLANDI
-  IPTAL
-}
-
-enum CongressRegistrationStatus {
-  TALEP
-  ONAYLANDI
-  IPTAL
-  REDDEDILDI
-}
-
-enum CongressLedgerType {
-  EARN // tahsilattan doğan kazanım
-  SPEND // kongre paketi harcaması
-  ADJUST // admin manuel düzeltmesi
-  EXPIRE // süresi dolan kazanım
-}
-
-model Congress {
-  id                   String         @id @default(cuid())
-  name                 String
-  description          String?
-  startDate            DateTime
-  endDate              DateTime
-  location             String?
-  registrationDeadline DateTime?
-  quota                Int? // null = sınırsız
-  status               CongressStatus @default(TASLAK)
-  createdAt            DateTime       @default(now())
-
-  packages CongressPackage[]
-
-  @@index([status])
-}
-
-model CongressPackage {
-  id         String   @id @default(cuid())
-  congress   Congress @relation(fields: [congressId], references: [id], onDelete: Cascade)
-  congressId String
-
-  name  String
-  value BigInt // kuruş — kongreden kongreye değişken (D-15)
-  quota Int? // null = sınırsız
-
-  registrations CongressRegistration[]
-
-  @@index([congressId])
-}
-
-// Kayıt akışı (FR-53): satıcı talep eder → bakiye REZERVE edilir (lotlardan
-// düşülür) → admin onaylar. Rezervasyon anında düşüldüğü için aynı bakiye iki
-// pakete aynı anda harcanamaz (RULE-09).
-model CongressRegistration {
-  id        String          @id @default(cuid())
-  package   CongressPackage @relation(fields: [packageId], references: [id])
-  packageId String
-  doctor    Doctor          @relation(fields: [doctorId], references: [id])
-  doctorId  String
-  sellerId  String // talebi açan satıcı
-
-  status         CongressRegistrationStatus @default(TALEP)
-  reservedAmount BigInt // rezerve edilen bakiye (paket değeri snapshot'ı)
-
-  requestedAt  DateTime  @default(now())
-  approvedAt   DateTime?
-  approvedBy   String?
-  cancelledAt  DateTime?
-  cancelledBy  String?
-  cancelReason String?
-
-  ledgerEntries CongressLedger[]
-
-  @@index([packageId])
   @@index([doctorId])
   @@index([status])
 }
 
-// Kongre bakiyesi hareket defteri. Bakiye AYRI KOLONDA TUTULMAZ (RULE-08);
-// süresi dolmamış EARN/ADJUST lotlarının `remainingAmount` toplamıdır.
-model CongressLedger {
-  id       String             @id @default(cuid())
-  doctor   Doctor             @relation(fields: [doctorId], references: [id])
-  doctorId String
-  type     CongressLedgerType
-
-  amount BigInt // ± kuruş
-
-  // Yalnızca kazanım (EARN/pozitif ADJUST) satırlarında dolu:
-  earnedAt        DateTime  @default(now())
-  expiresAt       DateTime? // kazanım + 12 ay (D-22); null = süresiz
-  remainingAmount BigInt    @default(0) // FIFO tüketimi buradan yürür
-
-  registration   CongressRegistration? @relation(fields: [registrationId], references: [id])
-  registrationId String?
-
-  refType String? // "DoctorPayment" | "CongressRegistration" | "Manual"
-  refId   String?
-  note    String?
-
-  createdBy String?
-  createdAt DateTime @default(now())
-
-  @@index([doctorId, earnedAt])
-  @@index([registrationId])
-}
-
-// Admin tarafından belirlenen sistem parametreleri (D-20 vade sınırı,
-// prim oranı vb.). Anahtar/değer: yeni parametre için şema değişikliği gerekmez.
-model SystemSetting {
-  key       String   @id
-  value     String
-  updatedAt DateTime @updatedAt
-  updatedBy String?
-}
-
-// --- Faz D: Bayi kanalı + bayi paneli ---
-//
-// D-06/D-14/D-19/RULE-15: Bayi kanalı prim ve kongre sistemine HİÇ dokunmaz.
-// Bu ayrı modeller (Order/DoctorPayment değil) kullanıldığı için bu doğal
-// olarak sağlanır — bayi sevkiyatı asla CommissionPeriod/CongressLedger yazmaz.
-
-enum DealerShipmentStatus {
-  TALEP // bayi panelden talep etti; stok/cari HENÜZ etkilenmedi
-  ONAYLANDI // admin onayladı; stok düştü, cariye yazıldı
-  IPTAL // onaylı sevkiyat iptal edildi (stok geri, cari geri)
-  REDDEDILDI // talep reddedildi (hiç etki olmamıştı)
-}
-
-model Dealer {
-  id          String       @id @default(cuid())
-  code        String       @unique
-  title       String
-  taxOffice   String?
-  taxNo       String?
-  contactName String?
-  phone       String?
-  email       String?
-  address     String?
-  status      EntityStatus @default(ACTIVE)
-  createdAt   DateTime     @default(now())
-
-  // Opsiyonel login: 1 bayi ↔ 1 DEALER kullanıcı. Login'siz bayi de olabilir.
-  user   User?   @relation(fields: [userId], references: [id])
-  userId String? @unique
-
-  prices    DealerPrice[]
-  shipments DealerShipment[]
-  payments  DealerPayment[]
-}
-
-// FR-40: bayiye özel SABİT net fiyat (iskonto oranı değil — D-08).
-model DealerPrice {
+// Satır tutarları saklanmaz; hesaplaSatirTutarlari() türetir (C-6 §(3), GÇ-18).
+model OrderItem {
   id        String  @id @default(cuid())
-  dealer    Dealer  @relation(fields: [dealerId], references: [id], onDelete: Cascade)
-  dealerId  String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   String
   product   Product @relation(fields: [productId], references: [id])
   productId String
+  quantity  Int
 
-  netPrice BigInt // kuruş, KDV hariç
-  vatRate  Int    @default(20)
+  // Sipariş anında donar (RULE-04). İskonto oranı türetilir, saklanmaz (X-5 §(9)).
+  listPrice Decimal @db.Decimal(18, 4)
+  unitPrice Decimal @db.Decimal(18, 4)
+  vatRate   Decimal @db.Decimal(5, 2) // C-6 §(2-a): değer olarak donar
 
-  @@unique([dealerId, productId])
-  @@index([dealerId])
+  // A-2: bedelsiz satır — stoktan düşer, cariye borç yazmaz, prim üretmez.
+  isFree     Boolean @default(false)
+  freeReason String?
+
+  shipmentItems ShipmentItem[]
+  returnItems   ReturnNoteItem[]
+
+  @@index([orderId])
 }
 
-model DealerShipment {
-  id       String @id @default(cuid())
-  dealer   Dealer @relation(fields: [dealerId], references: [id])
-  dealerId String
+// SVK — bir sipariş birden çok sevkiyatla kapanabilir (A-3, GÇ-12).
+model Shipment {
+  id         String @id @default(cuid())
+  documentNo String @unique
+  order      Order  @relation(fields: [orderId], references: [id])
+  orderId    String
 
-  status DealerShipmentStatus @default(TALEP)
+  carrier            Carrier?    @relation(fields: [carrierId], references: [id])
+  carrierId          String?
+  trackingNumber     String?
+  shippedOn          DateTime?   @db.Date // D-3: gönderi tarihi
+  cargoStatus        String? // D-3: API entegrasyonu Faz 3
+  cargoLastQueriedAt DateTime?   @db.Timestamptz(3)
+  deliveryAddress    String? // A-13 §(8): doluysa belgede donar
+  externalDispatchNo String?     @db.VarChar(32) // C-1: müşterinin irsaliye no'su, salt kayıt
+  status             OrderStatus @default(KARGOLANDI)
 
-  // Toplamlar KALEMLERİN TOPLAMIDIR (vat.ts). TALEP aşamasında da hesaplı tutulur
-  // (bayi ne kadarlık talep açtığını görür) ama cariye ancak ONAYLANDI'da girer.
-  netTotal   BigInt
-  vatTotal   BigInt
-  grossTotal BigInt
+  shippedAt DateTime? @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime  @updatedAt @db.Timestamptz(3)
 
-  requestedByUserId String? // bayi talebi ise dolu
-  approvedBy        String?
-  approvedAt        DateTime?
-  cancelledBy       String?
-  cancelledAt       DateTime?
-  cancelReason      String?
-  dueDate           DateTime?
+  items          ShipmentItem[]
+  ledgerEntries  LedgerEntry[]
+  stockMovements StockMovement[]
 
-  requestedAt DateTime @default(now())
+  @@index([orderId])
+}
 
-  items DealerShipmentItem[]
+// Borç ve prim sevkiyat satırında doğar (A-3); KDV burada hesaplanır (C-6 §(7)).
+model ShipmentItem {
+  id             String    @id @default(cuid())
+  shipment       Shipment  @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  shipmentId     String
+  orderItem      OrderItem @relation(fields: [orderItemId], references: [id])
+  orderItemId    String
+  quantity       Int
+  // X-14 §(3): sevkiyat anında donar; BAYI ve bedelsiz satırda boş.
+  commissionRate Decimal?  @db.Decimal(5, 2)
 
-  @@index([dealerId])
+  @@index([shipmentId])
+  @@index([orderItemId])
+}
+
+// IAD — A-1: ayrı belge; orijinal sipariş değişmez. Zorunlu sebep.
+model ReturnNote {
+  id          String        @id @default(cuid())
+  documentNo  String        @unique
+  doctor      Doctor        @relation(fields: [doctorId], references: [id])
+  doctorId    String
+  location    StockLocation @relation(fields: [locationId], references: [id])
+  locationId  String
+  reason      String
+  createdById String
+  createdAt   DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime      @updatedAt @db.Timestamptz(3)
+
+  items          ReturnNoteItem[]
+  ledgerEntries  LedgerEntry[]
+  stockMovements StockMovement[]
+
+  @@index([doctorId])
+}
+
+model ReturnNoteItem {
+  id           String     @id @default(cuid())
+  returnNote   ReturnNote @relation(fields: [returnNoteId], references: [id], onDelete: Cascade)
+  returnNoteId String
+  orderItem    OrderItem  @relation(fields: [orderItemId], references: [id])
+  orderItemId  String
+  quantity     Int
+  vatRate      Decimal    @db.Decimal(5, 2) // C-6 eki: orijinal satırın donmuş oranı
+
+  @@index([returnNoteId])
+}
+
+// KNS — A-4: mali sonucu yoktur.
+model ConsignmentIssue {
+  id             String        @id @default(cuid())
+  documentNo     String        @unique
+  doctor         Doctor        @relation(fields: [doctorId], references: [id])
+  doctorId       String
+  fromLocation   StockLocation @relation("ConsignmentFrom", fields: [fromLocationId], references: [id])
+  fromLocationId String
+  toLocation     StockLocation @relation("ConsignmentTo", fields: [toLocationId], references: [id])
+  toLocationId   String
+  createdById    String
+  createdAt      DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime      @updatedAt @db.Timestamptz(3)
+
+  items          ConsignmentIssueItem[]
+  stockMovements StockMovement[]
+}
+
+model ConsignmentIssueItem {
+  id                 String           @id @default(cuid())
+  consignmentIssue   ConsignmentIssue @relation(fields: [consignmentIssueId], references: [id], onDelete: Cascade)
+  consignmentIssueId String
+  product            Product          @relation(fields: [productId], references: [id])
+  productId          String
+  quantity           Int
+
+  @@index([consignmentIssueId])
+}
+
+// TRF — B-4: mali sonucu yoktur.
+model StockTransfer {
+  id             String        @id @default(cuid())
+  documentNo     String        @unique
+  fromLocation   StockLocation @relation("TransferFrom", fields: [fromLocationId], references: [id])
+  fromLocationId String
+  toLocation     StockLocation @relation("TransferTo", fields: [toLocationId], references: [id])
+  toLocationId   String
+  createdById    String
+  createdAt      DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime      @updatedAt @db.Timestamptz(3)
+
+  items          StockTransferItem[]
+  stockMovements StockMovement[]
+}
+
+model StockTransferItem {
+  id              String        @id @default(cuid())
+  stockTransfer   StockTransfer @relation(fields: [stockTransferId], references: [id], onDelete: Cascade)
+  stockTransferId String
+  product         Product       @relation(fields: [productId], references: [id])
+  productId       String
+  quantity        Int
+
+  @@index([stockTransferId])
+}
+
+// DZL — B-7: mali sonucu yok, geriye tarihlendirilemez (belge tarihi = createdAt).
+model StockAdjustment {
+  id            String   @id @default(cuid())
+  documentNo    String   @unique
+  externalDocNo String?  @db.VarChar(64) // B-7 §(5): tutanak no, salt kayıt
+  createdById   String
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @db.Timestamptz(3)
+
+  items          StockAdjustmentItem[]
+  stockMovements StockMovement[]
+}
+
+model StockAdjustmentItem {
+  id                String                @id @default(cuid())
+  stockAdjustment   StockAdjustment       @relation(fields: [stockAdjustmentId], references: [id], onDelete: Cascade)
+  stockAdjustmentId String
+  product           Product               @relation(fields: [productId], references: [id])
+  productId         String
+  location          StockLocation         @relation(fields: [locationId], references: [id])
+  locationId        String
+  quantityDelta     Int // ±
+  reason            StockAdjustmentReason @relation(fields: [reasonId], references: [id])
+  reasonId          String
+  note              String // zorunlu açıklama
+
+  @@index([stockAdjustmentId])
+}
+
+// THS — doktordan şirkete tahsilat (A-11). Cari hareketi aynı transaction'da yazılır (X-11 §(5)).
+model DoctorPayment {
+  id         String @id @default(cuid())
+  documentNo String @unique
+  doctor     Doctor @relation(fields: [doctorId], references: [id])
+  doctorId   String
+
+  amount            Decimal         @db.Decimal(18, 2) // brüt tahsil edilen tutar
+  direction         LedgerDirection @default(ALACAK) // A-11: tahsilat yönü
+  paymentMethod     PaymentMethod   @relation(fields: [paymentMethodId], references: [id])
+  paymentMethodId   String
+  // A-11: yöntemden kopyalanır ve donar. Komisyon cariye dokunmaz.
+  commissionRate    Decimal         @db.Decimal(5, 2)
+  commissionAmount  Decimal         @db.Decimal(18, 2)
+  expectedValueDate DateTime?       @db.Date
+
+  paidAt       DateTime      @default(now()) @db.Timestamptz(3)
+  referenceNo  String? // dekont / referans no
+  note         String?
+  status       PaymentStatus @default(AKTIF)
+  recordedBy   String // işlemi kaydeden kullanıcı id'si
+  cancelledAt  DateTime?     @db.Timestamptz(3)
+  cancelledBy  String?
+  cancelReason String?
+  createdAt    DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime      @updatedAt @db.Timestamptz(3)
+
+  ledgerEntries LedgerEntry[]
+
+  @@index([doctorId])
   @@index([status])
 }
 
-model DealerShipmentItem {
-  id         String         @id @default(cuid())
-  shipment   DealerShipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
-  shipmentId String
-  product    Product        @relation(fields: [productId], references: [id])
-  productId  String
+// ─── Onay, içe/dışa aktarım, denetim ─────────────────────────────────────────
 
-  quantity       Int
-  netUnitPrice   BigInt // sevkiyat/onay anında dondurulan fiyat (FR-41)
-  vatRate        Int
-  vatAmount      BigInt
-  lineNetTotal   BigInt
-  lineGrossTotal BigInt
+// A-8: belgeye yapışan tek genel blok kaydı. Belge kaydı engellenmez; açık blok
+// yalnız sonuç doğuran adımı durdurur. ruleCode varchar'dır, enum değil (§1.3).
+model ApprovalBlock {
+  id           String            @id @default(cuid())
+  documentType String // belge öneki: SIP, SVK, ...
+  documentId   String
+  ruleCode     String
+  // A-8: gerekçe her durumda zorunlu — bloğu açan da karar veren de yazar (X-4 YUMUSAK).
+  openedById   String
+  openReason   String
+  openedAt     DateTime          @default(now()) @db.Timestamptz(3)
+  decision     ApprovalDecision?
+  decidedById  String?
+  decidedAt    DateTime?         @db.Timestamptz(3)
+  decisionNote String? // karar verildiğinde zorunlu (uygulama kuralı)
 
-  @@index([shipmentId])
+  @@index([documentType, documentId])
 }
 
-model DealerPayment {
-  id       String @id @default(cuid())
-  dealer   Dealer @relation(fields: [dealerId], references: [id])
-  dealerId String
+// X-12: her import bir parti satırı. Satır sayısı saklanmaz, bağlı kayıtlardan türer.
+model ImportBatch {
+  id        String         @id @default(cuid())
+  batchNo   String         @unique
+  dataType  ImportDataType
+  user      User           @relation("ImportBatchBy", fields: [userId], references: [id])
+  userId    String
+  createdAt DateTime       @default(now()) @db.Timestamptz(3)
+  fileName  String?        @db.VarChar(255) // E-3 §(4): doğrulanmaz, dosya saklanmaz
 
-  amount      BigInt // kuruş, brüt
-  method      PaymentMethod @default(TRANSFER)
-  paidAt      DateTime      @default(now())
-  referenceNo String?
-  note        String?
-  recordedBy  String
-  createdAt   DateTime      @default(now())
+  revertedAt   DateTime? @db.Timestamptz(3)
+  revertedBy   User?     @relation("ImportBatchRevertedBy", fields: [revertedById], references: [id])
+  revertedById String?
+  revertReason String?
 
-  @@index([dealerId])
+  doctors        Doctor[]
+  products       Product[]
+  priceListItems PriceListItem[]
+  ledgerEntries  LedgerEntry[]
+  stockMovements StockMovement[]
 }
 
-// Giriş denemesi sayacı. Önceden bellek içi Map'ti; sunucu restart'ında
-// sıfırlanıyor ve çoklu instance'ta paylaşılmıyordu. Kalıcı tabloya alındı.
-model LoginAttempt {
-  key         String    @id // normalize edilmiş e-posta
-  failures    Int       @default(0)
-  lockedUntil DateTime?
-  updatedAt   DateTime  @updatedAt
+// D-5 §(5): her dışa aktarım loglanır — satırların kendisi yazılmaz. Ekranı yoktur.
+model ExportLog {
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  datasetCode String
+  parameters  Json
+  rowCount    Int
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([createdAt])
 }
 
-// Kritik işlemlerin denetim kaydı: kim, ne yaptı, ne zaman, hangi kayıtta.
-// actorId nullable: başarısız giriş gibi olaylarda kimliklenmiş aktör yoktur.
-// before/after JSON string olarak saklanır; hassas alanlar ve BigInt değerler
-// createAuditLog içinde merkezî olarak işlenir (bkz. src/lib/audit.ts).
 model AuditLog {
   id         String   @id @default(cuid())
   actor      User?    @relation(fields: [actorId], references: [id])
@@ -605,7 +774,7 @@ model AuditLog {
   entityId   String?
   beforeData String?
   afterData  String?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
 
   @@index([entityType, createdAt])
   @@index([actorId])

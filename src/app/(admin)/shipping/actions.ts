@@ -6,39 +6,42 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { OrderStatus } from "@/generated/prisma/enums";
+import { uretBelgeNo } from "@/lib/belge-no";
+import { bugun, simdi } from "@/lib/zaman";
 
-/** PREPARING durumundaki siparişe kargo bilgisi girer ve SHIPPED yapar. */
+/**
+ * HAZIRLANIYOR durumundaki siparişe kargo bilgisi girer ve KARGOLANDI yapar.
+ * Sevkiyat satırı, kısmi sevkiyat ve sevkiyatta doğan borç 1B madde 7'dedir (A-3, GÇ-12);
+ * `CM`'de sevkiyat bugünkü gibi siparişin tamamıdır ve yalnız başlık yazar.
+ */
 export async function shipOrder(orderId: string, formData: FormData) {
   const session = await requireAdmin();
 
-  const carrier = ((formData.get("carrier") as string) || "").trim() || null;
+  const carrierId = ((formData.get("carrierId") as string) || "").trim() || null;
   const trackingNumber =
     ((formData.get("trackingNumber") as string) || "").trim() || null;
 
   const order = await prisma.order.findUnique({ where: { id: orderId } });
-  if (!order || order.status !== "PREPARING") {
+  if (!order || order.status !== "HAZIRLANIYOR") {
     redirect("/shipping");
   }
 
+  let documentNo = "";
   await prisma.$transaction(async (tx) => {
     await tx.order.update({
       where: { id: orderId },
-      data: { status: OrderStatus.SHIPPED },
+      data: { status: OrderStatus.KARGOLANDI },
     });
-    await tx.shipment.upsert({
-      where: { orderId },
-      create: {
+    documentNo = await uretBelgeNo("SVK", tx);
+    await tx.shipment.create({
+      data: {
+        documentNo,
         orderId,
-        carrier,
+        carrierId,
         trackingNumber,
-        shippedAt: new Date(),
-        status: OrderStatus.SHIPPED,
-      },
-      update: {
-        carrier,
-        trackingNumber,
-        shippedAt: new Date(),
-        status: OrderStatus.SHIPPED,
+        shippedOn: bugun(),
+        shippedAt: simdi(),
+        status: OrderStatus.KARGOLANDI,
       },
     });
   });
@@ -48,8 +51,8 @@ export async function shipOrder(orderId: string, formData: FormData) {
     action: AUDIT_ACTIONS.ORDER_STATUS_CHANGE,
     entityType: "Order",
     entityId: orderId,
-    before: { status: "PREPARING" },
-    after: { status: "SHIPPED", carrier, trackingNumber },
+    before: { status: "HAZIRLANIYOR" },
+    after: { status: "KARGOLANDI", documentNo, carrierId, trackingNumber },
   });
 
   revalidatePath("/shipping");

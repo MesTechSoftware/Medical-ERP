@@ -30,17 +30,18 @@ test.describe("Girişsiz erişim ve login", () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
-  test("bayi rolü giriş yapamaz (D-2 §(6), X-8 — panel C5'te söküldü)", async ({ page }) => {
-    // Enum CM'e kadar DEALER taşıyor; aktif bir DEALER hesabı bile reddedilmeli.
-    const email = "e2e-bayi@medikal.local";
+  // Bayi bir cari tipidir, kullanıcı değildir (X-8): CM'de DEALER rolü enum'dan çıktı.
+  // OPERASYON şemada vardır ama davranışı 1B madde 3'te doğar (GÇ-7) — o güne kadar giremez.
+  test("OPERASYON rolü 1B'ye kadar giriş yapamaz (GÇ-7)", async ({ page }) => {
+    const email = "e2e-operasyon@medikal.local";
     const client = new Client({ connectionString });
     await client.connect();
     try {
       await client.query(
-        `INSERT INTO "User" (id, name, email, "passwordHash", role, status)
-         VALUES (gen_random_uuid()::text, 'E2E Bayi', $1, $2, 'DEALER', 'ACTIVE')
+        `INSERT INTO "User" (id, name, email, "passwordHash", role, "isActive")
+         VALUES (gen_random_uuid()::text, 'E2E Operasyon', $1, $2, 'OPERASYON', true)
          ON CONFLICT (email) DO NOTHING`,
-        [email, await bcrypt.hash("bayi123", 10)]
+        [email, await bcrypt.hash("operasyon123", 10)]
       );
     } finally {
       await client.end();
@@ -48,7 +49,7 @@ test.describe("Girişsiz erişim ve login", () => {
 
     await page.goto("/login");
     await page.getByLabel("E-posta").fill(email);
-    await page.getByLabel("Şifre").fill("bayi123");
+    await page.getByLabel("Şifre").fill("operasyon123");
     await page.getByRole("button", { name: "Giriş Yap" }).click();
 
     await expect(page.getByText("E-posta veya şifre hatalı.")).toBeVisible();

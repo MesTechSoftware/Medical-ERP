@@ -19,7 +19,7 @@ import { homeFor } from "@/lib/roles";
 const loadActiveUser = cache(async (userId: string) => {
   return prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, name: true, email: true, role: true, status: true },
+    select: { id: true, name: true, email: true, role: true, isActive: true },
   });
 });
 
@@ -29,7 +29,7 @@ export async function requireSession() {
   if (!session?.user?.id) redirect("/login");
 
   const user = await loadActiveUser(session.user.id);
-  if (!user || user.status !== "ACTIVE") redirect("/login");
+  if (!user || !user.isActive) redirect("/login");
 
   // Token'daki role değil, veritabanındaki güncel role güvenilir.
   session.user.role = user.role;
@@ -38,16 +38,16 @@ export async function requireSession() {
   return session;
 }
 
-/** ADMIN değilse KENDİ ana sayfasına yönlendirir (rolüne göre). */
+/** YONETICI değilse KENDİ ana sayfasına yönlendirir (rolüne göre). */
 export async function requireAdmin() {
   const session = await requireSession();
-  if (session.user.role !== "ADMIN") redirect(homeFor(session.user.role));
+  if (session.user.role !== "YONETICI") redirect(homeFor(session.user.role));
   return session;
 }
 
-/** SELLER değilse kendi ana sayfasına yönlendirir. */
+/** SATICI değilse kendi ana sayfasına yönlendirir. */
 export async function requireSeller() {
   const session = await requireSession();
-  if (session.user.role !== "SELLER") redirect(homeFor(session.user.role));
+  if (session.user.role !== "SATICI") redirect(homeFor(session.user.role));
   return session;
 }

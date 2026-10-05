@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { formatTRY } from "@/lib/money";
+import { formatla } from "@/lib/money";
+import { cozumleBirimFiyat } from "@/lib/fiyat";
+import { hesaplaStok } from "@/lib/stok";
 import {
   PageHeader,
   LinkButton,
@@ -19,9 +21,21 @@ export default async function ProductsPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const { error } = await searchParams;
-  const products = await prisma.product.findMany({
+  const urunler = await prisma.product.findMany({
     orderBy: { createdAt: "desc" },
+    include: { taxRate: { select: { rate: true } } },
   });
+  // Liste fiyatı varsayılan listenin satırıdır (X-10 §(5)); stok hareketlerden türer (ADR-005).
+  const products = await Promise.all(
+    urunler.map(async (p) => {
+      const fiyat = await cozumleBirimFiyat(p.id, null);
+      return {
+        ...p,
+        listPrice: fiyat.durum === "TAMAM" ? fiyat.listeFiyat : null,
+        stock: await hesaplaStok(p.id),
+      };
+    })
+  );
 
   return (
     <div>
@@ -48,9 +62,6 @@ export default async function ProductsPage({
                 <th className="px-4 py-2 text-right font-medium">
                   Liste (net)
                 </th>
-                <th className="px-4 py-2 text-right font-medium">
-                  Taban (net)
-                </th>
                 <th className="px-4 py-2 text-right font-medium">KDV</th>
                 <th className="px-4 py-2 text-right font-medium">Stok</th>
                 <th className="px-4 py-2 font-medium">Durum</th>
@@ -59,7 +70,7 @@ export default async function ProductsPage({
             </thead>
             <tbody>
               {products.length === 0 && (
-                <EmptyRow colSpan={8} text="Henüz ürün eklenmemiş." />
+                <EmptyRow colSpan={7} text="Henüz ürün eklenmemiş." />
               )}
               {products.map((p) => (
                 <tr
@@ -71,13 +82,10 @@ export default async function ProductsPage({
                   </td>
                   <td className="px-4 py-3 text-slate-500">{p.code}</td>
                   <td className="px-4 py-3 text-right tabular-nums">
-                    {formatTRY(p.netListPrice)}
+                    {formatla(p.listPrice)}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums text-slate-500">
-                    {formatTRY(p.netMinPrice)}
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums text-slate-500">
-                    %{p.vatRate}
+                    {formatla(p.taxRate.rate, "oran")}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums">
                     <span

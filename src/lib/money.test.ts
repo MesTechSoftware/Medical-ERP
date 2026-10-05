@@ -1,52 +1,50 @@
+import Decimal from "decimal.js";
 import { describe, expect, it } from "vitest";
-import { formatTRY, kurusToTl, sumKurus, tlToKurus } from "@/lib/money";
+import { formatla, paraOku } from "@/lib/money";
 
-describe("tlToKurus", () => {
-  it("TL'yi BigInt kuruşa çevirir", () => {
-    expect(tlToKurus(150.5)).toBe(15050n);
-    expect(tlToKurus(0)).toBe(0n);
-    expect(tlToKurus(1)).toBe(100n);
+// `money.test.ts`'in (7 test) Decimal karşılığı — X-5 §(6). FAZ1 §D.1 CM: "yeniden yazılır".
+const nbsp = (s: string) => s.replace(/ /g, " ");
+
+describe("formatla — istemciye giden tek çıkış (X-5 §(6))", () => {
+  it("parayı Türk Lirası metni olarak verir", () => {
+    expect(nbsp(formatla(new Decimal("1250.5")))).toBe("₺1.250,50");
+    expect(nbsp(formatla(new Decimal(0)))).toBe("₺0,00");
   });
 
-  it("kayan nokta hatasını yuvarlar", () => {
-    // 45.5 * 100 = 4549.999... IEEE754'te; Math.round bunu düzeltir.
-    expect(tlToKurus(45.5)).toBe(4550n);
-    expect(tlToKurus(95.75)).toBe(9575n);
-    expect(tlToKurus(340.9)).toBe(34090n);
-  });
-});
-
-describe("kurusToTl", () => {
-  it("kuruşu TL'ye çevirir", () => {
-    expect(kurusToTl(15050n)).toBe(150.5);
-    expect(kurusToTl(0n)).toBe(0);
-  });
-});
-
-describe("formatTRY", () => {
-  it("kuruşu Türk Lirası metnine çevirir", () => {
-    //   = non-breaking space (Intl'in ürettiği ayırıcı).
-    expect(formatTRY(125050n).replace(/ /g, " ")).toBe("₺1.250,50");
-    expect(formatTRY(0n).replace(/ /g, " ")).toBe("₺0,00");
+  it("float'a düşmeden büyük tutarı kayıpsız biçimlendirir", () => {
+    // 2^53'ü aşan kuruş: Number'a düşseydi son haneler bozulurdu.
+    expect(nbsp(formatla("90071992547409.93"))).toBe("₺90.071.992.547.409,93");
   });
 
-  it("Int32 tavanının üstündeki tutarları bozulmadan biçimlendirir", () => {
-    // PostgreSQL'de Int (4 bayt) tavanı 2.147.483.647 kuruş ≈ 21,5 M ₺ idi;
-    // BigInt'e geçişin asıl sebebi bu. 5 milyar ₺ eskiden saklanamazdı.
-    const kurus = 5_000_000_000_00n; // 5 milyar ₺ (kuruş cinsinden)
-    expect(formatTRY(kurus).replace(/ /g, " ")).toBe(
-      "₺5.000.000.000,00"
-    );
+  it("gösterimde 2 haneye yuvarlar (yarım sıfırdan uzağa)", () => {
+    expect(nbsp(formatla("12.345"))).toBe("₺12,35");
+  });
+
+  it("ham biçim nokta ondalıklı, üssüz metin verir", () => {
+    expect(formatla(new Decimal("873.4500"), "ham")).toBe("873.45");
+    expect(formatla(new Decimal("1e-7"), "ham")).toBe("0.0000001");
+  });
+
+  it("oran biçimi yüzde işaretiyle verir", () => {
+    expect(formatla(new Decimal("12.655"), "oran")).toBe("%12,66");
+  });
+
+  it("boş değeri tire olarak verir", () => {
+    expect(formatla(null)).toBe("—");
+    expect(formatla(undefined, "ham")).toBe("—");
   });
 });
 
-describe("sumKurus", () => {
-  it("BigInt kuruşları toplar", () => {
-    expect(sumKurus([100n, 250n, 50n])).toBe(400n);
+describe("paraOku", () => {
+  it("virgül veya nokta ondalıklı metni Decimal'e çevirir", () => {
+    expect(paraOku("1250,5")?.toFixed(2)).toBe("1250.50");
+    expect(paraOku(" 45.5 ")?.toFixed(2)).toBe("45.50");
   });
 
-  it("null/undefined değerleri 0 sayar (Prisma _sum null dönebilir)", () => {
-    expect(sumKurus([100n, null, undefined, 50n])).toBe(150n);
-    expect(sumKurus([])).toBe(0n);
+  it("geçersiz, negatif veya 4 haneden fazla ondalıklı metni reddeder", () => {
+    expect(paraOku("abc")).toBeNull();
+    expect(paraOku("-5")).toBeNull();
+    expect(paraOku("1.23456")).toBeNull();
+    expect(paraOku("")).toBeNull();
   });
 });

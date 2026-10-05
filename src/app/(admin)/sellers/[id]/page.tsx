@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { formatTRY } from "@/lib/money";
+import { formatla } from "@/lib/money";
+import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
 import { formatDate } from "@/lib/format";
 import {
   PageHeader,
@@ -17,7 +18,7 @@ export default async function SellerDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const seller = await prisma.user.findFirst({ where: { id, role: "SELLER" } });
+  const seller = await prisma.user.findFirst({ where: { id, role: "SATICI" } });
   if (!seller) notFound();
 
   const [orders, doctors] = await Promise.all([
@@ -25,7 +26,7 @@ export default async function SellerDetailPage({
       where: { sellerId: id },
       orderBy: { orderDate: "desc" },
       take: 20,
-      include: { doctor: { select: { fullName: true } } },
+      include: { doctor: { select: { fullName: true } }, items: { select: SIPARIS_SATIRI } },
     }),
     prisma.doctor.findMany({
       where: { ownerSellerId: id },
@@ -83,7 +84,7 @@ export default async function SellerDetailPage({
                     </td>
                     <td className="px-3 py-2 text-slate-900">{o.doctor.fullName}</td>
                     <td className="px-3 py-2 text-right tabular-nums">
-                      {formatTRY(o.grossTotal)}
+                      {formatla(siparisToplami(o.items).toplam)}
                     </td>
                     <td className="px-3 py-2">
                       <StatusBadge status={o.status} />
@@ -118,7 +119,7 @@ export default async function SellerDetailPage({
                     className="border-b border-slate-100 last:border-0"
                   >
                     <td className="px-3 py-2 text-slate-900">{d.fullName}</td>
-                    <td className="px-3 py-2 text-slate-500">{d.clinic}</td>
+                    <td className="px-3 py-2 text-slate-500">{d.clinic ?? "—"}</td>
                     <td className="px-3 py-2 text-slate-500">{d.region}</td>
                   </tr>
                 ))}

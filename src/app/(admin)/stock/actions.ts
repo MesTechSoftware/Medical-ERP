@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { quantitySchema } from "@/lib/validation";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
+import { hesaplaStok, varsayilanDepoId } from "@/lib/stok";
 
 export type StockFormState = { error?: string; ok?: boolean };
 
@@ -15,7 +16,7 @@ export async function addStockEntry(
   const session = await requireAdmin();
 
   const productId = formData.get("productId") as string;
-  const quantity = Number(formData.get("quantity"));
+  const quantity = parseInt(String(formData.get("quantity") ?? ""), 10);
   const note = ((formData.get("note") as string) || "").trim() || null;
 
   if (!productId) return { error: "Ürün seçiniz." };
@@ -25,22 +26,23 @@ export async function addStockEntry(
   const product = await prisma.product.findUnique({ where: { id: productId } });
   if (!product) return { error: "Ürün bulunamadı." };
 
-  const [updatedProduct] = await prisma.$transaction([
-    prisma.product.update({
-      where: { id: productId },
-      data: { stock: { increment: quantity } },
-    }),
-    prisma.stockMovement.create({
-      data: { productId, type: "IN", quantity, note: note ?? "Stok girişi" },
-    }),
-  ]);
+  // Stok miktarı saklanmaz; giriş yalnız hareket yazar (ADR-005).
+  await prisma.stockMovement.create({
+    data: {
+      productId,
+      locationId: await varsayilanDepoId(),
+      type: "GIRIS",
+      quantity,
+      note: note ?? "Stok girişi",
+    },
+  });
 
   await createAuditLog({
     actorId: session.user.id,
     action: AUDIT_ACTIONS.STOCK_ENTRY,
     entityType: "Product",
     entityId: productId,
-    after: { quantity, newStock: updatedProduct.stock, note },
+    after: { quantity, newStock: await hesaplaStok(productId), note },
   });
 
   revalidatePath("/stock");

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireSeller } from "@/lib/session";
-import { formatTRY } from "@/lib/money";
+import { formatla } from "@/lib/money";
+import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
 import { formatDate } from "@/lib/format";
 import {
   PageHeader,
@@ -29,7 +30,7 @@ export default async function MyOrdersPage({
       skip,
       take,
       include: {
-        _count: { select: { items: true } },
+        items: { select: SIPARIS_SATIRI },
         doctor: { select: { fullName: true, clinic: true } },
       },
     }),
@@ -73,12 +74,12 @@ export default async function MyOrdersPage({
                   <td className="px-4 py-3 font-medium text-slate-900">
                     {o.doctor.fullName}
                   </td>
-                  <td className="px-4 py-3 text-slate-500">{o.doctor.clinic}</td>
+                  <td className="px-4 py-3 text-slate-500">{o.doctor.clinic ?? "—"}</td>
                   <td className="px-4 py-3 text-right tabular-nums">
-                    {o._count.items}
+                    {o.items.length}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums">
-                    {formatTRY(o.grossTotal)}
+                    {formatla(siparisToplami(o.items).toplam)}
                   </td>
                   <td className="px-4 py-3">
                     <StatusBadge status={o.status} />

@@ -27,8 +27,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         const user = await prisma.user.findUnique({ where: { email } });
-        // D-2 §(6) / X-8: bayi sisteme giriş yapmaz — panel C5'te söküldü.
-        if (!user || user.status !== "ACTIVE" || user.role === "DEALER") {
+        // OPERASYON'un davranışı 1B madde 3'te doğar (GÇ-7); o güne kadar giriş yapamaz.
+        if (!user || !user.isActive || user.role === "OPERASYON") {
           recordFailure(email);
           logAttempt(user?.id ?? null, "hatali_kimlik");
           await createAuditLog({

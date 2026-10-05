@@ -2,10 +2,12 @@ import { test, expect } from "@playwright/test";
 import { Client } from "pg";
 
 /**
- * Doktor cari ve tahsilat.
+ * Tahsilat ekranı.
  *
- * FR-20/RULE-08 bakiye hareketlerden hesaplanır · FR-25 kısmi tahsilat ·
- * FR-29 iptal ters kayıt. FIFO mahsup ve yaşlandırma C3'te söküldü (GÇ-3, X-6).
+ * FR-29 iptal ters kayıt · geçersiz tutar reddi. FIFO mahsup ve yaşlandırma C3'te
+ * söküldü (GÇ-3, X-6). Bakiyenin tahsilatla düşmesi (FR-20, FR-25) cari hareketten
+ * okunur ve hareketi yazan akış 1B madde 2'dedir: CM → 1B arası bakiye boştur
+ * (FAZ1 R-11) — bu iki bakiye testi 1B'ye taşındı.
  */
 
 const connectionString =
@@ -22,53 +24,49 @@ async function query<T = unknown>(sql: string, params: unknown[] = []) {
   }
 }
 
-/** Bir doktorun açık borcu = Σ sipariş(brüt, iptal hariç) − Σ aktif tahsilat. */
-async function outstandingOf(doctorId: string): Promise<bigint> {
-  const [row] = await query<{ bakiye: string }>(
-    `SELECT (
-        COALESCE((SELECT SUM(o."grossTotal") FROM "Order" o
-                   WHERE o."doctorId" = $1 AND o.status <> 'CANCELLED'), 0)
-      - COALESCE((SELECT SUM(p.amount) FROM "DoctorPayment" p
-                   WHERE p."doctorId" = $1 AND p.status = 'AKTIF'), 0)
-     )::text AS bakiye`,
-    [doctorId]
-  );
-  return BigInt(row.bakiye);
-}
-
-async function pickDoctorWithDebt() {
-  const [row] = await query<{ id: string; fullName: string; clinic: string }>(
-    `SELECT d.id, d."fullName", d.clinic
-       FROM "Doctor" d JOIN "Order" o ON o."doctorId" = d.id
-      WHERE o.status <> 'CANCELLED'
-      GROUP BY d.id, d."fullName", d.clinic
-      LIMIT 1`
+async function pickDoctor() {
+  const [row] = await query<{ id: string }>(
+    `SELECT id FROM "Doctor" ORDER BY "fullName" LIMIT 1`
   );
   return row;
 }
 
-test("🔴 tahsilat iptali bakiyeyi eski haline getirir (FR-29)", async ({
+async function havaleId() {
+  const [row] = await query<{ id: string }>(
+    `SELECT id FROM "PaymentMethod" WHERE type = 'BANKA' LIMIT 1`
+  );
+  return row.id;
+}
+
+async function paymentCount(doctorId: string) {
+  const [row] = await query<{ n: string }>(
+    `SELECT COUNT(*)::text AS n FROM "DoctorPayment" WHERE "doctorId" = $1`,
+    [doctorId]
+  );
+  return Number.parseInt(row.n, 10);
+}
+
+test("🔴 tahsilat kaydedilir ve iptal edilir — kayıt silinmez (FR-29)", async ({
   page,
 }) => {
-  const doctor = await pickDoctorWithDebt();
-  const before = await outstandingOf(doctor.id);
+  const doctor = await pickDoctor();
 
   await page.goto("/collections");
   await page.getByLabel("Doktor").selectOption(doctor.id);
-  await page.getByLabel("Tutar (₺)").fill("50");
+  await page.getByLabel("Tutar (₺)").fill("50,25");
+  await page.getByLabel("Yöntem").selectOption(await havaleId());
   await page.getByRole("button", { name: "Tahsilat Kaydet" }).click();
   await expect(page.getByText(/Tahsilat kaydedildi/)).toBeVisible();
-  expect(await outstandingOf(doctor.id)).toBe(before - 5000n);
 
-  // Az önce oluşturulan tahsilatı KESİN olarak hedefle: liste paidAt'e göre
-  // sıralı ve eşit zaman damgalarında sıra belirsiz — .first() yanlış kaydı seçer.
-  const [created] = await query<{ id: string }>(
-    `SELECT id FROM "DoctorPayment"
-      WHERE "doctorId" = $1 AND amount = 5000 AND status = 'AKTIF'
+  // Az önce oluşturulan tahsilatı KESİN olarak hedefle (eşit zaman damgalarında sıra belirsiz).
+  const [created] = await query<{ id: string; documentNo: string }>(
+    `SELECT id, "documentNo" FROM "DoctorPayment"
+      WHERE "doctorId" = $1 AND amount = 50.25 AND status = 'AKTIF'
       ORDER BY "createdAt" DESC LIMIT 1`,
     [doctor.id]
   );
   expect(created).toBeTruthy();
+  expect(created.documentNo).toMatch(/^THS-\d{4}-\d{6}$/); // A-14
 
   page.on("dialog", (d) => d.accept());
   await page.reload();
@@ -87,37 +85,18 @@ test("🔴 tahsilat iptali bakiyeyi eski haline getirir (FR-29)", async ({
       return row.status;
     })
     .toBe("IPTAL");
-
-  // Ters kayıt: bakiye tam olarak eski değerine döndü.
-  expect(await outstandingOf(doctor.id)).toBe(before);
-});
-
-test("FR-25: kısmi tahsilat bakiyeyi kısmen düşürür, borç sürer", async ({
-  page,
-}) => {
-  const doctor = await pickDoctorWithDebt();
-  const before = await outstandingOf(doctor.id);
-
-  await page.goto("/collections");
-  await page.getByLabel("Doktor").selectOption(doctor.id);
-  await page.getByLabel("Tutar (₺)").fill("1");
-  await page.getByRole("button", { name: "Tahsilat Kaydet" }).click();
-  await expect(page.getByText(/Tahsilat kaydedildi/)).toBeVisible();
-
-  const after = await outstandingOf(doctor.id);
-  expect(after).toBe(before - 100n);
-  expect(after).toBeGreaterThan(0n); // borç tamamen kapanmadı
 });
 
 test("geçersiz tutar sunucuda reddedilir", async ({ page }) => {
-  const doctor = await pickDoctorWithDebt();
-  const before = await outstandingOf(doctor.id);
+  const doctor = await pickDoctor();
+  const before = await paymentCount(doctor.id);
 
   await page.goto("/collections");
   await page.getByLabel("Doktor").selectOption(doctor.id);
   await page.getByLabel("Tutar (₺)").fill("0");
+  await page.getByLabel("Yöntem").selectOption(await havaleId());
   await page.getByRole("button", { name: "Tahsilat Kaydet" }).click();
 
   await expect(page.getByText(/Geçerli bir tahsilat tutarı/)).toBeVisible();
-  expect(await outstandingOf(doctor.id)).toBe(before); // hiçbir şey değişmedi
+  expect(await paymentCount(doctor.id)).toBe(before); // hiçbir şey yazılmadı
 });

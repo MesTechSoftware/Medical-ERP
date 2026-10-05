@@ -4,13 +4,19 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
+import { degistirDoktorSahibi } from "@/lib/sahiplik";
 
 export type TransferState = { error?: string; ok?: string };
 
+const KURAL_MESAJI = {
+  SAHIP_AKTIF_SATICI_DEGIL: "Yalnız aktif bir satıcıya devir yapılabilir.",
+  BAYI_SAHIP_ATANAMAZ: "Bayinin sorumlu satıcısı olmaz.",
+} as const;
+
 /**
- * FR-06: Admin doktoru başka satıcıya devreder; devir kaydı tutulur.
- * FR-07: Geçmiş siparişler ESKİ satıcıda kalır — `Order.sellerId`'ye
- *        dokunulmaz. Sadece doktorun güncel sahipliği değişir.
+ * FR-06 / X-13: yönetici doktoru başka satıcıya devreder; gerekçe zorunlu, iz tutulur.
+ * FR-07: geçmiş siparişler ESKİ satıcıda kalır — `Order.sellerId`'ye dokunulmaz.
+ * Sahiplik yalnız `degistirDoktorSahibi()` ile değişir (X-17 §(1)); toplu devir 1B madde 3'te.
  */
 export async function transferDoctor(
   _prev: TransferState,
@@ -20,54 +26,24 @@ export async function transferDoctor(
 
   const doctorId = (formData.get("doctorId") as string)?.trim();
   const newSellerId = (formData.get("sellerId") as string)?.trim();
-  const reason = ((formData.get("reason") as string) || "").trim() || null;
+  const reason = ((formData.get("reason") as string) || "").trim();
 
   if (!doctorId) return { error: "Doktor seçilmedi." };
+  if (!reason) return { error: "Gerekçe zorunludur." };
 
   const doctor = await prisma.doctor.findUnique({ where: { id: doctorId } });
   if (!doctor) return { error: "Doktor bulunamadı." };
 
-  // Boş seçim = sahipsiz havuza al (FR-08 ile aynı duruma düşürür).
+  // Boş seçim = sahipsiz bırak (X-17 §(5)).
   const targetSellerId = newSellerId || null;
-
-  if (targetSellerId) {
-    const seller = await prisma.user.findFirst({
-      where: { id: targetSellerId, role: "SELLER" },
-      select: { id: true, status: true },
-    });
-    if (!seller) return { error: "Geçerli bir satıcı seçiniz." };
-    if (seller.status !== "ACTIVE")
-      return { error: "Pasif bir satıcıya devir yapılamaz." };
-  }
-
   if (doctor.ownerSellerId === targetSellerId) {
     return { error: "Doktor zaten bu sahiplikte." };
   }
 
-  await prisma.$transaction(async (tx) => {
-    // Açık atamayı kapat.
-    await tx.doctorAssignment.updateMany({
-      where: { doctorId, toDate: null },
-      data: { toDate: new Date() },
-    });
-
-    await tx.doctor.update({
-      where: { id: doctorId },
-      data: { ownerSellerId: targetSellerId },
-    });
-
-    // Sahipsiz havuza alınırken yeni atama satırı yazılmaz.
-    if (targetSellerId) {
-      await tx.doctorAssignment.create({
-        data: {
-          doctorId,
-          sellerId: targetSellerId,
-          assignedBy: session.user.id,
-          reason,
-        },
-      });
-    }
-  });
+  const sonuc = await prisma.$transaction((tx) =>
+    degistirDoktorSahibi([doctorId], targetSellerId, { metin: reason, yapanId: session.user.id }, tx)
+  );
+  if (sonuc.durum === "HATA") return { error: KURAL_MESAJI[sonuc.kuralKodu] };
 
   // RULE-13: devir istisnasız audit'e yazılır.
   await createAuditLog({

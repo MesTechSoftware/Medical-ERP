@@ -3,17 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
-import { tlToKurus } from "@/lib/money";
-import { amountTLSchema } from "@/lib/validation";
+import { amountSchema } from "@/lib/validation";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
-import { PaymentMethod } from "@/generated/prisma/enums";
+import { uretBelgeNo } from "@/lib/belge-no";
+import { hesaplaKomisyonTutari } from "@/lib/satir-tutarlari";
+import { simdi } from "@/lib/zaman";
 
 export type CollectionState = { error?: string; ok?: string };
-
-function parseMethod(v: FormDataEntryValue | null): PaymentMethod {
-  const s = String(v ?? "");
-  return s in PaymentMethod ? (s as PaymentMethod) : PaymentMethod.TRANSFER;
-}
 
 /**
  * 🔴 Tahsilat kaydı — sistemin MERKEZÎ olayı (RULE-12).
@@ -21,6 +17,10 @@ function parseMethod(v: FormDataEntryValue | null): PaymentMethod {
  * Tahsilat kaydı yazılır; doktor bakiyesi hareketlerden HESAPLANIR (ayrı
  * kolon yok — RULE-08). Tahsilat hiçbir siparişle eşleştirilmez: FIFO mahsup
  * C3'te söküldü (GÇ-3, X-6), kongre kazanımı C2'de (GÇ-4).
+ *
+ * Ödeme yöntemi tanım tablosudur; komisyon oranı kayda kopyalanır ve donar (A-11).
+ * Cari hareket (`TAHSILAT`) aynı transaction'da yazılır — 1B madde 2 (X-11 §(5), X-2);
+ * `CM` → 1B arası yazılmaz (FAZ1 R-11).
  */
 export async function recordCollection(
   _prev: CollectionState,
@@ -29,32 +29,41 @@ export async function recordCollection(
   const session = await requireAdmin();
 
   const doctorId = (formData.get("doctorId") as string)?.trim();
-  const amountTL = Number(formData.get("amount"));
+  const paymentMethodId = (formData.get("paymentMethodId") as string)?.trim();
+  const tutar = amountSchema.safeParse(formData.get("amount") ?? "");
   if (!doctorId) return { error: "Doktor seçiniz." };
-  if (!amountTLSchema.safeParse(amountTL).success) {
+  if (!tutar.success) {
     return { error: "Geçerli bir tahsilat tutarı giriniz." };
   }
-
-  const amount = tlToKurus(amountTL);
+  if (!paymentMethodId) return { error: "Ödeme yöntemi seçiniz." };
+  const amount = tutar.data;
 
   let paymentId = "";
+  let documentNo = "";
   try {
-    const payment = await prisma.doctorPayment.create({
-      data: {
-        doctorId,
-        amount,
-        method: parseMethod(formData.get("method")),
-        paidAt: formData.get("paidAt")
-          ? new Date(String(formData.get("paidAt")))
-          : new Date(),
-        referenceNo:
-          ((formData.get("referenceNo") as string) || "").trim() || null,
-        invoiceNo: ((formData.get("invoiceNo") as string) || "").trim() || null,
-        note: ((formData.get("note") as string) || "").trim() || null,
-        recordedBy: session.user.id,
-      },
+    await prisma.$transaction(async (tx) => {
+      const yontem = await tx.paymentMethod.findUnique({ where: { id: paymentMethodId } });
+      if (!yontem || !yontem.isActive) throw new Error("Ödeme yöntemi bulunamadı.");
+      documentNo = await uretBelgeNo("THS", tx);
+      const payment = await tx.doctorPayment.create({
+        data: {
+          documentNo,
+          doctorId,
+          amount,
+          paymentMethodId,
+          commissionRate: yontem.commissionRate,
+          commissionAmount: hesaplaKomisyonTutari(amount, yontem.commissionRate),
+          paidAt: formData.get("paidAt")
+            ? new Date(String(formData.get("paidAt")))
+            : simdi(),
+          referenceNo:
+            ((formData.get("referenceNo") as string) || "").trim() || null,
+          note: ((formData.get("note") as string) || "").trim() || null,
+          recordedBy: session.user.id,
+        },
+      });
+      paymentId = payment.id;
     });
-    paymentId = payment.id;
   } catch {
     return { error: "Tahsilat kaydedilemedi." };
   }
@@ -64,7 +73,7 @@ export async function recordCollection(
     action: AUDIT_ACTIONS.COLLECTION_CREATE,
     entityType: "DoctorPayment",
     entityId: paymentId,
-    after: { doctorId, amount },
+    after: { documentNo, doctorId, amount },
   });
 
   revalidatePath("/collections");
@@ -97,7 +106,7 @@ export async function cancelCollection(
     where: { id: paymentId },
     data: {
       status: "IPTAL",
-      cancelledAt: new Date(),
+      cancelledAt: simdi(),
       cancelledBy: session.user.id,
       cancelReason: reason,
     },
@@ -118,9 +127,9 @@ export async function cancelCollection(
 }
 
 /**
- * FR-22 / D-02: Vade tarihi değiştirme. Her değişiklik geçmişe ve audit'e yazılır.
- * Vadede sistem sınırı YOKTUR (KARARLAR §2 madde 16) — üst sınır kontrolü C7'de
- * söküldü (GÇ-11).
+ * FR-22 / X-15 §(1): vade tarihi değiştirme. Vade CARİ HAREKETTEDİR (X-11 §(4));
+ * yalnız `YONETICI`, gerekçe zorunlu, her değişiklik ize ve audit'e yazılır.
+ * Vadede sistem sınırı YOKTUR (KARARLAR §2 madde 16).
  */
 export async function changeDueDate(
   _prev: CollectionState,
@@ -128,29 +137,29 @@ export async function changeDueDate(
 ): Promise<CollectionState> {
   const session = await requireAdmin();
 
-  const orderId = (formData.get("orderId") as string)?.trim();
+  const ledgerEntryId = (formData.get("ledgerEntryId") as string)?.trim();
   const raw = (formData.get("newDueDate") as string)?.trim();
-  const reason = ((formData.get("reason") as string) || "").trim() || null;
-  if (!orderId || !raw) return { error: "Sipariş ve yeni vade zorunludur." };
+  const reason = ((formData.get("reason") as string) || "").trim();
+  if (!ledgerEntryId || !raw) return { error: "Cari hareket ve yeni vade zorunludur." };
+  if (!reason) return { error: "Gerekçe zorunludur." };
 
-  const newDueDate = new Date(raw);
+  // `date` kolonu: "YYYY-MM-DD" UTC gece yarısı olarak okunur, dilim taşımaz (E-1 §(1)).
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return { error: "Geçerli bir tarih giriniz." };
+  const newDueDate = new Date(`${raw}T00:00:00Z`);
   if (Number.isNaN(newDueDate.getTime())) {
     return { error: "Geçerli bir tarih giriniz." };
   }
 
-  const order = await prisma.order.findUnique({ where: { id: orderId } });
-  if (!order) return { error: "Sipariş bulunamadı." };
+  const entry = await prisma.ledgerEntry.findUnique({ where: { id: ledgerEntryId } });
+  if (!entry) return { error: "Cari hareket bulunamadı." };
+  if (entry.direction !== "BORC") return { error: "Vade yalnız borç hareketinde değişir." };
 
-  if (newDueDate < order.orderDate) {
-    return { error: "Vade, sipariş tarihinden önce olamaz." };
-  }
-
-  const oldDueDate = order.dueDate;
+  const oldDueDate = entry.dueDate;
   await prisma.$transaction(async (tx) => {
-    await tx.order.update({ where: { id: orderId }, data: { dueDate: newDueDate } });
+    await tx.ledgerEntry.update({ where: { id: ledgerEntryId }, data: { dueDate: newDueDate } });
     await tx.dueDateChange.create({
       data: {
-        orderId,
+        ledgerEntryId,
         oldDueDate,
         newDueDate,
         changedBy: session.user.id,
@@ -163,12 +172,12 @@ export async function changeDueDate(
   await createAuditLog({
     actorId: session.user.id,
     action: AUDIT_ACTIONS.DUE_DATE_CHANGE,
-    entityType: "Order",
-    entityId: orderId,
+    entityType: "LedgerEntry",
+    entityId: ledgerEntryId,
     before: { dueDate: oldDueDate },
     after: { dueDate: newDueDate, reason },
   });
 
-  revalidatePath("/orders");
+  revalidatePath("/doctors");
   return { ok: "Vade güncellendi." };
 }

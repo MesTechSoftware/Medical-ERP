@@ -11,7 +11,7 @@ export default async function EditSellerPage({
 }) {
   const { id } = await params;
   const seller = await prisma.user.findFirst({
-    where: { id, role: "SELLER" },
+    where: { id, role: "SATICI" },
   });
   if (!seller) notFound();
 
@@ -29,7 +29,7 @@ export default async function EditSellerPage({
             name: seller.name,
             email: seller.email,
             phone: seller.phone ?? undefined,
-            status: seller.status,
+            status: seller.isActive ? "AKTIF" : "PASIF",
           }}
         />
       </Card>

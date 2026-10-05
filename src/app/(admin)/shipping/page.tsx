@@ -1,29 +1,41 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { formatTRY } from "@/lib/money";
+import { formatla } from "@/lib/money";
+import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { PageHeader, Card, StatusBadge, EmptyRow } from "@/components/ui";
 import { shipOrder } from "./actions";
 
 export default async function ShippingPage() {
-  const [pending, shipped] = await Promise.all([
+  const [pending, shipped, carriers] = await Promise.all([
     prisma.order.findMany({
-      where: { status: "PREPARING" },
+      where: { status: "HAZIRLANIYOR" },
       orderBy: { orderDate: "asc" },
       include: {
         seller: { select: { name: true } },
         doctor: { select: { fullName: true, clinic: true } },
+        items: { select: SIPARIS_SATIRI },
       },
     }),
     prisma.order.findMany({
-      where: { status: { in: ["SHIPPED", "DELIVERED"] } },
+      where: { status: { in: ["KARGOLANDI", "TESLIM_EDILDI"] } },
       orderBy: { orderDate: "desc" },
       take: 30,
       include: {
         seller: { select: { name: true } },
         doctor: { select: { fullName: true, clinic: true } },
-        shipment: true,
+        shipments: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          include: { carrier: { select: { name: true } } },
+        },
       },
+    }),
+    // Kargo firması tanım tablosudur (D-3); yönetim ekranı 1B'dedir.
+    prisma.carrier.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: "asc" },
+      select: { id: true, name: true },
     }),
   ]);
 
@@ -59,12 +71,12 @@ export default async function ShippingPage() {
                         {o.doctor.fullName}
                       </Link>
                       <span className="ml-2 text-sm text-slate-500">
-                        {o.doctor.clinic} · {o.seller.name} ·{" "}
+                        {[o.doctor.clinic, o.seller?.name].filter(Boolean).join(" · ")} ·{" "}
                         {formatDate(o.orderDate)}
                       </span>
                     </div>
                     <span className="text-sm font-medium tabular-nums text-slate-900">
-                      {formatTRY(o.grossTotal)}
+                      {formatla(siparisToplami(o.items).toplam)}
                     </span>
                   </div>
                   <form
@@ -75,11 +87,18 @@ export default async function ShippingPage() {
                       <label className="mb-1 block text-xs text-slate-500">
                         Kargo Firması
                       </label>
-                      <input
-                        name="carrier"
-                        placeholder="Örn: Aras Kargo"
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
-                      />
+                      <select
+                        name="carrierId"
+                        defaultValue=""
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-500"
+                      >
+                        <option value="">Seçiniz...</option>
+                        {carriers.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div className="flex-1 min-w-[160px]">
                       <label className="mb-1 block text-xs text-slate-500">
@@ -133,16 +152,16 @@ export default async function ShippingPage() {
                   <td className="px-4 py-3 font-medium text-slate-900">
                     {o.doctor.fullName}
                   </td>
-                  <td className="px-4 py-3 text-slate-500">{o.seller.name}</td>
+                  <td className="px-4 py-3 text-slate-500">{o.seller?.name ?? "—"}</td>
                   <td className="px-4 py-3 text-slate-700">
-                    {o.shipment?.carrier ?? "—"}
+                    {o.shipments[0]?.carrier?.name ?? "—"}
                   </td>
                   <td className="px-4 py-3 text-slate-700">
-                    {o.shipment?.trackingNumber ?? "—"}
+                    {o.shipments[0]?.trackingNumber ?? "—"}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-slate-500">
-                    {o.shipment?.shippedAt
-                      ? formatDateTime(o.shipment.shippedAt)
+                    {o.shipments[0]?.shippedAt
+                      ? formatDateTime(o.shipments[0].shippedAt)
                       : "—"}
                   </td>
                   <td className="px-4 py-3">

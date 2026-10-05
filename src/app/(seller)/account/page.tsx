@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireSeller } from "@/lib/session";
-import { weightedDiscount } from "@/lib/reports";
+import { formatla } from "@/lib/money";
+import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
 import { PageHeader, StatCard } from "@/components/ui";
 
 /**
@@ -20,10 +21,10 @@ export default async function AccountPage() {
 
   // FR-61: ortalama iskonto (tutar ağırlıklı).
   const items = await prisma.orderItem.findMany({
-    where: { order: { sellerId, status: { not: "CANCELLED" } } },
-    select: { listPriceAtSale: true, netUnitPrice: true, quantity: true },
+    where: { order: { sellerId, status: { not: "IPTAL" } } },
+    select: SIPARIS_SATIRI,
   });
-  const ortalamaIskonto = weightedDiscount(items);
+  const ortalamaIskonto = siparisToplami(items).iskontoOran;
 
   return (
     <div>
@@ -31,7 +32,7 @@ export default async function AccountPage() {
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2">
         <StatCard label="Doktor Sayısı" value={String(doctorCount)} />
-        <StatCard label="Ortalama İskonto" value={`%${ortalamaIskonto}`} />
+        <StatCard label="Ortalama İskonto" value={formatla(ortalamaIskonto, "oran")} />
       </div>
     </div>
   );

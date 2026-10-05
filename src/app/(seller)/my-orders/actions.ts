@@ -5,26 +5,25 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireSeller } from "@/lib/session";
-import { priceTLSchema, quantitySchema } from "@/lib/validation";
+import { priceSchema, quantitySchema } from "@/lib/validation";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
-import { tlToKurus } from "@/lib/money";
-import { discountRate, lineTotals, sumLineTotals } from "@/lib/vat";
+import { cozumleBirimFiyat } from "@/lib/fiyat";
+import { uretBelgeNo } from "@/lib/belge-no";
+import { varsayilanDepoId } from "@/lib/stok";
 import { canSellerOrderForDoctor } from "@/lib/doctor";
-import { addDays } from "@/lib/date";
 import { policy } from "@/lib/policy";
 
 export type OrderFormState = { error?: string };
-
-type LineInput = { productId: string; quantity: number; netUnitPriceTL?: number };
 
 const orderLinesSchema = z
   .array(
     z.object({
       productId: z.string().min(1),
       quantity: quantitySchema,
-      // Satıcı birim fiyatı değiştirebilir (FR-12). Girilmezse liste fiyatı kullanılır.
-      // Her zaman NET (KDV hariç) TL olarak gelir; dönüşüm istemcide yapılır (FR-18).
-      netUnitPriceTL: priceTLSchema.optional(),
+      // Satıcı birim fiyatı değiştirebilir (FR-12, X-5 §(9) `birim_fiyat`).
+      // Daima NET (KDV hariç), ham ondalık metin olarak gelir (X-5 §(6)).
+      // Girilmezse liste fiyatı kullanılır (X-5 §(9)).
+      birimFiyat: priceSchema.optional(),
     })
   )
   .min(1);
@@ -43,7 +42,7 @@ export async function createOrder(
   // kendi doktorları listelenir ama ham istek de aynı kapıdan geçmek zorunda.
   const doctor = await prisma.doctor.findUnique({
     where: { id: doctorId },
-    select: { id: true, fullName: true, ownerSellerId: true, status: true },
+    select: { id: true, fullName: true, ownerSellerId: true, status: true, paymentTermDays: true },
   });
   if (!doctor) return { error: "Doktor bulunamadı." };
 
@@ -60,92 +59,65 @@ export async function createOrder(
   const parsedLines = orderLinesSchema.safeParse(raw);
   if (!parsedLines.success)
     return { error: "En az bir ürün ve geçerli miktar giriniz." };
-  const lines: LineInput[] = parsedLines.data;
+  const lines = parsedLines.data;
 
-  // FR-21: her siparişe vade tarihi girilir; varsayılan gün sayısı kurulum
-  // düzeyi config'tir, ayar ekranı yoktur (GÇ-11, A-7).
-  const dueDate = addDays(new Date(), policy.finance.odemeVadesiGunVarsayilan);
-
-  let created: { id: string; grossTotal: bigint };
+  let created: { id: string; documentNo: string };
   try {
     created = await prisma.$transaction(async (tx) => {
-      const items: {
-        productId: string;
-        quantity: number;
-        netUnitPrice: bigint;
-        listPriceAtSale: bigint;
-        discountRate: number;
-        vatRate: number;
-        vatAmount: bigint;
-        lineNetTotal: bigint;
-        lineGrossTotal: bigint;
-      }[] = [];
-
+      const items = [];
       for (const line of lines) {
         const product = await tx.product.findUnique({
           where: { id: line.productId },
+          select: { id: true, name: true, status: true, taxRate: { select: { rate: true } } },
         });
         if (!product) throw new Error(`Ürün bulunamadı.`);
-        if (product.status !== "ACTIVE")
+        if (product.status !== "AKTIF")
           throw new Error(`${product.name} pasif durumda.`);
 
-        // Fiyat: satıcı girdiyse onu, girmediyse liste fiyatını kullan.
-        const netUnitPrice =
-          line.netUnitPriceTL !== undefined
-            ? tlToKurus(line.netUnitPriceTL)
-            : product.netListPrice;
+        // Liste fiyatı tek yoldan çözülür; atanmış listede satır yoksa varsayılana
+        // düşülmez (X-10 §(3)). Satıcının girdiği fiyat ayrıca saklanır (X-5 §(9)).
+        const fiyat = await cozumleBirimFiyat(product.id, doctor.id, tx);
+        if (fiyat.durum === "HATA")
+          throw new Error(`${product.name} için fiyat çözümlenemedi.`);
 
         // RULE-03 taban fiyat reddi C6'da söküldü: iskonto tavanı yok, liste üstü
         // satış serbest (GÇ-8, A-10 · Ü-3 §(10)). Taban etiketi 1B'de gelir.
+        // Negatif stok engellenmez (B-4, GÇ-17); izi 1B madde 1/7'de gelir (R-10).
 
-        // Stok düşümü ATOMİK: koşul WHERE'de, veritabanında değerlendirilir.
-        // Önce okuyup JS'te karşılaştırmak (check-then-act) iki eşzamanlı
-        // siparişin aynı son birimi satmasına izin veriyordu — stok negatife
-        // düşebiliyordu. count === 0 => yeterli stok yoktu.
-        const decremented = await tx.product.updateMany({
-          where: { id: product.id, stock: { gte: line.quantity } },
-          data: { stock: { decrement: line.quantity } },
-        });
-        if (decremented.count === 0)
-          throw new Error(
-            `${product.name} için yeterli stok yok (mevcut: ${product.stock}).`
-          );
-
-        // Fiyat + KDV sipariş anında DONDURULUR (RULE-04). Yuvarlama kalem
-        // bazındadır; sipariş toplamı bu değerlerin toplamıdır (bkz. vat.ts).
-        const totals = lineTotals(netUnitPrice, line.quantity, product.vatRate);
+        // Fiyat ve oran sipariş anında DONDURULUR (RULE-04, C-6 §(2-a)).
         items.push({
           productId: product.id,
           quantity: line.quantity,
-          netUnitPrice,
-          listPriceAtSale: product.netListPrice,
-          discountRate: discountRate(product.netListPrice, netUnitPrice),
-          vatRate: product.vatRate,
-          ...totals,
+          listPrice: fiyat.listeFiyat,
+          unitPrice: line.birimFiyat ?? fiyat.listeFiyat,
+          vatRate: product.taxRate.rate,
         });
       }
 
-      const { netTotal, vatTotal, grossTotal } = sumLineTotals(items);
-
+      const documentNo = await uretBelgeNo("SIP", tx);
       const order = await tx.order.create({
         data: {
+          documentNo,
           sellerId,
           doctorId,
-          status: "PENDING",
-          dueDate,
-          netTotal,
-          vatTotal,
-          grossTotal,
+          // Bugünkü akış onaylı sipariş açar; teklif aşaması 1B madde 7'dedir (A-5).
+          stage: "ONAYLI",
+          status: "BEKLIYOR",
+          // Vade tarihi cari harekettedir (X-11 §(4)); siparişte gün sayısı durur (A-7).
+          paymentTermDays: doctor.paymentTermDays ?? policy.finance.odemeVadesiGunVarsayilan,
           items: { create: items },
         },
       });
 
-      // Stok yukarıda düşüldü; burada yalnızca OUT hareketleri yazılır.
+      // Stok bugün sipariş anında düşer; sevkiyata taşınması 1B madde 7'dir (A-3).
+      // Hareketin kaynağı sipariştir (B-7: her hareket bir belgeden doğar).
+      const locationId = await varsayilanDepoId(tx);
       for (const item of items) {
         await tx.stockMovement.create({
           data: {
             productId: item.productId,
-            type: "OUT",
+            locationId,
+            type: "CIKIS",
             quantity: item.quantity,
             note: "Sipariş çıkışı",
             orderId: order.id,
@@ -153,7 +125,7 @@ export async function createOrder(
         });
       }
 
-      return { id: order.id, grossTotal };
+      return { id: order.id, documentNo };
     });
   } catch (e) {
     return {
@@ -167,9 +139,9 @@ export async function createOrder(
     entityType: "Order",
     entityId: created.id,
     after: {
+      documentNo: created.documentNo,
       doctorId,
       doctorName: doctor.fullName,
-      grossTotal: created.grossTotal,
       itemCount: lines.length,
     },
   });

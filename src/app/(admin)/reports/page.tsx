@@ -1,5 +1,5 @@
 import { requireAdmin } from "@/lib/session";
-import { formatTRY } from "@/lib/money";
+import { formatla } from "@/lib/money";
 import {
   getCiroTotal,
   getDoctorReports,
@@ -30,7 +30,7 @@ export default async function ReportsPage() {
 
       {/* FR-60: kanal karşılaştırması C5'te söküldü (X-8) */}
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard label="Toplam Ciro" value={formatTRY(ciro)} hint="KDV hariç" />
+        <StatCard label="Toplam Ciro" value={formatla(ciro)} hint="KDV hariç" />
       </div>
 
       {/* FR-62: satıcı performans karşılaştırması */}
@@ -59,13 +59,13 @@ export default async function ReportsPage() {
                     {s.name}
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums">
-                    {formatTRY(s.ciro)}
+                    {formatla(s.ciro)}
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums">
-                    {formatTRY(s.tahsilat)}
+                    {formatla(s.tahsilat)}
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums text-slate-500">
-                    %{s.ortalamaIskonto}
+                    {formatla(s.ortalamaIskonto, "oran")}
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums">
                     {s.doktorSayisi}
@@ -105,7 +105,7 @@ export default async function ReportsPage() {
                       {d.sellerName ?? "—"}
                     </td>
                     <td className="px-3 py-2 text-right tabular-nums">
-                      {formatTRY(d.ciro)}
+                      {formatla(d.ciro)}
                     </td>
                   </tr>
                 ))}

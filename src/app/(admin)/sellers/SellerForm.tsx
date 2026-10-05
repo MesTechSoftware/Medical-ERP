@@ -51,10 +51,10 @@ export default function SellerForm({
       <SelectField
         label="Durum"
         name="status"
-        defaultValue={defaults?.status ?? "ACTIVE"}
+        defaultValue={defaults?.status ?? "AKTIF"}
         options={[
-          { value: "ACTIVE", label: "Aktif" },
-          { value: "PASSIVE", label: "Pasif" },
+          { value: "AKTIF", label: "Aktif" },
+          { value: "PASIF", label: "Pasif" },
         ]}
       />
 

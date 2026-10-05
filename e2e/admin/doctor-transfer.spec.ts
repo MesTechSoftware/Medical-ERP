@@ -66,7 +66,7 @@ test("admin doktoru devreder; geçmiş siparişler eski satıcıda kalır (FR-06
   // Devredilecek FARKLI bir aktif satıcı.
   const [newSeller] = await query<{ id: string; name: string }>(
     `SELECT id, name FROM "User"
-      WHERE role = 'SELLER' AND status = 'ACTIVE' AND id <> $1 LIMIT 1`,
+      WHERE role = 'SATICI' AND "isActive" AND id <> $1 LIMIT 1`,
     [target.oldSellerId]
   );
   expect(newSeller).toBeTruthy();
@@ -94,16 +94,18 @@ test("admin doktoru devreder; geçmiş siparişler eski satıcıda kalır (FR-06
   );
   expect(doctorAfter.ownerSellerId).toBe(newSeller.id);
 
-  const assignments = await query<{ sellerId: string; toDate: Date | null }>(
-    `SELECT "sellerId", "toDate" FROM "DoctorAssignment"
-      WHERE "doctorId" = $1 ORDER BY "fromDate" ASC`,
+  // İz olay kaydıdır: her geçiş bir satır, eski ve yeni sahip birlikte (X-17 §(3)).
+  const assignments = await query<{ fromSellerId: string | null; toSellerId: string | null; reason: string }>(
+    `SELECT "fromSellerId", "toSellerId", reason FROM "DoctorAssignment"
+      WHERE "doctorId" = $1 ORDER BY "changedAt" ASC`,
     [target.doctorId]
   );
-  // Eski atama kapandı, yeni atama açık.
   expect(assignments.length).toBeGreaterThanOrEqual(2);
-  expect(assignments.at(-1)!.sellerId).toBe(newSeller.id);
-  expect(assignments.at(-1)!.toDate).toBeNull();
-  expect(assignments.at(-2)!.toDate).not.toBeNull();
+  expect(assignments.at(-1)).toEqual({
+    fromSellerId: target.oldSellerId,
+    toSellerId: newSeller.id,
+    reason: "E2E devir testi",
+  });
 
   // --- 🔴 FR-07: geçmiş siparişler ESKİ satıcıda kaldı ---
   const ordersAfter = await query<{ sellerId: string }>(
@@ -141,6 +143,7 @@ test("doktor sahipsiz havuza alınabilir ve uyarı gösterilir (FR-08)", async (
   await page.goto("/doctors");
   const form = transferForm(page, doc.id);
   await form.select.selectOption(""); // — Sahipsiz havuz —
+  await form.reason.fill("E2E sahipsiz bırakma"); // gerekçe zorunlu (X-13, X-17)
   await form.submit.click();
   await expect(page.getByText("Devir tamamlandı.")).toBeVisible();
 

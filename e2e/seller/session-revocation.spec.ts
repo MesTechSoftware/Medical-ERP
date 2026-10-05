@@ -19,12 +19,12 @@ const connectionString =
   process.env.TEST_DATABASE_URL ??
   "postgresql://medikal:medikal_dev@localhost:5432/medikal_test?schema=public";
 
-async function setSellerStatus(status: "ACTIVE" | "PASSIVE") {
+async function setSellerActive(isActive: boolean) {
   const client = new Client({ connectionString });
   await client.connect();
   try {
-    await client.query('UPDATE "User" SET status = $1 WHERE email = $2', [
-      status,
+    await client.query('UPDATE "User" SET "isActive" = $1 WHERE email = $2', [
+      isActive,
       USERS.seller.email,
     ]);
   } finally {
@@ -40,13 +40,13 @@ test("pasifleştirilen satıcının açık oturumu bir sonraki istekte kesilir",
   await expect(page).toHaveURL(/\/my-orders/);
 
   try {
-    await setSellerStatus("PASSIVE");
+    await setSellerActive(false);
 
-    // Token hâlâ geçerli görünüyor ama kullanıcı artık ACTIVE değil.
+    // Token hâlâ geçerli görünüyor ama kullanıcı artık aktif değil (E-2).
     await page.goto("/my-orders");
     await expect(page).toHaveURL(/\/login/);
   } finally {
-    await setSellerStatus("ACTIVE");
+    await setSellerActive(true);
   }
 
   // Geri alındıktan sonra tekrar erişebilmeli.

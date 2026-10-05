@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { requireSeller } from "@/lib/session";
 import { tryNormalizePhone, formatPhone } from "@/lib/phone";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
+import { degistirDoktorSahibi } from "@/lib/sahiplik";
 
 export type DoctorFormState = { error?: string };
 
@@ -43,7 +44,10 @@ function parseDoctorForm(formData: FormData) {
   };
 }
 
-/** FR-03: satıcı doktor açar, sahiplik otomatik kendisine atanır. */
+/**
+ * FR-03: satıcı doktor açar, sahiplik otomatik kendisine atanır (X-17 §(7)).
+ * Satıcının açtığı cari daima `DOKTOR`'dur; `BAYI` açma yetkisi 1B madde 3'tedir (X-8 §(3)).
+ */
 export async function createDoctor(
   _prev: DoctorFormState,
   formData: FormData
@@ -73,18 +77,17 @@ export async function createDoctor(
   try {
     doctor = await prisma.$transaction(async (tx) => {
       const created = await tx.doctor.create({
-        data: { ...parsed.data, ownerSellerId: sellerId },
+        data: { ...parsed.data, accountClass: "DOKTOR" },
       });
-      // Devir geçmişinin ilk halkası (FR-06 raporlaması buna dayanır).
-      await tx.doctorAssignment.create({
-        data: {
-          doctorId: created.id,
-          sellerId,
-          assignedBy: sellerId,
-          reason: "İlk kayıt",
-        },
-      });
-      return created;
+      // Sahiplik yalnız tek noktadan yazılır; açılıştaki atama da iz satırıdır (X-17 §(1)/(3)).
+      const sonuc = await degistirDoktorSahibi(
+        [created.id],
+        sellerId,
+        { metin: "İlk kayıt", yapanId: sellerId },
+        tx
+      );
+      if (sonuc.durum === "HATA") throw new Error(sonuc.kuralKodu);
+      return { ...created, ownerSellerId: sellerId };
     });
   } catch {
     // Yarış durumu: aynı anda iki istek aynı telefonu yazmaya çalıştıysa

@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/db";
 import { requireSeller } from "@/lib/session";
 import { PageHeader, Card } from "@/components/ui";
+import { cozumleBirimFiyat } from "@/lib/fiyat";
+import { hesaplaStok } from "@/lib/stok";
+import { formatla } from "@/lib/money";
 import OrderForm from "../OrderForm";
 
 export default async function NewOrderPage() {
@@ -8,23 +11,32 @@ export default async function NewOrderPage() {
 
   // FR-05: yalnızca satıcının KENDİ aktif doktorları seçilebilir.
   const doctors = await prisma.doctor.findMany({
-    where: { ownerSellerId: session.user.id, status: "ACTIVE" },
+    where: { ownerSellerId: session.user.id, status: "AKTIF" },
     orderBy: { fullName: "asc" },
     select: { id: true, fullName: true, clinic: true, title: true },
   });
 
-  const products = await prisma.product.findMany({
-    where: { status: "ACTIVE" },
+  const urunler = await prisma.product.findMany({
+    where: { status: "AKTIF" },
     orderBy: { name: "asc" },
-    select: {
-      id: true,
-      name: true,
-      code: true,
-      netListPrice: true,
-      vatRate: true,
-      stock: true,
-    },
+    select: { id: true, name: true, code: true, taxRate: { select: { rate: true } } },
   });
+
+  // Önizleme varsayılan listeyle yapılır; sunucu siparişte carinin listesini
+  // yeniden çözer (X-10). Liste ataması 1B madde 7'dedir.
+  const products = await Promise.all(
+    urunler.map(async (u) => {
+      const fiyat = await cozumleBirimFiyat(u.id, null);
+      return {
+        id: u.id,
+        name: u.name,
+        code: u.code,
+        listPrice: fiyat.durum === "TAMAM" ? formatla(fiyat.listeFiyat, "ham") : null,
+        vatRate: formatla(u.taxRate.rate, "ham"),
+        stock: await hesaplaStok(u.id),
+      };
+    })
+  );
 
   return (
     <div>

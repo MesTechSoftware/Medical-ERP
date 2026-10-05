@@ -1,33 +1,34 @@
 import { Card, StatusBadge } from "@/components/ui";
-import { formatTRY } from "@/lib/money";
+import type Decimal from "decimal.js";
+import { formatla } from "@/lib/money";
 import { formatDate, formatDateTime } from "@/lib/format";
+import { hesaplaSatirTutarlari } from "@/lib/satir-tutarlari";
 
 type OrderWithRelations = {
   id: string;
+  documentNo: string;
   doctor: {
     fullName: string;
     title: string | null;
-    clinic: string;
-    region: string;
+    clinic: string | null;
+    region: string | null;
   };
   status: string;
-  netTotal: bigint;
-  vatTotal: bigint;
-  grossTotal: bigint;
   orderDate: Date;
   seller?: { name: string } | null;
   items: {
     id: string;
     quantity: number;
-    netUnitPrice: bigint;
-    vatRate: number;
-    vatAmount: bigint;
-    lineNetTotal: bigint;
-    lineGrossTotal: bigint;
+    listPrice: Decimal.Value;
+    unitPrice: Decimal.Value;
+    vatRate: Decimal.Value;
+    isFree: boolean;
     product: { name: string; code: string };
   }[];
+  /** En son sevkiyat (A-3 kısmi sevkiyat ekranı 1B'dedir). */
   shipment?: {
-    carrier: string | null;
+    documentNo: string;
+    carrier: { name: string } | null;
     trackingNumber: string | null;
     shippedAt: Date | null;
   } | null;
@@ -49,17 +50,28 @@ export default function OrderDetail({
   order: OrderWithRelations;
   showSeller?: boolean;
 }) {
+  // Tutarlar saklanmaz; donmuş satır değerlerinden türetilir (C-6 §(3), GÇ-18).
+  const hesap = hesaplaSatirTutarlari(
+    order.items.map((it) => ({
+      birimFiyat: it.unitPrice,
+      listeFiyat: it.listPrice,
+      kdvOrani: it.vatRate,
+      miktar: it.quantity,
+      bedelsiz: it.isFree,
+    }))
+  );
   return (
     <div className="space-y-6">
       <Card>
         <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <InfoRow label="Belge No" value={order.documentNo} />
           <InfoRow
             label="Doktor"
             value={`${order.doctor.title ? `${order.doctor.title} ` : ""}${order.doctor.fullName}`}
           />
           <InfoRow
             label="Klinik / Bölge"
-            value={`${order.doctor.clinic} · ${order.doctor.region}`}
+            value={[order.doctor.clinic, order.doctor.region].filter(Boolean).join(" · ") || "—"}
           />
           {showSeller && (
             <InfoRow label="Satıcı" value={order.seller?.name ?? "—"} />
@@ -93,7 +105,7 @@ export default function OrderDetail({
               </tr>
             </thead>
             <tbody>
-              {order.items.map((it) => (
+              {order.items.map((it, i) => (
                 <tr
                   key={it.id}
                   className="border-b border-slate-100 last:border-0"
@@ -108,31 +120,31 @@ export default function OrderDetail({
                     {it.quantity}
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums">
-                    {formatTRY(it.netUnitPrice)}
+                    {formatla(it.unitPrice)}
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums">
-                    {formatTRY(it.lineNetTotal)}
+                    {formatla(hesap.satirlar[i].matrah)}
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums text-slate-500">
-                    {formatTRY(it.vatAmount)}
+                    {formatla(hesap.satirlar[i].kdvTutar)}
                     <span className="ml-1 text-xs text-slate-400">
-                      %{it.vatRate}
+                      {formatla(it.vatRate, "oran")}
                     </span>
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums">
-                    {formatTRY(it.lineGrossTotal)}
+                    {formatla(hesap.satirlar[i].toplam)}
                   </td>
                 </tr>
               ))}
             </tbody>
-            {/* Toplamlar kalemlerin TOPLAMIDIR; yeniden hesaplanmaz (vat.ts). */}
+            {/* Toplamlar kalemlerin TOPLAMIDIR; yeniden yuvarlanmaz (C-6 §(5)). */}
             <tfoot className="border-t border-slate-200">
               <tr>
                 <td colSpan={4} className="px-3 py-1.5 text-right text-slate-600">
                   Ara Toplam (KDV hariç)
                 </td>
                 <td className="px-3 py-1.5 text-right tabular-nums text-slate-600">
-                  {formatTRY(order.netTotal)}
+                  {formatla(hesap.toplam.matrah)}
                 </td>
               </tr>
               <tr>
@@ -140,7 +152,7 @@ export default function OrderDetail({
                   KDV
                 </td>
                 <td className="px-3 py-1.5 text-right tabular-nums text-slate-600">
-                  {formatTRY(order.vatTotal)}
+                  {formatla(hesap.toplam.kdvTutar)}
                 </td>
               </tr>
               <tr>
@@ -148,7 +160,7 @@ export default function OrderDetail({
                   Genel Toplam
                 </td>
                 <td className="px-3 py-3 text-right text-base font-semibold tabular-nums">
-                  {formatTRY(order.grossTotal)}
+                  {formatla(hesap.toplam.toplam)}
                 </td>
               </tr>
             </tfoot>
@@ -161,8 +173,9 @@ export default function OrderDetail({
           <h2 className="mb-4 text-sm font-semibold text-slate-900">
             Kargo Bilgisi
           </h2>
-          <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            <InfoRow label="Kargo Firması" value={order.shipment.carrier ?? "—"} />
+          <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <InfoRow label="Sevkiyat No" value={order.shipment.documentNo} />
+            <InfoRow label="Kargo Firması" value={order.shipment.carrier?.name ?? "—"} />
             <InfoRow
               label="Takip No"
               value={order.shipment.trackingNumber ?? "—"}

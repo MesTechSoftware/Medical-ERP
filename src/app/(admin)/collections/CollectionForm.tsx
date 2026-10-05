@@ -6,8 +6,11 @@ import { recordCollection, type CollectionState } from "./actions";
 
 export default function CollectionForm({
   doctors,
+  paymentMethods,
 }: {
   doctors: { id: string; label: string }[];
+  /** Ödeme yöntemi tanım tablosu satırları (A-11); yönetim ekranı 1B'dedir. */
+  paymentMethods: { id: string; name: string }[];
 }) {
   const [state, formAction] = useActionState<CollectionState, FormData>(
     recordCollection,
@@ -25,22 +28,18 @@ export default function CollectionForm({
           ...doctors.map((d) => ({ value: d.id, label: d.label })),
         ]}
       />
-      <Field label="Tutar (₺)" name="amount" type="number" step="0.01" min="0" required />
+      <Field label="Tutar (₺)" name="amount" required />
       <SelectField
         label="Yöntem"
-        name="method"
-        defaultValue="TRANSFER"
+        name="paymentMethodId"
+        required
         options={[
-          { value: "CASH", label: "Nakit" },
-          { value: "TRANSFER", label: "Havale / EFT" },
-          { value: "CARD", label: "Kredi Kartı" },
-          { value: "OTHER", label: "Diğer" },
+          { value: "", label: "Seçiniz..." },
+          ...paymentMethods.map((m) => ({ value: m.id, label: m.name })),
         ]}
       />
       <Field label="Tahsilat Tarihi" name="paidAt" type="date" />
       <Field label="Dekont / Referans No" name="referenceNo" />
-      {/* D-24: Faz 1'de yalnızca fatura no alanı; e-Fatura entegrasyonu kapsam dışı. */}
-      <Field label="Fatura No" name="invoiceNo" />
       <div className="sm:col-span-2">
         <TextArea label="Açıklama" name="note" />
       </div>

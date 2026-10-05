@@ -3,129 +3,92 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AUDIT_ACTIONS } from "@/lib/audit";
 import { prisma } from "@/lib/db";
 import { getDoctorCari } from "@/lib/doctor-cari";
+import { takvimYili } from "@/lib/zaman";
+import { referansVeri, yeniDoktorVerisi } from "../../../../test/integration/referans";
 
-// Tahsilatın DAYANIKLI davranışını sınar: C2 (kongre sökümü) öncesi ve
-// sonrası aynı kalmak zorunda olan kısım. KARARLAR'a göre RULE-12'nin dört
-// bileşeninden üçü Faz 1'de düşüyor (mahsuplaşma GÇ-3 · prim matrahı GÇ-1 ·
-// kongre kazanımı GÇ-4); "geriye tahsilat kaydı + cari hareket kalır".
-// Bu test tam olarak o kalanı tutar. Kongre defteri C2'de, mahsup C3'te,
-// prim düzeltmesi C4'te söküldü; tabloları CM'e kadar şemada durduğu için
-// tahsilatın onlara YAZMADIĞI sınanır.
+// Tahsilatın DAYANIKLI davranışı (RULE-12'den Faz 1'de kalan: tahsilat kaydı + cari hareket).
+// Kongre defteri (GÇ-4), mahsup (GÇ-3) ve prim dönemi (GÇ-16) tabloları CM'de şemadan
+// çıktı — "onlara yazmaz" testleri yerini şemaya ve C8 anti-şema testine bıraktı.
+// Tahsilatın cari hareketi 1B madde 2'de yazılır (X-11 §(5)); CM → 1B arası yazılmaz (R-11).
 const h = vi.hoisted(() => ({ adminId: "" }));
 
-// Server action'ın iki çerçeve bağımlılığı var; ikisi de iş kuralı taşımıyor.
 vi.mock("@/lib/session", () => ({
-  requireAdmin: async () => ({ user: { id: h.adminId, role: "ADMIN" } }),
+  requireAdmin: async () => ({ user: { id: h.adminId, role: "YONETICI" } }),
 }));
 vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
 
 const { recordCollection, cancelCollection, changeDueDate } = await import("./actions");
 
-const SIPARIS_BRUT = 1_100_000n; // 11.000,00 TL (net 10.000 + %10 KDV)
-const TAHSILAT_TL = 5_000; // 5.000,00 TL
-
 async function seed() {
+  const ref = await referansVeri();
+  const pos = await prisma.paymentMethod.create({
+    data: { name: "POS", type: "POS", commissionRate: "2.5" },
+  });
   const admin = await prisma.user.create({
-    data: {
-      name: "Yönetici",
-      email: "yonetici@medikal.local",
-      passwordHash: "test",
-      role: "ADMIN",
-    },
+    data: { name: "Yönetici", email: "yonetici@medikal.local", passwordHash: "test", role: "YONETICI" },
   });
   h.adminId = admin.id;
-
-  const doctor = await prisma.doctor.create({
-    data: {
-      fullName: "Dr. Ayşe Kaya",
-      clinic: "Özel Anka Klinik",
-      region: "İç Anadolu",
-      phoneNormalized: "+905321112233",
-      ownerSellerId: admin.id,
-    },
-  });
-
-  const order = await prisma.order.create({
-    data: {
-      sellerId: admin.id,
-      doctorId: doctor.id,
-      netTotal: 1_000_000n,
-      vatTotal: 100_000n,
-      grossTotal: SIPARIS_BRUT,
-      dueDate: new Date("2026-10-15T00:00:00.000Z"),
-    },
-  });
-
-  return { admin, doctor, order };
+  const doctor = await prisma.doctor.create({ data: yeniDoktorVerisi("Dr. Ayşe Kaya") });
+  return { ...ref, pos, admin, doctor };
 }
 
-function tahsilatFormu(doctorId: string) {
+function tahsilatFormu(doctorId: string, paymentMethodId: string, amount = "5000") {
   const fd = new FormData();
   fd.set("doctorId", doctorId);
-  fd.set("amount", String(TAHSILAT_TL));
-  fd.set("method", "TRANSFER");
+  fd.set("amount", amount);
+  fd.set("paymentMethodId", paymentMethodId);
   fd.set("paidAt", "2026-09-26");
   fd.set("referenceNo", "DEKONT-001");
   return fd;
 }
 
 describe("tahsilat — dayanıklı davranış", () => {
-  let doctorId = "";
+  let s: Awaited<ReturnType<typeof seed>>;
 
   beforeEach(async () => {
-    const { doctor } = await seed();
-    doctorId = doctor.id;
+    s = await seed();
   });
 
-  it("tahsilat kaydını kuruş cinsinden yazar", async () => {
-    const sonuc = await recordCollection({}, tahsilatFormu(doctorId));
+  it("tahsilatı Decimal tutar ve THS numarasıyla yazar (X-5, A-14)", async () => {
+    const sonuc = await recordCollection({}, tahsilatFormu(s.doctor.id, s.havale.id, "5000,50"));
     expect(sonuc.error).toBeUndefined();
 
-    const payments = await prisma.doctorPayment.findMany({ where: { doctorId } });
-    expect(payments).toHaveLength(1);
-    expect(payments[0].amount).toBe(500_000n);
-    expect(payments[0].method).toBe("TRANSFER");
-    expect(payments[0].status).toBe("AKTIF");
-    expect(payments[0].recordedBy).toBe(h.adminId);
-    expect(payments[0].referenceNo).toBe("DEKONT-001");
+    const [p] = await prisma.doctorPayment.findMany({ where: { doctorId: s.doctor.id } });
+    expect(p.amount.toFixed(2)).toBe("5000.50");
+    expect(p.documentNo).toBe(`THS-${takvimYili()}-000001`);
+    expect(p.paymentMethodId).toBe(s.havale.id);
+    expect(p.status).toBe("AKTIF");
+    expect(p.recordedBy).toBe(h.adminId);
+    expect(p.referenceNo).toBe("DEKONT-001");
   });
 
-  it("cari bakiyeyi tahsilat kadar düşürür — bakiye saklanmaz, hesaplanır (RULE-08)", async () => {
-    const once = await getDoctorCari(doctorId);
-    expect(once.bakiye).toBe(SIPARIS_BRUT);
+  it("komisyon oranı yöntemden kopyalanır ve tutarı donar (A-11)", async () => {
+    await recordCollection({}, tahsilatFormu(s.doctor.id, s.pos.id, "1000"));
+    const p = await prisma.doctorPayment.findFirstOrThrow();
+    expect(p.commissionRate.toFixed(2)).toBe("2.50");
+    expect(p.commissionAmount.toFixed(2)).toBe("25.00");
 
-    await recordCollection({}, tahsilatFormu(doctorId));
-
-    const sonra = await getDoctorCari(doctorId);
-    expect(sonra.toplamSiparis).toBe(SIPARIS_BRUT);
-    expect(sonra.toplamTahsilat).toBe(500_000n);
-    expect(sonra.bakiye).toBe(600_000n);
+    // Yöntemin oranı sonradan değişse de kayıt değişmez.
+    await prisma.paymentMethod.update({ where: { id: s.pos.id }, data: { commissionRate: "3" } });
+    const sonra = await prisma.doctorPayment.findFirstOrThrow();
+    expect(sonra.commissionRate.toFixed(2)).toBe("2.50");
   });
 
-  it("denetim kaydı yazar (RULE-13 — Faz 1'de kalır)", async () => {
-    await recordCollection({}, tahsilatFormu(doctorId));
-
-    const payment = await prisma.doctorPayment.findFirstOrThrow({ where: { doctorId } });
-    const logs = await prisma.auditLog.findMany({
-      where: { action: AUDIT_ACTIONS.COLLECTION_CREATE },
-    });
+  it("denetim kaydı yazar (RULE-13)", async () => {
+    await recordCollection({}, tahsilatFormu(s.doctor.id, s.havale.id));
+    const payment = await prisma.doctorPayment.findFirstOrThrow();
+    const logs = await prisma.auditLog.findMany({ where: { action: AUDIT_ACTIONS.COLLECTION_CREATE } });
 
     expect(logs).toHaveLength(1);
     expect(logs[0].entityType).toBe("DoctorPayment");
     expect(logs[0].entityId).toBe(payment.id);
     expect(logs[0].actorId).toBe(h.adminId);
+    expect(logs[0].afterData).toContain('"amount":"5000"'); // Decimal log'a ham metin yazılır
   });
 
-  it("kongre hareketi yazmaz (C2 — GÇ-4: kongre kazanımı söküldü)", async () => {
-    await recordCollection({}, tahsilatFormu(doctorId));
-
-    expect(await prisma.doctorPayment.count()).toBe(1);
-    expect(await prisma.congressLedger.count()).toBe(0);
-  });
-
-  it("iptal, tahsilatı IPTAL işaretler ve cariyi geri alır (FR-29 — ters kayıt)", async () => {
-    await recordCollection({}, tahsilatFormu(doctorId));
-    const payment = await prisma.doctorPayment.findFirstOrThrow({ where: { doctorId } });
+  it("iptal, tahsilatı IPTAL işaretler (FR-29 — kayıt silinmez)", async () => {
+    await recordCollection({}, tahsilatFormu(s.doctor.id, s.havale.id));
+    const payment = await prisma.doctorPayment.findFirstOrThrow();
 
     const fd = new FormData();
     fd.set("paymentId", payment.id);
@@ -137,91 +100,92 @@ describe("tahsilat — dayanıklı davranış", () => {
     expect(iptal.status).toBe("IPTAL");
     expect(iptal.cancelledBy).toBe(h.adminId);
     expect(iptal.cancelReason).toBe("Dekont hatalı");
-
-    const cari = await getDoctorCari(doctorId);
-    expect(cari.toplamTahsilat).toBe(0n);
-    expect(cari.bakiye).toBe(SIPARIS_BRUT);
-
-    const logs = await prisma.auditLog.findMany({
-      where: { action: AUDIT_ACTIONS.COLLECTION_CANCEL },
-    });
-    expect(logs).toHaveLength(1);
-    expect(logs[0].entityId).toBe(payment.id);
-    expect(await prisma.congressLedger.count()).toBe(0);
-  });
-
-  it("iptal, kapanmış prim dönemi olsa bile prim düzeltmesi yazmaz (C4 — GÇ-16, X-1 §(6))", async () => {
-    await recordCollection({}, tahsilatFormu(doctorId));
-    const payment = await prisma.doctorPayment.findFirstOrThrow({ where: { doctorId } });
-
-    // Eski kod bu dönem kapalıyken iptalde CommissionAdjustment yazıyordu.
-    await prisma.commissionPeriod.create({
-      data: {
-        sellerId: h.adminId,
-        year: 2026,
-        month: 9,
-        baseAmount: 0n,
-        ratePercent: 5,
-        commissionAmount: 0n,
-        closedBy: h.adminId,
-      },
-    });
-
-    const fd = new FormData();
-    fd.set("paymentId", payment.id);
-    await cancelCollection({}, fd);
-
     expect(
-      (await prisma.doctorPayment.findUniqueOrThrow({ where: { id: payment.id } })).status
-    ).toBe("IPTAL");
-    expect(await prisma.commissionAdjustment.count()).toBe(0);
-  });
-
-  it("siparişe mahsup satırı yazmaz (C3 — GÇ-3, X-6: tahsilat eşlenmez)", async () => {
-    // Doktorun açık siparişi var; eski kod burada FIFO mahsup yazıyordu.
-    await recordCollection({}, tahsilatFormu(doctorId));
-
-    expect(await prisma.doctorPayment.count()).toBe(1);
-    expect(await prisma.paymentAllocation.count()).toBe(0);
-  });
-
-  it("borçtan büyük tahsilat da tek kayıttır — bakiye eksiye döner (K-2: avans ayrı tutulmaz)", async () => {
-    const fd = tahsilatFormu(doctorId);
-    fd.set("amount", "12000"); // borç 11.000,00
-
-    await recordCollection({}, fd);
-
-    const cari = await getDoctorCari(doctorId);
-    expect(cari.bakiye).toBe(-100_000n);
-    expect(await prisma.doctorPayment.count()).toBe(1);
-    expect(await prisma.paymentAllocation.count()).toBe(0);
+      await prisma.auditLog.count({ where: { action: AUDIT_ACTIONS.COLLECTION_CANCEL } })
+    ).toBe(1);
   });
 
   it("geçersiz tutarı reddeder ve hiçbir şey yazmaz", async () => {
-    const fd = tahsilatFormu(doctorId);
-    fd.set("amount", "0");
-
-    const sonuc = await recordCollection({}, fd);
-
-    expect(sonuc.error).toBeDefined();
+    for (const amount of ["0", "-5", "1.234", "abc"]) {
+      const sonuc = await recordCollection({}, tahsilatFormu(s.doctor.id, s.havale.id, amount));
+      expect(sonuc.error).toBeDefined();
+    }
     expect(await prisma.doctorPayment.count()).toBe(0);
     expect(await prisma.auditLog.count()).toBe(0);
   });
+
+  it("ödeme yöntemi seçilmeden tahsilat yazılmaz (A-11: zorunlu)", async () => {
+    const fd = tahsilatFormu(s.doctor.id, "");
+    expect((await recordCollection({}, fd)).error).toBeDefined();
+    expect(await prisma.doctorPayment.count()).toBe(0);
+  });
 });
 
-describe("vade değişikliği — sistem sınırı yok (C7 — GÇ-11, KARARLAR §2 madde 16)", () => {
-  let orderId = "";
+describe("cari bakiye — cari hareketin toplamı (X-11 §(6), RULE-08)", () => {
+  let s: Awaited<ReturnType<typeof seed>>;
+  const hareket = (direction: "BORC" | "ALACAK", amount: string, type: "SEVKIYAT" | "TAHSILAT" | "ACILIS") =>
+    prisma.ledgerEntry.create({
+      data: { doctorId: s.doctor.id, type, direction, amount, documentNo: "TEST", createdById: s.admin.id },
+    });
 
   beforeEach(async () => {
-    const { order } = await seed();
-    orderId = order.id;
+    s = await seed();
   });
 
-  function vadeFormu(newDueDate: string) {
+  it("hareket yoksa bakiye sıfırdır", async () => {
+    const cari = await getDoctorCari(s.doctor.id);
+    expect(cari.bakiye.toFixed(2)).toBe("0.00");
+  });
+
+  it("bakiye = Σ borç − Σ alacak; veritabanında toplanır", async () => {
+    await hareket("BORC", "11000.00", "SEVKIYAT");
+    await hareket("ALACAK", "5000.50", "TAHSILAT");
+    const cari = await getDoctorCari(s.doctor.id);
+    expect(cari.toplamBorc.toFixed(2)).toBe("11000.00");
+    expect(cari.toplamAlacak.toFixed(2)).toBe("5000.50");
+    expect(cari.bakiye.toFixed(2)).toBe("5999.50");
+  });
+
+  it("borçtan büyük alacak bakiyeyi eksiye çevirir (K-2: avans ayrı tutulmaz)", async () => {
+    await hareket("BORC", "11000", "SEVKIYAT");
+    await hareket("ALACAK", "12000", "TAHSILAT");
+    expect((await getDoctorCari(s.doctor.id)).bakiye.toFixed(2)).toBe("-1000.00");
+  });
+
+  it("başka doktorun hareketi sayılmaz", async () => {
+    const diger = await prisma.doctor.create({ data: yeniDoktorVerisi("Dr. Diğer") });
+    await prisma.ledgerEntry.create({
+      data: { doctorId: diger.id, type: "ACILIS", direction: "BORC", amount: "999", documentNo: "ACL", createdById: s.admin.id },
+    });
+    expect((await getDoctorCari(s.doctor.id)).bakiye.toFixed(2)).toBe("0.00");
+  });
+});
+
+describe("vade değişikliği — cari harekette, sistem sınırı yok (X-15 §(1), KARARLAR §2 madde 16)", () => {
+  let s: Awaited<ReturnType<typeof seed>>;
+  let ledgerEntryId = "";
+
+  beforeEach(async () => {
+    s = await seed();
+    const e = await prisma.ledgerEntry.create({
+      data: {
+        doctorId: s.doctor.id,
+        type: "SEVKIYAT",
+        direction: "BORC",
+        amount: "11000",
+        dueDate: new Date("2026-10-15T00:00:00Z"),
+        documentNo: "SVK-2026-000001",
+        createdById: s.admin.id,
+      },
+    });
+    ledgerEntryId = e.id;
+  });
+
+  function vadeFormu(newDueDate: string, reason = "Doktor talebi") {
     const fd = new FormData();
-    fd.set("orderId", orderId);
+    fd.set("ledgerEntryId", ledgerEntryId);
     fd.set("newDueDate", newDueDate);
-    fd.set("reason", "Doktor talebi");
+    fd.set("reason", reason);
     return fd;
   }
 
@@ -229,22 +193,28 @@ describe("vade değişikliği — sistem sınırı yok (C7 — GÇ-11, KARARLAR 
     const sonuc = await changeDueDate({}, vadeFormu("2029-12-31"));
     expect(sonuc.error).toBeUndefined();
 
-    const order = await prisma.order.findUniqueOrThrow({ where: { id: orderId } });
-    expect(order.dueDate.toISOString().slice(0, 10)).toBe("2029-12-31");
+    const e = await prisma.ledgerEntry.findUniqueOrThrow({ where: { id: ledgerEntryId } });
+    expect(e.dueDate?.toISOString().slice(0, 10)).toBe("2029-12-31");
 
-    const iz = await prisma.dueDateChange.findMany({ where: { orderId } });
+    const iz = await prisma.dueDateChange.findMany({ where: { ledgerEntryId } });
     expect(iz).toHaveLength(1);
+    expect(iz[0].oldDueDate?.toISOString().slice(0, 10)).toBe("2026-10-15");
     expect(iz[0].reason).toBe("Doktor talebi");
-
     expect(
       await prisma.auditLog.count({ where: { action: AUDIT_ACTIONS.DUE_DATE_CHANGE } })
     ).toBe(1);
   });
 
-  it("sipariş tarihinden önceki vade yine reddedilir (sınır değil, tutarlılık)", async () => {
-    const sonuc = await changeDueDate({}, vadeFormu("2000-01-01"));
-
-    expect(sonuc.error).toBeDefined();
+  it("gerekçesiz değişiklik reddedilir (X-15 §(1))", async () => {
+    expect((await changeDueDate({}, vadeFormu("2027-01-01", ""))).error).toBeDefined();
     expect(await prisma.dueDateChange.count()).toBe(0);
+  });
+
+  it("alacak hareketinin vadesi değişmez", async () => {
+    const alacak = await prisma.ledgerEntry.create({
+      data: { doctorId: s.doctor.id, type: "TAHSILAT", direction: "ALACAK", amount: "1", documentNo: "THS", createdById: s.admin.id },
+    });
+    ledgerEntryId = alacak.id;
+    expect((await changeDueDate({}, vadeFormu("2027-01-01"))).error).toBeDefined();
   });
 });

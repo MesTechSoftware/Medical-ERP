@@ -2,7 +2,7 @@ import Link from "next/link";
 
 /**
  * Sunucu bileşeni sayfalama kontrolü. Mevcut arama parametrelerini korur
- * (ör. `?status=PENDING` filtresi sayfa değiştirince kaybolmaz).
+ * (ör. `?status=BEKLIYOR` filtresi sayfa değiştirince kaybolmaz).
  */
 export default function Pagination({
   page,
