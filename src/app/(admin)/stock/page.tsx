@@ -1,21 +1,12 @@
 import { prisma } from "@/lib/db";
 import { PageHeader, Card, EmptyRow } from "@/components/ui";
+import { formatDateTime } from "@/lib/format";
 import StockEntryForm from "./StockEntryForm";
-
-function formatDate(d: Date) {
-  return new Intl.DateTimeFormat("tr-TR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(d);
-}
 
 export default async function StockPage() {
   const [products, movements] = await Promise.all([
     prisma.product.findMany({
-      where: { status: "ACTIVE" },
+      where: { status: "AKTIF" },
       orderBy: { name: "asc" },
       select: { id: true, name: true, code: true },
     }),
@@ -69,7 +60,7 @@ export default async function StockPage() {
                       className="border-b border-slate-100 last:border-0"
                     >
                       <td className="px-4 py-3 whitespace-nowrap text-slate-500">
-                        {formatDate(m.createdAt)}
+                        {formatDateTime(m.createdAt)}
                       </td>
                       <td className="px-4 py-3 text-slate-900">
                         {m.product.name}
@@ -78,7 +69,7 @@ export default async function StockPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        {m.type === "IN" ? (
+                        {m.type === "GIRIS" ? (
                           <span className="inline-flex rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
                             Giriş
                           </span>
@@ -89,7 +80,7 @@ export default async function StockPage() {
                         )}
                       </td>
                       <td className="px-4 py-3 text-right tabular-nums">
-                        {m.type === "IN" ? "+" : "−"}
+                        {m.type === "GIRIS" ? "+" : "−"}
                         {m.quantity}
                       </td>
                       <td className="px-4 py-3 text-slate-500">{m.note}</td>

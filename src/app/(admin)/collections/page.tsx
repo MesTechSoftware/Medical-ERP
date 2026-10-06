@@ -1,13 +1,8 @@
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
-import { formatTRY } from "@/lib/money";
+import { formatla } from "@/lib/money";
 import { formatDate } from "@/lib/format";
-import {
-  PageHeader,
-  Card,
-  EmptyRow,
-  PAYMENT_METHOD_LABELS,
-} from "@/components/ui";
+import { PageHeader, Card, EmptyRow } from "@/components/ui";
 import Pagination from "@/components/Pagination";
 import { getPagination, pageCount } from "@/lib/pagination";
 import CollectionForm from "./CollectionForm";
@@ -21,9 +16,9 @@ export default async function CollectionsPage({
   await requireAdmin();
   const { page, perPage, skip, take } = getPagination(await searchParams);
 
-  const [doctors, payments, total] = await Promise.all([
+  const [doctors, payments, total, paymentMethods] = await Promise.all([
     prisma.doctor.findMany({
-      where: { status: "ACTIVE" },
+      where: { status: "AKTIF" },
       orderBy: { fullName: "asc" },
       select: { id: true, fullName: true, clinic: true },
     }),
@@ -33,9 +28,15 @@ export default async function CollectionsPage({
       take,
       include: {
         doctor: { select: { fullName: true } },
+        paymentMethod: { select: { name: true } },
       },
     }),
     prisma.doctorPayment.count(),
+    prisma.paymentMethod.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: "asc" },
+      select: { id: true, name: true },
+    }),
   ]);
 
   return (
@@ -52,8 +53,9 @@ export default async function CollectionsPage({
         <CollectionForm
           doctors={doctors.map((d) => ({
             id: d.id,
-            label: `${d.fullName} — ${d.clinic}`,
+            label: d.clinic ? `${d.fullName} — ${d.clinic}` : d.fullName,
           }))}
+          paymentMethods={paymentMethods}
         />
       </Card>
 
@@ -96,13 +98,13 @@ export default async function CollectionsPage({
                         {p.doctor.fullName}
                       </td>
                       <td className="px-4 py-3 text-slate-500">
-                        {PAYMENT_METHOD_LABELS[p.method]}
+                        {p.paymentMethod.name}
                       </td>
                       <td className="px-4 py-3 text-slate-500">
                         {p.referenceNo ?? "—"}
                       </td>
                       <td className="px-4 py-3 text-right tabular-nums">
-                        {formatTRY(p.amount)}
+                        {formatla(p.amount)}
                       </td>
                       <td className="px-4 py-3">
                         {cancelled ? "İptal" : "Aktif"}

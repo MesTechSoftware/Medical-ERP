@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { OrderStatus } from "@/generated/prisma/enums";
+import { varsayilanDepoId } from "@/lib/stok";
 
 function revalidateOrders() {
   revalidatePath("/orders");
@@ -13,12 +14,12 @@ function revalidateOrders() {
   revalidatePath("/shipping");
 }
 
-/** PENDING -> PREPARING */
+/** BEKLIYOR -> HAZIRLANIYOR */
 export async function prepareOrder(id: string) {
   const session = await requireAdmin();
   const res = await prisma.order.updateMany({
-    where: { id, status: "PENDING" },
-    data: { status: OrderStatus.PREPARING },
+    where: { id, status: "BEKLIYOR" },
+    data: { status: OrderStatus.HAZIRLANIYOR },
   });
   if (res.count > 0) {
     await createAuditLog({
@@ -26,28 +27,28 @@ export async function prepareOrder(id: string) {
       action: AUDIT_ACTIONS.ORDER_STATUS_CHANGE,
       entityType: "Order",
       entityId: id,
-      before: { status: "PENDING" },
-      after: { status: "PREPARING" },
+      before: { status: "BEKLIYOR" },
+      after: { status: "HAZIRLANIYOR" },
     });
   }
   revalidateOrders();
   redirect(`/orders/${id}`);
 }
 
-/** SHIPPED -> DELIVERED */
+/** KARGOLANDI -> TESLIM_EDILDI */
 export async function markDelivered(id: string) {
   const session = await requireAdmin();
   let changed = 0;
   await prisma.$transaction(async (tx) => {
     const updated = await tx.order.updateMany({
-      where: { id, status: "SHIPPED" },
-      data: { status: OrderStatus.DELIVERED },
+      where: { id, status: "KARGOLANDI" },
+      data: { status: OrderStatus.TESLIM_EDILDI },
     });
     changed = updated.count;
     if (updated.count > 0) {
       await tx.shipment.updateMany({
         where: { orderId: id },
-        data: { status: OrderStatus.DELIVERED },
+        data: { status: OrderStatus.TESLIM_EDILDI },
       });
     }
   });
@@ -57,8 +58,8 @@ export async function markDelivered(id: string) {
       action: AUDIT_ACTIONS.ORDER_STATUS_CHANGE,
       entityType: "Order",
       entityId: id,
-      before: { status: "SHIPPED" },
-      after: { status: "DELIVERED" },
+      before: { status: "KARGOLANDI" },
+      after: { status: "TESLIM_EDILDI" },
     });
   }
   revalidateOrders();
@@ -74,21 +75,19 @@ export async function cancelOrder(id: string) {
     include: { items: true },
   });
   if (!order) redirect("/orders");
-  if (order.status === "CANCELLED" || order.status === "DELIVERED") {
+  if (order.status === "IPTAL" || order.status === "TESLIM_EDILDI") {
     redirect(`/orders/${id}?error=cannotCancel`);
   }
 
   await prisma.$transaction(async (tx) => {
-    // Stok iadesi + IN hareketleri
+    // Stok iadesi = GIRIS hareketleri (stok miktarı saklanmaz — ADR-005).
+    const locationId = await varsayilanDepoId(tx);
     for (const item of order.items) {
-      await tx.product.update({
-        where: { id: item.productId },
-        data: { stock: { increment: item.quantity } },
-      });
       await tx.stockMovement.create({
         data: {
           productId: item.productId,
-          type: "IN",
+          locationId,
+          type: "GIRIS",
           quantity: item.quantity,
           note: "Sipariş iptali - stok iadesi",
           orderId: order.id,
@@ -97,7 +96,7 @@ export async function cancelOrder(id: string) {
     }
     await tx.order.update({
       where: { id },
-      data: { status: OrderStatus.CANCELLED },
+      data: { status: OrderStatus.IPTAL },
     });
   });
 
@@ -107,7 +106,7 @@ export async function cancelOrder(id: string) {
     entityType: "Order",
     entityId: id,
     before: { status: order.status },
-    after: { status: "CANCELLED" },
+    after: { status: "IPTAL" },
   });
 
   revalidateOrders();

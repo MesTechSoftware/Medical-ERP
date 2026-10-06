@@ -43,6 +43,12 @@ migration** olarak mı üretileceğiydi.
 - **Entegrasyon test DB'si** (`medikal_itest`, C1) `globalSetup`'ta `migrate deploy` çalıştırır.
   C1 eski migration'la kurulur, `CM`'den sonra yeni `init` ile çalışmaya devam eder. Ayrı bir
   işlem gerekmez.
+  *04.10.2026 düzeltmesi (`CM` uygulaması — karar değişmedi):* son cümle **yanlıştı**. Eski
+  `init_v2` geçmişini taşıyan bir veritabanında `migrate deploy` yeni `init`'i uygulayamaz
+  (`type "Role" already exists`). CI etkilenmez — veritabanlarını her koşuda sıfırdan açar.
+  **Var olan yerel kurulumlarda** `medikal_itest` ve `medikal_dev` **bir kez** silinip yeniden
+  açılır (`medikal_test`'i Playwright her koşuda zaten sıfırlar). Canlı veri olmadığı için
+  bu tek seferlik bir yerel adımdır.
 
 ## Değerlendirilen alternatifler
 

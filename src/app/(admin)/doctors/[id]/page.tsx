@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
-import { formatTRY } from "@/lib/money";
+import { formatla } from "@/lib/money";
+import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
 import { formatDate } from "@/lib/format";
 import { formatPhone } from "@/lib/phone";
 import { getDoctorCari } from "@/lib/doctor-cari";
@@ -12,7 +13,6 @@ import {
   StatCard,
   StatusBadge,
   EmptyRow,
-  PAYMENT_METHOD_LABELS,
 } from "@/components/ui";
 
 /**
@@ -42,12 +42,14 @@ export default async function DoctorDetailPage({
       take: 30,
       include: {
         seller: { select: { name: true } },
+        items: { select: SIPARIS_SATIRI },
       },
     }),
     prisma.doctorPayment.findMany({
       where: { doctorId: id },
       orderBy: { paidAt: "desc" },
       take: 30,
+      include: { paymentMethod: { select: { name: true } } },
     }),
   ]);
 
@@ -55,9 +57,9 @@ export default async function DoctorDetailPage({
     <div>
       <PageHeader
         title={`${doctor.title ? `${doctor.title} ` : ""}${doctor.fullName}`}
-        description={`${doctor.clinic} · ${doctor.region}${
-          doctor.city ? ` · ${doctor.city}` : ""
-        } · ${formatPhone(doctor.phoneNormalized)}`}
+        description={[doctor.clinic, doctor.region, doctor.city, formatPhone(doctor.phoneNormalized)]
+          .filter(Boolean)
+          .join(" · ")}
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -66,13 +68,14 @@ export default async function DoctorDetailPage({
           value={doctor.ownerSeller?.name ?? "Sahipsiz"}
           tone={doctor.ownerSeller ? "default" : "danger"}
         />
-        <StatCard label="Toplam Sipariş" value={formatTRY(cari.toplamSiparis)} />
-        <StatCard label="Toplam Tahsilat" value={formatTRY(cari.toplamTahsilat)} />
+        {/* Cari hareketten okunur (X-11); CM → 1B arası boş görünür (FAZ1 R-11). */}
+        <StatCard label="Toplam Borç" value={formatla(cari.toplamBorc)} />
+        <StatCard label="Toplam Alacak" value={formatla(cari.toplamAlacak)} />
         <StatCard
           label="Cari Bakiye"
-          value={formatTRY(cari.bakiye)}
-          tone={cari.bakiye > 0n ? "danger" : "success"}
-          hint={cari.bakiye > 0n ? "Şirkete borçlu" : "Bakiye kapalı"}
+          value={formatla(cari.bakiye)}
+          tone={cari.bakiye.gt(0) ? "danger" : "success"}
+          hint={cari.bakiye.gt(0) ? "Şirkete borçlu" : "Bakiye kapalı"}
         />
       </div>
 
@@ -85,7 +88,8 @@ export default async function DoctorDetailPage({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
-                  <th className="px-3 py-2 font-medium">Vade</th>
+                  <th className="px-3 py-2 font-medium">Belge No</th>
+                  <th className="px-3 py-2 font-medium">Tarih</th>
                   <th className="px-3 py-2 font-medium">Satıcı</th>
                   <th className="px-3 py-2 text-right font-medium">Tutar</th>
                   <th className="px-3 py-2 font-medium">Durum</th>
@@ -93,7 +97,7 @@ export default async function DoctorDetailPage({
               </thead>
               <tbody>
                 {orders.length === 0 && (
-                  <EmptyRow colSpan={4} text="Sipariş yok." />
+                  <EmptyRow colSpan={5} text="Sipariş yok." />
                 )}
                 {orders.map((o) => {
                   return (
@@ -102,13 +106,16 @@ export default async function DoctorDetailPage({
                       className="border-b border-slate-100 last:border-0"
                     >
                       <td className="px-3 py-2 whitespace-nowrap text-slate-500">
-                        {formatDate(o.dueDate)}
+                        {o.documentNo}
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap text-slate-500">
+                        {formatDate(o.orderDate)}
                       </td>
                       <td className="px-3 py-2 text-slate-500">
-                        {o.seller.name}
+                        {o.seller?.name ?? "—"}
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums">
-                        {formatTRY(o.grossTotal)}
+                        {formatla(siparisToplami(o.items).toplam)}
                       </td>
                       <td className="px-3 py-2">
                         <StatusBadge status={o.status} />
@@ -151,10 +158,10 @@ export default async function DoctorDetailPage({
                       {formatDate(p.paidAt)}
                     </td>
                     <td className="px-3 py-2">
-                      {PAYMENT_METHOD_LABELS[p.method] ?? p.method}
+                      {p.paymentMethod.name}
                     </td>
                     <td className="px-3 py-2 text-right tabular-nums">
-                      {formatTRY(p.amount)}
+                      {formatla(p.amount)}
                     </td>
                     <td className="px-3 py-2">
                       {p.status === "IPTAL" ? "İptal" : "Aktif"}

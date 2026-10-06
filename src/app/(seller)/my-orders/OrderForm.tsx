@@ -3,16 +3,17 @@
 import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
 import { FormError, SubmitButton } from "@/components/form";
-import { formatTRY, kurusToTl, tlToKurus } from "@/lib/money";
-import { lineTotals, sumLineTotals } from "@/lib/vat";
+import { formatla, paraOku } from "@/lib/money";
+import { hesaplaSatirTutarlari } from "@/lib/satir-tutarlari";
 import { createOrder, type OrderFormState } from "./actions";
 
 type Product = {
   id: string;
   name: string;
   code: string;
-  netListPrice: bigint; // kuruş, KDV hariç
-  vatRate: number; // %
+  /** Varsayılan listenin fiyatı, KDV hariç ham metin; listede yoksa `null`. */
+  listPrice: string | null;
+  vatRate: string; // %, ham metin
   stock: number;
 };
 
@@ -22,7 +23,7 @@ type Row = { key: number; productId: string; quantity: number; priceText: string
 export type DoctorOption = {
   id: string;
   fullName: string;
-  clinic: string;
+  clinic: string | null;
   title: string | null;
 };
 
@@ -47,46 +48,42 @@ export default function OrderForm({
   );
 
   /**
-   * Girilen metni NET kuruşa çevirir. Boşsa liste fiyatı. Fiyat girişi daima
+   * Girilen metin = net birim fiyat. Boşsa liste fiyatı. Fiyat girişi daima
    * KDV hariçtir — toggle C6'da söküldü (Ü-3 §(3), `pricing.fiyatGirisiKdvDahil = false`).
+   * Geçersiz metin `null` döner ve satır gönderilmez.
    */
-  function netKurusOf(row: Row, p: Product | undefined): bigint {
-    if (!p) return 0n;
+  function birimFiyatOf(row: Row, p: Product | undefined): string | null {
+    if (!p?.listPrice) return null;
     const text = row.priceText.trim();
-    if (text === "") return p.netListPrice;
-    const tl = Number(text);
-    if (!Number.isFinite(tl) || tl < 0) return 0n;
-    return tlToKurus(tl);
+    if (text === "") return p.listPrice;
+    const d = paraOku(text);
+    return d ? formatla(d, "ham") : null;
   }
 
-  const computed = rows.map((row) => {
+  const satirlar = rows.map((row) => {
     const p = productMap.get(row.productId);
-    const netUnit = netKurusOf(row, p);
-    const totals =
-      p && row.quantity > 0
-        ? lineTotals(netUnit, row.quantity, p.vatRate)
-        : { lineNetTotal: 0n, vatAmount: 0n, lineGrossTotal: 0n };
-    return {
-      row,
-      product: p,
-      netUnit,
-      totals,
-      overStock: p ? row.quantity > p.stock : false,
-    };
+    return { row, product: p, birimFiyat: birimFiyatOf(row, p) };
   });
+  const gecerli = satirlar.filter((c) => c.product?.listPrice && c.birimFiyat && c.row.quantity > 0);
 
-  const orderTotals = sumLineTotals(computed.map((c) => c.totals));
+  // Önizleme sunucuyla aynı fonksiyondan geçer: tek yuvarlama noktası (C-6 §(5)).
+  const hesap = hesaplaSatirTutarlari(
+    gecerli.map((c) => ({
+      birimFiyat: c.birimFiyat!,
+      listeFiyat: c.product!.listPrice!,
+      kdvOrani: c.product!.vatRate,
+      miktar: c.row.quantity,
+    }))
+  );
+  const tutarOf = new Map(gecerli.map((c, i) => [c.row.key, hesap.satirlar[i]]));
+  const computed = satirlar.map((c) => ({ ...c, totals: tutarOf.get(c.row.key) }));
 
-  // Sunucuya HER ZAMAN net fiyat gider (kanonik değer nettir).
-  const items = computed
-    .filter((c) => c.product && c.row.quantity > 0)
-    .map((c) => ({
-      productId: c.row.productId,
-      quantity: c.row.quantity,
-      netUnitPriceTL: kurusToTl(c.netUnit),
-    }));
-
-  const hasBlockingError = computed.some((c) => c.overStock);
+  // Sunucuya net birim fiyat ham metin olarak gider (kanonik değer nettir, X-5).
+  const items = gecerli.map((c) => ({
+    productId: c.row.productId,
+    quantity: c.row.quantity,
+    birimFiyat: c.birimFiyat!,
+  }));
 
   function addRow() {
     setRows((rs) => [
@@ -136,7 +133,8 @@ export default function OrderForm({
             {doctors.map((d) => (
               <option key={d.id} value={d.id}>
                 {d.title ? `${d.title} ` : ""}
-                {d.fullName} — {d.clinic}
+                {d.fullName}
+                {d.clinic ? ` — ${d.clinic}` : ""}
               </option>
             ))}
           </select>
@@ -160,7 +158,7 @@ export default function OrderForm({
         </div>
 
         <div className="space-y-2">
-          {computed.map(({ row, product: p, totals, overStock }) => (
+          {computed.map(({ row, product: p, totals }) => (
             <div
               key={row.key}
               className="flex flex-wrap items-end gap-2 rounded-lg border border-slate-200 p-2"
@@ -182,8 +180,9 @@ export default function OrderForm({
                 >
                   <option value="">Seçiniz...</option>
                   {products.map((prod) => (
-                    <option key={prod.id} value={prod.id}>
+                    <option key={prod.id} value={prod.id} disabled={!prod.listPrice}>
                       {prod.name} ({prod.code}) — Stok: {prod.stock}
+                      {prod.listPrice ? "" : " — fiyat listesinde yok"}
                     </option>
                   ))}
                 </select>
@@ -203,15 +202,10 @@ export default function OrderForm({
                   value={row.quantity}
                   onChange={(e) =>
                     updateRow(row.key, {
-                      quantity: Math.max(1, Number(e.target.value) || 1),
+                      quantity: Math.max(1, parseInt(e.target.value, 10) || 1),
                     })
                   }
-                  className={
-                    "w-full rounded-lg border px-3 py-2 text-sm outline-none " +
-                    (overStock
-                      ? "border-red-400 focus:border-red-500"
-                      : "border-slate-300 focus:border-slate-500")
-                  }
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
                 />
               </div>
 
@@ -229,7 +223,7 @@ export default function OrderForm({
                   type="number"
                   step="0.01"
                   min={0}
-                  placeholder={p ? String(kurusToTl(p.netListPrice)) : "—"}
+                  placeholder={p?.listPrice ?? "—"}
                   value={row.priceText}
                   onChange={(e) =>
                     updateRow(row.key, { priceText: e.target.value })
@@ -242,14 +236,14 @@ export default function OrderForm({
               <div className="w-24 text-right">
                 <span className="mb-1 block text-xs text-slate-500">KDV</span>
                 <div className="py-2 text-sm tabular-nums text-slate-500">
-                  {p ? formatTRY(totals.vatAmount) : "—"}
+                  {totals ? formatla(totals.kdvTutar) : "—"}
                 </div>
               </div>
 
               <div className="w-28 text-right">
                 <span className="mb-1 block text-xs text-slate-500">Tutar (KDV hariç)</span>
                 <div className="py-2 text-sm font-medium tabular-nums text-slate-900">
-                  {formatTRY(totals.lineNetTotal)}
+                  {totals ? formatla(totals.matrah) : "—"}
                 </div>
               </div>
 
@@ -262,30 +256,25 @@ export default function OrderForm({
                 ✕
               </button>
 
-              {overStock && (
-                <p className="w-full text-xs text-red-600">
-                  Stok yetersiz (mevcut: {p?.stock}).
-                </p>
-              )}
             </div>
           ))}
         </div>
       </div>
 
-      {/* Toplamlar kalemlerin TOPLAMIDIR; yeniden yuvarlanmaz (src/lib/vat.ts). */}
+      {/* Toplamlar kalemlerin TOPLAMIDIR; yeniden yuvarlanmaz (C-6 §(5)). */}
       <div className="flex justify-end">
         <dl className="w-64 space-y-1 text-sm">
           <div className="flex justify-between text-slate-600">
             <dt>Ara Toplam (KDV hariç)</dt>
-            <dd className="tabular-nums">{formatTRY(orderTotals.netTotal)}</dd>
+            <dd className="tabular-nums">{formatla(hesap.toplam.matrah)}</dd>
           </div>
           <div className="flex justify-between text-slate-600">
             <dt>KDV</dt>
-            <dd className="tabular-nums">{formatTRY(orderTotals.vatTotal)}</dd>
+            <dd className="tabular-nums">{formatla(hesap.toplam.kdvTutar)}</dd>
           </div>
           <div className="flex justify-between border-t border-slate-200 pt-1 font-semibold text-slate-900">
             <dt>Genel Toplam</dt>
-            <dd className="tabular-nums">{formatTRY(orderTotals.grossTotal)}</dd>
+            <dd className="tabular-nums">{formatla(hesap.toplam.toplam)}</dd>
           </div>
         </dl>
       </div>
@@ -293,7 +282,7 @@ export default function OrderForm({
       <FormError message={state.error} />
 
       <div className="flex items-center gap-3">
-        <SubmitButton disabled={hasBlockingError || items.length === 0}>
+        <SubmitButton disabled={items.length === 0}>
           Siparişi Oluştur
         </SubmitButton>
         <Link

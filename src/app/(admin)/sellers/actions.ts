@@ -6,7 +6,6 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
-import { EntityStatus } from "@/generated/prisma/enums";
 
 export type SellerFormState = { error?: string };
 
@@ -25,10 +24,8 @@ export async function createSeller(
   if (!password || password.length < 4)
     return { error: "Şifre en az 4 karakter olmalıdır." };
 
-  const status: EntityStatus =
-    formData.get("status") === "PASSIVE"
-      ? EntityStatus.PASSIVE
-      : EntityStatus.ACTIVE;
+  // E-2: aktiflik `isActive`'dir. Pasifleştirmede portföy seçimi 1B madde 3'tedir (X-17 §(5)).
+  const isActive = formData.get("status") !== "PASIF";
 
   let seller;
   try {
@@ -37,8 +34,8 @@ export async function createSeller(
         name,
         email,
         phone,
-        status,
-        role: "SELLER",
+        isActive,
+        role: "SATICI",
         passwordHash: await bcrypt.hash(password, 10),
       },
     });
@@ -72,18 +69,15 @@ export async function updateSeller(
 
   if (!name || !email) return { error: "Ad ve e-posta zorunludur." };
 
-  const status: EntityStatus =
-    formData.get("status") === "PASSIVE"
-      ? EntityStatus.PASSIVE
-      : EntityStatus.ACTIVE;
+  const isActive = formData.get("status") !== "PASIF";
 
   const data: {
     name: string;
     email: string;
     phone: string | null;
-    status: EntityStatus;
+    isActive: boolean;
     passwordHash?: string;
-  } = { name, email, phone, status };
+  } = { name, email, phone, isActive };
 
   if (password) {
     if (password.length < 4)
@@ -92,7 +86,7 @@ export async function updateSeller(
   }
 
   const before = await prisma.user.findFirst({
-    where: { id, role: "SELLER" },
+    where: { id, role: "SATICI" },
   });
 
   let updated;
@@ -119,11 +113,15 @@ export async function deleteSeller(id: string) {
   await requireAdmin();
   // Satıcı ödemesi kavramı kalktı (D-01); artık sipariş ve doktor portföyü
   // silmeyi engelliyor — geçmiş siparişler eski satıcıda kalmalı (FR-07).
-  const [orders, doctors] = await Promise.all([
+  // Sahiplik izinde adı geçen kullanıcı da silinmez (X-17 §(3) — iz olay kaydıdır).
+  const [orders, doctors, iz] = await Promise.all([
     prisma.order.count({ where: { sellerId: id } }),
     prisma.doctor.count({ where: { ownerSellerId: id } }),
+    prisma.doctorAssignment.count({
+      where: { OR: [{ fromSellerId: id }, { toSellerId: id }, { changedById: id }] },
+    }),
   ]);
-  if (orders > 0 || doctors > 0) {
+  if (orders > 0 || doctors > 0 || iz > 0) {
     redirect("/sellers?error=used");
   }
   await prisma.user.delete({ where: { id } });

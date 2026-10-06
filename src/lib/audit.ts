@@ -1,4 +1,6 @@
+import Decimal from "decimal.js";
 import { prisma } from "@/lib/db";
+import { formatla } from "@/lib/money";
 
 /**
  * Denetim kaydı (audit log) yardımcıları.
@@ -99,20 +101,29 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
 };
 
 // Log'a asla yazılmayacak alanlar (iç içe nesnelerde de temizlenir).
+// §C-j: vergi kimliği ve fatura seti (A-13) CM ile birlikte eklendi — değişiklik
+// loglanır (A-13 §(7)) ama değerin kendisi log'a yazılmaz.
 const SENSITIVE_KEYS = new Set([
   "passwordHash",
   "password",
   "token",
+  "tokenHash",
   "accessToken",
   "refreshToken",
   "secret",
+  "taxId",
+  "invoiceTitle",
+  "taxOffice",
+  "invoiceAddress",
+  "invoiceDistrict",
+  "invoiceCity",
 ]);
 
 /** Nesneden hassas alanları özyinelemeli olarak çıkarır. */
 export function sanitizeAuditData(data: unknown): unknown {
   if (data instanceof Date) return data.toISOString();
-  // Parasal alanlar BigInt kuruş. JSON.stringify BigInt'te TypeError atar ve
-  // serialize() bunu yutup null döndüğü için audit kaydı SESSİZCE boşalırdı.
+  // Parasal alanlar Decimal (X-5); log'a ham metin olarak tek çıkıştan yazılır.
+  if (Decimal.isDecimal(data)) return formatla(data, "ham");
   if (typeof data === "bigint") return data.toString();
   if (Array.isArray(data)) return data.map(sanitizeAuditData);
   if (data && typeof data === "object") {

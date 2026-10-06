@@ -8,7 +8,7 @@ describe("canSellerOrderForDoctor — RULE-02 / FR-04", () => {
   it("sahibi olan satıcıya izin verir", () => {
     const r = canSellerOrderForDoctor(SELLER_A, {
       ownerSellerId: SELLER_A,
-      status: "ACTIVE",
+      status: "AKTIF",
     });
     expect(r.allowed).toBe(true);
   });
@@ -16,7 +16,7 @@ describe("canSellerOrderForDoctor — RULE-02 / FR-04", () => {
   it("🔴 sahibi OLMAYAN satıcıyı reddeder (tekil sahiplik)", () => {
     const r = canSellerOrderForDoctor(SELLER_B, {
       ownerSellerId: SELLER_A,
-      status: "ACTIVE",
+      status: "AKTIF",
     });
     expect(r.allowed).toBe(false);
     expect(r).toHaveProperty("reason");
@@ -25,7 +25,7 @@ describe("canSellerOrderForDoctor — RULE-02 / FR-04", () => {
   it("başka satıcının kimliğini sızdırmaz", () => {
     const r = canSellerOrderForDoctor(SELLER_B, {
       ownerSellerId: SELLER_A,
-      status: "ACTIVE",
+      status: "AKTIF",
     });
     if (r.allowed) throw new Error("beklenmedik izin");
     expect(r.reason).not.toContain(SELLER_A);
@@ -34,7 +34,7 @@ describe("canSellerOrderForDoctor — RULE-02 / FR-04", () => {
   it("FR-08: sahipsiz doktora sipariş girilemez", () => {
     const r = canSellerOrderForDoctor(SELLER_A, {
       ownerSellerId: null,
-      status: "ACTIVE",
+      status: "AKTIF",
     });
     expect(r.allowed).toBe(false);
     if (r.allowed) return;
@@ -44,7 +44,7 @@ describe("canSellerOrderForDoctor — RULE-02 / FR-04", () => {
   it("pasif doktora sipariş girilemez", () => {
     const r = canSellerOrderForDoctor(SELLER_A, {
       ownerSellerId: SELLER_A,
-      status: "PASSIVE",
+      status: "PASIF",
     });
     expect(r.allowed).toBe(false);
   });
@@ -53,7 +53,7 @@ describe("canSellerOrderForDoctor — RULE-02 / FR-04", () => {
     // Sahibi olmayan + pasif doktorda mesaj pasiflik olmalı (bilgi sızıntısı yok).
     const r = canSellerOrderForDoctor(SELLER_B, {
       ownerSellerId: SELLER_A,
-      status: "PASSIVE",
+      status: "PASIF",
     });
     if (r.allowed) throw new Error("beklenmedik izin");
     expect(r.reason).toMatch(/pasif/i);
@@ -62,17 +62,17 @@ describe("canSellerOrderForDoctor — RULE-02 / FR-04", () => {
 
 describe("doctorScopeFor — FR-05 görünürlük", () => {
   it("admin tüm doktorları görür (kısıt yok)", () => {
-    expect(doctorScopeFor({ id: "admin-1", role: "ADMIN" })).toEqual({});
+    expect(doctorScopeFor({ id: "admin-1", role: "YONETICI" })).toEqual({});
   });
 
   it("satıcı yalnızca kendi portföyünü görür", () => {
-    expect(doctorScopeFor({ id: SELLER_A, role: "SELLER" })).toEqual({
+    expect(doctorScopeFor({ id: SELLER_A, role: "SATICI" })).toEqual({
       ownerSellerId: SELLER_A,
     });
   });
 
-  it("bilinmeyen rol de kısıtlanır (varsayılan kapalı)", () => {
-    expect(doctorScopeFor({ id: "x", role: "DEALER" })).toEqual({
+  it("yönetici dışındaki rol de kısıtlanır (varsayılan kapalı — OPERASYON matrisi 1B'de)", () => {
+    expect(doctorScopeFor({ id: "x", role: "OPERASYON" })).toEqual({
       ownerSellerId: "x",
     });
   });

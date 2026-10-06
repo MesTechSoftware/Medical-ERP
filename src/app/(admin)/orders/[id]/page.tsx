@@ -22,13 +22,17 @@ export default async function AdminOrderDetailPage({
       seller: { select: { name: true } },
       doctor: true,
       items: { include: { product: { select: { name: true, code: true } } } },
-      shipment: true,
+      shipments: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        include: { carrier: { select: { name: true } } },
+      },
     },
   });
   if (!order) notFound();
 
   const canCancel =
-    order.status !== "CANCELLED" && order.status !== "DELIVERED";
+    order.status !== "IPTAL" && order.status !== "TESLIM_EDILDI";
 
   return (
     <div>
@@ -50,12 +54,12 @@ export default async function AdminOrderDetailPage({
         </div>
       )}
 
-      <OrderDetail order={order} showSeller />
+      <OrderDetail order={{ ...order, shipment: order.shipments[0] ?? null }} showSeller />
 
       <Card>
         <h2 className="mb-3 text-sm font-semibold text-slate-900">İşlemler</h2>
         <div className="flex flex-wrap items-center gap-3">
-          {order.status === "PENDING" && (
+          {order.status === "BEKLIYOR" && (
             <form action={prepareOrder.bind(null, id)}>
               <button
                 type="submit"
@@ -66,7 +70,7 @@ export default async function AdminOrderDetailPage({
             </form>
           )}
 
-          {order.status === "PREPARING" && (
+          {order.status === "HAZIRLANIYOR" && (
             <Link
               href="/shipping"
               className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
@@ -75,7 +79,7 @@ export default async function AdminOrderDetailPage({
             </Link>
           )}
 
-          {order.status === "SHIPPED" && (
+          {order.status === "KARGOLANDI" && (
             <form action={markDelivered.bind(null, id)}>
               <button
                 type="submit"
@@ -97,7 +101,7 @@ export default async function AdminOrderDetailPage({
             </form>
           )}
 
-          {(order.status === "DELIVERED" || order.status === "CANCELLED") && (
+          {(order.status === "TESLIM_EDILDI" || order.status === "IPTAL") && (
             <p className="text-sm text-slate-400">
               Bu sipariş için işlem bulunmuyor.
             </p>

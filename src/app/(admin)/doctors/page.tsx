@@ -29,7 +29,7 @@ export default async function AdminDoctorsPage({
     }),
     prisma.doctor.count(),
     prisma.user.findMany({
-      where: { role: "SELLER", status: "ACTIVE" },
+      where: { role: "SATICI", isActive: true },
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }),

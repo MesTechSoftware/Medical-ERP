@@ -18,9 +18,9 @@ export type OwnershipCheck =
  */
 export function canSellerOrderForDoctor(
   sellerId: string,
-  doctor: { ownerSellerId: string | null; status: "ACTIVE" | "PASSIVE" }
+  doctor: { ownerSellerId: string | null; status: "AKTIF" | "PASIF" }
 ): OwnershipCheck {
-  if (doctor.status !== "ACTIVE") {
+  if (doctor.status !== "AKTIF") {
     return { allowed: false, reason: "Doktor kaydı pasif durumda." };
   }
   if (doctor.ownerSellerId === null) {
@@ -46,5 +46,5 @@ export function doctorScopeFor(user: {
   id: string;
   role: string;
 }): { ownerSellerId?: string } {
-  return user.role === "ADMIN" ? {} : { ownerSellerId: user.id };
+  return user.role === "YONETICI" ? {} : { ownerSellerId: user.id };
 }

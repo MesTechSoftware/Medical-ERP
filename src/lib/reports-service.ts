@@ -1,35 +1,59 @@
+import Decimal from "decimal.js";
 import { prisma } from "@/lib/db";
-import { weightedDiscount } from "@/lib/reports";
+import { hesaplaSatirTutarlari, type SatirGirdisi } from "@/lib/satir-tutarlari";
 
-/** Satıcı performans karşılaştırması (FR-62). Tahsilat oranı C4'te söküldü — kalıcı (X-1 §(1)). */
+/**
+ * Raporlar (FR-62, FR-63). Tahsilat oranı C4'te söküldü — kalıcı (X-1 §(1)).
+ *
+ * Ciro daima MATRAHTIR (KDV hariç) ve SEVK EDİLEN maldan doğar (A-3, Ü-3 §(5)):
+ * sevkiyat satırı × sipariş satırının donmuş fiyatı, `hesaplaSatirTutarlari()` ile.
+ * Tahsilat daima BRÜTTÜR (Ü-3 §(4)); veritabanında `SUM()` ile alınır.
+ * Sayılan belgeler filtresi ve dönem 1B'dedir (X-1). `CM` → 1B arası sevkiyat
+ * satırını yazan akış yoktur; ciro boş görünür (FAZ1 R-11).
+ */
+
+const SEVK_SATIRI = {
+  quantity: true,
+  orderItem: { select: { listPrice: true, unitPrice: true, vatRate: true, isFree: true } },
+} as const;
+
+type SevkSatiri = {
+  quantity: number;
+  orderItem: { listPrice: Decimal.Value; unitPrice: Decimal.Value; vatRate: Decimal.Value; isFree: boolean };
+};
+
+function girdi(s: SevkSatiri): SatirGirdisi {
+  return {
+    birimFiyat: s.orderItem.unitPrice,
+    listeFiyat: s.orderItem.listPrice,
+    kdvOrani: s.orderItem.vatRate,
+    miktar: s.quantity,
+    bedelsiz: s.orderItem.isFree,
+  };
+}
+
 export type SellerReport = {
   sellerId: string;
   name: string;
-  ciro: bigint; // seçili KDV moduna göre
-  tahsilat: bigint;
-  ortalamaIskonto: number; // %
+  ciro: Decimal;
+  tahsilat: Decimal;
+  ortalamaIskonto: Decimal | null; // %
   doktorSayisi: number;
 };
 
-// Ciro daima MATRAHTIR (KDV hariç): satıcı raporu ve dönem cirosu Ü-3 C sınıfıdır,
-// toggle konmaz (Ü-3 §(5)). Tahsilat daima BRÜTTÜR (B sınıfı, Ü-3 §(4)).
 export async function getSellerReports(): Promise<SellerReport[]> {
   const sellers = await prisma.user.findMany({
-    where: { role: "SELLER" },
+    where: { role: "SATICI" },
     orderBy: { name: "asc" },
     select: { id: true, name: true },
   });
 
-  const reports = await Promise.all(
+  return Promise.all(
     sellers.map(async (s) => {
-      const [orders, items, collected, doktorSayisi] = await Promise.all([
-        prisma.order.findMany({
-          where: { sellerId: s.id, status: { not: "CANCELLED" } },
-          select: { netTotal: true, grossTotal: true },
-        }),
-        prisma.orderItem.findMany({
-          where: { order: { sellerId: s.id, status: { not: "CANCELLED" } } },
-          select: { listPriceAtSale: true, netUnitPrice: true, quantity: true },
+      const [sevk, collected, doktorSayisi] = await Promise.all([
+        prisma.shipmentItem.findMany({
+          where: { shipment: { order: { sellerId: s.id } } },
+          select: SEVK_SATIRI,
         }),
         // Tahsilat siparişe eşlenmez (X-6); satıcıya doktorun sorumlusu
         // üzerinden sayılır. Dönem ve devir kuralı 1B'de (X-1 §(2), X-13).
@@ -39,22 +63,17 @@ export async function getSellerReports(): Promise<SellerReport[]> {
         }),
         prisma.doctor.count({ where: { ownerSellerId: s.id } }),
       ]);
-
-      const ciro = orders.reduce((sum, o) => sum + o.netTotal, 0n);
-      const tahsilat = collected._sum.amount ?? 0n;
-
+      const { toplam } = hesaplaSatirTutarlari(sevk.map(girdi));
       return {
         sellerId: s.id,
         name: s.name,
-        ciro,
-        tahsilat,
-        ortalamaIskonto: weightedDiscount(items),
+        ciro: toplam.matrah,
+        tahsilat: new Decimal(collected._sum.amount ?? 0),
+        ortalamaIskonto: toplam.iskontoOran,
         doktorSayisi,
       };
     })
   );
-
-  return reports;
 }
 
 /** Doktor ciro sıralaması (FR-63). Gecikmiş borç tutarı C3'te söküldü (X-6 §(7)). */
@@ -62,47 +81,35 @@ export type DoctorReport = {
   doctorId: string;
   fullName: string;
   sellerName: string | null;
-  ciro: bigint;
+  ciro: Decimal;
 };
 
 export async function getDoctorReports(limit = 50): Promise<DoctorReport[]> {
   const doctors = await prisma.doctor.findMany({
-    include: {
+    select: {
+      id: true,
+      fullName: true,
       ownerSeller: { select: { name: true } },
-      orders: {
-        where: { status: { not: "CANCELLED" } },
-        select: {
-          netTotal: true,
-          grossTotal: true,
-        },
-      },
+      orders: { select: { shipments: { select: { items: { select: SEVK_SATIRI } } } } },
     },
   });
 
   const rows = doctors.map((d) => {
-    const ciro = d.orders.reduce((s, o) => s + o.netTotal, 0n);
-
+    const satirlar = d.orders.flatMap((o) => o.shipments.flatMap((sh) => sh.items));
     return {
       doctorId: d.id,
       fullName: d.fullName,
       sellerName: d.ownerSeller?.name ?? null,
-      ciro,
+      ciro: hesaplaSatirTutarlari(satirlar.map(girdi)).toplam.matrah,
     };
   });
 
-  // Ciroya göre azalan sırala (BigInt karşılaştırması).
-  rows.sort((a, b) => (b.ciro === a.ciro ? 0 : b.ciro > a.ciro ? 1 : -1));
+  rows.sort((a, b) => b.ciro.comparedTo(a.ciro));
   return rows.slice(0, limit);
 }
 
-/**
- * Toplam ciro — matrah, iptal hariç (Ü-3 C sınıfı). Kanal karşılaştırması
- * C5'te söküldü: bayi bir cari tipidir, kırılım 1B'de `hesap_sinifi`'nden (X-8).
- */
-export async function getCiroTotal(): Promise<bigint> {
-  const orders = await prisma.order.aggregate({
-    where: { status: { not: "CANCELLED" } },
-    _sum: { netTotal: true },
-  });
-  return orders._sum.netTotal ?? 0n;
+/** Toplam ciro — matrah, sevk edilen mal (A-3, Ü-3 C sınıfı). */
+export async function getCiroTotal(): Promise<Decimal> {
+  const sevk = await prisma.shipmentItem.findMany({ select: SEVK_SATIRI });
+  return hesaplaSatirTutarlari(sevk.map(girdi)).toplam.matrah;
 }

@@ -5,13 +5,13 @@ import type { Role } from "@/generated/prisma/enums";
  *
  * Tüm guard'lar ve kök yönlendirme buradan okur (BRK-10).
  *
- * `DEALER` enum'da `CM`'e kadar durur (GÇ-7) ama bayi paneli C5'te söküldü ve
- * bayi sisteme giriş yapmaz (D-2 §(6), X-8) — ana sayfası yoktur.
+ * `OPERASYON` 1A'da şemada vardır, davranışı yoktur (GÇ-7): ekran matrisi 1B madde 3'te
+ * doğar. O güne kadar giriş yapamaz (`auth.ts`) ve ana sayfası yoktur.
  */
 export const ROLE_HOME: Record<Role, string> = {
-  ADMIN: "/dashboard",
-  SELLER: "/my-orders",
-  DEALER: "/login",
+  YONETICI: "/dashboard",
+  SATICI: "/my-orders",
+  OPERASYON: "/login",
 };
 
 export function homeFor(role: Role): string {

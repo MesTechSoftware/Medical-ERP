@@ -1,45 +1,51 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { formatTRY } from "@/lib/money";
+import Decimal from "decimal.js";
+import { formatla } from "@/lib/money";
+import { hesaplaStok } from "@/lib/stok";
+import { getCiroTotal } from "@/lib/reports-service";
+import { gunAraligi, simdi } from "@/lib/zaman";
 import { PageHeader, Card, StatCard, EmptyRow } from "@/components/ui";
 
 const CRITICAL_STOCK = 10;
 
 export default async function DashboardPage() {
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
+  // "Bugün" İstanbul takvim günüdür (E-1 §(3)).
+  const bugunAraligi = gunAraligi(simdi());
 
   const [
-    stockAgg,
-    criticalProducts,
+    products,
     todayOrders,
     pendingCount,
     preparingCount,
-    salesAgg,
+    toplamCiro,
     collectedAgg,
   ] = await Promise.all([
-    prisma.product.aggregate({ _sum: { stock: true } }),
     prisma.product.findMany({
-      where: { status: "ACTIVE", stock: { lte: CRITICAL_STOCK } },
-      orderBy: { stock: "asc" },
-      select: { id: true, name: true, code: true, stock: true },
+      where: { status: "AKTIF" },
+      select: { id: true, name: true, code: true },
     }),
-    prisma.order.count({ where: { orderDate: { gte: startOfToday } } }),
-    prisma.order.count({ where: { status: "PENDING" } }),
-    prisma.order.count({ where: { status: "PREPARING" } }),
-    prisma.order.aggregate({
-      where: { status: { not: "CANCELLED" } },
-      _sum: { grossTotal: true },
+    prisma.order.count({
+      where: { orderDate: { gte: bugunAraligi.baslangic, lt: bugunAraligi.bitis } },
     }),
+    prisma.order.count({ where: { status: "BEKLIYOR" } }),
+    prisma.order.count({ where: { status: "HAZIRLANIYOR" } }),
+    getCiroTotal(),
     prisma.doctorPayment.aggregate({
       where: { status: "AKTIF" },
       _sum: { amount: true },
     }),
   ]);
 
-  const toplamStok = stockAgg._sum.stock ?? 0;
-  const toplamCiro = salesAgg._sum.grossTotal ?? 0n;
-  const toplamTahsilat = collectedAgg._sum.amount ?? 0n;
+  // Stok hareketlerden türer; tek okuma yolu hesaplaStok() (B-4, ADR-005).
+  const stoklu = await Promise.all(
+    products.map(async (p) => ({ ...p, stock: await hesaplaStok(p.id) }))
+  );
+  const criticalProducts = stoklu
+    .filter((p) => p.stock <= CRITICAL_STOCK)
+    .sort((a, b) => a.stock - b.stock);
+  const toplamStok = stoklu.reduce((t, p) => t + p.stock, 0);
+  const toplamTahsilat = new Decimal(collectedAgg._sum.amount ?? 0);
 
   return (
     <div>
@@ -64,8 +70,9 @@ export default async function DashboardPage() {
       {/* Finansal metrikler (D-01: satıcı borcu kavramı YOK) */}
       {/* Bayi kanal kartları C5'te söküldü — bayi bir cari tipidir (X-8). */}
       <div className="mb-4 grid gap-4 sm:grid-cols-2">
-        <StatCard label="Toplam Ciro" value={formatTRY(toplamCiro)} hint="KDV dahil" />
-        <StatCard label="Toplam Tahsilat" value={formatTRY(toplamTahsilat)} />
+        {/* Ciro matrahtır ve sevk edilen maldan doğar (A-3, Ü-3 §(5)); CM → 1B arası boş (R-11). */}
+        <StatCard label="Toplam Ciro" value={formatla(toplamCiro)} hint="KDV hariç" />
+        <StatCard label="Toplam Tahsilat" value={formatla(toplamTahsilat)} />
       </div>
 
 

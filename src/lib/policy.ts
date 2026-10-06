@@ -31,8 +31,8 @@ export const policy = {
     iskontoTavani: null,
     /** #8 — Fiyat girişi KDV hariç; AÇILMAZ (Ü-3 §(3)). */
     fiyatGirisiKdvDahil: false,
-    /** #9 — Seed'in açtığı listenin kodu; C9'da dolar (X-10). */
-    varsayilanFiyatListesiKodu: null,
+    /** #9 — Seed'in açtığı listenin kodu (X-10). `CM`'de doldu: `cozumleBirimFiyat()` ilk sürümü okur. */
+    varsayilanFiyatListesiKodu: "VARSAYILAN",
   },
   tax: {
     /** #10 — (C-6) */

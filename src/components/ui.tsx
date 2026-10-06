@@ -52,24 +52,24 @@ export function Card({ children }: { children: React.ReactNode }) {
 
 const STATUS_STYLES: Record<string, string> = {
   // Sipariş durumları
-  PENDING: "bg-amber-100 text-amber-800",
-  PREPARING: "bg-blue-100 text-blue-800",
-  SHIPPED: "bg-indigo-100 text-indigo-800",
-  DELIVERED: "bg-green-100 text-green-800",
-  CANCELLED: "bg-red-100 text-red-700",
+  BEKLIYOR: "bg-amber-100 text-amber-800",
+  HAZIRLANIYOR: "bg-blue-100 text-blue-800",
+  KARGOLANDI: "bg-indigo-100 text-indigo-800",
+  TESLIM_EDILDI: "bg-green-100 text-green-800",
+  IPTAL: "bg-red-100 text-red-700",
   // Aktif/pasif
-  ACTIVE: "bg-green-100 text-green-800",
-  PASSIVE: "bg-slate-200 text-slate-600",
+  AKTIF: "bg-green-100 text-green-800",
+  PASIF: "bg-slate-200 text-slate-600",
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  PENDING: "Bekliyor",
-  PREPARING: "Hazırlanıyor",
-  SHIPPED: "Kargolandı",
-  DELIVERED: "Teslim Edildi",
-  CANCELLED: "İptal Edildi",
-  ACTIVE: "Aktif",
-  PASSIVE: "Pasif",
+  BEKLIYOR: "Bekliyor",
+  HAZIRLANIYOR: "Hazırlanıyor",
+  KARGOLANDI: "Kargolandı",
+  TESLIM_EDILDI: "Teslim Edildi",
+  IPTAL: "İptal Edildi",
+  AKTIF: "Aktif",
+  PASIF: "Pasif",
 };
 
 export function StatusBadge({ status }: { status: string }) {
@@ -84,13 +84,6 @@ export function StatusBadge({ status }: { status: string }) {
     </span>
   );
 }
-
-export const PAYMENT_METHOD_LABELS: Record<string, string> = {
-  CASH: "Nakit",
-  TRANSFER: "Havale / EFT",
-  CARD: "Kredi Kartı",
-  OTHER: "Diğer",
-};
 
 /** Özet istatistik kartı (dashboard ve cari ekranları için). */
 export function StatCard({

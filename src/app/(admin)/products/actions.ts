@@ -4,43 +4,59 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
-import { tlToKurus } from "@/lib/money";
-import { priceTLSchema } from "@/lib/validation";
+import { priceSchema } from "@/lib/validation";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
+import { policy } from "@/lib/policy";
+import { varsayilanDepoId } from "@/lib/stok";
 import { EntityStatus } from "@/generated/prisma/enums";
+import type { Prisma } from "@/generated/prisma/client";
+import type Decimal from "decimal.js";
 
 export type ProductFormState = { error?: string };
 
 function parseProductForm(formData: FormData) {
   const name = (formData.get("name") as string)?.trim();
   const code = (formData.get("code") as string)?.trim();
-  // Fiyatlar NET (KDV hariç) girilir; kanonik değer nettir (FR-17, FR-19).
-  const listPriceTL = Number(formData.get("netListPrice"));
-  const minPriceTL = Number(formData.get("netMinPrice"));
-  const vatRate = Number(formData.get("vatRate"));
+  const taxRateId = (formData.get("taxRateId") as string)?.trim();
+  // Fiyat NET (KDV hariç) girilir; kanonik değer nettir (FR-17, FR-19).
+  const listPrice = priceSchema.safeParse(formData.get("listPrice") ?? "");
   const status: EntityStatus =
-    formData.get("status") === "PASSIVE"
-      ? EntityStatus.PASSIVE
-      : EntityStatus.ACTIVE;
+    formData.get("status") === "PASIF"
+      ? EntityStatus.PASIF
+      : EntityStatus.AKTIF;
 
   if (!name || !code) return { error: "Ürün adı ve kodu zorunludur." as const };
-  if (!priceTLSchema.safeParse(listPriceTL).success)
+  if (!listPrice.success)
     return { error: "Geçerli bir liste fiyatı giriniz." as const };
-  if (!priceTLSchema.safeParse(minPriceTL).success)
-    return { error: "Geçerli bir taban fiyat giriniz." as const };
-  if (!Number.isInteger(vatRate) || vatRate < 0 || vatRate > 100)
-    return { error: "KDV oranı 0-100 arasında tam sayı olmalıdır." as const };
+  if (!taxRateId) return { error: "KDV oranı seçiniz." as const };
 
-  return {
-    data: {
-      name,
-      code,
-      netListPrice: tlToKurus(listPriceTL),
-      netMinPrice: tlToKurus(minPriceTL),
-      vatRate,
-      status,
-    },
-  };
+  return { data: { name, code, taxRateId, status }, listPrice: listPrice.data };
+}
+
+/**
+ * Ürünün liste fiyatı ürün tablosunda değil, VARSAYILAN LİSTENİN satırındadır
+ * (X-10 §(5), GÇ-15). Liste ekranı 1B madde 7'ye kadar ürün formu bu satırı yazar
+ * (FAZ1 §D.1 not 3). Tarih alanları boş (süresiz) kalır (X-10 §(7)).
+ */
+async function varsayilanListeFiyatiYaz(
+  tx: Prisma.TransactionClient,
+  productId: string,
+  listPrice: Decimal
+) {
+  const liste = await tx.priceList.findUnique({
+    where: { code: policy.pricing.varsayilanFiyatListesiKodu },
+    select: { id: true },
+  });
+  if (!liste) throw new Error("Varsayılan fiyat listesi tanımlı değil.");
+  const satir = await tx.priceListItem.findFirst({
+    where: { priceListId: liste.id, productId, minQuantity: 1, validFrom: null, validTo: null },
+    select: { id: true },
+  });
+  if (satir) {
+    await tx.priceListItem.update({ where: { id: satir.id }, data: { listPrice } });
+  } else {
+    await tx.priceListItem.create({ data: { priceListId: liste.id, productId, listPrice } });
+  }
 }
 
 export async function createProduct(
@@ -51,27 +67,29 @@ export async function createProduct(
   const parsed = parseProductForm(formData);
   if (parsed.error) return { error: parsed.error };
 
-  const initialStock = Math.max(0, Math.trunc(Number(formData.get("initialStock")) || 0));
+  const initialStock = Math.max(0, parseInt(String(formData.get("initialStock") ?? ""), 10) || 0);
 
   let product;
   try {
-    product = await prisma.product.create({
-      data: { ...parsed.data, stock: initialStock },
+    product = await prisma.$transaction(async (tx) => {
+      const p = await tx.product.create({ data: parsed.data });
+      await varsayilanListeFiyatiYaz(tx, p.id, parsed.listPrice);
+      // Başlangıç stoğu varsa hareket kaydı oluştur (stok miktarı saklanmaz — ADR-005).
+      if (initialStock > 0) {
+        await tx.stockMovement.create({
+          data: {
+            productId: p.id,
+            locationId: await varsayilanDepoId(tx),
+            type: "GIRIS",
+            quantity: initialStock,
+            note: "Başlangıç stok girişi",
+          },
+        });
+      }
+      return p;
     });
   } catch {
     return { error: "Bu ürün kodu zaten kullanılıyor." };
-  }
-
-  // Başlangıç stoğu varsa hareket kaydı oluştur
-  if (initialStock > 0) {
-    await prisma.stockMovement.create({
-      data: {
-        productId: product.id,
-        type: "IN",
-        quantity: initialStock,
-        note: "Başlangıç stok girişi",
-      },
-    });
   }
 
   await createAuditLog({
@@ -79,7 +97,7 @@ export async function createProduct(
     action: AUDIT_ACTIONS.PRODUCT_CREATE,
     entityType: "Product",
     entityId: product.id,
-    after: product,
+    after: { ...product, listPrice: parsed.listPrice },
   });
 
   revalidatePath("/products");
@@ -100,9 +118,10 @@ export async function updateProduct(
 
   let updated;
   try {
-    updated = await prisma.product.update({
-      where: { id },
-      data: parsed.data,
+    updated = await prisma.$transaction(async (tx) => {
+      const p = await tx.product.update({ where: { id }, data: parsed.data });
+      await varsayilanListeFiyatiYaz(tx, id, parsed.listPrice);
+      return p;
     });
   } catch {
     return { error: "Bu ürün kodu zaten kullanılıyor." };
@@ -114,7 +133,7 @@ export async function updateProduct(
     entityType: "Product",
     entityId: id,
     before,
-    after: updated,
+    after: { ...updated, listPrice: parsed.listPrice },
   });
 
   revalidatePath("/products");
@@ -128,6 +147,7 @@ export async function deleteProduct(id: string) {
     redirect("/products?error=used");
   }
   await prisma.stockMovement.deleteMany({ where: { productId: id } });
+  await prisma.priceListItem.deleteMany({ where: { productId: id } });
   await prisma.product.delete({ where: { id } });
   revalidatePath("/products");
   redirect("/products");

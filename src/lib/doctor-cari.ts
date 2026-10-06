@@ -1,80 +1,53 @@
+import Decimal from "decimal.js";
+import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 
 /**
  * Doktor cari hesabı — TEK KAYNAK.
  *
- * FR-20 / RULE-08: `Bakiye = Σ sipariş (iptal hariç, BRÜT) − Σ tahsilat`.
- * Bakiye ayrı bir kolonda TUTULMAZ; hareketlerden hesaplanır. Böylece
- * iptal ve düzeltmeler sonrası tutarsız bir kolon kalmaz.
+ * Bakiye ayrı bir kolonda TUTULMAZ; cari hareketlerin toplamıdır (RULE-08, K-2, X-11 §(6)).
+ * Toplama veritabanında `SUM()` ile yapılır; uygulamada parasal aritmetik yoktur (X-5 §(4)).
+ * Tutarlar KDV dahildir (C-6 §(6)).
  *
- * "Açık alacak" ya da yaşlandırma için ikinci bir fonksiyon YAZILMAZ — bütün
- * ekranlar bu bakiyeyi okur (K-2, X-6 §(9)). Mahsup C3'te söküldü (GÇ-3).
- *
- * Eski `src/lib/cari.ts` (satıcı-borçlu modeli) bunun yerini aldı — BRK-01.
+ * `CM` → 1B arası `LedgerEntry`'yi yazan akış yoktur; bakiye boş görünür (FAZ1 R-11).
+ * 1B madde 1'de bu dosya `hesaplaDoktorBakiye(doktor, tarih?)`'e dönüşür.
  */
 
 export type DoctorCari = {
-  toplamSiparis: bigint; // brüt, iptal hariç
-  toplamTahsilat: bigint; // aktif tahsilatlar
-  bakiye: bigint; // pozitif = doktor borçlu
+  toplamBorc: Decimal;
+  toplamAlacak: Decimal;
+  bakiye: Decimal; // pozitif = doktor borçlu
 };
 
-/** İptal edilmiş siparişler borç doğurmaz. */
-const ACTIVE_ORDER = { status: { not: "CANCELLED" as const } };
-const ACTIVE_PAYMENT = { status: "AKTIF" as const };
+type Satir = { doctorId: string; borc: Prisma.Decimal; alacak: Prisma.Decimal; bakiye: Prisma.Decimal };
+
+async function oku(doctorId?: string): Promise<Satir[]> {
+  const filtre = doctorId ? Prisma.sql`WHERE "doctorId" = ${doctorId}` : Prisma.empty;
+  return prisma.$queryRaw<Satir[]>`
+    SELECT "doctorId",
+           COALESCE(SUM(CASE WHEN "direction" = 'BORC' THEN "amount" END), 0) AS borc,
+           COALESCE(SUM(CASE WHEN "direction" = 'ALACAK' THEN "amount" END), 0) AS alacak,
+           COALESCE(SUM(CASE WHEN "direction" = 'BORC' THEN "amount" ELSE -"amount" END), 0) AS bakiye
+    FROM "LedgerEntry"
+    ${filtre}
+    GROUP BY "doctorId"`;
+}
+
+function cevir(s: Satir | undefined): DoctorCari {
+  return {
+    toplamBorc: new Decimal(s?.borc ?? 0),
+    toplamAlacak: new Decimal(s?.alacak ?? 0),
+    bakiye: new Decimal(s?.bakiye ?? 0),
+  };
+}
 
 export async function getDoctorCari(doctorId: string): Promise<DoctorCari> {
-  const [orders, payments] = await Promise.all([
-    prisma.order.aggregate({
-      where: { doctorId, ...ACTIVE_ORDER },
-      _sum: { grossTotal: true },
-    }),
-    prisma.doctorPayment.aggregate({
-      where: { doctorId, ...ACTIVE_PAYMENT },
-      _sum: { amount: true },
-    }),
-  ]);
-
-  const toplamSiparis = orders._sum.grossTotal ?? 0n;
-  const toplamTahsilat = payments._sum.amount ?? 0n;
-  return {
-    toplamSiparis,
-    toplamTahsilat,
-    bakiye: toplamSiparis - toplamTahsilat,
-  };
+  const [satir] = await oku(doctorId);
+  return cevir(satir);
 }
 
 /** Liste ekranları için tüm doktorların carisi tek seferde. */
 export async function getAllDoctorsCari(): Promise<Map<string, DoctorCari>> {
-  const [orderGroups, paymentGroups] = await Promise.all([
-    prisma.order.groupBy({
-      by: ["doctorId"],
-      where: ACTIVE_ORDER,
-      _sum: { grossTotal: true },
-    }),
-    prisma.doctorPayment.groupBy({
-      by: ["doctorId"],
-      where: ACTIVE_PAYMENT,
-      _sum: { amount: true },
-    }),
-  ]);
-
-  const orderMap = new Map(
-    orderGroups.map((g) => [g.doctorId, g._sum.grossTotal ?? 0n])
-  );
-  const payMap = new Map(
-    paymentGroups.map((g) => [g.doctorId, g._sum.amount ?? 0n])
-  );
-
-  const result = new Map<string, DoctorCari>();
-  for (const id of new Set([...orderMap.keys(), ...payMap.keys()])) {
-    const toplamSiparis = orderMap.get(id) ?? 0n;
-    const toplamTahsilat = payMap.get(id) ?? 0n;
-    result.set(id, {
-      toplamSiparis,
-      toplamTahsilat,
-      bakiye: toplamSiparis - toplamTahsilat,
-    });
-  }
-  return result;
+  const satirlar = await oku();
+  return new Map(satirlar.map((s) => [s.doctorId, cevir(s)]));
 }

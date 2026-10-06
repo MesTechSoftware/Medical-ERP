@@ -18,7 +18,11 @@ export default async function MyOrderDetailPage({
     include: {
       doctor: true,
       items: { include: { product: { select: { name: true, code: true } } } },
-      shipment: true,
+      shipments: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        include: { carrier: { select: { name: true } } },
+      },
     },
   });
   if (!order) notFound();
@@ -36,7 +40,7 @@ export default async function MyOrderDetailPage({
           </Link>
         }
       />
-      <OrderDetail order={order} />
+      <OrderDetail order={{ ...order, shipment: order.shipments[0] ?? null }} />
     </div>
   );
 }

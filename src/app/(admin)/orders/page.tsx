@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { formatTRY } from "@/lib/money";
+import { formatla } from "@/lib/money";
+import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
 import { formatDate } from "@/lib/format";
 import { PageHeader, Card, StatusBadge, EmptyRow } from "@/components/ui";
 import Pagination from "@/components/Pagination";
@@ -9,11 +10,11 @@ import { OrderStatus } from "@/generated/prisma/enums";
 
 const STATUS_FILTERS: { value: string; label: string }[] = [
   { value: "", label: "Tümü" },
-  { value: "PENDING", label: "Bekliyor" },
-  { value: "PREPARING", label: "Hazırlanıyor" },
-  { value: "SHIPPED", label: "Kargolandı" },
-  { value: "DELIVERED", label: "Teslim Edildi" },
-  { value: "CANCELLED", label: "İptal" },
+  { value: "BEKLIYOR", label: "Bekliyor" },
+  { value: "HAZIRLANIYOR", label: "Hazırlanıyor" },
+  { value: "KARGOLANDI", label: "Kargolandı" },
+  { value: "TESLIM_EDILDI", label: "Teslim Edildi" },
+  { value: "IPTAL", label: "İptal" },
 ];
 
 function isOrderStatus(v: string): v is OrderStatus {
@@ -40,7 +41,7 @@ export default async function OrdersPage({
       include: {
         seller: { select: { name: true } },
         doctor: { select: { fullName: true, clinic: true } },
-        _count: { select: { items: true } },
+        items: { select: SIPARIS_SATIRI },
       },
     }),
     prisma.order.count({ where }),
@@ -99,7 +100,7 @@ export default async function OrdersPage({
                   <td className="px-4 py-3 whitespace-nowrap text-slate-500">
                     {formatDate(o.orderDate)}
                   </td>
-                  <td className="px-4 py-3 text-slate-900">{o.seller.name}</td>
+                  <td className="px-4 py-3 text-slate-900">{o.seller?.name ?? "—"}</td>
                   <td className="px-4 py-3 font-medium text-slate-900">
                     {o.doctor.fullName}
                   </td>
@@ -107,7 +108,7 @@ export default async function OrdersPage({
                     {o.doctor.clinic}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums">
-                    {formatTRY(o.grossTotal)}
+                    {formatla(siparisToplami(o.items).toplam)}
                   </td>
                   <td className="px-4 py-3">
                     <StatusBadge status={o.status} />

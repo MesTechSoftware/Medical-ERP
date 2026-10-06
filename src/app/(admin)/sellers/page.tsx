@@ -18,7 +18,7 @@ export default async function SellersPage({
   const { error } = await searchParams;
   const [sellers, doctorCounts] = await Promise.all([
     prisma.user.findMany({
-      where: { role: "SELLER" },
+      where: { role: "SATICI" },
       orderBy: { name: "asc" },
     }),
     prisma.doctor.groupBy({
@@ -85,7 +85,7 @@ export default async function SellersPage({
                       {doktorSayisi.get(s.id) ?? 0}
                     </td>
                     <td className="px-4 py-3">
-                      <StatusBadge status={s.status} />
+                      <StatusBadge status={s.isActive ? "AKTIF" : "PASIF"} />
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-3">

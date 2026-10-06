@@ -13,6 +13,7 @@ type Action = (
 export default function ProductForm({
   action,
   defaults,
+  taxRates,
   submitLabel,
   showInitialStock,
 }: {
@@ -20,11 +21,13 @@ export default function ProductForm({
   defaults?: {
     name?: string;
     code?: string;
-    netListPriceTL?: number;
-    netMinPriceTL?: number;
-    vatRate?: number;
+    /** Varsayılan listenin fiyatı, ham metin (X-10 §(5)). */
+    listPrice?: string;
+    taxRateId?: string;
     status?: string;
   };
+  /** Aktif `TaxRate` satırları (C-6); tanım tablosu ekranı 1B'dedir. */
+  taxRates: { id: string; name: string }[];
   submitLabel: string;
   showInitialStock?: boolean;
 }) {
@@ -38,34 +41,18 @@ export default function ProductForm({
       <Field label="Ürün Adı" name="name" required defaultValue={defaults?.name} />
       <Field label="Ürün Kodu" name="code" required defaultValue={defaults?.code} />
       {/* Fiyatlar NET (KDV hariç) girilir — kanonik değer nettir (FR-19). */}
+      {/* Liste fiyatı varsayılan fiyat listesinin satırına yazılır (X-10 §(5)). */}
       <Field
         label="Liste Fiyatı — KDV hariç (₺)"
-        name="netListPrice"
-        type="number"
-        step="0.01"
-        min="0"
+        name="listPrice"
         required
-        defaultValue={defaults?.netListPriceTL}
+        defaultValue={defaults?.listPrice}
       />
-      <Field
-        label="Taban Fiyat — KDV hariç (₺)"
-        name="netMinPrice"
-        type="number"
-        step="0.01"
-        min="0"
-        required
-        defaultValue={defaults?.netMinPriceTL ?? 0}
-      />
-      <p className="-mt-2 text-xs text-slate-500">
-        Satıcı bu fiyatın altına inemez; sunucu tarafında reddedilir.
-      </p>
-      <Field
-        label="KDV Oranı (%)"
-        name="vatRate"
-        type="number"
-        min="0"
-        required
-        defaultValue={defaults?.vatRate ?? 20}
+      <SelectField
+        label="KDV Oranı"
+        name="taxRateId"
+        defaultValue={defaults?.taxRateId ?? taxRates[0]?.id}
+        options={taxRates.map((t) => ({ value: t.id, label: t.name }))}
       />
       {showInitialStock && (
         <Field
@@ -79,10 +66,10 @@ export default function ProductForm({
       <SelectField
         label="Durum"
         name="status"
-        defaultValue={defaults?.status ?? "ACTIVE"}
+        defaultValue={defaults?.status ?? "AKTIF"}
         options={[
-          { value: "ACTIVE", label: "Aktif" },
-          { value: "PASSIVE", label: "Pasif" },
+          { value: "AKTIF", label: "Aktif" },
+          { value: "PASIF", label: "Pasif" },
         ]}
       />
 

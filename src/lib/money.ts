@@ -1,48 +1,51 @@
-// Para birimi yardımcıları.
-// Tüm parasal değerler veritabanında BigInt KURUŞ olarak saklanır.
-// Örn: 150,50 TL -> 15050n kuruş.
-//
-// Neden BigInt: PostgreSQL'de Prisma `Int` = 4 baytlık INTEGER = ±21,5 M ₺
-// tavanı demektir. KDV ve kümülatif ciro ile bu tavan gerçek bir risktir.
-// Görüntüleme sırasında Number'a düşmek güvenlidir: 2^53 kuruş ≈ 90 trilyon TL,
-// yani ulaşılabilir hiçbir tutar hassasiyet kaybetmez.
+import Decimal from "decimal.js";
 
-/** Kuruş değerini "1.250,50 ₺" biçiminde Türk Lirası metnine çevirir. */
-export function formatTRY(kurus: bigint | number): string {
-  return new Intl.NumberFormat("tr-TR", {
-    style: "currency",
-    currency: "TRY",
-  }).format(Number(kurus) / 100);
-}
+/**
+ * Para birimi yardımcıları (X-5).
+ *
+ * Parasal alanlar veritabanında `Decimal`dir: birim fiyat (18,4) · tutar (18,2) ·
+ * oran (5,2). Bu dosyada ARİTMETİK YOKTUR — ham aritmetik yalnız
+ * `hesaplaSatirTutarlari()` ve `cozumleBirimFiyat()` içindedir (X-5 §(4)).
+ *
+ * `formatla()` istemciye giden her parasal değerin TEK çıkış noktasıdır ve
+ * değeri `string` olarak verir: `Decimal` sunucu–istemci sınırında serileşmez
+ * (X-5 §(6)). Başka yerde `toString()`/`toNumber()` çağrılması kaçış yoludur.
+ */
 
-/** TL cinsinden (ondalıklı) bir tutarı kuruşa (BigInt) çevirir. */
-export function tlToKurus(tl: number): bigint {
-  return BigInt(Math.round(tl * 100));
-}
+/** Prisma `Decimal`, decimal.js `Decimal` veya ham metin. */
+export type ParaDegeri = Decimal.Value | { toFixed(dp?: number): string };
 
-/** Kuruş değerini TL cinsine (ondalıklı sayı) çevirir. */
-export function kurusToTl(kurus: bigint | number): number {
-  return Number(kurus) / 100;
+const TRY = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
+
+/**
+ * Parasal değeri istemciye `string` olarak verir.
+ * - `"para"`: gösterim — "₺1.250,50"
+ * - `"ham"`: form alanı / istemci hesabı girdisi — "1250.5" (nokta ondalık, üssüz)
+ * - `"oran"`: yüzde gösterimi — "%12,66"
+ * `null` → "—".
+ */
+export function formatla(
+  deger: ParaDegeri | null | undefined,
+  bicim: "para" | "ham" | "oran" = "para"
+): string {
+  if (deger === null || deger === undefined) return "—";
+  const d = new Decimal(deger as Decimal.Value);
+  if (bicim === "ham") return d.toFixed();
+  if (bicim === "oran") {
+    return `%${new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 }).format(
+      d.toFixed(2) as unknown as number
+    )}`;
+  }
+  // Intl.NumberFormat ondalık metni kayıpsız biçimlendirir (float'a düşmez).
+  return TRY.format(d.toFixed(2) as unknown as number);
 }
 
 /**
- * Tam sayı bölme, yarımı sıfırdan uzağa yuvarlar (round-half-away-from-zero).
- * `(2n + d) / 2d` biçimi, `d/2`'nin tam sayı bölmesinde hassasiyet kaybetmesini önler.
- *
- * Parasal orantı hesaplarının TEK yuvarlama noktası (KDV — vat.ts).
+ * Kullanıcının girdiği TL metnini `Decimal`e çevirir. "1250,5" ve "1250.5" kabul;
+ * en fazla 4 ondalık (birim fiyat ölçeği). Geçersizse `null`.
  */
-export function divRound(numerator: bigint, denominator: bigint): bigint {
-  if (denominator === 0n) throw new Error("Sıfıra bölme.");
-  const negative = numerator < 0n !== denominator < 0n;
-  const n = numerator < 0n ? -numerator : numerator;
-  const d = denominator < 0n ? -denominator : denominator;
-  const q = (2n * n + d) / (2n * d);
-  return negative ? -q : q;
-}
-
-/** BigInt kuruş listesini toplar. Prisma `_sum` null dönebildiği için varsayılan 0n. */
-export function sumKurus(values: Iterable<bigint | null | undefined>): bigint {
-  let total = 0n;
-  for (const v of values) total += v ?? 0n;
-  return total;
+export function paraOku(metin: string): Decimal | null {
+  const t = metin.trim().replace(",", ".");
+  if (!/^\d+(\.\d{1,4})?$/.test(t)) return null;
+  return new Decimal(t);
 }
