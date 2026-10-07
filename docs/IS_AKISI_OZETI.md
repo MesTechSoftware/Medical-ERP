@@ -5,7 +5,7 @@
 > Amaç: eksik kalmış bir iş gereksinimi varsa **buradan yakalamak**. Sonundaki
 > "Sistemde OLMAYAN şeyler" bölümü asıl kontrol listesidir.
 >
-> Kaynak: `PRD_V2.md` v2.2 + `docs/TRACEABILITY.md` (8 Ağustos 2026 denetimi).
+> Kaynak: `docs/arsiv/PRD_V2.md` v2.2 *(C10'da arşive alındı — X-7)* + `docs/TRACEABILITY.md` (8 Ağustos 2026 denetimi).
 > Teknik durum için `PROJE_DURUMU.md`'ye bak.
 >
 > **🔄 KARARLAR senkronizasyonu — 11.09.2026.** Bölüm 6'daki eksik listesi ve Bölüm 7'deki cevap

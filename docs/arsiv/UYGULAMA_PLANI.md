@@ -2,7 +2,7 @@
 
 # Uygulama Planı — Medikal Satış Operasyon v2.2
 
-**Kaynak spec:** [PRD_V2.md](../PRD_V2.md) (v2.2) · **Tarih:** 23 Temmuz 2026
+**Kaynak spec:** [PRD_V2.md](PRD_V2.md) (v2.2) · **Tarih:** 23 Temmuz 2026
 **Kapsam:** Sprint 0 → Faz F (tamamı)
 
 ---

@@ -465,7 +465,7 @@ metinleri geçerli değildir, karşılık **yeni tanıma göre** aranır. Tarama
 
 Karşılığı çıkmayan madde **eksik karardır** ve KARARLAR'a açık madde olarak düşer. Şema kalemi doğuran her madde **`CM`'e girer**.
 
-**Kaynak dosya:** `PRD_V2.md` **repo kökündedir** (git'te izleniyor, 498 satır —
+**Kaynak dosya:** `PRD_V2.md` *(C10'dan beri `docs/arsiv/PRD_V2.md`)* — tarama sırasında **repo kökündeydi** (git'te izleniyor, 498 satır —
 `MEVCUT_SISTEM_DURUMU.md` §1.1). Proje bilgisine **repodan** yüklenir ve tarama sohbette yapılır.
 Tarama karar boşluğu aradığı için Claude Code'a bırakılmaz.
 **Çıktı tablosu, grup sırası ve sonuç kodları: §E.** ✅ *16.09.2026: tarandı ve kapandı — 10 ❌ aynı gün X-13…X-15 ile karşılık buldu → 48 ✅ · 8 ⛔ · 3 🔵.*
@@ -548,7 +548,7 @@ parametrelerini taşır. Koşullu `updateMany` kolonla birlikte gider; bu yüzde
 
 ### §D.2 · Faz 1A çıkış kriteri — **sayıya bağlı**
 
-- [ ] §A'nın **20 kalemi** *(15.09: GÇ-14/15 · 16.09: GÇ-16…20)* `Durum = ✅`, her birinin commit hash'i §A tablosunda
+- [x] §A'nın **20 kalemi** *(C10 itibarıyla: 19 ✅ + GÇ-12 `şema ✅ / davranış 1B`; hash'ler §A'da)* *(15.09: GÇ-14/15 · 16.09: GÇ-16…20)* `Durum = ✅`, her birinin commit hash'i §A tablosunda
       *`✅` = eski yapı **kodda ve şemada kalmadı** — yerine gelen davranışın yazılması değildir
       (o 1B'dir). **İstisna GÇ-12:** 1A'da yalnız şema tarafı yapılır; tek parça sevkiyat
       varsayımı kodda A-3 ile (1B madde 7) kalkar → §A'da `Durum = şema ✅ / davranış 1B` yazılır
@@ -581,14 +581,14 @@ parametrelerini taşır. Koşullu `updateMany` kolonla birlikte gider; bu yüzde
       hiçbir kalem `CM` bitmeden adsız kalamaz
       ⚠️ Karşılaştırma **`lower(column_name)`** ile yapılır; Prisma `camelCase` kolonları
       tırnaklı üretir ve büyük/küçük harf varyantı listeden kaçar
-- [ ] **Lint kuralı CI'da yeşil.** Kural **sözdizimseldir**, tip-farkında değil:
+- [x] **Lint kuralı CI'da yeşil.** *(`ee22ca7` — `eslint.config.mjs`; CI koşusu 37393233606)* Kural **sözdizimseldir**, tip-farkında değil:
       `Decimal * Decimal` TypeScript'te zaten derleme hatası; sessiz float riski
       **`.toNumber()` / `Number()` / `parseFloat`** kaçışından gelir. `no-restricted-syntax`
       + `files` kapsamlı istisna (`hesaplaSatirTutarlari`, `cozumleBirimFiyat`, `formatla`)
       *(Gerekçe: `parserOptions.project` açmak `npm run lint`'in bugünkü **56 sn**'sini
       ikiye katlardı. Bedava kazanç: gitignored `src/generated`'ın **33 dosyası** ESLint
       ignore listesine alınır.)*
-- [ ] **Test sayısı beyan edilmiş.** "Yeşil CI" tek başına kriter değildir:
+- [x] **Test sayısı beyan edilmiş.** *(aşağıda `CM` ölçümü)* "Yeşil CI" tek başına kriter değildir:
 
   | | Başlangıç | Silinir | Yeniden yazılır | Dokunulmaz | 1A sonu (beklenen) |
   |---|---|---|---|---|---|
@@ -617,13 +617,13 @@ parametrelerini taşır. Koşullu `updateMany` kolonla birlikte gider; bu yüzde
   eşzamanlılığı, `hesaplaStok` konum/tarih) · `reports-service` 3 · `db` 2. Kongre/mahsup/prim
   dönemi tablolarına "yazmaz" testleri tablolarla birlikte gitti. · **E2E** — 6 spec yeni şemaya
   uyarlandı; `collections.spec` FR-25 ve iki bakiye/ciro tutarı doğrulaması **1B'ye taşındı** (R-11).
-  Koşu sayısı CM PR'ında yazılır.
+  **E2E 32** — `main` CI koşusu 37393233606: 32 geçti, 0 başarısız (33 − FR-25).
 
   ⚠️ **Dokunulmadan kalan 30 birim testi** (`doctor`, `pagination`, `phone`, `audit`)
   sistemin kanıtı değildir. 1A çıkışında bu fark **yazılı olarak** kabul edilir; kapanması
   1B'nin işidir.
-- [ ] Silinen her testin **gerekçesi commit mesajında**
-- [ ] `PRD_V2.md` arşivde *(§C-f taraması ✅ 16.09 kapandı — §E; doğan kararlar X-13…X-15 ✅)*
+- [x] Silinen her testin **gerekçesi commit mesajında** *(C2…C7b ve `ee22ca7`)*
+- [x] `PRD_V2.md` arşivde *(C10 — `docs/arsiv/PRD_V2.md`; §C-f taraması ✅ 16.09 kapandı — §E; doğan kararlar X-13…X-15 ✅)*
 - [x] `policy.ts` var; doldurulması gerekenler dolduruldu (`zaman.saatDilimi`,
       `auth.oturumHareketsizlikSaat`, `auth.oturumMutlakSaat`, **`auth.girisDenemeSiniri`,
       `auth.girisKilitDakika`**, **`pricing.varsayilanFiyatListesiKodu`**, **`finance.primOraniVarsayilan`** *(X-14)*) ve seed varsayılan
@@ -631,10 +631,10 @@ parametrelerini taşır. Koşullu `updateMany` kolonla birlikte gider; bu yüzde
       *15.09: `import.azamiDosyaBoyutMb` bu listeden **çıkarıldı** — KARARLAR §6 değerini
       **devreye almaya** bağlıyor ve 1A'da import kodu yok. Değer **1B madde 7'den (D-6) önce**
       gerekir.*
-- [ ] **X-11 · X-12'nin şeması `CM`'de** (`CariHareket`, `ImportParti`, katalog enum'ları, parti FK'ları)
-- [ ] **X-13 · X-14 · X-15'in şema etkileri `CM`'de** · **ADR-005 uygulandı** (`Product.stock` yok, `hesaplaStok()` ilk sürümü testli) *(kararlar ✅ 16.09)*
-- [ ] **X-10'un şeması `CM`'de** (iki tablo + FK) ve `cozumleBirimFiyat()` ilk sürümü sipariş akışında tek fiyat yolu *(karar 15.09'da kapandı)*
-- [ ] **`CM` sonrası `TZ=UTC` üç dosyada tanımlı** *(04.10: E-1 §(2))* ve `format.ts` `timeZone` taşıyor
+- [x] **X-11 · X-12'nin şeması `CM`'de** *(`ee22ca7`)* (`CariHareket`, `ImportParti`, katalog enum'ları, parti FK'ları)
+- [x] **X-13 · X-14 · X-15'in şema etkileri `CM`'de** *(`ee22ca7`)* · **ADR-005 uygulandı** (`Product.stock` yok, `hesaplaStok()` ilk sürümü testli) *(kararlar ✅ 16.09)*
+- [x] **X-10'un şeması `CM`'de** *(`ee22ca7`; `orders.itest` tek fiyat yolu)* (iki tablo + FK) ve `cozumleBirimFiyat()` ilk sürümü sipariş akışında tek fiyat yolu *(karar 15.09'da kapandı)*
+- [x] **`CM` sonrası `TZ=UTC` üç dosyada tanımlı** *(04.10: E-1 §(2))* ve `format.ts` `timeZone` taşıyor
 
 ---
 
@@ -770,7 +770,7 @@ satıra sokmaz.
 > ***"Bu madde KARARLAR'da bir maddeye bağlandı mı?"*** Karşılık **aranır, varsayılmaz** (§D.1).
 > **Liste kaynağı:** `TRACEABILITY.md` §1–§2 (PRD'nin 71 FR + 15 RULE başlıkları). Tamamen düşen
 > **22 FR + 5 RULE** `TRACEABILITY.md` §6.4'e göre çıkarıldı. *Sayım: 86 − 27 = 59.*
-> **Kaynak metin:** `PRD_V2.md` (**repo kökü**). *Özet* kolonu TRACEABILITY'nin kısaltmasıdır.
+> **Kaynak metin:** `PRD_V2.md` (tarama sırasında repo kökü; C10'dan beri `docs/arsiv/`). *Özet* kolonu TRACEABILITY'nin kısaltmasıdır.
 > **Karar metni PRD'dedir.** Sonuç yazılmadan önce PRD'deki tam metin okunur.
 > **İpucu** kolonu yalnız §6.4'ün *"yeniden tanımlanır"* dediği 24 madde için doludur. Bu
 > maddelerin eski metni geçerli değildir; karşılık **yeni tanıma göre** aranır. İpucu karşılık

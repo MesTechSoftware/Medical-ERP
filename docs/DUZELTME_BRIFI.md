@@ -368,7 +368,7 @@ E2E ile kanıtlamak mümkün ama pahalı ve kırılgan; bu hatalar sorgu seviyes
 > · **Bağlı açık madde:** `FAZ1_UYGULAMA_KAPSAMI.md` §C-e (senaryo) ve §C-c (PRD'nin durumu).
 >   Senaryo PRD'de duruyorsa **önce PRD'nin akıbeti** kararlaştırılmalı.
 
-- **Sorun:** `PRD_V2.md:474-497`'deki 15 adımlık zinciri tek akışta koşan test **yok**.
+- **Sorun:** `docs/arsiv/PRD_V2.md` (15 adımlık senaryo)'deki 15 adımlık zinciri tek akışta koşan test **yok**.
   Adımların 11'i parça parça kapsanıyor, **adım 7 (vade değişikliği) ve adım 15 (EXPIRE)
   hiçbir testte yok**.
 - **Yap:** `e2e/acceptance/full-scenario.spec.ts` — 15 adımı sırayla `test.step()` blokları
