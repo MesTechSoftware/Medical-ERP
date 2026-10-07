@@ -34,7 +34,7 @@ export default defineConfig({
   webServer: {
     command: [
       `DATABASE_URL="${TEST_DATABASE_URL}" npx prisma migrate reset --force`,
-      `DATABASE_URL="${TEST_DATABASE_URL}" npm run db:seed`,
+      `DATABASE_URL="${TEST_DATABASE_URL}" npm run db:seed:demo`,
       `DATABASE_URL="${TEST_DATABASE_URL}" PORT=${PORT} npm run dev`,
     ].join(" && "),
     url: baseURL,

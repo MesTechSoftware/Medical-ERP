@@ -31,7 +31,7 @@ cp .env.example .env        # ortam değişkenleri (aşağıya bak)
 npm run db:up               # PostgreSQL (docker compose)
 npx prisma generate
 npx prisma migrate deploy   # veritabanı + tablolar
-npm run db:seed             # örnek demo verisi
+npm run db:seed:demo        # referans veri + örnek demo verisi (yalnız geliştirme)
 npm run dev                 # http://localhost:3000
 ```
 
@@ -137,7 +137,8 @@ npm run typecheck    # tsc --noEmit
 npm run lint         # ESLint
 npm run db:up        # PostgreSQL container'ını başlat
 npm run db:down      # container'ı durdur
-npm run db:seed      # demo verisini yeniden yükle (mevcut veriyi siler)
+npm run db:seed      # referans veri — canlıda da çalışır, hiçbir şey silmez
+npm run db:seed:demo # demo verisini yeniden yükle (mevcut veriyi SİLER; yalnız geliştirme)
 npm run db:reset     # migration'ları sıfırla
 npm run backup       # veritabanını yedekle (+ bütünlük doğrulaması)
 npm run job:expire   # süresi dolan kongre bakiyelerini düş
