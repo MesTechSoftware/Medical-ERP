@@ -624,10 +624,10 @@ parametrelerini taşır. Koşullu `updateMany` kolonla birlikte gider; bu yüzde
   1B'nin işidir.
 - [ ] Silinen her testin **gerekçesi commit mesajında**
 - [ ] `PRD_V2.md` arşivde *(§C-f taraması ✅ 16.09 kapandı — §E; doğan kararlar X-13…X-15 ✅)*
-- [ ] `policy.ts` var; doldurulması gerekenler dolduruldu (`zaman.saatDilimi`,
+- [x] `policy.ts` var; doldurulması gerekenler dolduruldu (`zaman.saatDilimi`,
       `auth.oturumHareketsizlikSaat`, `auth.oturumMutlakSaat`, **`auth.girisDenemeSiniri`,
       `auth.girisKilitDakika`**, **`pricing.varsayilanFiyatListesiKodu`**, **`finance.primOraniVarsayilan`** *(X-14)*) ve seed varsayılan
-      listeyi **aynı kodla** açıyor
+      listeyi **aynı kodla** açıyor *(C9 — `prisma/referans.ts`, `referans-seed.itest`; `varsayilanFiyatListesiKodu` CM'de doldu)*
       *15.09: `import.azamiDosyaBoyutMb` bu listeden **çıkarıldı** — KARARLAR §6 değerini
       **devreye almaya** bağlıyor ve 1A'da import kodu yok. Değer **1B madde 7'den (D-6) önce**
       gerekir.*

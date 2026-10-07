@@ -1,24 +1,23 @@
 import { prisma } from "@/lib/db";
 import { policy } from "@/lib/policy";
+import { referansVeriYukle } from "../../prisma/referans";
 
 /**
- * Entegrasyon testlerinin ortak referans verisi: CM'den sonra her akışın ön koşulu
- * olan tanım tablosu satırları (seed'in referans kısmının asgarisi).
+ * Entegrasyon testlerinin ortak referans verisi: `db:seed`'in kendisi (C9).
+ * Testler ayrı bir kopya tutmaz; referans veri değişirse testler de onu görür.
  */
 export async function referansVeri() {
-  const kdv20 = await prisma.taxRate.create({
-    data: { code: policy.tax.varsayilanVergiOraniKodu, name: "KDV %20", rate: "20" },
-  });
-  const liste = await prisma.priceList.create({
-    data: { code: policy.pricing.varsayilanFiyatListesiKodu, name: "Varsayılan" },
-  });
-  const depo = await prisma.stockLocation.create({
-    data: { code: "MERKEZ", name: "Merkez Depo", type: "DEPO" },
-  });
-  const havale = await prisma.paymentMethod.create({
-    data: { name: "Havale / EFT", type: "BANKA" },
-  });
-  return { kdv20, liste, depo, havale };
+  await referansVeriYukle(prisma);
+  return {
+    kdv20: await prisma.taxRate.findUniqueOrThrow({
+      where: { code: policy.tax.varsayilanVergiOraniKodu },
+    }),
+    liste: await prisma.priceList.findUniqueOrThrow({
+      where: { code: policy.pricing.varsayilanFiyatListesiKodu },
+    }),
+    depo: await prisma.stockLocation.findUniqueOrThrow({ where: { code: "MERKEZ" } }),
+    havale: await prisma.paymentMethod.findUniqueOrThrow({ where: { name: "Havale / EFT" } }),
+  };
 }
 
 let telefon = 0;
