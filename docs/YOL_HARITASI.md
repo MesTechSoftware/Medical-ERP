@@ -122,7 +122,7 @@ veri üstünde migration'ı pahalı olduğundan Faz 1'de netleşmeli.
 | **`KARARLAR.md`** | **ANA KİTAP** — tüm ticari/kapsam kararlarının tek kaynağı | 🟢 **canlı · her karar buraya** |
 | **`YOL_HARITASI.md`** (bu dosya) | Sıralı ana plan | 🟢 canlı |
 | **`FAZ1_UYGULAMA_KAPSAMI.md`** | **KARARLAR §4'ün iş dökümü** — geri çekilecekler (**söküm takibi: `Durum`/`Commit` kolonları**) · yeni yazılacaklar · açık madde defteri · **§D: 1A commit dizisi ve 1B sırası** | 🟢 **canlı · Faz 1'in çalışma listesi** |
-| **`KABUL_KRITERLERI.md`** | Doğrulanabilir davranış cümleleri — **karar içermez**; numaralandırma karar kimliğinden (`A-3-1`) | ⬜ **Faz 1A'da açılacak** (X-7) |
+| **`KABUL_KRITERLERI.md`** | Doğrulanabilir davranış cümleleri — **karar içermez**; numaralandırma karar kimliğinden (`A-3-1`) | 🟢 **iskelet açıldı (C10)** · metinler 1B'de, testten önce (X-7 §(6)) |
 | **`SOZLESME_EKI.md`** | C-1 teyit metni — **on bir madde + zamanlama kolonu**; imzalanacak ek | ⬜ **açılacak · hukukçu kontrolü beklemede** (K-7 §5) |
 | **`docs/adr/`** | Mimari karar kayıtları — yalnız *"nasıl"* sorusu | 🟢 **açıldı (15.09.2026)** · ADR-001 isimlendirme · ADR-002 fresh init · ADR-003 oturum · ADR-004 deneme sayacı · **ADR-005 stok miktarı türetilir** *(16.09)* · **sınır kuralı `docs/adr/README.md`'de** |
 | **`IS_AKISI_OZETI.md`** | Sistem iş diliyle ne yapıyor + eksik gereksinim kontrol listesi | 🟢 canlı · **Sınıf 3 · Ayna** *(14.09.2026'da atandı — §7.1-A)* |
@@ -134,7 +134,7 @@ veri üstünde migration'ı pahalı olduğundan Faz 1'de netleşmeli.
 | **Görev Brifi (Faz 0-Demo)** | Ürünleştirme 8 görevi | 📌 Faz 2'de kullanılır, **genişletilecek** |
 | `UYGULAMA_PLANI.md` | v2 inşa planı | 📦 arşiv — işi bitti |
 | **Fleet Mimarisi** | Çok müşteri altyapısı | 🧊 **DONDURULDU** — ikinci ödeme yapan müşteri sözleşmesi imzalanana kadar açılmaz |
-| `PRD_V2.md` | v2 gereksinim dokümanı (FR/RULE) | 📦 **ARŞİVE ALINACAK** (X-7) — **önce 71 FR + 15 RULE taranır** (§C-f); sonra atıf yapılmaz |
+| `PRD_V2.md` | v2 gereksinim dokümanı (FR/RULE) | 📦 **arşiv** — `docs/arsiv/` (C10, X-7); tarama §C-f 16.09'da kapandı; atıf yapılmaz |
 
 > **Dosya adı notu.** Ana kitap bir ara `KARARLARFinal.md` adıyla dolaşıma girmişti.
 > **13.09.2026'da X-5/X-6/X-7 işlenerek `KARARLAR.md` adıyla birleştirildi** — tek ad kullanılır.

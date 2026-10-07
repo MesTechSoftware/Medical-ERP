@@ -1,3 +1,6 @@
+> ⛔ ARŞİV (KARARLAR X-7 §(1)) — C10, Faz 1A. Atıf yapılmaz. Yerine: `KARARLAR.md` (ne/neden) ·
+> `KABUL_KRITERLERI.md` (nasıl doğrulanır). Tarama sonucu: `FAZ1_UYGULAMA_KAPSAMI.md` §E.
+
 # PRD — Medikal Satış Operasyon Yönetim Sistemi **v2.2**
 
 **Sürüm:** 2.2 (10 açık soru kapandı + bayi paneli kararı) · **Tarih:** 23 Temmuz 2026
