@@ -7,7 +7,7 @@
 > "Karar bekleyenler" bölümlerindeki soru metinleri **buraya taşındı**. O bölümler
 > bundan sonra yalnız "bkz. `KARARLAR.md`" der.
 >
-> Son güncelleme: 1 Ekim 2026 (**X-17 kararı — sahipliğin tek yazma noktası, toplu devir; tek çağrı noktası listesi 11 → 12; `CM`'in önündeki son açık kalem kapandı**) · 24 Eylül 2026 (**D-6 ekleri — açılış bakiyesi import'u**) · 16 Eylül 2026 (**X-11…X-15 kararı + PRD taraması**) · **Faz 0'ın karar adımları tamamlandı · Faz 1A'da açılan X-8…X-15 ve X-17 kapandı · PRD taraması kapandı — açık (⬜) madde yok.**
+> Son güncelleme: 12 Ekim 2026 (**C-1 revizyon 3 — modül sınırı §1.3 §F, zamanlayıcı altyapısı, e-belge durum makinesi, cari uzantısı, istisna/tevkifat çekirdek kararı · K-8 kontör 🟦 · K-9 §B kargo anahtarı**) · 10 Ekim 2026 (**C-1 revizyon 2 — e-belge modülü çekirdek sonrası ilk modül, ilk adaptör müşterinin entegratörü, tek çatı partnerlikle · D-3 kargo e-belgeden sonra, BYOI · 🟦 tarama: X-11/X-12/A-4/A-8 ✅, K-10 yeni kilit, K-4 ayrıştı**) · 9 Ekim 2026 (**C-1 iç karar olarak ✅ — 🟦 varsayılan kaydı ve kilitlenme anı kaldırıldı; §0.6'nın otomatik ✅ kuralı kaldırıldı — tarih tek başına hiçbir kaydı kapatmaz**) · 1 Ekim 2026 (**X-17 kararı — sahipliğin tek yazma noktası, toplu devir; tek çağrı noktası listesi 11 → 12; `CM`'in önündeki son açık kalem kapandı**) · 24 Eylül 2026 (**D-6 ekleri — açılış bakiyesi import'u**) · 16 Eylül 2026 (**X-11…X-15 kararı + PRD taraması**) · **Faz 0'ın karar adımları tamamlandı · Faz 1A'da açılan X-8…X-15 ve X-17 kapandı · PRD taraması kapandı — açık (⬜) madde yok.**
 > **24.09.2026 — D-6 ekleri (şema değişmedi):** açılış bakiyesi import'unda **işaret kuralı** ve
 > **önizleme özeti** yazıldı. Boşluğun kaynağı 19.09 incelemesinin 4. bulgusudur; D-6 üç aşamayı
 > (doğrula → önizle → yaz) koyuyor ama hiçbirinin içeriğini yazmıyordu. Yeni kural kodu: `TUTAR_NEGATIF`.
@@ -89,7 +89,7 @@
 > **16.09.2026 turu (3. kısım) — X-11 · X-12 karara bağlandı; PRD taraması yapıldı.**
 > - **X-11 (§5.14):** `CariHareket` yeni çekirdek tablodur.
 > - **X-12 (§5.15):** `ImportParti` yeni çekirdek tablodur.
-> - Tablo sayısı **13 → 15**. İki tip kataloğu 🟦 varsayılan olarak yazıldı; kilitlenme anı `CM`.
+> - Tablo sayısı **13 → 15**. İki tip kataloğu 🟦 varsayılan olarak yazıldı; kilitlenme anı `CM`. *(10.10.2026 — geri not: ikisi de iç karar olarak ✅, kilitlenme anı kalktı — §0.6 (2).)*
 >
 > **PRD taraması (X-7 §(2))** — 59 madde (49 FR + 10 RULE) tek tek geçildi. Sonuç:
 > - **38** ✅ karşılığı var
@@ -413,7 +413,19 @@ dönüşür ve §0.4'ün uyarısına çarpar: *gösterge sayı, karar verilen sa
 **Yeni durum işareti — 🟦:** varsayılan sabitlendi, cevap beklenmeye devam ediyor.
 ⬜ ile ✅ arasındaki üçüncü hâldir; madde Faz 1'i bloklamaz ama kapanmış da sayılmaz.
 Cevap geldiğinde 🟦 → ✅ olur ve varsayılan ya teyit edilir ya değiştirilir.
-**Kilitlenme anı geçmiş 🟦 maddeler otomatik olarak ✅ sayılır.**
+~~**Kilitlenme anı geçmiş 🟦 maddeler otomatik olarak ✅ sayılır.**~~ *(kaldırıldı — 09.10.2026)*
+
+**🟦 → ✅ geçişinin iki yolu vardır *(09.10.2026)*:**
+(1) **Kilitlenme olayı belgeyle gerçekleşir:** imza, yazılı müşteri/müşavir beyanı vb.
+Belge karar metnine **tarihiyle** yazılır (aşağıdaki sorumluluk sınırı).
+(2) **Kayıt iç karar olarak yeniden sınıflandırılır:** cevabın müşteride olmadığı
+anlaşılırsa kayıt varsayılan kaydı olmaktan çıkar, doğrudan karar olur ve kilitlenme anı
+alanı düşer.
+**Tarihin geçmesi tek başına hiçbir kaydı değiştirmez.** Kilitlenme anı geçmiş ama olayı
+gerçekleşmemiş bir 🟦 madde **açık bulgudur**: ya yeni bir kilitlenme anı yazılır ya da
+(2) uygulanır. *Gerekçe: otomatik ✅, alınmamış bir beyanı alınmış gibi gösterir ve
+sorumluluk sınırını (aşağıda) sessizce deler — C-1'in 1 Ekim kaydı böyle kapanmış
+görünüyordu (§3.3.c, 09.10.2026 revizyonu).*
 
 **Yöntemin bilinen riski:** varsayılan, fark edilmeden kalıcı karara dönüşebilir.
 İki koruma: (1) her 🟦 bir kilitlenme anı taşır — tarihsiz varsayılan, varsayımın kılık
@@ -541,13 +553,13 @@ B-7 ile açılan son şema kalemi 29.08.2026'da kapandı (bkz. §3.2.a).
 | **K-1** | Tahsilatı yapılmış sipariş iptal edilebilir mi? | F-03 | ✅ | İptal edilebilir. Sipariş `CANCELLED` olur, **kayıt silinmez**. Tahsilat cari hesapta kalır, sipariş borcu ters kayıtla düşer → bakiye avansa döner. İptal; **satıcı primi ve ciro** türevlerini **ters kaydeder**. *(Redaksiyon 13.09.2026 — X-6 §(10): "tahsilat oranı" **X-1 §(1) ile kalıcı olarak kaldırılmıştı**; kongre türevi **K-6 §(2) ile düşmüştü**.)* **K-6 eki (29.08.2026): kongre kredisi lotu kavramı kaldırıldığı için "tüketilen kredinin lota iadesi" hükmü düştü.** **Sevk edilmiş sipariş bu yoldan iptal edilemez — o iade sürecidir (A-1).** | 14.08.2026 · rev. 29.08.2026 |
 | **K-2** | Fazla ödeme (avans) bakiyede nasıl görünmeli? | F-02 | ✅ | Ayrı avans kaydı **tutulmaz**. Cari bakiye tek ve işaretli hesaplanır (Σborç − Σalacak); negatif bakiye = avans. Ekranda **çıplak negatif sayı gösterilmez**, yön etiketiyle sunulur. Tüm ekranlar **tek bakiye fonksiyonunu** çağırır. Avans sonraki siparişte **otomatik mahsup** olur. **C-6 eki: bakiye KDV dahil (brüt) hesaplanır.** **C-2 eki: fonksiyon `tarih?` parametresi alır.** | 14.08.2026 |
 | **K-3** | Kongre kontenjanı fiziksel mi idari mi? Aşım engellensin mi? | F-05 | ✅ | **Yumuşak kısıt.** Aşım engellenmez; yetkili rol gerekçeyle onaylar. Her aşım **ve her kapasite değişikliği** loglanır. **A-8 ile `OnayBlogu` tablosunda somutlaştı.** **Onay makamı: yönetici (admin).** **K-6 eki: kural kongre modülünün içindedir; modül kapalıyken çalışmaz.** | 14.08.2026 |
-| **K-10** | **İzlenebilirlik / ÜTS ve tıbbi cihaz faturası kapsamı** | Şema, K-5, B-3 | 🟦 | Bkz. §1.4. **Normal satış faturası; lot/seri/GTIN/karekod tutulmaz, sigorta kolonu da konmaz.** **28.08.2026 revizyonu: paket bölünmez · Faz 1'e hiçbir kolon/tablo/bayrak eklenmez · UI'da görünmez · geçiş = fiziksel sayım, ayrı kalem · tetikleyici iki bağımsız yazılı talep · ÜTS kapsam bilgisi sözleşme ekinde.** **Kilitlenme anı: 1 Ekim 2026.** **07.09.2026: modül ertelendi; teknik yol notu eklendi (§1.4 §I).** **08.09.2026: erteleme saha verisiyle desteklendi; 1 Ekim kilitlenmesi ikiye ayrıldı — K-10 tetikleyicisi düştü, KDV teyidi K-7 §(7)'ye taşındı. ÜTS "kalıcı kapsam dışı" DEĞİL, "ertelenmiş"tir (tek görüşme kararı tersine çeviremez).** | 17.08.2026 · rev. 28.08 · 07.09 · 08.09.2026 |
+| **K-10** | **İzlenebilirlik / ÜTS ve tıbbi cihaz faturası kapsamı** | Şema, K-5, B-3 | 🟦 | Bkz. §1.4. **Normal satış faturası; lot/seri/GTIN/karekod tutulmaz, sigorta kolonu da konmaz.** **28.08.2026 revizyonu: paket bölünmez · Faz 1'e hiçbir kolon/tablo/bayrak eklenmez · UI'da görünmez · geçiş = fiziksel sayım, ayrı kalem · tetikleyici iki bağımsız yazılı talep · ÜTS kapsam bilgisi sözleşme ekinde.** **Kilitlenme anı:** ~~1 Ekim 2026~~ → **teyit metni 1. madde imzası, canlıya geçişten önce (10.10.2026)**. **07.09.2026: modül ertelendi; teknik yol notu eklendi (§1.4 §I).** **08.09.2026: erteleme saha verisiyle desteklendi; 1 Ekim kilitlenmesi ikiye ayrıldı — K-10 tetikleyicisi düştü, KDV teyidi K-7 §(7)'ye taşındı. ÜTS "kalıcı kapsam dışı" DEĞİL, "ertelenmiş"tir (tek görüşme kararı tersine çeviremez).** | 17.08.2026 · rev. 28.08 · 07.09 · 08.09.2026 |
 
 ### 1.2 Faz 2–3'ü etkiliyor
 
 | # | Soru | Etkilediği | Durum | Karar | Tarih |
 |---|---|---|---|---|---|
-| **K-4** | Hangi muhasebe programı? e-Fatura kesiliyor mu, hangi entegratörle? | Ürün konumlandırması, Ü-5 | 🟦 | **Cevap alındı, varsayılan sabitlendi.** Muhasebe programı **yok** (Excel); e-Fatura firma içinde bir çalışan tarafından **GİB portalından elle** kesiliyor; ayrıca dış mali müşavir var. Bkz. §1.5. **C-1 eki: irsaliye tarafı §3.3.c'de karara bağlandı.** **C-2 eki: müşavirin fatura tarafında bize ihtiyacı olmadığı doğrulandı (§3.3.d).** **07.09.2026 ertelemesi: API modülü Faz 3+'ta kalır; BYOI adapter'ı ve `IEBelgeSaglayici` arayüzü Faz 1'de YAZILMAZ (§1.5 §(4)-EK2).** **08.09.2026: §(6) FATURA HAZIRLIK VERİ SETİ MVP'ye alındı** — altıncı dışa aktarım veri seti, modül değil; sütun eşlemesi `export.sablonTanimi` ile konfigüre edilir; C-1 ihlal edilmez. | 17.08.2026 · rev. 07.09 · 08.09.2026 |
+| **K-4** | Hangi muhasebe programı? e-Fatura kesiliyor mu, hangi entegratörle? | Ürün konumlandırması, Ü-5 | ✅ / 🟦 | **10.10.2026 ayrıştırma: mimari ✅ (iç karar), entegratör tespiti 🟦 — §1.5 başı.** **Cevap alındı, varsayılan sabitlendi.** Muhasebe programı **yok** (Excel); e-Fatura firma içinde bir çalışan tarafından **GİB portalından elle** kesiliyor; ayrıca dış mali müşavir var. Bkz. §1.5. **C-1 eki: irsaliye tarafı §3.3.c'de karara bağlandı.** **C-2 eki: müşavirin fatura tarafında bize ihtiyacı olmadığı doğrulandı (§3.3.d).** **07.09.2026 ertelemesi: API modülü Faz 3+'ta kalır; BYOI adapter'ı ve `IEBelgeSaglayici` arayüzü Faz 1'de YAZILMAZ (§1.5 §(4)-EK2).** **08.09.2026: §(6) FATURA HAZIRLIK VERİ SETİ MVP'ye alındı** — altıncı dışa aktarım veri seti, modül değil; sütun eşlemesi `export.sablonTanimi` ile konfigüre edilir; C-1 ihlal edilmez. | 17.08.2026 · rev. 07.09 · 08.09.2026 |
 | **K-5** | Ürünler ÜTS kapsamında mı? Lot/seri takibi zorunlu mu? | Şema | ✅ | **Kapsam dışı.** Lot/seri/SKT takibi yapılmaz. Talep gelirse **ayrı faz olarak fiyatlandırılır**. → B-1, B-2 ✅ · **K-10 ile teyit edildi** | 14.08.2026 |
 | **K-6** | Kongre modülü için hukuki görüş alınacak mı? | Modül varsayılanı | ✅ / 🟦 | **C-4 ile tek madde olarak karara bağlandı — bkz. §1.7.** Hukuki görüş **opsiyonel değildir**. Modülün temel iş kuralı (alımdan bütçe türetme) **geçersiz sayıldı** (Yönetmelik md. 22). Modül **ödül motoru değil uyum kütüğüdür**; pazarlama bütçesi **satıcı/bölge/kampanya bazlıdır ve elle atanır**. Varsayılan: modül **kapalı teslim**. | 29.08.2026 |
 | **K-7** | Canlıya geçişte hangi veri, hangi formatta aktarılacak? | Ü-4, C-2, A-6, **K-8** | ✅ / 🟦 | Bkz. §1.9. **Asgari şablon sabitlendi** (`VergiOrani` **kodu**, ÜTS sütunu, ayrı açılış stoğu şablonu) · **veri standardizasyonu ayrı kalemdir**, Anka West'te bedelsiz ama teklifte **görünen satır** (§0.5) · **canlıya çıkış öncesi yazılı teyit zorunlu**. 🟦 kalan: gerçek dosyaların incelenmesi — **K-8 devreye alma kaleminin tek girdisi**. **08.09.2026 §(7): KDV oranı teyidi 1 Ekim'den canlıya çıkışa taşındı; ayrı liste istenmez, şablonun `VergiOrani` kodu sütunuyla müşteri doldurur.** | 14.08.2026 · rev. 07.09 · 08.09.2026 |
@@ -667,7 +679,8 @@ fiyatlanamaz.** Teknik gerekçe: servis katmanında hâlâ test yokken çekirdek
 > dilidir**; paket **canlıya geçişin ön koşulu değil, ayrı fiyatlı ilk yükseltme** olarak
 > teklife eklenir. **Karar müşterinindir; yazılı olması bizimdir.**
 >
-> **Kilitlenme anı — DEĞİŞTİ:** ~~Faz 1 migration'ı~~ → **1 Ekim 2026.**
+> **Kilitlenme anı — DEĞİŞTİ:** ~~Faz 1 migration'ı~~ → ~~**1 Ekim 2026.**~~ → **teyit metninin 1. maddesinin imzası (müşavir imzalı ürün listesi), canlıya geçişten önce** *(10.10.2026)*.
+> *10.10.2026 — geri not: 1 Ekim tetikleyici kilidi 08.09'da düşmüştü (§I-7) ama alan güncellenmemişti; tarih geçince kayıt §0.6'nın eski otomatik ✅ kuralıyla kapanmış görünüyordu. K-10 müşteri bilgisine bağlıdır ve **🟦 kalır**; kanıt §(G)'deki imzalı listedir.*
 
 ### §I · Erteleme kararı ve teknik yol notu *(07.09.2026)*
 
@@ -691,7 +704,7 @@ fiyatlanamaz.** Teknik gerekçe: servis katmanında hâlâ test yokken çekirdek
 >
 > **(4) Erteleme, veri toplamayı ertelemez.** §H-G yürürlüktedir: müşavir listesinde **ÜTS
 > sütunu istenir** (§0.1.a ikinci test — veri geriye dönük üretilemez). **Ürün import'u bu
-> sütunu okumaz** (D-6). **1 Ekim 2026 kilitlenme anı değişmedi.**
+> sütunu okumaz** (D-6). **1 Ekim 2026 kilitlenme anı değişmedi.** *(10.10.2026 — geri not: kilit artık teyit metninin 1. madde imzasıdır, canlıya geçişten önce — §H sonu.)*
 >
 > **(6) SAHA BULGUSU *(08.09.2026)* — erteleme kararı pazar verisiyle desteklendi.**
 > Stakeholder görüşmesinde alınan sinyal: *"ÜTS'ye bulaşmayın; sektörün acısı e-Fatura
@@ -722,7 +735,22 @@ fiyatlanamaz.** Teknik gerekçe: servis katmanında hâlâ test yokken çekirdek
 
 ---
 
-## 1.5 K-4 · Muhasebe, e-Fatura ve dışa aktarım mimarisi — 🟦
+## 1.5 K-4 · Muhasebe, e-Fatura ve dışa aktarım mimarisi — ✅ / 🟦
+
+> **Durum ayrıştırması *(10.10.2026)*.** Başlıktaki tek 🟦 hangi alt maddeye ait olduğunu
+> yazmıyordu. Ayrıştırma:
+> · **✅ iç karar — mimari:** §(1) kimlik katmanı · §(2) dikiş yeri ve veri seti kataloğu ·
+>   §(3) şablon katmanı · §(4) entegrasyon katmanının yapısı ve §(4)-EK2 · §(5) fatura belgesi
+>   dikiş notu · §(6) fatura hazırlık veri seti. Bunların cevabı müşteride değildir; kilitlenme
+>   anı taşımazlar (§0.6 (2)). *Alt maddelerde yazılı "kilitlenme anı" satırları ücretsiz
+>   değişiklik penceresini anlatır, 🟦 değildir.*
+> · **🟦 müşteri bilgisine bağlı — entegratör tespiti:**
+>
+> | Alan | İçerik |
+> |---|---|
+> | **Varsayılan davranış** | Anka West'in entegratörü ve onun toplu yükleme şablonu bilinmeden e-belge adaptörü yazılmaz; fatura hazırlık çıktısı `export.sablonTanimi` değeri girilmeden devreye alınmaz. Kodda "standart" şablon yazılmaz (§(6)-b). |
+> | **Cevabın değiştirdiği katman** | Yalnız config (`export.sablonTanimi`) ve modülün ilk adaptörü. Şema etkilenmez. |
+> | **Kilitlenme anı** | Hangisi önce gelirse: **devreye alma** (`export.sablonTanimi` değeri — `FAZ1_UYGULAMA_KAPSAMI.md` §B.7) ya da **e-belge modülü yazımının başlangıcı** (C-1 §3.3.c, 10.10.2026 revizyon 2). |
 
 **Müşteri durumu (17.08.2026):** Muhasebe programı **kullanılmıyor**; takip Excel'de elle
 tutuluyor. e-Fatura firma içinde bir çalışan tarafından **GİB portalından elle** kesiliyor.
@@ -767,6 +795,12 @@ gönderimi **özel entegratör sözleşmesi** gerektirir.
 >   tutulmaz** (K-9 kontrol düzlemi).
 > · **Müşteri sözleşmesi (Sınıf 2):** müşteri kendi entegratör sözleşmesini getirir.
 > **Bakım bedeli fiyata dahildir.**
+> *10.10.2026 — geri not (C-1 §3.3.c revizyon 2): katman çekirdek sonrası ilk modüle öne
+> çekildi. İlk adaptör **Sınıf 1'de müşterinin kendi entegratör sözleşmesi ve API
+> kullanıcısıyla** çalışır — "müşteri sözleşmesi = Sınıf 2" eşlemesi ilk adaptör için geçerli
+> değildir. Partnerlik ilk entegrasyon çalıştıktan sonra görüşülür.*
+> *12.10.2026 — geri not: modül sınırı §1.3 §F (16); tetikleme, zamanlayıcı ve durum makinesi
+> C-1 §3.3.c revizyon 3-(5), (6). Zamanlayıcı altyapısı modül v1 ile gelir ve fiyatlanmaz.*
 > **C-1 eki (28.08.2026):** Bu modül **normal satış faturası** gönderir. `ILAC_TIBBICIHAZ`
 > senaryosuyla fatura göndermek için **K-10 izlenebilirlik paketi de gerekir**.
 >
@@ -824,6 +858,10 @@ gönderimi **özel entegratör sözleşmesi** gerektirir.
 > geçtikten sonra alınacaktır."* Modülü ölçümden önce yazmak, ölçümün amacını ortadan kaldırır.
 > Müşteri bugün e-faturasını GİB portalından elle kesiyor ve buna devam edebilir —
 > **modül canlıya çıkış engeli değildir.**
+> *10.10.2026 — geri not: "Faz 3+'ta kalır" hükmü değişti — modül **çekirdek sonrası ilk
+> modüldür** ve ikinci müşteriye satıştan önce hazır olmalıdır (C-1 §3.3.c revizyon 2).
+> "Faz 1'de kod ve şema alanı yazılmaz" ile (a) ve (b) aynen geçerlidir; "canlıya çıkış
+> engeli değildir" hükmü de geçerlidir — çekirdek deneme teslimi entegrasyonsuz yapılır.*
 >
 > **(a) `IEBelgeSaglayici` arayüzü de yazılmaz.** Sıfır implementasyonlu arayüz, test
 > edilmeyen ve çürüyen koddur; K-10 §H-B'nin `modulAcikMi()` için söylediğinin aynısıdır.
@@ -866,6 +904,11 @@ gönderimi **özel entegratör sözleşmesi** gerektirir.
 > **ilk kurulumda partnerlik/komisyon**, bayilik **ikinci–üçüncü müşteriden sonra**.
 > *Bir tedarikçiye tüm müşterilerin fatura akışını bağlamadan önce onunla bir müşteri boyunca
 > çalışmış olmak, satın alınabilecek en ucuz bilgidir.*
+> *10.10.2026 — geri not: sıra netleşti — ilk kurulumda **müşterinin mevcut entegratörüne
+> müşterinin API kullanıcısıyla** bağlanılır (partnerlik şartı yok); o entegratör partner
+> adayıdır ve **partner görüşmesi ilk entegrasyon çalıştıktan sonra** yapılır. Yukarıdaki
+> gerekçe ("bir müşteri boyunca çalışmış olmak") bu sırayı destekler. BYOI ürün stratejisi
+> değildir (C-1 §3.3.c revizyon 2-a).*
 >
 > **(f) Al-Sat'ın gizli maliyeti gelirde değil bilançodadır.** Kontör peşin alınır (nakit
 > bağlanır); müşteri ödemezse entegratöre borç bizde kalır. **Bayilik sözleşmesinde
@@ -1036,6 +1079,10 @@ VPS'e veya nesne deposuna veri yazmak yurt dışına aktarımdır** — yedekler
 > **K-6 eki: `modules.congress` bu fonksiyondan okunur ve Faz 1'de `false`'tur.**
 >
 > **Entegratör anahtarları ve kontör kütüğü hiçbir koşulda müşteri örneğinde bulunmaz.**
+> *12.10.2026 — açıklama: yasak **entegratör anahtarları ve kontör kütüğü** içindir. **Kargo
+> anahtarları** müşterinin kendi kargo sözleşmesine aittir (D-3) ve **müşteri örneğinde şifreli
+> tutulabilir.** Entegratör anahtarı için alt hesap ayrımı önerisi bu cümleyle çeliştiği için
+> uygulanmadı — C-1 §3.3.c revizyon 3-(4).*
 >
 > **Varsayılan davranış:** Sunucu **bizim yönettiğimiz, Türkiye'de bulunan VPS'tedir**
 > (Sınıf 1); barındırma, yedekleme ve güncelleme bize aittir ve aylık bedele dahildir.
@@ -1216,9 +1263,12 @@ tutma** üzerine kurulur (K-9 §A zaten bunu yazmıştır).
 > **KARAR (K-8):** Ticari model **hibrittir ve üç kalemlidir**. Teklif tek rakam değil,
 > **üç satır** olarak verilir: ① devreye alma (tek seferlik, peşin) · ② abonelik
 > (tekrarlayan) · ③ opsiyonel modül. Kalemler birbirinin yerine geçmez.
-> *(Kontör dördüncü kalem olarak **düşmüştür**: K-4 §(4)-EK2 ile modül ertelendiği ve BYOI
-> yönü seçildiği için kontör bizim gelir kalemimiz değildir. Partnerliğe geçilirse komisyon
+> *(Kontör dördüncü kalem olarak **düşmüştür**. ~~K-4 §(4)-EK2 ile modül ertelendiği ve BYOI
+> yönü seçildiği için kontör bizim gelir kalemimiz değildir.~~ **Kontör/gelir paylaşımı partner
+> anlaşmasında belirlenir (🟦 — aşağıda).** Partnerliğe geçilirse komisyon
 > **bizim gelirimizdir**, müşteriye görünen satır değildir — üç kalem o durumda da doğrudur.)*
+> *12.10.2026 — geri not: üstü çizili gerekçe bayattı — modül ertelenmedi, çekirdek sonrası ilk
+> modüle öne çekildi; BYOI ürün stratejisi değildir (C-1 §3.3.c revizyon 2-(a), revizyon 3-(3)).*
 >
 > **(1) Devreye alma bedeli** kurulumu, tanım tablolarının doldurulmasını (`VergiOrani`,
 > `OdemeYontemi`, `KargoFirma`, `StokKonum`, `StokDuzeltmeSebep`, fiyat listeleri), D-6
@@ -1238,6 +1288,9 @@ tutma** üzerine kurulur (K-9 §A zaten bunu yazmıştır).
 >   **İki parçalı** fiyatlanır: tek seferlik devreye alma + **aboneliğe eklenen bakım kalemi**
 >   (oran yazılmaz, §10). Bakım aboneliğin **üstüne biner**, yerine geçmez (K-4).
 >   Yalnız **Sınıf 1**'de satılır (K-9).
+>   **e-belge modülü *(12.10.2026)*:** Ürün açısından e-belge modülü **ticarileşmenin ön
+>   koşuludur; ikinci müşteriye satıştan önce hazır olmalıdır.** Müşteri açısından modül
+>   **opsiyoneldir;** müşteri kendi portalı ve çekirdek Excel çıktısıyla çalışabilir.
 > · **Özel geliştirme:** tek müşteriye özgü, **tekrar satılamayan** iş. **Ayrı sözleşme**,
 >   ayrı teslim. **Çekirdeğe girmez** (§0.9). *Modül tanımı "müşterinin istediği her şey"
 >   hâline gelirse modül sınırı diye bir şey kalmaz.*
@@ -1287,12 +1340,21 @@ tutma** üzerine kurulur (K-9 §A zaten bunu yazmıştır).
 > |---|---|
 > | **Varsayılan davranış** | **Asgari taahhüt süresi yoktur**; sözleşme aylık döner ve karşılıklı yazılı bildirimle sona erer. Devreye alma bedeli **peşin** alındığı için batık maliyet abonelikten çıkarılmıştır. Ödeme gecikmesinde **yazılı ihtar ve giderme süresi** verilir; süre dolarsa erişim askıya alınır, **veri imha edilmez**. |
 > | **Cevabın değiştirdiği katman** | Yalnız **sözleşme**. §0.1 triyajında **üçüncü kova**; koda, şemaya ve config'e etkisi yoktur. |
-> | **Kilitlenme anı** | **İlk sözleşmenin imzası.** Sonrasında değişiklik ikinci müşteride serbesttir, birinci müşteride **yeniden müzakeredir**. |
+> | **Kilitlenme anı** | **İlk sözleşmenin imzası.** Sonrasında değişiklik ikinci müşteride serbesttir, birinci müşteride **yeniden müzakeredir**. *(10.10.2026: olay belgede yok — 🟦 kalır. Önceki MVP anlaşması bu ürünün teklifi/sözleşmesi **sayılmaz**.)* |
 >
 > **Neden bu varsayılan (geri dönüşü en ucuz):** Kısa taahhüt yanlış çıkarsa süre **eklenerek**
 > düzelir. Uzun taahhüt yanlış çıkarsa sıkışan müşteriyle **müzakere edilerek** düzelir — ve o
 > müzakere ürünün **ilk referansıyla** yapılır. *Hibrit modelin asıl gerekçesi budur: batık
 > maliyeti abonelikten çıkarmak, taahhüt süresini kısa tutabilmek için.*
+>
+> ---
+> **🟦 Varsayılan kaydı — kontör/gelir paylaşımı *(12.10.2026)***
+>
+> | Alan | İçerik |
+> |---|---|
+> | **Varsayılan davranış** | Kontör müşteriye **bizden satılmaz**; müşteri kontörü kendi entegratör sözleşmesinden alır (ilk adaptör — C-1 §3.3.c revizyon 2-(c)). Kontör veya komisyon gelirimiz **yoktur**. |
+> | **Cevabın değiştirdiği katman** | Yalnız **sözleşme** (partner anlaşması ve müşteri teklifi). Kontör kütüğü gerekirse K-9 §B gereği müşteri örneğinde değil, kontrol düzleminde tutulur. |
+> | **Kilitlenme anı** | **Partner anlaşmasının imzası.** |
 
 **Ön koşul notu:** K-8 kâğıt üstünde kalmaması için **şirket kuruluşu** gerekir (Anka West'e
 ERP'nin faturası kesilemez). Sırası ve yapısı **mali müşavire** sorulur; bu dosyanın konusu
@@ -1359,7 +1421,7 @@ Kapsam ve mekanizma A-6 (`ACILIS`) ve D-6 (import) ile zaten karara bağlanmış
 > |---|---|
 > | **Varsayılan davranış** | Dosyalar görülene kadar devreye alma bedeli **şablonlu teslim varsayımıyla** hesaplanır. Kirlilik çıkarsa fark **(3)'teki ayrı kalem** olarak görünür, devreye alma bedeli **yeniden açılmaz**. |
 > | **Cevabın değiştirdiği katman** | **Teklif ve devreye alma planı.** Şemaya etkisi yoktur — kapsam D-6/A-6'da kapalıdır. |
-> | **Kilitlenme anı** | **İlk teklifin verilmesi.** |
+> | **Kilitlenme anı** | **İlk teklifin verilmesi.** *(10.10.2026: olay belgede yok — 🟦 kalır. Önceki MVP anlaşması bu ürünün teklifi/sözleşmesi **sayılmaz**.)* |
 
 ---
 
@@ -1496,6 +1558,33 @@ ekibin** yaptığı iş değildir.
 > · **Modülerlikle bağı:** klinik konsolidasyonu **modül değildir** — cari yapısı çekirdektir
 >   ve §B-8 gereği modül bakiyeye dokunamaz.
 >
+> ### §F · e-belge ve kargo modülleri — sınırın uygulanışı *(12.10.2026)*
+>
+> **(16) e-belge (C-1 §3.3.c, K-4 §(4)) ve kargo (D-3) modülleri §A–§D'ye tabidir.** Bu
+> modüller çekirdeğe bağımlıdır; **çekirdek bu modüllere bağımlı değildir.** Karşılığı zaten
+> yazılı olan kural tekrarlanmaz, eksik olanlar eklenir:
+>
+> | Kural | Karşılığı |
+> |---|---|
+> | Veri: modül çekirdek tablosuna kolon eklemez; ek veri modülün kendi tablolarındadır, FK modül → çekirdek | §(1) · §(10) — mevcut |
+> | **Veri: modül çekirdek tablolarını yalnız okur, çekirdek kaydını değiştirmez** | **Yeni** |
+> | Fonksiyon: çekirdeğe yeni fonksiyon eklenmez; 12'lik tek çağrı noktası listesi kapalıdır | §(9) — mevcut |
+> | **Tetikleme: çekirdek modülü hiçbir zaman çağırmaz. Modül yalnız iki yolla çalışır — kullanıcı eylemi (UI yuvası) veya altyapı zamanlayıcısı** | **Yeni** |
+> | **UI: çekirdek UI belge ekranlarında eylem/bileşen yuvaları (slot) tanımlar; modül kendini bir kayıt (registry) üzerinden bu yuvalara ekler; çekirdek kaydı okur, modülü import etmez** | **Yeni** |
+> | Açık/kapalı kurulum (müşteri örneği) başına yönetilir | §(4) `modulAcikMi()` · §(5) — mevcut |
+> | Tek uygulama; ayrı servis ve ayrı deploy yoktur | Karar girişi · kalıcı kapsam dışı — mevcut. **Ek: yapı tek Next.js uygulaması içinde kurulur; ayrı API veya BFF katmanı yoktur** |
+> | **Bağımsızlık: çekirdek modül kurulmadan da eksiksiz çalışır; modülün kaldırılması çekirdekte hiçbir değişiklik gerektirmez** | §(2) derleme testi · §(11) — **açık cümle olarak yeni** |
+>
+> · **Bu iki modül §(3) olay handler'ı kaydetmez.** §(3) diğer modüller (D-1, K-6) için aynen
+>   geçerlidir.
+> · **Altyapı zamanlayıcısı §(3) anlamında handler değildir** (C-1 §3.3.c revizyon 3-(5));
+>   handler'lar için kuyruk ve asenkron iş yasağı aynen geçerlidir.
+> · ⚠️ **Açık bulgu — onay bekliyor (12.10.2026):** (i) Partner webhook'u (revizyon 3-(5))
+>   üçüncü bir tetikleyicidir; "yalnız iki yol" kuralıyla ilişkisi yazılı değildir.
+>   (ii) "Çekirdek kaydını değiştirmez" kuralı §(6) tablosundaki *"modül `uretBelgeNo()`'yu
+>   çağırır"* hükmüyle kesişir (`BelgeSayac` çekirdek kaydıdır); e-belge modülünün kendi
+>   belgesinin iç `belge_no` taşıyıp taşımayacağı (K-4 §(1)) yazılı değildir.
+>
 > **Kapsam dışı, kalıcı:** runtime plugin · ayrı servis, ayrı deploy, mikroservis · müşteri
 > başına farklı şema veya farklı migration hattı · modül mağazası · kullanıcı tarafından
 > modül açma/kapama · modülün çekirdek fonksiyonunu override etmesi · modülün çekirdek
@@ -1571,7 +1660,7 @@ dokunmaz**; teşviktir, borç/alacak değildir. **K-6 eki: doktorda bakiye de do
    almayacak.**
 6-b. ✅ *(teyit)* Sistem **birden çok depoyu** destekleyecek şekilde kurulacak; bugün tek
    deponuz olduğu için ekranlarda depo seçimi görünmeyecek.
-6-c. 🔴 **ACİL — 1 Ekim 2026'dan önce.** Tıbbi cihaz ve ilaç faturalarında ÜTS/karekod
+6-c. 🔴 **ACİL — 1 Ekim 2026'dan önce.** *(10.10.2026 — geri not: tarih geçti, liste alınmadı; talep canlıya geçiş ön koşulu olarak sürer — K-10 §H, `SOZLESME_EKI.md` 1. madde.)* Tıbbi cihaz ve ilaç faturalarında ÜTS/karekod
    bilgisi zorunluluğunun kapsamı **1 Ekim 2026**'da değişiyor. **Mali müşavirinizden,
    ürün listeniz üzerinde her ürün için "ÜTS/İTS kapsamında mı?" bilgisini işaretlemesini
    ve listeyi tarihli-imzalı olarak bize iletmenizi rica ediyoruz.** Bu liste, 10-c'de
@@ -1735,11 +1824,11 @@ Kovalar: 🔴 canlı öncesi · 🟡 ilk 3 ay · ⚪ sonra · ✅ bilinçli kaps
 | A-1 | Mal iadesi / kısmi iade | 🔴 | ✅ **KARAR:** İade **ayrı belge**, orijinal sipariş değiştirilmez. İade satırı sipariş satırına referansla **miktar** taşır. İade edilebilir miktar = sevk edilen − önceki iadeler. Oranı kadar cari alacak yazar; prim ve kongre hakkedişini ters kaydeder. **Zorunlu sebep** taşır. **C-6 eki: iade satırı orijinal satırın dondurulmuş `kdv_orani`sini taşır.** **B-7 eki (29.08.2026): "zayiat kaydı" ifadesi buradan çıkarıldı — iadenin karşı tarafı vardır (cari alacak doğar), zayiatın yoktur. Zayiat B-7'nin konusudur.** |
 | A-2 | Numune / bedelsiz / promosyon | 🔴 | ✅ **KARAR:** `OrderItem` düzeyinde **bayrak + zorunlu sebep**; ayrı sipariş tipi açılmaz. Stoktan düşer, cariye borç yazmaz, prim/hakkediş üretmez, tutar 0. **Onay kuralı sebebe bağlıdır** → A-8. **C-6 eki: matrah 0, KDV 0 (KDVGUT I/B-10).** |
 | A-3 | Kısmi sevkiyat | 🔴 | ✅ **KARAR:** Bir sipariş satırına **birden fazla sevkiyat** bağlanabilir. **Doktor borcu ve satıcı primi sevkiyat anında doğar.** **C-6 eki: her sevkiyat kendi matrah ve KDV'sini yuvarlar.** |
-| A-4 | Konsinye stok | 🔴/🟡 | ✅ **KARAR:** Konsinye, stok hareketine eklenen **konum boyutudur**. `StokKonum` tablosu; `StockMovement.konum_id` **zorunlu**. Yerleştirme `KonsinyeCikis` belgesiyle, **mali sonucu yoktur**. **🟦 Ek (04.10.2026) — `StokKonum.tip` kataloğu:** `DEPO` · `KONSINYE` *(kodda kapalı, §0.1.1; kilitlenme anı `CM`, §0.6)*. Satış `DEPO`'dan yapılır; `KonsinyeCikis` malı `DEPO`'dan `KONSINYE` konumuna taşır. Bayi deposu (§1.3 bayi kanalı notu) ayrı tip değildir: mal hâlâ bizimse `KONSINYE` satırıdır, bayi satın aldıysa stok bizim değildir ve izlenmez. |
+| A-4 | Konsinye stok | 🔴/🟡 | ✅ **KARAR:** Konsinye, stok hareketine eklenen **konum boyutudur**. `StokKonum` tablosu; `StockMovement.konum_id` **zorunlu**. Yerleştirme `KonsinyeCikis` belgesiyle, **mali sonucu yoktur**. **✅ Ek (04.10.2026 · iç karar 10.10.2026) — `StokKonum.tip` kataloğu:** `DEPO` · `KONSINYE` *(kodda kapalı, §0.1.1; ~~kilitlenme anı `CM`~~ → iç karar, §0.6 (2))*. Satış `DEPO`'dan yapılır; `KonsinyeCikis` malı `DEPO`'dan `KONSINYE` konumuna taşır. Bayi deposu (§1.3 bayi kanalı notu) ayrı tip değildir: mal hâlâ bizimse `KONSINYE` satırıdır, bayi satın aldıysa stok bizim değildir ve izlenmez. |
 | A-5 | Teklif *(ihale ⚪)* | 🔴 | ✅ **KARAR:** **Teklif ayrı belge değil, siparişin ilk aşamasıdır.** `Siparis.asama` + `teklif_gecerlilik_tarihi`. `TEKLIF` aşaması hiçbir hesaba girmez; dışlama **tek "sayılan belgeler" filtresinde** tanımlanır. **A-14 eki: `SIP` numarası `TEKLIF` aşamasında doğar ve `ONAYLI`'da değişmez.** |
 | A-6 | **Açılış bakiyesi** | 🔴 | ✅ **KARAR:** Cari hesapta **`ACILIS` tipli tek hareket**; prim/ciro/kongre hesaplarına dahil edilmez. `vade_tarihi` taşıyabilir. **C-6 eki: KDV kırılımı taşımaz.** **A-14 eki: `ACL` serisinden numara alır.** **D-6 eki (24.09.2026): import tarafında satır `tutar` (pozitif) + `yon` taşır, negatif tutar reddedilir; önizleme özeti mutabakatın girdisidir.** |
 | A-7 | **Vade farkı / gecikme faizi** | ⚪/🔴 | ✅ **KARAR:** Vade farkı **otomatik hesaplanmaz**. Borç doğuran her cari harekette `vade_tarihi`; vade **sevkiyat tarihinden** işler. **Kalıcı kalem kapatma tablosu açılmaz.** `VADE_FARKI` **yalnız elle girilir**. Config: `finance.odemeVadesiGunVarsayilan`, `finance.vadeFarkiOrani` (`null`). **A-14 eki: `VDF` serisinden numara alır.** |
-| A-8 | Sipariş onay akışı | 🔴 | ✅ **KARAR:** Onay, belgeye yapışan **tek genel blok kaydıdır** (`OnayBlogu`). Belge kaydı engellenmez; açık blok yalnız **sonuç doğuran adımı** durdurur. Kararı **yetki seviyesi** verir; bugün tek seviye: **yönetici**. **Gerekçe her durumda zorunlu.** **🟦 Ek (04.10.2026) — karar kataloğu:** `ONAY` · `RED` *(kilitlenme anı `CM`, §0.6)*. *"Her durumda"* iki tarafı kapsar: bloğu açan kullanıcı gerekçe yazar (X-4 §(4) `YUMUSAK` — yetkisizse *"onaya gönderildi"*), karar veren de yazar. Yetki seviyesi kolonu **konmaz** — bugün tek seviye vardır, tüketicisi yoktur (§0.1). |
+| A-8 | Sipariş onay akışı | 🔴 | ✅ **KARAR:** Onay, belgeye yapışan **tek genel blok kaydıdır** (`OnayBlogu`). Belge kaydı engellenmez; açık blok yalnız **sonuç doğuran adımı** durdurur. Kararı **yetki seviyesi** verir; bugün tek seviye: **yönetici**. **Gerekçe her durumda zorunlu.** **✅ Ek (04.10.2026 · iç karar 10.10.2026) — karar kataloğu:** `ONAY` · `RED` *(~~kilitlenme anı `CM`~~ → iç karar, §0.6 (2))*. *"Her durumda"* iki tarafı kapsar: bloğu açan kullanıcı gerekçe yazar (X-4 §(4) `YUMUSAK` — yetkisizse *"onaya gönderildi"*), karar veren de yazar. Yetki seviyesi kolonu **konmaz** — bugün tek seviye vardır, tüketicisi yoktur (§0.1). |
 | **A-9** | Cari hesap sahibi tipi (doktor / kurum) | ⚪ | ✅ **KARAR — 09.09.2026 (park kaldırıldı, §1.3 ile birlikte).** **Cari hesap sahibi tek tiptir: `Doktor`.** Ayrı `Kurum`/`Klinik` tablosu açılmaz, **`Doktor.kurum_id` konmaz** (§0.1, on ikinci uygulama). Tüzel/gerçek ayrımı `cari_tip`'te zaten var (A-13); fatura muhatabı `fatura_unvani` + `vkn_tckn`'den okunur. **Aynı VKN tekrarına kısıt konmaz** — bakiye, risk ve prim doktor bazında doğar (K-2, A-12, X-1). Klinik bazında konsolide bakiye talebi bir rapor değil **veri modeli değişikliğidir** ve **ayrı fiyatlı yükseltmedir** (§0.6): `Kurum` tablosu + `kurum_id` + `hesaplaDoktorBakiye()`'ye **kapsam parametresi** — yeni fonksiyon değil, ama **veri taşıma migration'ı**. Bkz. §1.3 §E. *(15.09.2026 — X-8: tablo tek kalır; **bayi de bu tablodadır**, ayrım `hesap_sinifi`.)* |
 | A-10 | İskonto / özel fiyat yetkisi | 🔴 | ✅ **KARAR:** **İskonto üst sınırı yoktur**; mekanizma kurulur, değer boş: `pricing.iskontoTavani` = `null`. Satırda `liste_fiyat` ve **`birim_fiyat`** ayrı saklanır; **iskonto oranı türetilir, saklanmaz** *(X-5 §(9)/(10) revizyonu — 13.09.2026)*. **İskonto satır bazındadır.** **C-6 eki: "net tutar" = iskonto sonrası **matrah**.** |
 | A-11 | **Ödeme yöntemi / tahsilat kanalı** | 🔴 | ✅ **KARAR:** `OdemeYontemi` **tanım tablosudur**. `tip` kodda kapalı katalog: `NAKIT` · `BANKA` · `POS`. Tahsilatta `odeme_yontemi_id` zorunlu; `komisyon_oran` ve `valor_gun` **kayda kopyalanır ve donar**. **Komisyon cariye dokunmaz.** **(8) Kasa/banka bakiyesi tutulmaz.** **C-2 eki (29.08.2026): `hesap_etiketi` kolonu **konmaz**; müşavir kırılımı ödeme yöntemi adından okur.** |
@@ -1795,6 +1884,9 @@ kesiliyor; klinik yoksa **doktora şahıs olarak** kesilebiliyor.
 >
 > **Kapsam dışı:** GİB VKN/unvan sorgulama · çoklu adres tablosu · çoklu iletişim tablosu ·
 > ülke ve posta kodu alanı · IBAN/banka hesabı · doktor birleştirme.
+> *12.10.2026 — geri not: liste **çekirdek doktor kartı** içindir. e-belge modülü yapılandırılmış
+> adresi (sokak, bina no, posta kodu) ve mükellef önbelleğini **kendi uzantı tablosunda** tutar;
+> `Doktor`'a kolon eklenmez (C-1 §3.3.c revizyon 3-(7)).*
 
 #### 3.1.b A-14 · Belge numaralandırma — karar metni
 
@@ -2016,7 +2108,7 @@ bizde maliyet/satın alma olmadığı için o yarı zaten yoktur.
 
 | # | Madde | Öneri | Karar |
 |---|---|---|---|
-| **C-1** | **e-Fatura / e-İrsaliye** | 🔴 | ✅ / 🟦 **KARAR — 28.08.2026.** Bkz. §3.3.c. Sistem hiçbir e-belge üretmez *(kalıcı ürün kararı)* · `Sevkiyat.harici_irsaliye_no` **tek nullable alan** · `harici_fatura_no` **konmaz** · teyit metni **altı madde** *(C-2 ile yedi, B-7 ile sekiz, K-6 ile dokuz oldu)* · 🟦 varsayılan: müşteri e-İrsaliye mükellefi değil. |
+| **C-1** | **e-Fatura / e-İrsaliye** | 🔴 | ✅ **KARAR — 28.08.2026 · rev. 09.10 · 10.10 · 12.10.2026.** Bkz. §3.3.c. Sistem hiçbir e-belge üretmez *(kalıcı ürün kararı)* · `Sevkiyat.harici_irsaliye_no` **tek nullable alan** · `harici_fatura_no` **konmaz** · teyit metni **altı madde** *(C-2 ile yedi, B-7 ile sekiz, K-6 ile dokuz oldu)* · ~~🟦 varsayılan: müşteri e-İrsaliye mükellefi değil~~ → **09.10.2026: iç karar, 🟦 kaldırıldı** — kapsam mükellefiyete bağlı değil; e-belge entegrasyonu ~~Faz 3+~~ ayrı fiyatlı modül; Excel çıktısı K-4 §(6). **10.10.2026 (revizyon 2):** e-belge modülü **çekirdek sonrası ilk modül**, ikinci müşteriye satıştan önce hazır · ilk adaptör Anka West'in entegratörü, müşterinin API kullanıcısıyla · tek çatı partnerlikle; özel entegratörlük ve BYOI strateji değil. **12.10.2026 (revizyon 3):** modül sınırı §1.3 §F · ortak e-belge modeli modülde · zamanlayıcı altyapısı modül v1 ile, fiyatsız · durum makinesi (kalıcı kilit `kabul`'de) · cari uzantı tablosu · istisna/tevkifat çekirdek kararı, modül v1 dışında. |
 | **C-2** | **Muhasebeye aktarım** | 🟡 | ✅ / 🟦 **KARAR — 29.08.2026.** Bkz. §3.3.d. Sistem **muhasebeleştirme yapmaz** *(kalıcı)* · sorumluluk **ham operasyonel veri düzeyinde** (§0.8) · `hesaplaDoktorBakiye` ve `hesaplaStok` **`tarih?` parametresi alır** · stok veri seti **tutar taşımaz** · `hesap_etiketi` **konmaz** · müşavir erişimi **D-2'ye devredildi**. |
 | C-4 | Kongre hukuki görüş | 🔴 *(karar olarak)* | ✅ / 🟦 **K-6 ile tek madde olarak karara bağlandı — bkz. §1.7.** |
 | C-5 | **Çoklu para birimi** | ⚪ | ✅ **KARAR: Kapsam dışı; sistem tamamen TL'dir.** **Sigorta kolonu konmaz.** **Ekranda anlık kur çevirisi hiçbir yerde yapılmaz.** |
@@ -2155,6 +2247,9 @@ tabi değildir** (KDVGUT I/B-10).
 >
 > **Kapsam dışı:** KDV tevkifatı · istisna/muafiyet rejimi · oran çözümleme matrisi ·
 > iskonto satırının ayrı KDV'si · belge düzeyi yuvarlama farkı kalemi · ÖTV · dövizli KDV.
+> *12.10.2026 — geri not: C-6 değişmedi. İstisna/tevkifat oranı ölçümü 🟦 açık maddedir
+> (C-1 §3.3.c revizyon 3-(8)); oran anlamlıysa C-6 yeniden açılır ve değişiklik
+> `hesaplaSatirTutarlari()` dâhil **çekirdekte** yapılır.*
 
 #### 3.3.c C-1 · e-Fatura / e-İrsaliye — karar metni *(28.08.2026)*
 
@@ -2178,6 +2273,9 @@ sevkiyat belgesinde dış belge için **tek referans alanı** bulunur.
 >
 > **(1) Sistem hiçbir e-belge üretmez, imzalamaz, göndermez** — e-Fatura, e-Arşiv,
 > e-İrsaliye, e-Müstahsil dâhil. **Bu kalıcı bir ürün kararıdır, toggle'ı yoktur.**
+> *10.10.2026 — kapsam notu: (1) **çekirdek** için geçerlidir. e-belge modülü (K-4 §(4)) belgeyi
+> **entegratör üzerinden** düzenletir; imza ve GİB'e iletim entegratördedir. Modülün öne
+> çekilmesi aşağıda, 10.10.2026 revizyonunda.* *(12.10.2026: not onaylandı.)*
 >
 > **(2) Dış irsaliye numarası için tek alan konur — Faz 1.**
 > `Sevkiyat.harici_irsaliye_no` — `varchar(32)`, **nullable**, serbest metin.
@@ -2199,7 +2297,7 @@ sevkiyat belgesinde dış belge için **tek referans alanı** bulunur.
 > |---|---|---|
 > | 1 | Satılan ürünlerin ÜTS/İTS tekil takip kapsamında olmadığı ve normal satış faturası düzenlendiği — **kanıt: müşavir imzalı ürün listesi** | K-10 §H-G |
 > | 2 | Her ürünün KDV oranının müşavir tarafından ürün bazında bildirildiği | C-6 |
-> | 3 | **e-Fatura ve e-İrsaliye mükellefiyet durumu; e-belgelerin sistem dışında düzenlendiği** | C-1 |
+> | 3 | **Sistemin şu an e-belge kesmediği; e-belgelerin müşterinin mevcut entegratör/GİB portalından kesildiği; e-belge entegrasyonunun çekirdek sonrası planlanan modül olduğu (fiyatlama K-8'e göre)** — *bilgilendirme maddesidir; mükellefiyet beyanı istenmez (09.10.2026 · metin 10.10.2026)* | C-1 |
 > | 4 | Vade farkı belgesinin sistem dışında elle düzenleneceği | A-7 |
 > | 5 | Veri sorumlusu sıfatının müşteride olduğu | C-3 |
 > | 6 | Dışa aktarım dosyalarının güvenliğinin müşteriye ait olduğu | K-9 |
@@ -2211,6 +2309,11 @@ sevkiyat belgesinde dış belge için **tek referans alanı** bulunur.
 >
 > **(6) Metnin zamanlaması sözleşmeye değil, takvime bağlıdır.** 1. madde **1 Ekim
 > 2026'dan önce** imzalanmış olmalıdır. **C-1, Faz 0'ın kalan sırasını beklemez.**
+> *09.10.2026 — geri not: 1 Ekim baskısı K-10'dan geliyordu. 08.09.2026'da K-10'un
+> kilitlenmesi ikiye ayrıldı (K-10 §I-7: tetikleyici düştü; KDV teyidi canlıya geçişe
+> taşındı, K-7 §(7)). C-1 bu ayrımda güncellenmemişti; 09.10.2026 revizyonuyla kapatıldı
+> (aşağıda). Teyit metninin imzası bir karar kilidi değil, **canlıya geçiş ön koşuludur**
+> (`YOL_HARITASI.md` §5.2).*
 >
 > **(7) Fatura ve irsaliye hacmi ölçülür.**
 >
@@ -2221,22 +2324,203 @@ sevkiyat belgesinde dış belge için **tek referans alanı** bulunur.
 > | Sistemin e-belge kesmemesi | **Opsiyonel değil** — kalıcı ürün kararı |
 > | Sistemin muhasebeleştirme yapmaması (C-2) | **Opsiyonel değil** — kalıcı ürün kararı |
 > | `Sevkiyat.harici_irsaliye_no` | **Modül değil** — çekirdekte |
-> | e-Fatura entegrasyon modülü (K-4 katman 4) | **Opsiyonel** — Faz 3, yalnız Sınıf 1 |
+> | e-Fatura entegrasyon modülü (K-4 katman 4) | **Opsiyonel** — ~~Faz 3~~ **çekirdek sonrası ilk modül** *(10.10.2026)*, yalnız Sınıf 1 |
 > | İzlenebilirlik paketi (K-10) | **Opsiyonel** — ayrı faz, yalnız Sınıf 1 |
 > | Kongre ve teşvik modülü (K-6) | **Opsiyonel** — kapalı teslim, yalnız Sınıf 1 |
 >
 > ---
-> **🟦 Varsayılan kaydı**
+> **REVİZYON *(09.10.2026)* — C-1 iç karardır; 🟦 varsayılan kaydı kaldırıldı.**
 >
-> | Alan | İçerik |
-> |---|---|
-> | **Varsayılan davranış** | Müşteri **e-İrsaliye mükellefi değildir**; irsaliye matbu kesilir, numarası `harici_irsaliye_no`'ya elle yazılır veya boş bırakılır. e-Fatura entegrasyon modülü **teklif edilmez**. |
-> | **Cevabın değiştirdiği katman** | **Yalnız sözleşme, teslimat ve Faz 3 modül kapsamı.** §0.1 triyajında **üçüncü kova**. |
-> | **Kilitlenme anı** | **Teyit metninin imzası — en geç 1 Ekim 2026.** |
+> **Bulgu:** Kayıt *"müşteri e-İrsaliye mükellefi değildir"* varsayılanını taşıyor ve
+> kilitlenme anını *"teyit metninin imzası — en geç 1 Ekim 2026"* olarak yazıyordu. Teyit
+> metni de müşterinin e-İrsaliye beyanı da **alınmadı**; 1 Ekim geçince kayıt §0.6'nın eski
+> otomatik ✅ kuralıyla **sessizce kapanmış görünüyordu**. Asıl hata daha eskidir: C-1'in
+> kapsamı müşterinin mükellefiyetine **bağlı değildir** — sistem mükellef olana da olmayana
+> da e-belge kesmez. Varsayılan kaydı, cevabı müşteride olmayan bir soruya açılmıştı.
+>
+> **KARAR (iç karar — müşteri onayına bağlı değildir):**
+> · **e-Fatura / e-İrsaliye düzenleme ve gönderimi ürün kapsamında değildir.** Entegrasyon
+>   ~~**Faz 3+**~~ *(10.10.2026: çekirdek sonrası ilk modül — aşağıda)*, **ayrı fiyatlı opsiyonel modüldür** (K-4 §(4), §(4)-EK2; K-8 opsiyonel modül
+>   kalemi; yalnız Sınıf 1 — K-9).
+> · **Müşteri e-belgelerini mevcut entegratör/GİB portalından keser.** Mükellefiyet durumu
+>   bu kararı değiştirmez.
+> · **İrsaliye numarası `harici_irsaliye_no`'ya elle girilir** (§(2)). Fatura numarası için
+>   alan **yoktur** (§(4) — ilişki N-N).
+> · **Portala toplu yükleme için Excel çıktısını sistem verir:** K-4 §(6) fatura hazırlık veri
+>   seti. Sütun eşlemesi kodda sabitlenmez, `export.sablonTanimi` config noktasından okunur
+>   (K-4 §(6)-b); kurulum başına ayrı değer, çünkü her müşteri izole örnektir (K-9). *Bu madde
+>   yeni karar değildir, K-4 §(6)'ya atıftır.*
+>
+> **Gerekçe:** Müşteriler farklı entegratörler kullanıyor; her portala ayrı entegrasyon yazmak
+> sürdürülemez (K-4 §(4)-EK2-d: N bakım hattı). ~~Tek çatı altında toplamak şirket ve sermaye
+> gerektirir.~~ *(10.10.2026: bu cümle yanlıştı — düzeltilmiş gerekçe aşağıda.)* Öncelik çekirdek yapının oturmasıdır.
+>
+> **Durum:** C-1 **✅**. Kilitlenme anı alanı **yoktur**. Teyit metninin 3. maddesi beyan
+> değil **bilgilendirme maddesidir** (§(5)); metnin imzası **canlıya geçiş ön koşuludur**,
+> karar kilidi değildir (`YOL_HARITASI.md` §5.2).
+> **Şemaya etki:** yok. `harici_irsaliye_no` → `Shipment.externalDispatchNo`
+> `VarChar(32)`; 16 karakterlik GİB e-belge numarasını (3 harf seri + 4 hane yıl + 9 hane
+> sıra) alır.
+>
+> *10.10.2026 — geri not: aşağıdaki not 10.10 revizyonuyla **karara dönüştü** (özel entegratörlük kapsam dışı; tek çatı partnerlikle).*
+> **Not — Faz 3, karar değildir:** Tek çatı için **özel entegratör olmak tek yol değildir.**
+> Bir entegratörün partner/API programı alternatiftir: daha az sermaye ister, ama müşterinin
+> **o entegratöre geçmesini** gerektirir. *Model sıralaması K-4 §(4)-EK2-e'de zaten yazılıdır
+> (ilk kurulumda partnerlik/komisyon, bayilik ikinci–üçüncü müşteriden sonra); bu not onu
+> değiştirmez, yalnız "müşteri geçişi" bedelini görünür kılar.*
 >
 > **Kapsam dışı, kalıcı:** e-İrsaliye/e-Arşiv/e-Defter/e-Müstahsil üretimi · irsaliye yanıtı
 > takibi · irsaliye–fatura eşleştirme tablosu · irsaliyeli fatura · açık/kapalı fatura
 > ayrımı · matbu irsaliye seri/sıra numarası üretimi · ÖKC/yazarkasa fiş entegrasyonu.
+> *10.10.2026 — kapsam notu: bu liste **çekirdek** içindir (bkz. (1)'in notu). e-Fatura,
+> e-Arşiv ve e-İrsaliye'nin entegratör üzerinden düzenlenmesi modülün konusudur; modülün
+> kalıcı kapsam dışı listesi modül yazılırken ayrıca yazılır.* *(12.10.2026: not onaylandı.)*
+>
+> ---
+> **REVİZYON 2 *(10.10.2026)* — e-belge stratejisi: öncelik, model, partner.**
+>
+> **(a) Gerekçe düzeltmesi.** 09.10 metnindeki *"tek çatı altında toplamak şirket ve sermaye
+> gerektirir"* cümlesi yanlıştı. Doğrusu:
+> · **Özel entegratörlük kapsam dışıdır** (GİB lisansı, ISO 27001 / ISO 20000-1, sermaye).
+> · **Tek çatı, tek bir entegratörle partnerlik üzerinden sağlanır** (K-4 §(4)-EK2-e).
+> · **Her müşterinin entegratörüne ayrı adaptör yazmak (BYOI) ürün stratejisi değildir**
+>   (K-4 §(4)-EK2-d: N bakım hattı).
+>
+> **(b) Öncelik — öne çekildi.** e-Fatura / e-Arşiv / e-İrsaliye entegrasyonu ~~Faz 3+~~ →
+> **çekirdek sonrası ilk modül.**
+> · **Çekirdek deneme teslimi entegrasyonsuz yapılır** (Excel çıktısı — K-4 §(6)).
+> · Modül sektör iş akışında kritiktir; **ticarileşmenin ön koşuludur: ikinci müşteriye
+>   satıştan önce hazır olmalıdır** (`YOL_HARITASI.md` §5.4, §6).
+> · Modül çekirdek denemesiyle **paralel** geliştirilir, Anka West'in entegratörünün test
+>   ortamında.
+> · Fiyatlama K-8 §(3) opsiyonel modül kuralına göredir (iki parçalı, yalnız Sınıf 1).
+>
+> **(c) Entegrasyon modeli.**
+> · **İlk adaptör Anka West'in mevcut entegratörüne bağlanır** *(entegratör adı tespit
+>   edilecek — K-4 §1.5 🟦)*, **müşterinin kendi API kullanıcısıyla.** Bunun için bizim
+>   şirket/partnerlik şartımız yoktur; sözleşme müşteri ile entegratör arasındadır.
+>   K-4 §(4)-EK2-g aynen geçerlidir: **parola alınmaz**, yalnız müşteri adına düzenlenmiş API
+>   kullanıcısı/anahtarı. K-9 §B aynen geçerlidir: **entegratör anahtarı müşteri örneğinde
+>   bulunmaz** — saklama yeri modül yazılırken belirlenir.
+> · **Bu entegratör partner adayıdır.** Partnerlik uygun değilse başka bir partner seçilir ve
+>   Anka West'e geçiş önerilir.
+> · **Partner dışı entegratör kullanan müşteri** dosya çıktısıyla çalışır (K-4 §(6)) ya da
+>   geçişi partner üzerinden yapılır (*"geçişi biz yapıyoruz"* modeli).
+> · **Adaptör tek bir arayüzün arkasında durur.** Arayüz adaptörle birlikte yazılır
+>   (K-4 §(4)-EK2-a: sıfır implementasyonlu arayüz yazılmaz). **Yeni entegratör eklemek ürün
+>   kararıdır, varsayılan değildir** (§1.3 §(12) deseni).
+> · **Partner görüşmesi ilk entegrasyon çalıştıktan sonra yapılır.**
+>
+> **Not — partner seçim kriterleri (karar değildir):** açık API dokümanı + test ortamı ·
+> e-Fatura / e-Arşiv / e-İrsaliye (tercihen kargo) aynı API'de · yazılım firmalarına iş
+> ortaklığı/komisyon programı · kontör fiyatı ve geçiş desteği · GİB'in 2026 ISO şartına uyum.
+> *12.10.2026 eki:* UBL'i kim üretir (biz/entegratör) — partnerin kabul ettiği girdi formatı
+> belirler · müşteri başına alt hesap / ayrı API kimliği desteği var mı · toplu mükellef listesi
+> senkronu sunuyor mu · belge durumu için webhook desteği var mı.
+>
+> **Geri not düşülen yerler:** K-4 §(4) (Sınıf eşlemesi) · K-4 §(4)-EK2 (erteleme ve -e sırası) ·
+> (1) ve kalıcı kapsam dışı listesi (çekirdek kapsamı) · (8) tablosu · teyit metni 3. madde.
+> **Şemaya etki:** yok. Modül tabloları modül yazıldığı gün girer (§1.3 §(10)).
+>
+> ---
+> **REVİZYON 3 *(12.10.2026)* — modül sınırı, anahtar, zamanlayıcı, durum makinesi, cari
+> uzantısı, birim ve istisna.**
+>
+> Bütün maddeler **§1.3 §F (16)** sınır kurallarına tabidir. Aksi yazılmadıkça **✅ iç
+> karardır**; partnere veya ölçüme bağlı kısımlar 🟦'dir.
+>
+> **(1) Ortak e-belge veri modeli modüle aittir, çekirdekte yer almaz.** Modül çekirdek
+> belgelerini **salt okunur** okur ve eşlemeyi kendisi yapar; tutarlar
+> `hesaplaSatirTutarlari()`'ndan okunur (C-6 §(5)). **K-4 §(6)-a, §1.3 §(9) ve (1) değişmez;**
+> çekirdekteki Excel çıktısı (K-4 §(6)) mevcut hâliyle kalır. *(10.10 turunda önerilen
+> "çekirdekte ortak model + UBL-TR dosya çıktısı" geri çekildi; karara hiç girmemişti.)*
+>
+> **(2) Partner seçim notlarına ek** — revizyon 2 notunda (karar değildir).
+>
+> **(3) K-8:** bayat BYOI gerekçesi çizildi; kontör/gelir paylaşımı partner anlaşmasında
+> belirlenir (🟦); modül ürün açısından ticarileşmenin ön koşulu, müşteri açısından opsiyoneldir
+> (K-8 §(3)).
+>
+> **(4) Anahtar yeri (K-9 §B).**
+> · **Kargo anahtarları** müşterinin kendi kargo sözleşmesine aittir; **müşteri örneğinde
+>   şifreli tutulabilir** (K-9 §B açıklaması, D-3).
+> · ⚠️ **Entegratör anahtarı — uygulanmadı, onay bekliyor.** Önerilen metin (*alt hesap
+>   destekleniyorsa müşteriye özgü kimlik müşteri örneğinde durabilir; desteklenmiyorsa ana
+>   hesap kimliği konamaz ve modül kontrol düzleminin yalnız anahtar saklayan dilimine bağımlı
+>   olur; yol partner seçiminde belirlenir*) K-9 §B'nin *"entegratör anahtarları … hiçbir
+>   koşulda müşteri örneğinde bulunmaz"* cümlesiyle çelişir. K-9 §B değişmeden uygulanamaz.
+>   Revizyon 2-(c)'deki hüküm yürürlüktedir: anahtar müşteri örneğinde bulunmaz, saklama yeri
+>   modül yazılırken belirlenir.
+>
+> **(5) Zamanlayıcı.**
+> · **Altyapı zamanlayıcısı (iş çalıştırıcı):** alan mantığı içermez; modüller kendi işlerini
+>   ona kaydeder. **Fiyatlanmaz.** **e-belge modülünün v1 sürümüyle birlikte gelir.** Faz 1
+>   kapsamına girmez — Faz 1'de fatura belgesi yoktur (K-4 §(5)). **Kargo modülü aynı altyapıyı
+>   kullanır.**
+> · **e-belge modülü v1** belge durumunu zamanlayıcıyla **periyodik olarak sorgular**;
+>   *"Durumu sorgula"* düğmesi **yedek** olarak kalır. Partner webhook destekliyorsa **webhook
+>   birincil kanaldır** (§1.3 §F açık bulgu (i)).
+> · **D-1 bildirimleri** (kademe 2) **Faz 3'te ayrı fiyatlı** özellik olarak kalır.
+>
+> **(6) e-belge durum makinesi ve kilit.**
+> · Durumlar: **taslak → iletildi → kabul / hata / beklemede.**
+> · **Kalıcı kilit `kabul` durumunda başlar.** `iletildi` ve `beklemede` durumlarında belge
+>   **düzenlenemez**, ama kalıcı kilit de yoktur.
+> · **`hata` durumundaki belge düzenlenmez ve silinmez;** hata kaydıyla birlikte saklanır.
+>   Düzeltme, o belgenin **kopyası olan yeni bir taslakla** yapılır (§0.2 deseni).
+> · **Kabul edilmiş belgenin düzeltmesi ters/iade belgesiyle** yapılır (A-1 deseni). Alıcının
+>   ticari faturayı **reddetmesi** ayrı bir durumdur; ayrıntısı modül yazılırken belirlenir.
+> · GİB/entegratör **hata kodları karara yazılmaz;** kodların bu durumlara eşlenmesi modül
+>   yazılırken yapılır.
+> · *Not: "entegratöre gönderilmiş belge kilitlenir" ifadesi KARARLAR'da yazılı değildi
+>   (10.10.2026 kontrolü: faturaya kilit kuralı yoktu). Bu madde kuralın ilk yazımıdır.*
+>
+> **🟦 Varsayılan kaydı — hata durumunda numara serisi**
+>
+> | Alan | İçerik |
+> |---|---|
+> | **Varsayılan davranış** | `hata` durumundaki belgenin numarası **yeniden kullanılmaz**; numara hata kaydıyla birlikte belgede kalır, düzeltme taslağı yeni numara alır. *(§0.7: GİB sıra kuralı araştırılmadı — teyit edilmeli.)* |
+> | **Cevabın değiştirdiği katman** | Yalnız modülün adaptörü ve numara atama mantığı. Çekirdek ve şema etkilenmez. |
+> | **Kilitlenme anı** | İlk adaptörün test ortamında **ilk gönderimden önce**; her yeni entegratör/partner adaptöründe yeniden teyit edilir. |
+>
+> **(7) Cari uzantı tablosu (modül tarafı).**
+> · Cari kartla **1:1** ilişkili modül tablosu kurulur; `Doktor`'a kolon eklenmez (§1.3 §(1)).
+> · **Yapılandırılmış adres:** sokak · bina no · posta kodu.
+> · **Mükellef önbelleği:** mükellef bilgisi + son kontrol tarihi. **Türetilmiş veridir,
+>   gerçeğin kaynağı değildir;** tabloda açıkça **önbellek** olarak tanımlanır.
+> · **Kural:** belge türü (e-Fatura / e-Arşiv) ve buna bağlı numara serisi **belge
+>   oluşturulurken önbellekten** belirlenir. Gönderim anında önbellek belirli bir süreden
+>   eskiyse mükellef bilgisi **yeniden sorgulanır**; süre modül yazılırken belirlenir. Partner
+>   **toplu liste senkronu** sunuyorsa önbellek o senkronla beslenir.
+>
+> **(8) Birim kodu, KDV istisnası ve tevkifat.**
+> · **Birim kodu** modül tarafında bir eşleme tablosuyla tutulur (FK modül → `Urun`); `Urun`'a
+>   kolon eklenmez.
+> · **İstisna ve tevkifat çekirdek kararıdır, modül kararı değildir:** müşterinin ödeyeceği
+>   tutarı ve dolayısıyla cari alacağı değiştirir. **Modül çekirdekteki tutardan farklı bir
+>   fatura tutarı üretemez** (§1.3 §(8)).
+> · **C-6 şimdilik değişmez.**
+> · Modülde istisnalı/tevkifatlı belgeler **"kalıcı kapsam dışı" değil, "modül v1 dışında"**
+>   olarak işaretlenir; v1'de bu belgeler **portalda elle** kesilir.
+>
+> **🟦 Açık madde — istisnalı/tevkifatlı belge oranı**
+>
+> | Alan | İçerik |
+> |---|---|
+> | **Görev** | Anka West'in son 12 ayındaki istisnalı/tevkifatlı belge oranı ölçülür. |
+> | **Varsayılan davranış** | İstisnalı/tevkifatlı belgeler modül v1 dışındadır, portalda elle kesilir; C-6 değişmez. |
+> | **Cevabın değiştirdiği katman** | Oran anlamlıysa **çekirdek**: C-6 yeniden açılır, değişiklik `hesaplaSatirTutarlari()` dâhil çekirdekte yapılır (§1.3 §(8)). Anlamlı değilse hiçbir katman. |
+> | **Kilitlenme anı** | **İkinci müşteriye satıştan önce** (`YOL_HARITASI.md` §5.4). |
+>
+> **(9) Yer tutucular:** entegratör adı ve kargo firması **tespit edilecek** (K-4 §1.5 🟦, D-3).
+>
+> **(10) Onay (12.10.2026):** (1)'e ve kalıcı kapsam dışı listesine düşülen *"çekirdek için
+> geçerlidir"* notları ile D-3'teki *"kurulum (müşteri örneği) başına"* ifadesi **onaylandı**.
+>
+> **Geri not düşülen yerler:** §1.3 §F · K-4 §(4) · K-8 §(3) ve kontör parantezi · K-9 §B ·
+> D-1 · D-3 · A-13 kapsam dışı · C-6 kapsam dışı · §3.5 · §4 tablosu.
+> **Şemaya etki:** yok. Modül tabloları (cari uzantısı, birim eşlemesi, belge ve durum
+> tabloları) modül yazıldığı gün girer (§1.3 §(10)).
 
 #### 3.3.d C-2 · Muhasebeye aktarım ve müşavirin veri ihtiyacı — karar metni *(29.08.2026)*
 
@@ -2367,9 +2651,9 @@ sevkiyat belgesinde dış belge için **tek referans alanı** bulunur.
 
 | # | Madde | Öneri | Karar |
 |---|---|---|---|
-| D-1 | **Bildirim (e-posta/SMS)** | 🟡 *(olay noktası 🔴)* | ✅ **KARAR:** Bildirim **opsiyonel modül**. Faz 1'de yalnız **olay noktaları** tanımlanır ve çağrılır; handler'ları **boştur**: `onBlokAcildi`, `onBlokKararaBaglandi`, `onSevkiyatTamamlandi`, `onIadeKaydedildi`. **Kademe 1 — Faz 2:** olaya bağlı e-posta. **Kademe 2 — Faz 3: zamanlayıcı altyapısı.** **A-7, D-3, K-4 ve C-3 periyodik imhası buna bağımlıdır.** `notifications.enabled` (`false`). |
+| D-1 | **Bildirim (e-posta/SMS)** | 🟡 *(olay noktası 🔴)* | ✅ **KARAR:** Bildirim **opsiyonel modül**. Faz 1'de yalnız **olay noktaları** tanımlanır ve çağrılır; handler'ları **boştur**: `onBlokAcildi`, `onBlokKararaBaglandi`, `onSevkiyatTamamlandi`, `onIadeKaydedildi`. **Kademe 1 — Faz 2:** olaya bağlı e-posta. **Kademe 2 — Faz 3: zamanlayıcı altyapısı.** **A-7, D-3, K-4 ve C-3 periyodik imhası buna bağımlıdır.** `notifications.enabled` (`false`). **Geri not (12.10.2026):** zamanlayıcı **altyapısı** (iş çalıştırıcı — alan mantığı yok, fiyatlanmaz) **e-belge modülü v1 ile gelir** (C-1 §3.3.c revizyon 3-(5)); **kademe 2 bildirimleri Faz 3'te ayrı fiyatlı kalır.** Altyapıyı kullanacak diğer işler (A-7, C-3 periyodik imha, zamanlanmış dışa aktarım) kendi kararlarıyla açılır; altyapının gelmesi onları açmaz. |
 | D-2 | Rol granülerliği | 🟡 | ✅ **KARAR (07.09.2026) — bkz. §3.4.a.** **Üç rol, kapalı katalog:** `YONETICI` · `OPERASYON` · `SATICI`. `Kullanici.rol` enum; **yetki matrisi ekranı ve kullanıcı tanımlı rol yapılmaz** (§0.1.1 — rol davranış doğurur). `StokDuzeltme` **yalnız `YONETICI`** (B-7). **`MUSAVIR` rolü Faz 1'de YOKTUR** — müşavir verisi dışa aktarımla gider (C-2, D-5); talep gelirse eklenir, **şartı veri işleyen protokolüdür**. Satıcı izolasyonu yapılmaz, **kapısı açılır**: `kapsamliDoktorlariGetir()`. **Bayi cari tipidir, kullanıcı değildir; bayi paneli Faz 3+ opsiyonel modül.** |
-| D-3 | **Kargo takip entegrasyonu** | 🔴/Faz 3 | ✅ **KARAR:** `KargoFirma` **tanım tablosu**. `takip_url_sablonu` içinde `{takip_no}`; **entegrasyon olmadan da her firma çalışır**. `Sevkiyat.kargo_firma_id`, `takip_no`, `gonderi_tarihi` **Faz 1'de görünür**. **API entegrasyonu Faz 3, sağlayıcı başına fiyat.** |
+| D-3 | **Kargo takip entegrasyonu** | 🔴/Faz 3 | ✅ **KARAR:** `KargoFirma` **tanım tablosu**. `takip_url_sablonu` içinde `{takip_no}`; **entegrasyon olmadan da her firma çalışır**. `Sevkiyat.kargo_firma_id`, `takip_no`, `gonderi_tarihi` **Faz 1'de görünür**. **API entegrasyonu ~~Faz 3~~ e-belge modülünden sonra *(10.10)*, sağlayıcı başına fiyat.** **REVİZYON (10.10.2026):** Kargo entegrasyonu **e-belge modülünden sonra** gelen modüldür (C-1 §3.3.c revizyon 2) · tek **adaptör arayüzü** arkasında durur · **kargoda BYOI doğal modeldir:** kargo anlaşması müşteriye aittir, müşterinin kendi anlaşması ve API bilgileri kullanılır *(e-belgedeki "BYOI strateji değildir" kuralının istisnası değil, farklı sınıfı: orada sözleşmeyi biz kurabiliriz, burada kuramayız)* · **ilk adaptör Anka West'in kargo firmasıdır** *(firma tespit edilecek)*; diğer firmalar talep geldikçe eklenir · müşterinin API bilgileri **kurulum (müşteri örneği) başına şifreli** saklanır *(12.10: ifade onaylandı)* *(~~saklama yeri modül yazılırken K-9 §B ile birlikte belirlenir~~ → 12.10: **müşteri örneğinde şifreli tutulabilir** — K-9 §B açıklaması)* · **Faz 1'e şema kolonu eklenmez** — modül tabloları modül yazıldığı gün girer (§1.3 §(10)). **Geri not (12.10.2026):** kargo modülü §1.3 §F sınır kurallarına tabidir ve e-belge modülüyle gelen **altyapı zamanlayıcısını** kullanır (C-1 §3.3.c revizyon 3-(5)); D-1 kademe 2'ye bağımlılığı kalktı. |
 | D-4 | **Satıcı hedefi / kotası** | ⚪ | ✅ **KARAR: Ertelenir, sınırı bugünden sabittir.** Prim **yalnız ciro üzerindendir**. **Prim oranının hedefe / dönemsel ciroya bağlanması kalıcı olarak kapsam dışıdır** (§0.4). |
 | **D-5** | Excel dışa aktarım | 🟡 | ✅ **KARAR — 09.09.2026. Bkz. §3.4.b.** Kapsam **altı veri setiyle kapalı** · dönem parametreleri **E-1'e bağlandı** · dışa aktarım **yalnız `YONETICI`** · **her dışa aktarım veritabanında loglanır** (yeni tablo) · üretilen dosya **sunucuda saklanmaz**. *Önceki hâli:* Zaten Ü-5. **K-4 ile mimarisi belirlendi**, **C-2 ile kapsamı sabitlendi**: beş veri seti, tarih parametreli, stokta tutar yok. Kalan iş yalnız kapsam teyidi. **D-2 eki (07.09.2026): müşavir rolü olmadığı için veri setlerini firma sahibi çalıştırır; dışa aktarım `YONETICI` yetkisindedir ve sayılan belgeler filtresine tabidir.** |
 | D-6 | Toplu veri girişi (import) | 🔴 | ✅ **KARAR:** Kapsam **doktor, ürün/fiyat listesi, açılış bakiyesi** ile sınırlı. Import **üç aşamalı**: doğrula → önizle → tek transaction'da yaz. Her import **parti numarası** taşır ve **geri alınabilir**. **Canlıya geçiş şartı:** açılış bakiyesi mutabakatının **yazılı teyidi**. **Ekler:** fiyat import'u çok satırlı barem (B-6) · açılış bakiyesi nullable vade (A-7) · doktor import'u nullable `kredi_limiti` (A-12) · açılış stoğu konum bazında (B-4) · **doktor import'u kimlik ve `fatura_` alanları + `cari_tip` (A-13)** · **ürün import'u `VergiOrani` kodu kolonu (C-6)** · **ürün import'u ÜTS sütununu OKUMAZ (K-10)** · **açılış stoğu hatası `DZL`/`ACILIS_DUZELTME` ile düzeltilir, import geri alınmaz (B-7)**. **Ek (24.09.2026) — açılış bakiyesinde işaret:** satır `tutar` (**pozitif**) + `yon` (`BORC`/`ALACAK`) taşır; **negatif tutar `TUTAR_NEGATIF` ile reddedilir** (sert, §0.3). İşaret yöne çevrilmez, mutlak değeri alınmaz — modelde işaret yoktur (X-11 §(3)) ve yanlış yazılan yön sonradan düzeltilemez, ancak ters hareketle kapanır (X-11 §(5), §0.2). Dosyanın müşterinin defterindeki işaret alışkanlığına uyarlanması **ürün kararı değildir** (§0.2). **Ek (24.09.2026) — açılış bakiyesi önizlemesi:** **cari adedi · toplam borç · toplam alacak · net** gösterir; oran gösterilmez, tek birleşik tutar yeterli sayılmaz (§0.4 oran kuralı). Tutarlar brüttür ve **taban etiketi taşır** (Ü-3 §(6)); açılış hareketi KDV kırılımı taşımaz (A-6, C-6 §(3)). **Mutabakatın yazılı teyidi (K-7 §(4)) bu sayılara dayanır** ve teyit **yazmadan önce** alınır. **Ek (01.10.2026) — doktor import'unda sahip:** sahip kolonu ya boştur ya da aktif bir `SATICI`'yı gösterir; `BAYI` satırında doluysa satır reddedilir (`BAYI_SAHIP_ATANAMAZ`). Sahiplik `degistirDoktorSahibi()` ile yazılır, gerekçesi partidir — X-17 §(7). |
@@ -2560,7 +2844,9 @@ yetkisiyle gelmez (Odoo'da `Export` hakkı gruptan ayrı verilir). Gerekçe her 
 - Dışa aktarımda formüllü kolon, pivot, veri seti birleştirme, kullanıcı tanımlı veri seti
   (K-4) — **kalıcı**
 - **KDV tevkifatı, istisna/muafiyet rejimi, oran çözümleme matrisi, ÖTV (C-6) — kalıcı**
+  *(12.10.2026: oran ölçümü 🟦 açık madde — C-1 §3.3.c revizyon 3-(8))*
 - **Çoklu adres/iletişim tablosu, GİB VKN sorgulama, doktor birleştirme (A-13)**
+  *(12.10.2026: çekirdek kart içindir — e-belge modülünün cari uzantısı ve mükellef önbelleği C-1 §3.3.c revizyon 3-(7))*
 - **Rıza yönetimi, VERBİS, aydınlatma metni, ilgili kişi başvuru portalı, görüntüleme logu,
   rol bazlı alan maskeleme (C-3) — kalıcı**
 - **Kullanıcı tanımlı belge numarası şablonu, elle numara girişi, boşluk raporu (A-14)**
@@ -2609,7 +2895,7 @@ yetkisiyle gelmez (Odoo'da `Export` hakkı gruptan ayrı verilir). Gerekçe her 
 | B-5 | Tarih aralığı çakışması **sert kısıt (DB düzeyi)** | Faz 1, şema |
 | C-5 | **Para birimi alanı hiçbir tabloya konmaz** | — |
 | D-1 | Olay noktaları koda yerleştirilir, handler'lar **boş** | Faz 1 |
-| D-1 | **Zamanlayıcı (kademe 2)** — A-7, D-3, K-4 ve **C-3 periyodik imhası** buna bağlı | Faz 3, ayrı fiyat |
+| D-1 | **Zamanlayıcı** — ~~kademe 2, Faz 3 ayrı fiyat~~ *(12.10)* **altyapı e-belge modülü v1 ile gelir, fiyatlanmaz**; A-7, D-3, K-4 ve **C-3 periyodik imhası** altyapıyı kullanır | Altyapı: e-belge v1 · **bildirim kademe 2: Faz 3, ayrı fiyat** |
 | D-3 | `KargoFirma` + seed · `Sevkiyat.kargo_firma_id`, `takip_no`, `gonderi_tarihi` | Faz 1, şema |
 | **K-4** | **Tüm belgelerde `belge_no` + `guncelleme_tarihi`** | Faz 1, şema, kritik |
 | **K-4** | **Tek `calistirDisaAktarim(kod, parametreler)`** | Faz 1, kritik |
@@ -2630,7 +2916,7 @@ yetkisiyle gelmez (Odoo'da `Export` hakkı gruptan ayrı verilir). Gerekçe her 
 | **K-10** | **Geçiş = fiziksel sayım + etiketleme**, pakete dâhil değil | Faz 3, ticari |
 | **K-10** | **Tetikleyici: iki bağımsız yazılı talep** | Ürün kuralı |
 | **K-10** | **ÜTS kapsam bilgisi şemada tutulmaz** | C-6, D-6 |
-| **K-10** | **Kilitlenme anı: 1 Ekim 2026** | §0.6 |
+| **K-10** | **Kilitlenme anı:** ~~1 Ekim 2026~~ → **teyit metni 1. madde imzası, canlıya geçişten önce** *(10.10.2026)* | §0.6 |
 | **A-13** | `Doktor`: `vkn_tckn` · `cari_tip` · `fatura_*` seti · `eposta` · `telefon` · `muhasebe_kodu` | Faz 1, şema |
 | **A-13** | Doğrulama **hane sayısından** (10=VKN, 11=TCKN) | Faz 1 |
 | **A-13** | Eksik kimlik **bilgi kademesi** · `finance.faturaBilgisiZorunlu` (`false`) | §0.3, K-4 |
@@ -2663,6 +2949,14 @@ yetkisiyle gelmez (Odoo'da `Export` hakkı gruptan ayrı verilir). Gerekçe her 
 | **C-1** | **`SVK` iç numaradır; dış irsaliye numarasıyla birbirinin yerine geçmez** | A-14 §10 |
 | **C-1** | **`harici_fatura_no` konmaz** — ilişki N-N | K-4 §5 |
 | **C-1** | **Teyit metni artık on bir madde** (X-1 ve A-15 ile genişledi) | Sözleşme, canlıya çıkış ön koşulu |
+| **C-1** *(09.10)* | **İç karar — 🟦 kaldırıldı, kilitlenme anı yok.** Kapsam mükellefiyete bağlı değil; e-belge entegrasyonu Faz 3+ ayrı fiyatlı modül; 3. madde **bilgilendirme**, beyan değil | §0.6, K-4 §(4)/§(6), K-8 |
+| **C-1** *(10.10)* | **e-belge modülü çekirdek sonrası ilk modül**, ticarileşmenin ön koşulu (ikinci müşteriden önce) · ilk adaptör müşterinin entegratörüne müşterinin API kullanıcısıyla · partner görüşmesi ilk entegrasyondan sonra · özel entegratörlük kapsam dışı · BYOI strateji değil | K-4 §(4)/EK2, K-8, K-9 |
+| **C-1** *(12.10)* | **Revizyon 3:** modül sınırı §1.3 §F · ortak e-belge modeli modülde (çekirdekte UBL önerisi geri çekildi) · zamanlayıcı altyapısı e-belge v1 ile, fiyatsız · durum makinesi (kalıcı kilit `kabul`'de, `hata` silinmez) · cari uzantı tablosu + mükellef önbelleği · birim eşlemesi modülde · istisna/tevkifat çekirdek kararı, modül v1 dışında · 🟦 numara serisi · 🟦 istisna oranı ölçümü | §1.3, K-4, C-6, D-1 |
+| **K-8** *(12.10)* | Bayat BYOI gerekçesi çizildi · **kontör/gelir paylaşımı partner anlaşmasında (🟦)** · modül ürün açısından ön koşul, müşteri açısından opsiyonel | C-1 rev. 3 |
+| **K-9 §B** *(12.10)* | Kargo anahtarları müşteri örneğinde şifreli tutulabilir · entegratör anahtarı alt hesap önerisi **uygulanmadı** (§B ile çakışma) | D-3 |
+| **D-3** *(10.10)* | Kargo modülü e-belgeden sonra · adaptör arayüzü · **BYOI doğal model** (anlaşma müşterinin) · ilk adaptör Anka West'in kargo firması · API bilgileri kurulum başına şifreli · Faz 1'e kolon yok | §1.3 §(10), K-9 |
+| **🟦 tarama** *(10.10)* | X-11 · X-12 · A-4 · A-8 katalogları iç karar → ✅ · K-10 yeni kilit: teyit 1. madde imzası, canlıya geçiş öncesi · K-4 ayrıştı: mimari ✅, entegratör tespiti 🟦 | §0.6 (2) |
+| **§0.6** *(09.10)* | **Otomatik ✅ kuralı kaldırıldı:** 🟦 → ✅ yalnız belgelenmiş kilitlenme olayıyla ya da iç karar olarak yeniden sınıflandırmayla; **tarihin geçmesi hiçbir kaydı değiştirmez** | Yöntem |
 | **C-2** | **İlke: sorumluluk ham operasyonel veri düzeyinde, hesap kodu düzeyinde değil** | §0.8, ürün kuralı |
 | **C-2** | **`hesaplaDoktorBakiye(doktor, tarih?)`** — imza genişler | K-2, Faz 1, kritik |
 | **C-2** | **`hesaplaStok(urun, konum?, tarih?)`** — imza genişler | B-4, Faz 1, kritik |
@@ -2716,7 +3010,7 @@ yetkisiyle gelmez (Odoo'da `Export` hakkı gruptan ayrı verilir). Gerekçe her 
 | **K-4 EK2** | Hazırlık = **servis katmanı testleri + X-1/X-2/X-3/Ü-3**, yeni kod değil | Faz 1 |
 | **K-4 EK2** | Satış dili: "entegrasyonumuz var" / "tüm entegratörler" **denmez** | K-10 §H-C, ticari |
 | **K-10 §I** | ÜTS modülü ertelendi; **Sistem Token yolu doğrulandı (2 adet, imza yetkilisi)** | Not, modül değil |
-| **K-10 §I** | Erteleme **veri toplamayı ertelemez** — ÜTS sütunu 1 Ekim'den önce | §0.1.a, **acil** |
+| **K-10 §I** | Erteleme **veri toplamayı ertelemez** — ÜTS sütunu ~~1 Ekim'den önce~~ **canlıya geçişten önce** *(10.10.2026)* | §0.1.a, **acil** |
 | **K-10 §I** | ÜTS'de **indirimli KDV** ihtimali → "%20 sabit" beyanı çürüyebilir | C-6, C-1, **acil** |
 | **K-7** | Ürün şablonunda **`VergiOrani` KODU** (ham oran değil) + ÜTS sütunu | C-6, D-6 |
 | **K-7** | **Açılış stoğu ayrı şablondur**; devreye alma kaleminde ayrı görünür | A-6, B-4, K-8 |
@@ -2948,8 +3242,8 @@ Kolonlar → `StockMovement.konum_id` (zorunlu) · `FiyatListesiSatir.min_adet`,
 **`Kullanici.aktif`, `parola_hash`, `parola_degistirmeli` (E-2)** ·
 **`ImportParti.dosya_adi` (E-3)**, **parti numarası, veri türü (X-12)** ·
 **tüm belgelerde `belge_no` + `guncelleme_tarihi` (K-4, A-14)**
-Yeni tipler → cari hareket `ACILIS`, `VADE_FARKI` *(tam katalog 🟦 X-11: `SEVKIYAT` · `IADE` · `TAHSILAT` · `ACILIS` · `VADE_FARKI` · `TERS_KAYIT`; yön `BORC`/`ALACAK`)* · **import veri türü 🟦 X-12: `CARI` · `URUN` · `FIYAT_LISTESI` · `ACILIS_BAKIYESI` · `ACILIS_STOGU`** · kural kodu `NEGATIF_STOK`, `KREDI_LIMITI`, **`VADESI_GECMIS_HAREKET` (X-6 §(6) — 24.09'da eklendi, karar 13.09)**, **`TUTAR_NEGATIF` (D-6, 24.09)**, **`SAHIP_AKTIF_SATICI_DEGIL`, `BAYI_SAHIP_ATANAMAZ`, `SAHIP_DEGISTI` (X-17, 01.10)** ·
-`cari_tip`: `TUZEL_KISI`/`GERCEK_KISI` · **`HesapSinifi`: `DOKTOR`/`BAYI` (X-8)** · **🟦 `StokKonum.tip`: `DEPO`/`KONSINYE` (A-4, 04.10)** · **🟦 `OnayBlogu` kararı: `ONAY`/`RED` (A-8, 04.10)** · **`Kullanici.rol`: `YONETICI`/`OPERASYON`/`SATICI` (D-2)** ·
+Yeni tipler → cari hareket `ACILIS`, `VADE_FARKI` *(tam katalog ✅ X-11: `SEVKIYAT` · `IADE` · `TAHSILAT` · `ACILIS` · `VADE_FARKI` · `TERS_KAYIT`; yön `BORC`/`ALACAK`)* · **import veri türü ✅ X-12: `CARI` · `URUN` · `FIYAT_LISTESI` · `ACILIS_BAKIYESI` · `ACILIS_STOGU`** · kural kodu `NEGATIF_STOK`, `KREDI_LIMITI`, **`VADESI_GECMIS_HAREKET` (X-6 §(6) — 24.09'da eklendi, karar 13.09)**, **`TUTAR_NEGATIF` (D-6, 24.09)**, **`SAHIP_AKTIF_SATICI_DEGIL`, `BAYI_SAHIP_ATANAMAZ`, `SAHIP_DEGISTI` (X-17, 01.10)** ·
+`cari_tip`: `TUZEL_KISI`/`GERCEK_KISI` · **`HesapSinifi`: `DOKTOR`/`BAYI` (X-8)** · **✅ `StokKonum.tip`: `DEPO`/`KONSINYE` (A-4, 04.10)** · **✅ `OnayBlogu` kararı: `ONAY`/`RED` (A-8, 04.10)** · **`Kullanici.rol`: `YONETICI`/`OPERASYON`/`SATICI` (D-2)** ·
 belge önekleri `SIP`/`SVK`/`IAD`/`KNS`/`TRF`/`THS`/`ACL`/`VDF`/**`DZL`**
 Kısıtlar → `FiyatListesiSatir` tarih aralığı çakışma yasağı (DB) · `belge_no` global UNIQUE · **cari telefonu UNIQUE (X-15)** · **`BAYI`'de sahip boş — `CHECK` (DB, X-17)** ·
 VKN/TCKN format doğrulaması · **`tenant_id` yok** · **izlenebilirlik alanı yok** ·
@@ -3039,8 +3333,8 @@ doldurulur.)*
 | **X-8** | **Bayinin veri modeli üç yerde farklı anlatılıyordu.** D-2 §(6) bayiyi *"cari tipi"* sayıp işlemlerini `recordDealerPayment`'a bağlıyor; A-9 cari sahibini tek tip (`Doktor`) sayıyor; A-13 `cari_tip` bayi değeri taşımıyor; plan (§D C5) bayi yönetim ekranlarını söküyordu, X-2 ise o ekranların dosyasına bakıyordu | Bayi `Doktor` satırı olur | ✅ **KARAR (15.09.2026) — bkz. §5.11.** `hesap_sinifi = BAYI` · beş `Dealer*` tablosu **kalkar** · bayi işlemleri **genel belge akışlarıdır** · bayiye satıcı atanmaz, **prim doğmaz** · 1B'de tek cari ekranı · X-2 ilkesi bütün tahsilatlara genişler |
 | **X-9** | **`LoginAttempt` E-2 §(8) ile çelişiyordu.** Tablo deneme sınırı için var ve geri çekme listesinde yoktu; E-2 §(8) giriş denemelerini tabloya değil log'a yazıyor, §(5) ise deneme sınırı istiyor | Tablo kalkar | ✅ **KARAR (15.09.2026) — bkz. §5.12.** Tablo **kaldırılır** · deneme sınırı **bellek içi** (ADR-004) · eşikler `policy.ts`'te · **tek süreç varsayımı ve tetikleyici yazılı** |
 | **X-10** | **Fiyat listesinin cariye bağlanışı yazılı değil.** `cozumleBirimFiyat(urun, liste, miktar, tarih)` bir `liste` alıyor, ama hangi carinin hangi listeyi kullandığı hiçbir yerde yok; `FiyatListesi`/`FiyatListesiSatir` §4 *"yeni tablolar"* sayımında da yok. Bugün doktor fiyatı `Product.netListPrice`, bayi fiyatı `DealerPrice` — **X-8 ikincisini kaldırıyor**. RULE-06 (*listede olmayan ürün bayiye sevk edilemez*) ve D-6 fiyat listesi import'u bu cevaba bağlı | **(a)** `FiyatListesi` + `FiyatListesiSatir` yeni tablo · `Doktor.fiyat_listesi_id` nullable (boş = varsayılan liste) · ürün liste fiyatı varsayılan listeye taşınır · **(b)** cariye özel liste yok; tek liste, bayi fiyatı satırda elle girilir (A-10) | ✅ **KARAR (15.09.2026) — bkz. §5.13.** **(a) seçildi:** cariye atanan liste · iki yeni tablo · boş atama = varsayılan liste · varsayılana düşülmez (RULE-06 yaşar) · `Product.netListPrice` kalkar (GÇ-15) · elle fiyat girişi serbest kalır |
-| **X-11** | **`CariHareket` şemada tanımsız.** Bu kitap onu dört yerde anıyor: `CariHareket.vade_tarihi` kolonu (A-7, E-1) · `ACILIS` / `VADE_FARKI` cari hareket tipleri (A-6, A-7) · *"tahsilat … cari hareket doğurur"* (X-6 §(3)) · işaretin hareket tipinde taşınması (X-5 §(7)). Ama `CariHareket` §4'ün **ne 13 yeni tablosunda ne 4 yeni belgesinde** var. Bugünkü şemada da karşılığı yok; bugün cari `Order` + `DoctorPayment` üzerinden hesaplanıyor. `ACL` ve `VDF` önekli belgelerin nerede yaşadığı belirsiz. `hesaplaDoktorBakiye()` (K-2), cari hareket veri seti (K-4 §2) ve K-1 ters kaydı bu cevaba bağlı | **(a)** `CariHareket` **yeni çekirdek tablo.** Borç veya alacak doğuran her belge (`SVK`, `IAD`, `THS`, `ACL`, `VDF`, iptal ters kaydı) bir satır yazar. `vade_tarihi` ve işareti taşıyan tip bu tablodadır. `ACL` ve `VDF` bu tablonun kendi belgeleridir. *Bedeli:* belge ile hareket satırı aynı transaction'da yazılmak zorundadır (X-3). · **(b)** `CariHareket` **kavramsaldır**, tablo yoktur. Bakiye, borç/alacak doğuran belgelerin toplamıdır (§0.4). `vade_tarihi` borç doğuran belgelerde durur. `ACL` ve `VDF` için ayrı belge tabloları açılır. *Bedeli:* bakiye sorgusu beş belge tipini birleştirir | ✅ **KARAR (16.09.2026) — bkz. §5.14.** **(a) seçildi:** `CariHareket` yeni çekirdek tablo · `ACL`/`VDF` bu tablonun kayıtları · tutar pozitif, yön ayrı · belge ile aynı transaction · tip kataloğu 🟦 |
-| **X-12** | **`ImportParti` tablo sayımında yok.** D-6 her import'un **parti numarası** taşıdığını ve **geri alınabildiğini** yazıyor; E-3 §(4) `ImportParti.dosya_adi` kolonunu koyuyor. Ama `ImportParti` §4 *"yeni tablolar"* sayımında yok. Bu, X-10'da `FiyatListesi` için yaşanan boşluğun aynısı. Geri almanın hangi kayıtları kapsadığı da bu cevaba bağlı: doktor, fiyat listesi satırı, açılış bakiyesi, açılış stoğu | **(a)** `ImportParti` **yeni çekirdek tablo** (parti numarası, `dosya_adi`). İçe aktarılan kayıtlar parti kimliğini taşır · **(b)** Tablo yok; kayıtlar yalnız parti numarası taşır. Bu durumda `dosya_adi` kolonunun yeri kalmaz ve **E-3 §(4) değişir** | ✅ **KARAR (16.09.2026) — bkz. §5.15.** **(a) seçildi:** `ImportParti` yeni çekirdek tablo · içe aktarılan kayıtlar parti FK taşır · E-3 §(4) aynen · veri türü kataloğu 🟦 |
+| **X-11** | **`CariHareket` şemada tanımsız.** Bu kitap onu dört yerde anıyor: `CariHareket.vade_tarihi` kolonu (A-7, E-1) · `ACILIS` / `VADE_FARKI` cari hareket tipleri (A-6, A-7) · *"tahsilat … cari hareket doğurur"* (X-6 §(3)) · işaretin hareket tipinde taşınması (X-5 §(7)). Ama `CariHareket` §4'ün **ne 13 yeni tablosunda ne 4 yeni belgesinde** var. Bugünkü şemada da karşılığı yok; bugün cari `Order` + `DoctorPayment` üzerinden hesaplanıyor. `ACL` ve `VDF` önekli belgelerin nerede yaşadığı belirsiz. `hesaplaDoktorBakiye()` (K-2), cari hareket veri seti (K-4 §2) ve K-1 ters kaydı bu cevaba bağlı | **(a)** `CariHareket` **yeni çekirdek tablo.** Borç veya alacak doğuran her belge (`SVK`, `IAD`, `THS`, `ACL`, `VDF`, iptal ters kaydı) bir satır yazar. `vade_tarihi` ve işareti taşıyan tip bu tablodadır. `ACL` ve `VDF` bu tablonun kendi belgeleridir. *Bedeli:* belge ile hareket satırı aynı transaction'da yazılmak zorundadır (X-3). · **(b)** `CariHareket` **kavramsaldır**, tablo yoktur. Bakiye, borç/alacak doğuran belgelerin toplamıdır (§0.4). `vade_tarihi` borç doğuran belgelerde durur. `ACL` ve `VDF` için ayrı belge tabloları açılır. *Bedeli:* bakiye sorgusu beş belge tipini birleştirir | ✅ **KARAR (16.09.2026) — bkz. §5.14.** **(a) seçildi:** `CariHareket` yeni çekirdek tablo · `ACL`/`VDF` bu tablonun kayıtları · tutar pozitif, yön ayrı · belge ile aynı transaction · tip kataloğu ~~🟦~~ ✅ *(iç karar, 10.10.2026)* |
+| **X-12** | **`ImportParti` tablo sayımında yok.** D-6 her import'un **parti numarası** taşıdığını ve **geri alınabildiğini** yazıyor; E-3 §(4) `ImportParti.dosya_adi` kolonunu koyuyor. Ama `ImportParti` §4 *"yeni tablolar"* sayımında yok. Bu, X-10'da `FiyatListesi` için yaşanan boşluğun aynısı. Geri almanın hangi kayıtları kapsadığı da bu cevaba bağlı: doktor, fiyat listesi satırı, açılış bakiyesi, açılış stoğu | **(a)** `ImportParti` **yeni çekirdek tablo** (parti numarası, `dosya_adi`). İçe aktarılan kayıtlar parti kimliğini taşır · **(b)** Tablo yok; kayıtlar yalnız parti numarası taşır. Bu durumda `dosya_adi` kolonunun yeri kalmaz ve **E-3 §(4) değişir** | ✅ **KARAR (16.09.2026) — bkz. §5.15.** **(a) seçildi:** `ImportParti` yeni çekirdek tablo · içe aktarılan kayıtlar parti FK taşır · E-3 §(4) aynen · veri türü kataloğu ~~🟦~~ ✅ *(iç karar, 10.10.2026)* |
 | **X-13** | **Satıcı–doktor sahipliği yarım yazılı** *(PRD taraması — FR-03…FR-08)*. Sahiplik bu kitapta var: RULE-02, X-8 §(3) ve X-1 §(7) (*hakediş sahiplikten doğar*). Ama **görünürlüğü, atanması, devri ve pasif satıcı durumu** yazılı değil. **Çelişki:** D-2 §(3) *"satıcı veri izolasyonu Faz 1'de yapılmaz; `kapsamliDoktorlariGetir()` herkesi döndürür"* diyor. D-2 §(1) tablosu ise `SATICI` için *"kendi doktorları"* yazıyor. Bugünkü kod ve PRD FR-05 (*zorunlu*) satıcıya **yalnız kendi doktorlarını** gösteriyor. Devir bugün `DoctorAssignment` tablosunda izleniyor; tablonun akıbeti yazılı değil | **(a) İzolasyon korunur.** D-2 §(3)'ün kendi tetikleyicisi (*"izolasyon talebi gelirse tek fonksiyon değişir"*) PRD FR-05 ile gerçekleşmiş sayılır. `kapsamliDoktorlariGetir()` Faz 1'de `SATICI`'ya yalnız sahibi olduğu `DOKTOR` carilerini döndürür. · **(b) D-2 §(3) aynen.** Faz 1'de okuma serbest; bugünkü süzme sökülür (yeni GÇ). · **İki okumada ortak:** satıcının açtığı doktorun sahibi kendisidir (FR-03) sipariş yalnız sahibi olunan doktora girilir (FR-04) devir yalnız `YONETICI` işidir ve izi tutulur — `DoctorAssignment` kalır (FR-06) hakediş **siparişi giren satıcıya** yazılır; devir geçmişi taşımaz (FR-07, X-1 §(6)) pasifleştirilen satıcının doktorları sahipsiz kalır ve yeniden atanana kadar sipariş girilmez (FR-08) | ✅ **KARAR (16.09.2026) — bkz. §5.16.** **(a) seçildi:** izolasyon korunur (D-2 §(3) redakte) · siparişin satıcısı sipariş anındaki sahip · devir izli · pasif satıcının doktorları sahipsiz |
 | **X-14** | **Prim oranının yeri yazılı değil** *(FR-30, FR-31)*. Hakedişin sevkiyatta doğduğu (X-1 §(7)) ve primin yalnız ciro üzerinden olduğu (D-4) yazılı; ama **oranın kendisi** hiçbir maddede yok ve `policy.ts` anahtarları arasında da yok. Bugün oran `DEFAULT_COMMISSION_RATE` sabiti (%5) ve `User.commissionRate` alanıdır (satıcı bazlı, formu yok). Ayrıca X-1 §(6) *"geçmiş dönem raporu yeniden çalıştırıldığında aynı sonucu verir"* der: oran değişince geçmiş hakediş değişmemeli, yani oran bir yere **dondurulmalı** | **(a)** Varsayılan oran `policy.ts`'tedir — `finance.primOraniVarsayilan`, **23. anahtar**; kurulum düzeyindedir, ekranı yoktur (GÇ-11). Satıcı kartında **nullable override** vardır (`Kullanici.prim_orani`, `Decimal(5,2)`; formu Ü-2). Oran değişikliği loglanır (RULE-13). **Uygulanan oran, hakedişin doğduğu sevkiyat satırına dondurulur.** · **(b)** Tek oran, yalnız `policy.ts`'te; satıcı bazlı override **kalkar** (`User.commissionRate` → GÇ). Oran yine sevkiyata dondurulur | ✅ **KARAR (16.09.2026) — bkz. §5.17.** **(a) seçildi:** `finance.primOraniVarsayilan` + satıcı kartında nullable özel oran · oran sevkiyat satırına donar |
 | **X-15** | **Bugün çalışan iki davranışın bu kitapta karşılığı yok** *(FR-22, FR-09, FR-01, FR-39)*. **(i) Vade değişikliği.** Müşteri kararı D-02 *"vade esneyebilir"*. Bugün siparişe bağlı `DueDateChange` tablosu ve `changeDueDate` var (ekranı yok). A-7 `vade_tarihi`'ni koyuyor ama sonradan değişip değişmeyeceğini yazmıyor; X-11 §(5) hareketin tutar, yön ve tipini donduruyor. **(ii) Mükerrer cari engeli.** Bugün `Doctor.phoneNormalized` **NOT NULL + UNIQUE**; `clinic` ve `region` NOT NULL. A-13 ayrıca bir `telefon` alanı sayıyor. X-8 ile bayi de bu tabloda ve bayinin kliniği ya da bölgesi yok. PRD bayi için *kod* ve *yetkili* de istiyordu | **(a) İkisi de korunur:** **(i)** `vade_tarihi` sonradan değiştirilebilir. Yalnız `YONETICI` değiştirir; gerekçe zorunludur. Her değişiklik eski ve yeni tarih, kişi ve zamanla **ayrı iz tablosuna** yazılır (bugünkü `DueDateChange`); iz **cari harekete** bağlanır. Tutar değişmediği için hiçbir hesap etkilenmez (A-7: vade farkı otomatik değildir). **(ii)** Telefon **zorunlu ve normalize hâliyle benzersiz** kalır; A-13'ün `telefon`'u bu alandır, ikinci alan açılmaz. Klinik ve bölge `DOKTOR` için zorunlu, `BAYI` için boş olabilir. Bayiye ayrı *kod* ya da *yetkili* alanı konmaz (`muhasebe_kodu` ve `fatura_unvani` yeter). Ad + klinik benzerlik uyarısı Faz 2'dir (Ü-10). · **(b)** Maddeler tek tek karara bağlanır | ✅ **KARAR (16.09.2026) — bkz. §5.18.** **(a) seçildi:** vade değişikliği izli (yalnız `YONETICI`) · telefon zorunlu ve benzersiz · `BAYI`'de klinik/bölge boş olabilir |
@@ -4143,13 +4437,13 @@ Bugünkü şemada da karşılığı yok: cari, `Order` ve `DoctorPayment` üzeri
 > - Prim ve ciro sorgularında `ACILIS` ve `VADE_FARKI` sayılan belgeler filtresiyle dışlanır.
 >
 > ---
-> **🟦 Varsayılan kaydı — tip ve yön kataloğu** *(normatif ad — `docs/adr/ADR-001`; §1.3 çekirdek katalog)*
+> **✅ Katalog kaydı — tip ve yön** *(10.10.2026: 🟦 varsayılan kaydından iç karara yeniden sınıflandırıldı — §0.6 (2))* *(normatif ad — `docs/adr/ADR-001`; §1.3 çekirdek katalog)*
 >
 > | Alan | İçerik |
 > |---|---|
-> | **Varsayılan davranış** | **`yon`:** `BORC` · `ALACAK` — A-11 `Tahsilat.yon` deseni. **`tip`** ve yönü: `SEVKIYAT` → borç · `IADE` → alacak · `TAHSILAT` → yönü tahsilattan (A-11) · `ACILIS` → iki yön de olabilir, avanslı açılış alacaktır · `VADE_FARKI` → borç · `TERS_KAYIT` → çevirdiği satırın tersi; o satıra bağ taşır. Katalog kodda kapalıdır |
-> | **Cevabın değiştirdiği katman** | Şema (enum değerleri) |
-> | **Kilitlenme anı** | **`CM` commit'i** — o güne kadar itiraz yoksa ✅ sayılır (§0.6) |
+> | **Karar** | **`yon`:** `BORC` · `ALACAK` — A-11 `Tahsilat.yon` deseni. **`tip`** ve yönü: `SEVKIYAT` → borç · `IADE` → alacak · `TAHSILAT` → yönü tahsilattan (A-11) · `ACILIS` → iki yön de olabilir, avanslı açılış alacaktır · `VADE_FARKI` → borç · `TERS_KAYIT` → çevirdiği satırın tersi; o satıra bağ taşır. Katalog kodda kapalıdır |
+> | **Katman** | Şema (enum değerleri) |
+> | **Durum** | ✅ **iç karar** — cevabı müşteride olan bir soru değildir. Kilitlenme anı yoktur; katalog değişikliği yeni karar ve migration ister. *~~`CM` commit'i — o güne kadar itiraz yoksa ✅ sayılır~~ (09.10.2026: §0.6'nın otomatik ✅ kuralı kaldırıldı)* |
 >
 > **Kapsam dışı, kalıcı:** hareketler arası eşleştirme · bakiye kolonu · hareket satırının silinmesi.
 >
@@ -4194,13 +4488,13 @@ yazıyor. E-3 §(4) de `ImportParti.dosya_adi` kolonunu koyuyor. Ama `ImportPart
 > **(4) Dosya saklanmaz** (E-3 §(2)).
 >
 > ---
-> **🟦 Varsayılan kaydı — veri türü kataloğu** *(normatif ad — `docs/adr/ADR-001`)*
+> **✅ Katalog kaydı — veri türü** *(10.10.2026: 🟦 varsayılan kaydından iç karara yeniden sınıflandırıldı — §0.6 (2))* *(normatif ad — `docs/adr/ADR-001`)*
 >
 > | Alan | İçerik |
 > |---|---|
-> | **Varsayılan davranış** | `CARI` · `URUN` · `FIYAT_LISTESI` · `ACILIS_BAKIYESI` · `ACILIS_STOGU` — D-6 kapsamının birebir karşılığı; kodda kapalı |
-> | **Cevabın değiştirdiği katman** | Şema (enum değerleri) |
-> | **Kilitlenme anı** | **`CM` commit'i** |
+> | **Karar** | `CARI` · `URUN` · `FIYAT_LISTESI` · `ACILIS_BAKIYESI` · `ACILIS_STOGU` — D-6 kapsamının birebir karşılığı; kodda kapalı |
+> | **Katman** | Şema (enum değerleri) |
+> | **Durum** | ✅ **iç karar** — kilitlenme anı yoktur; katalog değişikliği yeni karar ve migration ister. *~~`CM` commit'i~~ (10.10.2026)* |
 >
 > **Şemaya etki:** bir tablo (**14 → 15**) + beş tabloya nullable FK.
 > **Geri çekme:** yok — bugün import kodu yok.
@@ -4531,6 +4825,9 @@ boş olamaz, dönemi kimin ve neden kapattığı yazılmaz. Sahipsizliğe geçi�
 - [x] **X-13 karara bağlandı** *(satıcı yalnız kendi doktorlarını görür · D-2 §(3) redakte · siparişin satıcısı sipariş anındaki sahip · devir izli)* — **16.09.2026** · ⚠️ **şemayı değiştirir**
 - [x] **X-14 karara bağlandı** *(`finance.primOraniVarsayilan` · satıcıya özel oran · oran sevkiyata donar)* — **16.09.2026** · ⚠️ **şemaya ekler**
 - [x] **X-15 karara bağlandı** *(vade değişikliği izli · telefon zorunlu ve benzersiz · `BAYI`'de klinik/bölge boş olabilir)* — **16.09.2026** · ⚠️ **şemayı değiştirir**
+- [x] **C-1 iç karar olarak yeniden sınıflandırıldı; §0.6 otomatik ✅ kuralı kaldırıldı** *(🟦 → ✅ · kilitlenme anı alanı kalktı · teyit metni 3. madde bilgilendirme · §(6) geri notu)* — **09.10.2026** · şemaya etki yok
+- [x] **🟦 tarama uygulandı; C-1 revizyon 2 (e-belge stratejisi) ve D-3 revizyonu** *(X-11 · X-12 · A-4 · A-8 → ✅ · K-10 yeni kilit · K-4 ayrıştı · e-belge modülü çekirdek sonrası ilk modül · kargo e-belgeden sonra, BYOI)* — **10.10.2026** · şemaya etki yok
+- [x] **C-1 revizyon 3 — modül sınırı ve e-belge modülü kararları** *(§1.3 §F · ortak model modülde · zamanlayıcı altyapısı · durum makinesi · cari uzantısı · birim/istisna · K-8 kontör 🟦 · K-9 §B kargo anahtarı açıklaması)* — **12.10.2026** · şemaya etki yok
 - [x] **Belge uyum denetimi yapıldı** *(13.09.2026)*: bu dosya ile diğer altı dosya arasındaki
       çelişkiler tarandı; **on üç kalemlik geri çekme listesi** *(15.09: X-9 ve X-10 ile on beş)* `FAZ1_UYGULAMA_KAPSAMI.md` §A'da
       açıldı ve **`YOL_HARITASI.md` §7.1 belge rejimi** yazıldı.
@@ -4588,6 +4885,7 @@ müşteri adaylarıyla görüşülür; her görüşmede **iki standart soru** so
       K-10 izlenebilirlik + geçiş sayım kalemi, C-3 periyodik imha,
       **K-6 kongre ve teşvik modülünün yeniden yazımı**) **ayrı kalem** olarak eklendi
 - [ ] 🟦 maddelerin kilitlenme anları takvime işlendi — **K-10 ve C-1: 1 Ekim 2026**
+      *09.10.2026 — geri not: C-1 iç karar olarak ✅ oldu, kilitlenme anı yok (§3.3.c revizyonu). K-10'un 1 Ekim kilidi 08.09'da düşmüştü (§I-7); 10.10.2026: yeni kilit teyit metni 1. madde imzası, canlıya geçişten önce (§1.4 §H). Tarihin geçmesi bir 🟦'yi kapatmaz (§0.6, 09.10).*
 - [ ] **Sözleşme metni hazırlandı (on bir madde)** — bkz. §3.3.c (5)
 - [ ] Satış sürecine **K-10 §H-E standart sorusu** eklendi *(her müşteri adayına)*
 - [ ] Satış sürecine **K-4 §(4)-EK2-h standart sorusu** eklendi *(entegratör tespiti)*
