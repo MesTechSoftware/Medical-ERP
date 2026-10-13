@@ -123,7 +123,7 @@ veri üstünde migration'ı pahalı olduğundan Faz 1'de netleşmeli.
 | **`YOL_HARITASI.md`** (bu dosya) | Sıralı ana plan | 🟢 canlı |
 | **`FAZ1_UYGULAMA_KAPSAMI.md`** | **KARARLAR §4'ün iş dökümü** — geri çekilecekler (**söküm takibi: `Durum`/`Commit` kolonları**) · yeni yazılacaklar · açık madde defteri · **§D: 1A commit dizisi ve 1B sırası** | 🟢 **canlı · Faz 1'in çalışma listesi** |
 | **`KABUL_KRITERLERI.md`** | Doğrulanabilir davranış cümleleri — **karar içermez**; numaralandırma karar kimliğinden (`A-3-1`) | 🟢 **iskelet açıldı (C10)** · metinler 1B'de, testten önce (X-7 §(6)) |
-| **`SOZLESME_EKI.md`** | C-1 teyit metni — **on bir madde + zamanlama kolonu**; imzalanacak ek | ⬜ **açılacak · hukukçu kontrolü beklemede** (K-7 §5) |
+| **`SOZLESME_EKI.md`** | C-1 teyit metni — **on bir madde + zamanlama kolonu**; imzalanacak ek | 🟡 **taslak açıldı (09.10.2026) · hukukçu kontrolü beklemede** (K-7 §5) · metnin kaynağı KARARLAR §3.3.c (5) |
 | **`docs/adr/`** | Mimari karar kayıtları — yalnız *"nasıl"* sorusu | 🟢 **açıldı (15.09.2026)** · ADR-001 isimlendirme · ADR-002 fresh init · ADR-003 oturum · ADR-004 deneme sayacı · **ADR-005 stok miktarı türetilir** *(16.09)* · **sınır kuralı `docs/adr/README.md`'de** |
 | **`IS_AKISI_OZETI.md`** | Sistem iş diliyle ne yapıyor + eksik gereksinim kontrol listesi | 🟢 canlı · **Sınıf 3 · Ayna** *(14.09.2026'da atandı — §7.1-A)* |
 | **`PROJE_DURUMU.md`** | Teknik envanter — ne var, hangi sürüm | 🟢 canlı *(2 belge hatası düzeltildi 11.09)* |
@@ -158,7 +158,7 @@ Karar metinleri burada tekrarlanmaz; aşağıda **sonuç + atıf** var.
 
 | # | Sonuç (özet) | KARARLAR |
 |---|---|---|
-| **K-4** 🟦 | Muhasebe programı yok (Excel); e-Fatura GİB'den elle. **API modülü ertelendi**; **§(6) fatura hazırlık veri seti MVP'ye alındı** (6. dışa aktarım çıktısı, API/anahtar yok). | §1.5 |
+| **K-4** ✅/🟦 | Muhasebe programı yok (Excel); e-Fatura GİB'den elle. ~~**API modülü ertelendi**~~ → **e-belge modülü çekirdek sonrası ilk modül** *(10.10 — KARARLAR C-1 revizyon 2; entegratör tespiti 🟦)*; **§(6) fatura hazırlık veri seti MVP'ye alındı** (6. dışa aktarım çıktısı, API/anahtar yok). | §1.5 |
 | **K-5** ✅ | Lot/seri/SKT **kapsam dışı**; talep gelirse ayrı faz. K-10 ile teyit. | §1.1 |
 | **K-6+C-4** ✅ | Hukuki görüş **zorunlu**; alımdan bütçe türetme geçersiz; modül **uyum kütüğü**, `PazarlamaButcesi` elle; **kapalı teslim**. | §1.7 |
 | **K-7** ✅/🟦 | Asgari şablon (`VergiOrani` kodu + ÜTS sütunu + ayrı açılış stoğu); veri standardizasyonu ayrı kalem; **canlıdan önce yazılı teyit**; KDV teyidi 1 Ekim'den **canlıya çıkışa** taşındı. | §1.9 |
@@ -221,7 +221,7 @@ Tam kapanış listesi: `KARARLAR.md` §6.
 | F-05 ✅açık | Kongre kontenjanı transaction içine — **K-3: yumuşak kısıt** (aşım izli, blok değil) | 🟠 ⚠️ asıl iş **K-6 geri çekmesidir** (GÇ-4/GÇ-5); modül kapalı teslim edileceği için eşzamanlılık düzeltmesinin aciliyeti düşük |
 | F-06 | RULE-01 eşzamanlılık testi | 🟠 ⚠️ B-4: negatif stok artık **yumuşak kısıt**; test "tam olarak biri başarılı" yerine "aşım izli" doğrulamalı |
 | F-07 | Para hareketlerinde audit transaction'ın parçası | 🟠 ✅ KARARLAR ile uyumlu (C-3 §4) |
-| F-08 | Expiry job'ı gerçekten zamanlanır | ⛔ **KONUSUZ** — 12 ay expiry mekanizması K-6 §(2) ile siliniyor (GÇ-4). Zamanlayıcı altyapısı zaten **D-1 kademe 2, Faz 3** |
+| F-08 | Expiry job'ı gerçekten zamanlanır | ⛔ **KONUSUZ** — 12 ay expiry mekanizması K-6 §(2) ile siliniyor (GÇ-4). Zamanlayıcı altyapısı zaten **D-1 kademe 2, Faz 3** *(12.10: altyapı e-belge modülü v1 ile gelir — KARARLAR C-1 revizyon 3-(5))* |
 | F-09 | `refundReservation` sessiz bakiye kaybı | ⛔ **KONUSUZ** — kongre kredi lotu kaldırılıyor (GÇ-4) |
 | F-10 | `createShipment` iki transaction birleştirilir | 🟡 ✅ kalır; A-3 kısmi sevkiyatla birlikte yeniden yazılır |
 | F-11 | 15 adımlık kabul senaryosu e2e testi | 🟠 ⚠️ **senaryo yeniden yazılmalı** — rakamlar tahsilat bazlı prim ve kongre EARN varsayıyor (`FAZ1_UYGULAMA_KAPSAMI.md` §C-e) |
@@ -395,9 +395,10 @@ Uygulamanın TypeScript fonksiyonlarını **kullanmadan** yazılır — yoksa ay
 
 Sırayı beklemeyen, canlıdan **önce** tamamlanması gereken kalemler:
 
-- [ ] 🔴 **C-1 teyit metni (on bir madde)** yazılı alınır. *(Hiçbir sırayı beklemez.)* KDV sütunu K-7 §(7)'ye,
+- [ ] 🔴 **C-1 teyit metni (on bir madde) imzalanır — canlıya geçişten önce tamamlanmalı.** *Kontrol listesi maddesidir, karar kilidi değildir (KARARLAR §3.3.c, 09.10.2026 revizyonu): imzanın gecikmesi hiçbir kararı değiştirmez, yalnız canlıya çıkışı durdurur.* Taslak: `docs/SOZLESME_EKI.md`. 3. madde (e-belge) **bilgilendirmedir**, mükellefiyet beyanı istenmez. *(Hiçbir sırayı beklemez.)* KDV sütunu K-7 §(7)'ye,
       ÜTS sütunu K-10 §I-4'e taşındı; **1 Ekim 2026 artık blokleyici tarih değil**, ama ÜTS sütunu **hâlâ istenir** (veri geriye dönük üretilemez).
 - [ ] **Şirket kuruluşu** — Anka West'e ERP faturası kesilebilmesi için (K-8 ön koşul); sırası/yapısı **mali müşavire** sorulur.
+      ⬜ **Açık madde — teknik değil, karar değil *(10.10.2026)*:** Şirketleşme zamanlaması açık. Partner komisyonu ve abonelik faturası için vergi kaydı gerekli. TÜBİTAK BiGG başvurusu, herhangi bir işletmede ortaklık varken yapılamıyor; şirket kurmadan önce değerlendirilecek.
 - [ ] **Müşavire giden tek yazı** — KDV oranı sütunu + ÜTS sütunu + örnek dosya.
 - [ ] **Anka West'in entegratörü tespit edildi** ve **onun Excel şablonu** elde edildi (K-4 §6-b); ilk çıktı öncesi K-7 §(4) yazılı teyidi alındı.
 - [ ] **Üç kalemli teklif şablonu** hazır (K-8: devreye alma · abonelik · opsiyonel modül) + veri standardizasyonu **görünen satır** (K-7).
@@ -407,15 +408,27 @@ Sırayı beklemeyen, canlıdan **önce** tamamlanması gereken kalemler:
 
 ### 5.3 Faz 3+ opsiyonel paketler — **ertelenmiş modüller** (ayrı kalem, tekrar satılabilir)
 
+> *10.10.2026: e-belge ve kargo modülleri bu listeden çıktı, sıraları §5.4'tedir (KARARLAR C-1 §3.3.c revizyon 2 · D-3).*
+
 KARARLAR'da ertelenen ve opsiyonel modül olarak fiyatlanacaklar (K-8: iki parçalı — devreye alma + bakım):
 
-- **e-Fatura entegrasyonu + kontör** (K-4 §(4)-EK2; BYOI adapter, `IEBelgeSaglayici` — Faz 1'de **yazılmadı**)
+- ~~**e-Fatura entegrasyonu + kontör** (K-4 §(4)-EK2; BYOI adapter, `IEBelgeSaglayici` — Faz 1'de **yazılmadı**)~~ → §5.4 *(10.10: tek çatı partnerlikle; BYOI strateji değil)*
 - **İzlenebilirlik / ÜTS + geçiş sayım kalemi** (K-10; fiziksel sayım operasyonel maliyet, yazılımla azalmaz)
 - **C-3 periyodik KVKK imha** (uygulama-içi otomatik imha)
 - **K-6 kongre ve teşvik modülünün yeniden yazımı** (uyum kütüğü olarak)
-- **D-1 bildirim kademe 2** (e-posta/SMS) · **D-3 kargo API** entegrasyonu
+- **D-1 bildirim kademe 2** (e-posta/SMS) · ~~**D-3 kargo API** entegrasyonu~~ → §5.4
 - **Bayi paneli** (D-2 §(6), §1.3 §D-14) — Faz 2'den buraya taşındı; dış kullanıcı ve destek yükü getirir
 - **`MUSAVIR` rolü** — panel değil, **bir enum satırı** (D-2 §(5)); açılma şartı **veri işleyen protokolüdür** (K-9 §A-6). Bayi panelinden farklı sınıftadır: rol **çekirdek migration'ı**, panel **modül**
+
+### 5.4 Çekirdek sonrası modül sırası *(10.10.2026 — KARARLAR C-1 §3.3.c revizyon 2 · D-3)*
+
+Sıra bağlayıcıdır; kararın kendisi KARARLAR'dadır, burada yalnız sıra durur.
+
+1. **Çekirdek deneme teslimi** — Anka West, **entegrasyonsuz**; e-belge için Excel çıktısı (K-4 §(6)).
+2. **e-belge modülü** (e-Fatura / e-Arşiv / e-İrsaliye) — Anka West'in entegratörünün **test ortamında**, çekirdek denemesiyle **paralel** geliştirilir; müşterinin kendi API kullanıcısıyla. **Ticarileşmenin ön koşulu:** ikinci müşteriye satıştan önce hazır (§6). Altyapı zamanlayıcısı modülün v1 sürümüyle gelir *(12.10 — KARARLAR C-1 revizyon 3-(5))*.
+   - 🟦 **İstisnalı/tevkifatlı belge oranı ölçümü** — Anka West'in son 12 ayı; **ikinci müşteriye satıştan önce**. Oran anlamlıysa C-6 yeniden açılır, değişiklik çekirdekte yapılır *(12.10 — KARARLAR C-1 revizyon 3-(8))*.
+3. **Kargo modülü** — e-belgeden sonra; ilk adaptör Anka West'in kargo firması, müşterinin kendi anlaşması ve API bilgileriyle.
+4. **Partner görüşmesi** — ilk entegrasyon çalıştıktan sonra; seçim kriterleri KARARLAR C-1 revizyon 2 notundadır.
 
 **Faz 3 çıkış kriteri:** Paralel çalışma penceresinde iki taraf rakamları tutuyor; restore tatbikatı başarılı;
 runbook doğrulanmış; **§5.2 ön koşullarının tamamı işaretli** (özellikle C-1 teyit metni ve şirket kuruluşu).
@@ -426,7 +439,7 @@ runbook doğrulanmış; **§5.2 ön koşullarının tamamı işaretli** (özelli
 
 **Fleet Mimarisi dokümanı bu fazın planıdır ve şu an DONDURULMUŞTUR.**
 
-Açılma koşulu: **ikinci ödeme yapan müşteri sözleşmesi imzalandığında.** O ana kadar
+Açılma koşulu: **ikinci ödeme yapan müşteri sözleşmesi imzalandığında.** *(10.10.2026: ikinci müşteriye satıştan önce **e-belge modülü hazır olmalıdır** — §5.4-2, KARARLAR C-1 revizyon 2.)* O ana kadar
 registry DB, provisioning CLI, fleet migration runner, owner/migrator/app rol matrisi,
 PgBouncer, KMS envelope encryption, image-parity CI — **hiçbirine dokunulmaz.**
 

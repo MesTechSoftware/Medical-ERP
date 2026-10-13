@@ -431,7 +431,7 @@ yapıyor mu? Yapıyorsa sistem olmadan nasıl idare edecek?"*
 > | **B-5** Fiyat listesi dönemselliği | ✅ karara bağlandı — `gecerli_baslangic/bitis`, ekran **Faz 2** | §3.2 |
 > | **B-6** Miktar baremi / mal fazlası *(yeni)* | ✅ karara bağlandı — barem + MF ayrı mekanizma; fiyat dondurulur | §3.2 |
 > | **B-7** Stok düzeltme *(yeni)* | ✅ 29.08 — `StokDuzeltme`+`DZL`, `StokDuzeltmeSebep` tanım tablosu | §3.2.a |
-> | **C-1** e-Fatura / e-İrsaliye | ✅/🟦 (K-4) — sistem e-belge üretmez (kalıcı); `harici_irsaliye_no` tek alan; teyit metni ön koşul | §3.3.c |
+> | **C-1** e-Fatura / e-İrsaliye | ✅ *(09.10 — iç karar, 🟦 kalktı)* — sistem e-belge üretmez (kalıcı); `harici_irsaliye_no` tek alan; entegrasyon **çekirdek sonrası ilk modül** *(10.10)*, ayrı fiyatlı; modül çekirdeği yalnız okur, fatura tutarını değiştiremez *(12.10)*; teyit metni canlıya geçiş ön koşulu | §3.3.c |
 > | **C-2** Muhasebe programına aktarım | ✅/🟦 — muhasebeleştirme yapılmaz; sorumluluk ham veri düzeyinde; `tarih?` param | §3.3.d · §0.8 |
 > | **C-3** KVKK saklama / silme | ✅ 19.08 — Faz 1 `DELETE` yok + asgari tedbir; anonimleştirme Faz 2; periyodik imha Faz 3 | §3.3.a |
 > | **C-4** Kongre modülü hukuki görüş | ✅ karara bağlandı — hukuki görüş **zorunlu**; modül uyum kütüğü, kapalı teslim | §1.7 (K-6) |
@@ -439,7 +439,7 @@ yapıyor mu? Yapıyorsa sistem olmadan nasıl idare edecek?"*
 > | **C-6** KDV / verginin tabanı *(yeni)* | ✅ 19.08 — `VergiOrani` tanım tablosu, kanonik taban KDV hariç | §3.3.b |
 > | **D-1** Bildirim (e-posta/SMS) | ✅ karara bağlandı — **opsiyonel modül**; Faz 1 boş olay noktaları, kademe 1 Faz 2, kademe 2 Faz 3 | §3.4 |
 > | **D-2** Rol granülerliği | ✅ 07.09 — **üç rol kapalı katalog** (`YONETICI`/`OPERASYON`/`SATICI`), MUSAVIR yok, bayi cari tipi | §3.4.a |
-> | **D-3** Kargo takip entegrasyonu | ✅ karara bağlandı — `KargoFirma` tanım tablosu, Faz 1 görünür; API **Faz 3** | §3.4 |
+> | **D-3** Kargo takip entegrasyonu | ✅ karara bağlandı — `KargoFirma` tanım tablosu, Faz 1 görünür; API ~~Faz 3~~ **e-belge modülünden sonra, müşterinin kendi kargo anlaşmasıyla (BYOI)** *(10.10)* | §3.4 |
 > | **D-4** Satıcı hedefi / kotası | ✅ karara bağlandı — ertelenir; prim yalnız ciro; hedefe bağlama **kalıcı kapsam dışı** | §3.4 |
 > | **D-5** Excel dışa aktarım (Ü-5) | ✅ 09.09 — **altı veri seti**, yalnız `YONETICI`, her aktarım loglanır ⚠️şema | §3.4.b |
 > | **D-6** Toplu veri girişi (import) | ✅ karara bağlandı — üç aşamalı (doğrula→önizle→yaz), parti no, geri alınabilir | §3.4 · §1.9 (K-7) |
