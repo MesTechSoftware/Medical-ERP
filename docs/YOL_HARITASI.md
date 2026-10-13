@@ -3,7 +3,9 @@
 > **Bu dosya ana plandır.** Yeni bir sohbete başlarken önce bunu ver.
 > Sıra bağlayıcıdır — bir faz bitmeden sonrakine geçilmez, faz atlanmaz.
 >
-> Son güncelleme: 16 Eylül 2026 · **Faz 0 KAPANDI · Faz 1A commit dizisi yazıldı (`FAZ1_UYGULAMA_KAPSAMI.md` §D) → Şerit A (PRD taraması) ve C0…C7b başlayabilir · Şerit A ✅ kapandı · X-8…X-15 ✅ · ADR-001…005 ✅ · **açık karar yok** — C0…C7b başlayabilir, `CM` onların ardından
+> Son güncelleme: 13 Ekim 2026 · **Faz 1A KAPANDI (07.10.2026 — C0…C10, `CM`; PR #15)** · **şu an Faz 1B — başlamadı.** Önünde karar engeli: X-16 + X-15 §(5) + ADR-006 (`docs/KARAR ONERISI.md` §11) — 1B madde 3/4/7'yi bloklar · 1B ilk tahmini §8'de
+>
+> *16 Eylül 2026 durumu:* **Faz 0 KAPANDI · Faz 1A commit dizisi yazıldı (`FAZ1_UYGULAMA_KAPSAMI.md` §D) → Şerit A (PRD taraması) ve C0…C7b başlayabilir · Şerit A ✅ kapandı · X-8…X-15 ✅ · ADR-001…005 ✅ · **açık karar yok** — C0…C7b başlayabilir, `CM` onların ardından
 >
 > **🔧 16.09.2026 — sayı uyumu (karar üretmedi).** X-10 sonrası kalan bayat ifadeler düzeltildi:
 > **§3.2** ve **§3 çıkış kriteri**nde tablo sayısı **11 → 13** · **§8 takvim uyarısı**nda geri çekme
@@ -96,7 +98,7 @@
 
 Medikal ürün distribütörü için full-stack ERP. ~10 satıcı üzerinden doktorlara satış +
 bayi kanalı. Next.js 16 · React 19 · TypeScript · PostgreSQL + Prisma 7 · Auth.js v5 beta ·
-vitest + Playwright. 25 model, 41 sayfa, 3 rol paneli. CI yeşil. **Canlı veri yok.**
+vitest + Playwright. ~~25 model, 41 sayfa, 3 rol paneli~~ → *13.10.2026 (1A sonu):* **33 model, 26 sayfa, 2 rol paneli** (`PROJE_DURUMU.md`). CI yeşil. **Canlı veri yok.**
 
 **Hedef:** Önce Anka West'e canlıya alınır. Sorunsuz çalışırsa aynı ürün başka firmalara
 satılır. Ekip **2 geliştirici**.
@@ -185,6 +187,8 @@ Tam kapanış listesi: `KARARLAR.md` §6.
 ---
 
 ## 3. FAZ 1 — Düzeltme turu ← **ŞU AN BURADAYIZ**
+
+> ✅ **13.10.2026 — Faz 1A kapandı (07.10.2026).** §D.2 çıkış kriterlerinin tamamı işaretli; geri çekme listesinin 20 kalemi kapandı (GÇ-12 `şema ✅ / davranış 1B`). **Şu an: Faz 1B** (`FAZ1_UYGULAMA_KAPSAMI.md` §D.3) — başlamadı.
 
 **Talimat:** `FAZ1_UYGULAMA_KAPSAMI.md` + `DUZELTME_BRIFI.md` (+ `KARARLAR.md`) · **Sıra bağlayıcı**
 **🟡 kalmadı — K-1/K-2/K-3 karara bağlandı (`KARARLAR.md` §1.1); F-03 ve F-05 seçilen yolla uygulanır.**
@@ -294,14 +298,14 @@ Bu turdaki hatalar tam olarak "test yokken sessizce yanlış çalışan" sınıf
 - [ ] **Satıcı sahipliği uygulanıyor** (X-13) · **prim oranı hakedişe donuyor** (X-14) · **vade değişikliği izli** (X-15)
 - [ ] F-00…F-12'nin **ayakta kalanları** tamam, CI yeşil *(F-08/F-09 konusuz; **F-01/F-04 düştü** — X-6)*
 - [ ] §3.2 uygulama işleri tamam (X-1+D-2 **tek commit**; E-1/E-2/E-3; D-5; X-3/X-4; Ü-3; A-15; X-2 blocker)
-- [ ] **§A geri çekme listesi uygulandı** — kongre defteri, tahsilat bazlı prim, FIFO mahsup, bayi paneli, `DEALER` rolü, **`Dealer*` tabloları ve bayi yönetim ekranları (X-8)**, taban fiyat reddi, KDV toggle çerezi, **`LoginAttempt` (X-9)** kodda ve şemada **kalmadı**
-- [ ] **Şema kapanışı** yapıldı: KARARLAR §4'ün **tamamı tek migration'da** — **15** tablo *(X-10, X-11, X-12)*, 4 belge,
+- [x] **§A geri çekme listesi uygulandı** *(13.10: 1A'da kapandı — hash'ler `FAZ1_UYGULAMA_KAPSAMI.md` §A; GÇ-12'nin davranış tarafı 1B madde 7)* — kongre defteri, tahsilat bazlı prim, FIFO mahsup, bayi paneli, `DEALER` rolü, **`Dealer*` tabloları ve bayi yönetim ekranları (X-8)**, taban fiyat reddi, KDV toggle çerezi, **`LoginAttempt` (X-9)** kodda ve şemada **kalmadı**
+- [x] **Şema kapanışı** yapıldı *(13.10: `CM` — `ee22ca7`, tek migration `20261004000000_init`; anti-şema testi C8)*: KARARLAR §4'ün **tamamı tek migration'da** — **15** tablo *(X-10, X-11, X-12)*, 4 belge,
       40+ kolon, yeni tipler, kısıtlar + E-1 tip disiplini (`timestamptz`/`date`).
       Yazılı yasak listesi ihlal edilmedi (`tenant_id`, `son_giris_at`, `kurum_id`, `iskonto_oran`,
       `PaymentAllocation`, izlenebilirlik alanları, dosya alanları …) — ✅ **14.09.2026: bu satır
       artık dikkate değil `anti-şema testine` bağlıdır** (`FAZ1_UYGULAMA_KAPSAMI.md` §D.1 commit **C8**; yasak listesi §D.2'de, **15.09'da KARARLAR §4 ile tamamlandı**):
       `information_schema` sorgulayan tek test, yasak kolon eklenirse CI'ı kırar.
-- [ ] **11 tek çağrı noktası fonksiyonu** yazıldı ve inline tekrarları kaldırıldı; **sayılan belgeler filtresi** altı dışlamayı taşıyor
+- [ ] **~~11~~ 12 tek çağrı noktası fonksiyonu** *(X-17)* yazıldı ve inline tekrarları kaldırıldı; **sayılan belgeler filtresi** altı dışlamayı taşıyor
 - [ ] **Config noktaları `policy.ts`'te** tanımlı; doldurulması gerekenler dolduruldu (`zaman.saatDilimi`, `auth.oturum*`, **`auth.girisDenemeSiniri`, `auth.girisKilitDakika`** *(X-9)*, **`pricing.varsayilanFiyatListesiKodu`** *(X-10)*, `import.azamiDosyaBoyutMb` *(D-6'dan önce; kesin değer devreye almada — KARARLAR §6)*)
 - [ ] **Bayiler tek cari ekranından yönetiliyor** (X-8 §(5)); `SATICI` `BAYI` göremiyor ve açamıyor; `BAYI` sevkiyatı prim matrahına girmiyor (X-8 §(3))
 - [ ] **Fiyat tek yoldan çözülüyor** (X-10): atanmış listede satırı olmayan ürün satıra girmiyor; cariye liste atamayı yalnız `YONETICI` yapabiliyor
@@ -581,13 +585,39 @@ Bulgular `FAZ1_UYGULAMA_KAPSAMI.md` §C'ye (açık madde defteri) yazılır, KAR
 | Faz | Süre | Bitiş | Durum |
 |---|---|---|---|
 | Faz 0 — Karar | ~1 hafta | Kararlar `KARARLAR.md`'de | ✅ **kapandı (09.09.2026)** |
-| **Faz 1A — Söküm + şema** | tahmin edilebilir — **tarih artık verilebilir** — karar engeli kalmadı *(16.09: Şerit A, X-8…X-15, ADR-005 ✅)* *(X-10 15.09'da kapandı)* | **`FAZ1_UYGULAMA_KAPSAMI.md` §D.2** — sayıya bağlı çıkış kriteri *(burada kopyalanmaz)* · §C-g ✅ 15.09.2026 (`docs/adr/ADR-003`) | ← **şu an** |
-| **Faz 1B — Yeniden inşa** | 🔵 **1A bitince tahmin edilir** | 11 fonksiyon · belge akışları · X-1/D-2/X-3/X-4/Ü-3/E-1/E-2/D-5 · `TRACEABILITY` yeniden kuruldu | ⏳ |
+| **Faz 1A — Söküm + şema** | **fiilî: ~1,5 hafta** (26.09 – 07.10.2026; C1…C10 + `CM`) | **`FAZ1_UYGULAMA_KAPSAMI.md` §D.2** — sayıya bağlı çıkış kriteri *(burada kopyalanmaz)* | ✅ **kapandı (07.10.2026)** |
+| **Faz 1B — Yeniden inşa** | **ilk tahmin ~8–13 hafta** *(13.10.2026 — aşağıda; kaba boyutlandırma)* | 12 fonksiyon · belge akışları · X-1/D-2/X-3/X-4/Ü-3/E-1/E-2/D-5 · `TRACEABILITY` yeniden kuruldu | ← **şu an** (başlamadı) |
 | Faz 2 — Ürünleştirme | 🔵 **1B bitince tahmin edilir** *(eski tahmin ~3–4 hafta)* | Çoğaltılabilir, izlenebilir ürün | ⏳ |
 | Faz 3 — Canlıya alma | 🔵 **1B bitince tahmin edilir** *(eski tahmin ~3–4 hafta)* | Anka West canlıda | ⏳ |
 | **Toplam** | 🔴 **Taahhüt edilemez** — gerekçe aşağıda | | |
 
 **Anka West'e taahhüt ederken demo tarihi ile canlı tarihini ayrı ayrı yaz.**
+
+### 8.1 Faz 1B ilk tahmini *(13.10.2026)*
+
+> ⚠️ **Kaba boyutlandırmadır, taahhüt değildir.** Madde bazında, 1A hızına (`CM` gibi geniş bir
+> commit ~3 iş günü) ve `FAZ1_UYGULAMA_KAPSAMI.md` §D.3 kapsamına göre yapıldı; her maddenin
+> kodu ayrıca incelenmedi. Süreler **iş günüdür**, 2 kişilik ekip, her madde testleriyle
+> birlikte (kabul kriteri testten önce — X-7 §(6)).
+
+| Madde (§D.3) | İş | Tahmin (iş günü) |
+|---|---|---|
+| 1 | Tek çağrı noktası fonksiyonları + sayılan belgeler filtresi *(bir kısmının ilk sürümü `CM`'de)* | 3–5 |
+| 2 | `uretBelgeNo()` tamamlanması + X-2 kabul testi | 1–2 |
+| 3 | X-1 + D-2 tek commit — sevkiyat bazlı prim, `OPERASYON` ekran matrisi | 3–5 |
+| 4 | E-2 oturum katmanı (`next-auth` sökümü) → X-3/X-4 hata yüzeyi → Ü-3 → A-15 → X-6 §(6) | 6–9 |
+| 5 | `hesaplaSatirTutarlari()` + `cozumleBirimFiyat()` tamamlanması (barem, tarih) | 2–4 |
+| 6 | D-5 dışa aktarım + kütük, K-4 §(6) fatura hazırlık çıktısı | 3–5 |
+| 7 | **En büyük kalem:** B-7 stok düzeltme, A-1…A-13 belge akışları (iade, kısmi sevkiyat, konsinye, transfer, teklif, açılış…), tek cari ekranı, fiyat listesi ekranı, D-6 import | 15–25 |
+| 8 | Kalan F-görevleri (F-02, F-03, F-05 + K-6 temizliği, F-06, F-07, F-10, F-12) | 3–5 |
+| 9 | F-11 kabul senaryosu (`KABUL_KRITERLERI.md`'ye göre) | 3–5 |
+| 10 | `TRACEABILITY.md` yeniden kurulması | 1–2 |
+| | **Toplam** | **40–67 iş günü ≈ 8–13 hafta** |
+
+**Tahmini değiştirecek bilinenler:**
+- **Karar engeli:** X-16 + X-15 §(5) + ADR-006 kapanmadan madde 3/4/7 başlayamaz. Bu süre tabloya dâhil değildir.
+- **En büyük belirsizlik madde 7 ve madde 4'tedir.** Tahmin, madde 4 bittiğinde ve madde 7'nin ilk belge akışı bittiğinde **yeniden yapılır.**
+- `import.azamiDosyaBoyutMb` değeri D-6'dan önce gerekir (devreye alma bilgisi).
 
 > 🔴 **13.09.2026 — takvim uyarısı.** "~2–2,5 hafta" tahmini yalnız F-00…F-12'yi kapsıyordu.
 > KARARLAR §4'ün doğurduğu iş (11 tablo — *15.09'da 13*, 4 belge, 40+ kolon, 11 fonksiyon) ve §A geri çekme
