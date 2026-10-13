@@ -7,6 +7,8 @@
 > §B yeni yazılacaklar · §C açık madde defteri · §D 1A commit dizisi ve 1B sırası ·
 > §E Şerit A (PRD taraması) defteri.
 >
+> ✅ **13.10.2026 — Faz 1A kapandı (07.10.2026).** §D.2'nin tamamı işaretli; §A'nın 20 kalemi kapandı (GÇ-12 `şema ✅ / davranış 1B`). **Sıradaki iş §D.3 (Faz 1B).** İlk tahmin: `YOL_HARITASI.md` §8.1.
+>
 > **🔧 16.09.2026 — dosya yeniden kuruldu (kapsam ve sıra değişmedi).** 13.09'da açılan ana
 > dosyanın güncel sürümü kayıptı; elde yalnız §D (`FAZ1_UYGULAMA_KAPSAMI_D.md`) ve 15.09 yaması
 > vardı. **§A, §B ve §C** şu kaynaklardan yeniden yazıldı: `KARARLAR.md` §4 (şema özeti,
