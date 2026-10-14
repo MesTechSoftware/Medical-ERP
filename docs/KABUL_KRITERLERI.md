@@ -36,7 +36,10 @@
 | Kod | Kriter | Yazılacağı yer |
 |---|---|---|
 | K-1-1 | — | konusuz (K-6) |
-| K-2-1 | | 1B-1 |
+| K-2-1 | `hesaplaDoktorBakiye(doktor, tarih?)` = Σ borç − Σ alacak; bütün cari hareket tipleri (`ACILIS`, `VADE_FARKI`, `TERS_KAYIT` dahil) bakiyeye girer — sayılan belgeler filtresi uygulanmaz (X-11 §(6)). | 1B-1 · `bakiye.itest.ts` |
+| K-2-2 | Negatif bakiye avanstır ve yönü `ALACAK`'tır; ayrı avans kaydı yoktur. Ekranda çıplak negatif sayı gösterilmez, tutar yön etiketiyle gösterilir. | 1B-1 · `bakiye.itest.ts` · doktor detay ekranı |
+| K-2-3 | `tarih` verilirse sonuç o günün İstanbul günü sonu itibarıyladır: o günün hareketi dahil, ertesi günün hareketi hariç (C-2 §(3), E-1 §(5)). | 1B-1 · `bakiye.itest.ts` |
+| K-2-4 | Cari hareket tutarını toplayan tek kod `src/lib/doctor-cari.ts`'tedir; başka dosya `LedgerEntry` toplamı almaz (K-2: tüm ekranlar tek fonksiyonu çağırır). | 1B-1 · `tek-cagri.test.ts` |
 | K-3-1 | — | konusuz (A-8) |
 | K-4-1 | | 1B-6 |
 | K-5-1 | | 1A-C8 *(izlenebilirlik alanı yok)* |
