@@ -9,6 +9,8 @@
 >
 > ✅ **13.10.2026 — Faz 1A kapandı (07.10.2026).** §D.2'nin tamamı işaretli; §A'nın 20 kalemi kapandı (GÇ-12 `şema ✅ / davranış 1B`). **Sıradaki iş §D.3 (Faz 1B).** İlk tahmin: `YOL_HARITASI.md` §8.1.
 >
+> ✅ **13.10.2026 — 1B'nin son karar engeli kalktı:** KARARLAR **X-16** (§5.20) · **X-15 §(5)** 🟦 · `docs/adr/ADR-006`. Defter: §C-y · §C-aa. Plan etkisi: §B.4 · §B.5 · §D.3 madde 7.
+>
 > **🔧 16.09.2026 — dosya yeniden kuruldu (kapsam ve sıra değişmedi).** 13.09'da açılan ana
 > dosyanın güncel sürümü kayıptı; elde yalnız §D (`FAZ1_UYGULAMA_KAPSAMI_D.md`) ve 15.09 yaması
 > vardı. **§A, §B ve §C** şu kaynaklardan yeniden yazıldı: `KARARLAR.md` §4 (şema özeti,
@@ -187,7 +189,7 @@ Hepsinin şeması `CM`'dedir. Tüm belgelerde `belge_no` (global UNIQUE, salt ok
 | Import veri türü 🟦 | `CARI` · `URUN` · `FIYAT_LISTESI` · `ACILIS_BAKIYESI` · `ACILIS_STOGU` | **X-12** · D-6 |
 | Stok konumu tipi 🟦 *(04.10)* | `DEPO` · `KONSINYE` | A-4 · B-4 |
 | Onay bloğu kararı 🟦 *(04.10)* | `ONAY` · `RED` | A-8 |
-| Kural kodu (`varchar`, enum değil — §1.3) | `NEGATIF_STOK` · `KREDI_LIMITI` · `VADESI_GECMIS_HAREKET` · `TUTAR_NEGATIF` · `SAHIP_AKTIF_SATICI_DEGIL` · `BAYI_SAHIP_ATANAMAZ` · `SAHIP_DEGISTI` | B-4 · A-12 · X-6 · D-6 · **X-17** |
+| Kural kodu (`varchar`, enum değil — §1.3) | `NEGATIF_STOK` · `KREDI_LIMITI` · `VADESI_GECMIS_HAREKET` · `TUTAR_NEGATIF` · `SAHIP_AKTIF_SATICI_DEGIL` · `BAYI_SAHIP_ATANAMAZ` · `SAHIP_DEGISTI` · `TELEFON_KAYITLI` · `ICE_AKTARIM_KOLON_EKSIK` · `ICE_AKTARIM_KOLON_TANINMIYOR` · `URUN_KODU_KAYITLI` · `FIYAT_SATIRI_CAKISIYOR` | B-4 · A-12 · X-6 · D-6 · **X-17** · **X-15 §(5)** · **X-16** *(13.10)* |
 | Belge önekleri | `SIP` · `SVK` · `IAD` · `KNS` · `TRF` · `THS` · `ACL` · `VDF` · `DZL` | A-14 · B-7 |
 
 🟦 = KARARLAR'da **varsayılan kaydı**. Kilitlenme anı `CM`; o güne kadar itiraz yoksa ✅ sayılır (KARARLAR §0.6).
@@ -205,6 +207,10 @@ Hepsinin şeması `CM`'dedir. Tüm belgelerde `belge_no` (global UNIQUE, salt ok
 | `DZL` geriye tarihlendirilemez | sert | 1B madde 7 | B-7 |
 | Negatif stok | **yumuşak** (izli) | 1B madde 1/7 | B-4 |
 | Sistemde `DELETE` yok (istisna: belgesiz doktor) | kural | 1B | C-3 |
+| Cari telefonu normalize hâliyle UNIQUE | sert, **DB** | CM | X-15 §(2) · §(5) 🟦 |
+| Import'ta eksik / tanınmayan kolon → dosya bütünüyle reddedilir | sert | 1B madde 7 | **X-16** §(3) |
+| Import'ta kısmi yazma yok · kısmi geri alma yok | sert | 1B madde 7 | **X-16** §(4)/(10) |
+| `CARI` import'unu yalnız `YONETICI` çalıştırır (kontrol sunucuda) | sert | 1B madde 7 | **X-16** §(6) |
 
 **Yasak liste** (şemada **olmayacaklar**) → §D.2 anti-şema testi. Kaynak: KARARLAR §4 *"Kısıtlar"*.
 Burada kopyalanmaz.
@@ -296,6 +302,15 @@ Bayi için **ayrı fonksiyon yazılmaz** (X-8 §(2)). Liste **12'de kapalıdır*
 | §C-v | Prim oranının yeri ve dondurulması *(§E: FR-30, FR-31)* | ✅ 16.09.2026 — config + satıcıya özel oran, sevkiyata donar | KARARLAR **X-14** (§5.17) |
 | §C-w | Vade tarihi değişikliği · mükerrer cari engeli · cari kartı zorunlu alanları *(§E: FR-22, FR-09, FR-01, FR-39)* | ✅ 16.09.2026 — ikisi de korunur | KARARLAR **X-15** (§5.18) |
 | §C-x | `Product.stock` kalır mı? *("nasıl" sorusu)* | ✅ 16.09.2026 — kalkar, stok hareketlerden türer | `docs/adr/ADR-005` |
+| §C-y | Cari şablonunun kararlarla bağı yok; fiyat listesi ataması ve import yetkisi yazılı değil *(19.09 incelemesi, bulgu 1 + genişletme)* | ✅ 13.10.2026 — import elle girişin toplu hâli, şablon tek tanımdan | KARARLAR **X-16** (§5.20) · `docs/adr/ADR-006` |
+| §C-z | Sahipliğin yazma yolları ve `BAYI` sahipsizliği *(19.09 incelemesi, bulgu 3)* | ✅ 01.10.2026 — tek yazma noktası `degistirDoktorSahibi()` | KARARLAR **X-17** (§5.19) · §D.0 · §D.7-10 |
+| §C-aa | Telefon UNIQUE ile A-9'daki çoklu doktor arasında yazılmamış varsayım *(bulgu 2)* | ✅ 13.10.2026 — varsayım yazıldı (🟦, kilit: doktor listesi teslimi) | KARARLAR **X-15 §(5)** |
+| §C-bb | Kilit sırası tek belgede değildi; `BelgeSayac` sırada yoktu *(19.09 incelemesi, bulgu 5 — "nasıl" sorusu)* | ✅ 24.09.2026 — tek küresel sıra | `docs/adr/ADR-008` |
+
+> *13.10.2026 — §C-z ve §C-bb satırları sonradan eklendi.* İki harf 19.09 önerisinde ayrılmış ve atıflarda
+> kullanılmıştı (§C-z: §D.0 ve §D.7-10; §C-bb: `ADR-008` başlığı ve `docs/adr/README.md` dizini), ama bu
+> deftere satır olarak hiç yazılmamıştı — öneri §6'daki defter eklemesi uygulanmadan X-17 (01.10) ve
+> ADR-008 (24.09) kapandı. Harfler yeniden kullanılmaz kuralı gereği satırlar tarihçe olarak eklendi.
 
 **§C-r — `CariHareket`** *(✅ X-11 ile kapandı; tarihçe)*
 
@@ -650,7 +665,7 @@ parametrelerini taşır. Koşullu `updateMany` kolonla birlikte gider; bu yüzde
    **A-15** → **X-6 §(6) vade uyarısı**
 5. **C-6 `hesaplaSatirTutarlari()`** + **B-5/B-6 `cozumleBirimFiyat()`** *(X-5 ham aritmetiğin iki adresi · `CM`'deki ilk sürüm burada tamamlanır: barem, tarih, X-4 `SERT` — X-10 §(3))*
 6. **D-5 dışa aktarım + kütük**, **K-4 §(6) fatura hazırlık veri seti**
-7. **B-7 stok düzeltme**, **A-1…A-13 belge akışları** *(bayi dahil — X-8 §(4))*, **tek cari ekranı** *(`hesap_sinifi` süzgeci — X-8 §(5); **fiyat listesi ataması** — X-10 §(2)/(6), yalnız `YONETICI`)*, **fiyat listesi ekranı** *(başlık + satır; tarih ekranı Faz 2 — X-10 §(7))*, **D-6 import** *(`hesap_sinifi` zorunlu kolon; **ön koşul:** `import.azamiDosyaBoyutMb` değeri)*
+7. **B-7 stok düzeltme**, **A-1…A-13 belge akışları** *(bayi dahil — X-8 §(4))*, **tek cari ekranı** *(`hesap_sinifi` süzgeci — X-8 §(5); **fiyat listesi ataması** — X-10 §(2)/(6), yalnız `YONETICI`)*, **fiyat listesi ekranı** *(başlık + satır; tarih ekranı Faz 2 — X-10 §(7))*, **D-6 import** *(`hesap_sinifi` zorunlu kolon; **ön koşul:** `import.azamiDosyaBoyutMb` değeri)* — **X-16 / ADR-006 sırası** *(13.10)*: cari girdi şeması (tek cari ekranı) → `CARI` tanımı → şablon üretici ve geliştirici komutu → önizleme özeti · küme kuralı bildirimleri ve üç koruma testi (`information_schema`, C8 deseni) · kabul kriteri taslakları `docs/arsiv/KARAR_ONERISI_2026-09-19.md` §10'dadır, testten önce `KABUL_KRITERLERI.md`'ye yazılır
 8. **F-02 (küçültülmüş)**, **F-03**, **F-05 + K-6 temizliği**, **F-06**, **F-07**, **F-10**, **F-12**
 9. **F-11 kabul senaryosu** — `KABUL_KRITERLERI.md`'ye göre **yeniden yazılmış** hâliyle *(§C-e)*
 10. **`TRACEABILITY.md` yeniden kurulur** — kod × test × **karar** *(X-7 §(5))*
@@ -721,7 +736,7 @@ import (D-6) · dışa aktarım (D-5) · kabul senaryosu (F-11) · servis katman
 > **15.09 4. tur:** ilk üç soru kapandı (X-8, X-9, X-10).
 > **16.09: X-11…X-15 açıldı ve aynı gün kapandı; ADR-005 yazıldı. Açık soru yok.**
 > **24.09: bir soru yeniden açıldı — `CM` artık engelsiz değil.** X-17 (sahipliğin tek yazma yolu)
-> `Doktor` üzerinde bir `CHECK` kısıtı doğuruyor ve **karar verilmiş değil** (`docs/KARAR ONERISI.md` §2).
+> `Doktor` üzerinde bir `CHECK` kısıtı doğuruyor ve **karar verilmiş değil** (`docs/KARAR ONERISI.md` §2 — *13.10.2026: arşivde, `docs/arsiv/KARAR_ONERISI_2026-09-19.md`*).
 > Kısıt `CM`'e yetişmezse ikinci bir migration gerekir; bu da **§D.2'nin "tek klasör" çıkış kriterini**
 > ihlal eder. Karar: **X-17 `CM`'den önce kapanır**, kısıt tek migration'a girer.
 > **Şimdi başlayabilecekler:** Şerit A · C0 · C1 · C2 · C3 · C4 · C5 *(tam)* · C6 · C7 · C7b.

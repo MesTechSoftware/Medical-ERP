@@ -7,7 +7,7 @@
 > "Karar bekleyenler" bölümlerindeki soru metinleri **buraya taşındı**. O bölümler
 > bundan sonra yalnız "bkz. `KARARLAR.md`" der.
 >
-> Son güncelleme: 12 Ekim 2026 (**C-1 revizyon 3 — modül sınırı §1.3 §F, zamanlayıcı altyapısı, e-belge durum makinesi, cari uzantısı, istisna/tevkifat çekirdek kararı · K-8 kontör 🟦 · K-9 §B kargo anahtarı**) · 10 Ekim 2026 (**C-1 revizyon 2 — e-belge modülü çekirdek sonrası ilk modül, ilk adaptör müşterinin entegratörü, tek çatı partnerlikle · D-3 kargo e-belgeden sonra, BYOI · 🟦 tarama: X-11/X-12/A-4/A-8 ✅, K-10 yeni kilit, K-4 ayrıştı**) · 9 Ekim 2026 (**C-1 iç karar olarak ✅ — 🟦 varsayılan kaydı ve kilitlenme anı kaldırıldı; §0.6'nın otomatik ✅ kuralı kaldırıldı — tarih tek başına hiçbir kaydı kapatmaz**) · 1 Ekim 2026 (**X-17 kararı — sahipliğin tek yazma noktası, toplu devir; tek çağrı noktası listesi 11 → 12; `CM`'in önündeki son açık kalem kapandı**) · 24 Eylül 2026 (**D-6 ekleri — açılış bakiyesi import'u**) · 16 Eylül 2026 (**X-11…X-15 kararı + PRD taraması**) · **Faz 0'ın karar adımları tamamlandı · Faz 1A'da açılan X-8…X-15 ve X-17 kapandı · PRD taraması kapandı — açık (⬜) madde yok.**
+> Son güncelleme: 13 Ekim 2026 (**X-16 kararı — içe aktarım elle girişin toplu hâli, şablon tek tanımdan (ADR-006), kısmi yazma yok · X-15 §(5) kişisel telefon varsayımı 🟦**) · 12 Ekim 2026 (**C-1 revizyon 3 — modül sınırı §1.3 §F, zamanlayıcı altyapısı, e-belge durum makinesi, cari uzantısı, istisna/tevkifat çekirdek kararı · K-8 kontör 🟦 · K-9 §B kargo anahtarı**) · 10 Ekim 2026 (**C-1 revizyon 2 — e-belge modülü çekirdek sonrası ilk modül, ilk adaptör müşterinin entegratörü, tek çatı partnerlikle · D-3 kargo e-belgeden sonra, BYOI · 🟦 tarama: X-11/X-12/A-4/A-8 ✅, K-10 yeni kilit, K-4 ayrıştı**) · 9 Ekim 2026 (**C-1 iç karar olarak ✅ — 🟦 varsayılan kaydı ve kilitlenme anı kaldırıldı; §0.6'nın otomatik ✅ kuralı kaldırıldı — tarih tek başına hiçbir kaydı kapatmaz**) · 1 Ekim 2026 (**X-17 kararı — sahipliğin tek yazma noktası, toplu devir; tek çağrı noktası listesi 11 → 12; `CM`'in önündeki son açık kalem kapandı**) · 24 Eylül 2026 (**D-6 ekleri — açılış bakiyesi import'u**) · 16 Eylül 2026 (**X-11…X-15 kararı + PRD taraması**) · **Faz 0'ın karar adımları tamamlandı · Faz 1A'da açılan X-8…X-17 kapandı (X-16: 13.10.2026) · PRD taraması kapandı — açık (⬜) madde yok.**
 > **24.09.2026 — D-6 ekleri (şema değişmedi):** açılış bakiyesi import'unda **işaret kuralı** ve
 > **önizleme özeti** yazıldı. Boşluğun kaynağı 19.09 incelemesinin 4. bulgusudur; D-6 üç aşamayı
 > (doğrula → önizle → yaz) koyuyor ama hiçbirinin içeriğini yazmıyordu. Yeni kural kodu: `TUTAR_NEGATIF`.
@@ -1376,8 +1376,10 @@ Kapsam ve mekanizma A-6 (`ACILIS`) ve D-6 (import) ile zaten karara bağlanmış
 >   gömülür ve C-6'nın çözdüğü sorun geri gelir.
 > · **ÜTS sütunu istenir ama import okumaz** (K-10 §H-G, D-6). Bu ayrım bilinçlidir.
 >
-> **(2) Açılış stoğu ayrı şablondur** (miktar + `StokKonum`, B-4/A-6). Doktor/cari şablonu
-> D-6'daki A-13 alanlarını taşır. **Devreye alma kaleminde bu şablonlar ayrı görünür.**
+> **(2) Açılış stoğu ayrı şablondur** (miktar + `StokKonum`, B-4/A-6). ~~Doktor/cari şablonu
+> D-6'daki A-13 alanlarını taşır.~~ **Devreye alma kaleminde bu şablonlar ayrı görünür.**
+> *13.10.2026 — geri not (X-16): cari şablonu sistemden üretilir; kolonları `YONETICI` cari açma
+> akışının alanlarıdır. Belgede kolon listesi tutulmaz.*
 >
 > **(3) Veri standardizasyonu ayrı kalemdir.** Müşterinin şablona uygun dosya verememesi
 > hâlinde veriyi bizim standart şablona taşımamız **mümkündür**, ancak:
@@ -1391,6 +1393,7 @@ Kapsam ve mekanizma A-6 (`ACILIS`) ve D-6 (import) ile zaten karara bağlanmış
 > **önce** müşteriye ve mali müşavire e-posta ile gönderilir; *"Sistemi bu oranlarla canlıya
 > alıyoruz"* denerek **yazılı onay** alınır. D-6'nın açılış bakiyesi mutabakatı teyidiyle
 > **aynı yazıda** gidebilir.
+> *13.10.2026 — geri not: aynı şart **cari listesi** için de geçerlidir (X-16 §(11)).*
 >
 > **(5) Sorumluluk dili — dikkatli formülasyon.** Yazılı teyit **delildir, mutlak kalkan
 > değildir**; vergi cezası zaten mükellefe kesilir, sözleşmenin belirlediği şey **rücu
@@ -1862,6 +1865,7 @@ kesiliyor; klinik yoksa **doktora şahıs olarak** kesilebiliyor.
 > **(4) Alan listesi — hepsi nullable:** `fatura_unvani` · `vergi_dairesi` · `fatura_adresi`
 > · `fatura_ilce` · `fatura_il` · `eposta` · `telefon` · `muhasebe_kodu`.
 > **`fatura_` öneki zorunludur.** Boşsa ad-soyad kullanılır.
+> *13.10.2026 — geri not: `telefon`: X-15 §(2) ile NOT NULL + UNIQUE (16.09); varsayım X-15 §(5).*
 > **C-2 eki (29.08.2026):** `muhasebe_kodu` **salt kayıt alanıdır** — doğrulanmaz, hiçbir
 > hesaba girmez, uyarı üretmez; tüketicisi mutabakatta bakan **insan gözüdür**. Üzerine
 > muhasebe eşlemesi kurulmaz.
@@ -2656,7 +2660,7 @@ sevkiyat belgesinde dış belge için **tek referans alanı** bulunur.
 | D-3 | **Kargo takip entegrasyonu** | 🔴/Faz 3 | ✅ **KARAR:** `KargoFirma` **tanım tablosu**. `takip_url_sablonu` içinde `{takip_no}`; **entegrasyon olmadan da her firma çalışır**. `Sevkiyat.kargo_firma_id`, `takip_no`, `gonderi_tarihi` **Faz 1'de görünür**. **API entegrasyonu ~~Faz 3~~ e-belge modülünden sonra *(10.10)*, sağlayıcı başına fiyat.** **REVİZYON (10.10.2026):** Kargo entegrasyonu **e-belge modülünden sonra** gelen modüldür (C-1 §3.3.c revizyon 2) · tek **adaptör arayüzü** arkasında durur · **kargoda BYOI doğal modeldir:** kargo anlaşması müşteriye aittir, müşterinin kendi anlaşması ve API bilgileri kullanılır *(e-belgedeki "BYOI strateji değildir" kuralının istisnası değil, farklı sınıfı: orada sözleşmeyi biz kurabiliriz, burada kuramayız)* · **ilk adaptör Anka West'in kargo firmasıdır** *(firma tespit edilecek)*; diğer firmalar talep geldikçe eklenir · müşterinin API bilgileri **kurulum (müşteri örneği) başına şifreli** saklanır *(12.10: ifade onaylandı)* *(~~saklama yeri modül yazılırken K-9 §B ile birlikte belirlenir~~ → 12.10: **müşteri örneğinde şifreli tutulabilir** — K-9 §B açıklaması)* · **Faz 1'e şema kolonu eklenmez** — modül tabloları modül yazıldığı gün girer (§1.3 §(10)). **Geri not (12.10.2026):** kargo modülü §1.3 §F sınır kurallarına tabidir ve e-belge modülüyle gelen **altyapı zamanlayıcısını** kullanır (C-1 §3.3.c revizyon 3-(5)); D-1 kademe 2'ye bağımlılığı kalktı. |
 | D-4 | **Satıcı hedefi / kotası** | ⚪ | ✅ **KARAR: Ertelenir, sınırı bugünden sabittir.** Prim **yalnız ciro üzerindendir**. **Prim oranının hedefe / dönemsel ciroya bağlanması kalıcı olarak kapsam dışıdır** (§0.4). |
 | **D-5** | Excel dışa aktarım | 🟡 | ✅ **KARAR — 09.09.2026. Bkz. §3.4.b.** Kapsam **altı veri setiyle kapalı** · dönem parametreleri **E-1'e bağlandı** · dışa aktarım **yalnız `YONETICI`** · **her dışa aktarım veritabanında loglanır** (yeni tablo) · üretilen dosya **sunucuda saklanmaz**. *Önceki hâli:* Zaten Ü-5. **K-4 ile mimarisi belirlendi**, **C-2 ile kapsamı sabitlendi**: beş veri seti, tarih parametreli, stokta tutar yok. Kalan iş yalnız kapsam teyidi. **D-2 eki (07.09.2026): müşavir rolü olmadığı için veri setlerini firma sahibi çalıştırır; dışa aktarım `YONETICI` yetkisindedir ve sayılan belgeler filtresine tabidir.** |
-| D-6 | Toplu veri girişi (import) | 🔴 | ✅ **KARAR:** Kapsam **doktor, ürün/fiyat listesi, açılış bakiyesi** ile sınırlı. Import **üç aşamalı**: doğrula → önizle → tek transaction'da yaz. Her import **parti numarası** taşır ve **geri alınabilir**. **Canlıya geçiş şartı:** açılış bakiyesi mutabakatının **yazılı teyidi**. **Ekler:** fiyat import'u çok satırlı barem (B-6) · açılış bakiyesi nullable vade (A-7) · doktor import'u nullable `kredi_limiti` (A-12) · açılış stoğu konum bazında (B-4) · **doktor import'u kimlik ve `fatura_` alanları + `cari_tip` (A-13)** · **ürün import'u `VergiOrani` kodu kolonu (C-6)** · **ürün import'u ÜTS sütununu OKUMAZ (K-10)** · **açılış stoğu hatası `DZL`/`ACILIS_DUZELTME` ile düzeltilir, import geri alınmaz (B-7)**. **Ek (24.09.2026) — açılış bakiyesinde işaret:** satır `tutar` (**pozitif**) + `yon` (`BORC`/`ALACAK`) taşır; **negatif tutar `TUTAR_NEGATIF` ile reddedilir** (sert, §0.3). İşaret yöne çevrilmez, mutlak değeri alınmaz — modelde işaret yoktur (X-11 §(3)) ve yanlış yazılan yön sonradan düzeltilemez, ancak ters hareketle kapanır (X-11 §(5), §0.2). Dosyanın müşterinin defterindeki işaret alışkanlığına uyarlanması **ürün kararı değildir** (§0.2). **Ek (24.09.2026) — açılış bakiyesi önizlemesi:** **cari adedi · toplam borç · toplam alacak · net** gösterir; oran gösterilmez, tek birleşik tutar yeterli sayılmaz (§0.4 oran kuralı). Tutarlar brüttür ve **taban etiketi taşır** (Ü-3 §(6)); açılış hareketi KDV kırılımı taşımaz (A-6, C-6 §(3)). **Mutabakatın yazılı teyidi (K-7 §(4)) bu sayılara dayanır** ve teyit **yazmadan önce** alınır. **Ek (01.10.2026) — doktor import'unda sahip:** sahip kolonu ya boştur ya da aktif bir `SATICI`'yı gösterir; `BAYI` satırında doluysa satır reddedilir (`BAYI_SAHIP_ATANAMAZ`). Sahiplik `degistirDoktorSahibi()` ile yazılır, gerekçesi partidir — X-17 §(7). |
+| D-6 | Toplu veri girişi (import) | 🔴 | ✅ **KARAR:** Kapsam **doktor, ürün/fiyat listesi, açılış bakiyesi** ile sınırlı. Import **üç aşamalı**: doğrula → önizle → tek transaction'da yaz. Her import **parti numarası** taşır ve **geri alınabilir**. **Canlıya geçiş şartı:** açılış bakiyesi mutabakatının **yazılı teyidi**. **Ekler:** fiyat import'u çok satırlı barem (B-6) · açılış bakiyesi nullable vade (A-7) · doktor import'u nullable `kredi_limiti` (A-12) · açılış stoğu konum bazında (B-4) · ~~**doktor import'u kimlik ve `fatura_` alanları + `cari_tip` (A-13)**~~ → **cari import'u, `YONETICI` cari açma akışının toplu hâlidir · kısmi yazma yok · yalnız `YONETICI` (X-16, 13.10.2026)** · **ürün import'u `VergiOrani` kodu kolonu (C-6)** · **ürün import'u ÜTS sütununu OKUMAZ (K-10)** · **açılış stoğu hatası `DZL`/`ACILIS_DUZELTME` ile düzeltilir, import geri alınmaz (B-7)**. **Ek (24.09.2026) — açılış bakiyesinde işaret:** satır `tutar` (**pozitif**) + `yon` (`BORC`/`ALACAK`) taşır; **negatif tutar `TUTAR_NEGATIF` ile reddedilir** (sert, §0.3). İşaret yöne çevrilmez, mutlak değeri alınmaz — modelde işaret yoktur (X-11 §(3)) ve yanlış yazılan yön sonradan düzeltilemez, ancak ters hareketle kapanır (X-11 §(5), §0.2). Dosyanın müşterinin defterindeki işaret alışkanlığına uyarlanması **ürün kararı değildir** (§0.2). **Ek (24.09.2026) — açılış bakiyesi önizlemesi:** **cari adedi · toplam borç · toplam alacak · net** gösterir; oran gösterilmez, tek birleşik tutar yeterli sayılmaz (§0.4 oran kuralı). Tutarlar brüttür ve **taban etiketi taşır** (Ü-3 §(6)); açılış hareketi KDV kırılımı taşımaz (A-6, C-6 §(3)). **Mutabakatın yazılı teyidi (K-7 §(4)) bu sayılara dayanır** ve teyit **yazmadan önce** alınır. **Ek (01.10.2026) — doktor import'unda sahip:** sahip kolonu ya boştur ya da aktif bir `SATICI`'yı gösterir; `BAYI` satırında doluysa satır reddedilir (`BAYI_SAHIP_ATANAMAZ`). Sahiplik `degistirDoktorSahibi()` ile yazılır, gerekçesi partidir — X-17 §(7). *13.10.2026 — geri not (X-16 §(10)): geri alma tek çare değildir; koşulu (C-3 §(6)) sağlanmayan partinin düzeltme yolu elle düzeltmedir. **Kısmi geri alma yoktur.** Açılış bakiyesi hatası `TERS_KAYIT` ile düzeltilir, parti geri alınmaz.* |
 
 #### 3.4.a · D-2 · Rol tasarımı — ✅ **KARAR (07.09.2026)**
 
@@ -3196,7 +3200,7 @@ yetkisiyle gelmez (Odoo'da `Export` hakkı gruptan ayrı verilir). Gerekçe her 
 | **X-11** | Tutar pozitif, yön ayrı (`BORC`/`ALACAK`); belge ve hareket **aynı transaction'da**; düzeltme ters harekettir | X-5 §(7), X-3, §0.2 |
 | **X-11** | `hesaplaDoktorBakiye()` ve cari hareket veri seti bu tablodan okur; eşleştirme yok, bakiye kolonu yok | K-2, K-4, X-6, RULE-08 |
 | **X-12** | **Yeni çekirdek tablo `ImportParti`** · `dosya_adi` salt kayıt (E-3 §(4)) · içe aktarılan kayıtlar **nullable parti FK** taşır | Faz 1A, şema |
-| **X-12** | Geri alma C-3 §(6) koşuluyla; **açılış stoğu partisi geri alınmaz** (`DZL` ile düzeltilir) | D-6, B-7 |
+| **X-12** | Geri alma C-3 §(6) koşuluyla; **açılış stoğu partisi geri alınmaz** (`DZL` ile düzeltilir) *(13.10.2026 — X-16 §(10): açılış bakiyesi partisi de geri alınmaz, `TERS_KAYIT`; kısmi geri alma yok)* | D-6, B-7 |
 | **X-13** | **Satıcı yalnız kendi `DOKTOR` carilerini görür** — `kapsamliDoktorlariGetir()` süzer; **D-2 §(3) redakte edildi** | D-2, Faz 1, **kritik** |
 | **X-13** | Siparişin satıcısı **sipariş anındaki sahiptir**, sonra değişmez → hakediş ona yazılır · `BAYI` siparişinde satıcı **boş** | X-1 §(6)/(7), X-8 §(3), şema |
 | **X-13** | Devir yalnız `YONETICI` · gerekçeli · **izli** (bugünkü devir tablosu kalır) · pasif satıcının doktorları sahipsiz, sahipsiz doktora sipariş girilmez *(01.10.2026 — pasifleştirmede portföy seçimi zorunlu, X-17)* | E-2, RULE-13 |
@@ -3206,6 +3210,9 @@ yetkisiyle gelmez (Odoo'da `Export` hakkı gruptan ayrı verilir). Gerekçe her 
 | **X-15** | Telefon **NOT NULL + normalize hâliyle UNIQUE** (A-13 `telefon` bu alandır) · klinik/bölge `DOKTOR` için zorunlu, `BAYI` için boş olabilir · bayiye ayrı kod/yetkili alanı yok | A-13, X-8, şema |
 | **X-17** | **Sahiplik tek fonksiyondan değişir** — `degistirDoktorSahibi()`, **12. tek çağrı noktası** · sahip daima aktif `SATICI` · `BAYI`'de sahip boş (**DB `CHECK`**) · `hesap_sinifi` değişmez | X-13, X-8, Faz 1A şema, **kritik** |
 | **X-17** | Devir **toplu** (cari listesinde çoklu seçim) · pasifleştirme/rol değişikliğinde portföy seçimi **zorunlu** (devret ya da sahipsiz bırak) · iz her geçişi yazar (olay kaydı) · sipariş ve devir doktor satırı kilidiyle yarışmaz | E-2 §(6), RULE-13, ADR-008 |
+| **X-16** | Import, elle girişin toplu hâlidir · şablon tek tanımdan üretilir (ADR-006) · **kısmi yazma yok** · `CARI` import'unu yalnız `YONETICI` çalıştırır · import kayıt güncellemez, kısmi geri alma yok | D-6, K-7, 1B madde 7 |
+| **X-16** | `CARI` tanımında sorumlu satıcı (X-17 §(7)) ve fiyat listesi kodu · `FIYAT_LISTESI` şablonunda Faz 1'de tarih kolonu yok · `CARI` listesi de yazılı teyit ister | X-10, X-13, K-7 §(4) |
+| **X-15 §(5)** | `DOKTOR` kişiye ait telefonla açılır (🟦, kilit: doktor listesi teslimi; `BAYI`'de etiket "Telefon", firma numarası) · `TELEFON_KAYITLI` · import'ta aynı numaralı bütün satırlar reddedilir | A-9, X-16, devreye alma |
 
 > 📐 **Ad rejimi — redaksiyon 15.09.2026 (`docs/adr/ADR-001`).** Aşağıdaki özetteki ve bu kitabın
 > genelindeki **tablo ve kolon adları kavramsaldır**: şemada İngilizce `camelCase` karşılıkları
@@ -3242,7 +3249,7 @@ Kolonlar → `StockMovement.konum_id` (zorunlu) · `FiyatListesiSatir.min_adet`,
 **`Kullanici.aktif`, `parola_hash`, `parola_degistirmeli` (E-2)** ·
 **`ImportParti.dosya_adi` (E-3)**, **parti numarası, veri türü (X-12)** ·
 **tüm belgelerde `belge_no` + `guncelleme_tarihi` (K-4, A-14)**
-Yeni tipler → cari hareket `ACILIS`, `VADE_FARKI` *(tam katalog ✅ X-11: `SEVKIYAT` · `IADE` · `TAHSILAT` · `ACILIS` · `VADE_FARKI` · `TERS_KAYIT`; yön `BORC`/`ALACAK`)* · **import veri türü ✅ X-12: `CARI` · `URUN` · `FIYAT_LISTESI` · `ACILIS_BAKIYESI` · `ACILIS_STOGU`** · kural kodu `NEGATIF_STOK`, `KREDI_LIMITI`, **`VADESI_GECMIS_HAREKET` (X-6 §(6) — 24.09'da eklendi, karar 13.09)**, **`TUTAR_NEGATIF` (D-6, 24.09)**, **`SAHIP_AKTIF_SATICI_DEGIL`, `BAYI_SAHIP_ATANAMAZ`, `SAHIP_DEGISTI` (X-17, 01.10)** ·
+Yeni tipler → cari hareket `ACILIS`, `VADE_FARKI` *(tam katalog ✅ X-11: `SEVKIYAT` · `IADE` · `TAHSILAT` · `ACILIS` · `VADE_FARKI` · `TERS_KAYIT`; yön `BORC`/`ALACAK`)* · **import veri türü ✅ X-12: `CARI` · `URUN` · `FIYAT_LISTESI` · `ACILIS_BAKIYESI` · `ACILIS_STOGU`** · kural kodu `NEGATIF_STOK`, `KREDI_LIMITI`, **`VADESI_GECMIS_HAREKET` (X-6 §(6) — 24.09'da eklendi, karar 13.09)**, **`TUTAR_NEGATIF` (D-6, 24.09)**, **`SAHIP_AKTIF_SATICI_DEGIL`, `BAYI_SAHIP_ATANAMAZ`, `SAHIP_DEGISTI` (X-17, 01.10)**, **`TELEFON_KAYITLI` (X-15 §(5)), `ICE_AKTARIM_KOLON_EKSIK`, `ICE_AKTARIM_KOLON_TANINMIYOR`, `URUN_KODU_KAYITLI`, `FIYAT_SATIRI_CAKISIYOR` (X-16, 13.10)** ·
 `cari_tip`: `TUZEL_KISI`/`GERCEK_KISI` · **`HesapSinifi`: `DOKTOR`/`BAYI` (X-8)** · **✅ `StokKonum.tip`: `DEPO`/`KONSINYE` (A-4, 04.10)** · **✅ `OnayBlogu` kararı: `ONAY`/`RED` (A-8, 04.10)** · **`Kullanici.rol`: `YONETICI`/`OPERASYON`/`SATICI` (D-2)** ·
 belge önekleri `SIP`/`SVK`/`IAD`/`KNS`/`TRF`/`THS`/`ACL`/`VDF`/**`DZL`**
 Kısıtlar → `FiyatListesiSatir` tarih aralığı çakışma yasağı (DB) · `belge_no` global UNIQUE · **cari telefonu UNIQUE (X-15)** · **`BAYI`'de sahip boş — `CHECK` (DB, X-17)** ·
@@ -3339,6 +3346,7 @@ doldurulur.)*
 | **X-14** | **Prim oranının yeri yazılı değil** *(FR-30, FR-31)*. Hakedişin sevkiyatta doğduğu (X-1 §(7)) ve primin yalnız ciro üzerinden olduğu (D-4) yazılı; ama **oranın kendisi** hiçbir maddede yok ve `policy.ts` anahtarları arasında da yok. Bugün oran `DEFAULT_COMMISSION_RATE` sabiti (%5) ve `User.commissionRate` alanıdır (satıcı bazlı, formu yok). Ayrıca X-1 §(6) *"geçmiş dönem raporu yeniden çalıştırıldığında aynı sonucu verir"* der: oran değişince geçmiş hakediş değişmemeli, yani oran bir yere **dondurulmalı** | **(a)** Varsayılan oran `policy.ts`'tedir — `finance.primOraniVarsayilan`, **23. anahtar**; kurulum düzeyindedir, ekranı yoktur (GÇ-11). Satıcı kartında **nullable override** vardır (`Kullanici.prim_orani`, `Decimal(5,2)`; formu Ü-2). Oran değişikliği loglanır (RULE-13). **Uygulanan oran, hakedişin doğduğu sevkiyat satırına dondurulur.** · **(b)** Tek oran, yalnız `policy.ts`'te; satıcı bazlı override **kalkar** (`User.commissionRate` → GÇ). Oran yine sevkiyata dondurulur | ✅ **KARAR (16.09.2026) — bkz. §5.17.** **(a) seçildi:** `finance.primOraniVarsayilan` + satıcı kartında nullable özel oran · oran sevkiyat satırına donar |
 | **X-15** | **Bugün çalışan iki davranışın bu kitapta karşılığı yok** *(FR-22, FR-09, FR-01, FR-39)*. **(i) Vade değişikliği.** Müşteri kararı D-02 *"vade esneyebilir"*. Bugün siparişe bağlı `DueDateChange` tablosu ve `changeDueDate` var (ekranı yok). A-7 `vade_tarihi`'ni koyuyor ama sonradan değişip değişmeyeceğini yazmıyor; X-11 §(5) hareketin tutar, yön ve tipini donduruyor. **(ii) Mükerrer cari engeli.** Bugün `Doctor.phoneNormalized` **NOT NULL + UNIQUE**; `clinic` ve `region` NOT NULL. A-13 ayrıca bir `telefon` alanı sayıyor. X-8 ile bayi de bu tabloda ve bayinin kliniği ya da bölgesi yok. PRD bayi için *kod* ve *yetkili* de istiyordu | **(a) İkisi de korunur:** **(i)** `vade_tarihi` sonradan değiştirilebilir. Yalnız `YONETICI` değiştirir; gerekçe zorunludur. Her değişiklik eski ve yeni tarih, kişi ve zamanla **ayrı iz tablosuna** yazılır (bugünkü `DueDateChange`); iz **cari harekete** bağlanır. Tutar değişmediği için hiçbir hesap etkilenmez (A-7: vade farkı otomatik değildir). **(ii)** Telefon **zorunlu ve normalize hâliyle benzersiz** kalır; A-13'ün `telefon`'u bu alandır, ikinci alan açılmaz. Klinik ve bölge `DOKTOR` için zorunlu, `BAYI` için boş olabilir. Bayiye ayrı *kod* ya da *yetkili* alanı konmaz (`muhasebe_kodu` ve `fatura_unvani` yeter). Ad + klinik benzerlik uyarısı Faz 2'dir (Ü-10). · **(b)** Maddeler tek tek karara bağlanır | ✅ **KARAR (16.09.2026) — bkz. §5.18.** **(a) seçildi:** vade değişikliği izli (yalnız `YONETICI`) · telefon zorunlu ve benzersiz · `BAYI`'de klinik/bölge boş olabilir |
 | **X-17** | **Sahipliği altı yol yazacak, devir tek tek, pasif satıcının portföyü sahipsiz düşüyor** *(19.09 incelemesi, bulgu 3)*. X-13 sahipliğin ne olduğunu yazdı, nasıl değiştiğini yazmadı; bugünkü devir izi dönem kaydı tutuyor ve sahipsizliğe geçiş izsiz. `BAYI` sahipsizliği DB'de kısıt değil | **(a)** Tek yazma noktası + toplu devir + pasifleştirmede zorunlu portföy seçimi · **(b)** bugünkü davranış (sahipsiz düşer, tek tek atanır) | ✅ **KARAR (01.10.2026) — bkz. §5.19.** **(a) seçildi:** `degistirDoktorSahibi()` 12. tek çağrı noktası · `BAYI`'de sahip boş (`CHECK`) · iz olay kaydı · pasifleştirmede devret ya da sahipsiz bırak |
+| **X-16** | **Cari şablonunun kararlarla bağı yok** *(19.09 incelemesi, bulgu 1 + genişletme)*. K-7 §(2) şablonu *"D-6'daki A-13 alanları"* diye tarif ediyor; sonra X-8 §(6) `hesap_sinifi`'yi, X-15 §(3) klinik ve bölgeyi zorunlu yaptı, ikisi de şablona yansımadı. Fiyat listesi ataması ve import yetkisi yazılı değil. Ayrıca telefon UNIQUE (X-15 §(2)) ile aynı klinikte çok doktor (A-9) arasında yazılmamış varsayım *(bulgu 2)* | **(a)** Import elle girişin toplu hâli, şablon tek tanımdan · **(b)** K-7'ye açık kolon tablosu | ✅ **KARAR (13.10.2026) — bkz. §5.20.** **(a) seçildi:** import'a özgü doğrulama yok · kısmi yazma yok · `CARI` yalnız `YONETICI` · import kayıt güncellemez · kısmi geri alma yok · mekanizma `docs/adr/ADR-006`. Telefon varsayımı **X-15 §(5) 🟦** |
 
 > **Serinin kapsamı genişledi (13.09.2026).** `X-*` bugüne kadar *"kod denetiminde çıkmış ama
 > hiçbir listede olmayan"* maddeleri taşıyordu. **X-5…X-7 belge uyum denetiminden** doğdu:
@@ -4287,6 +4295,7 @@ listesine almıştı; X-2 ise 1B'de o ekranların dosyasına bakıyordu.
 > **(6) İçeri ve dışarı akan veride kolon.** Doktor listesi veri seti (K-4), doktor import'u
 > (D-6) ve geçiş şablonu (K-7) **`hesap_sinifi` kolonunu taşır**. Import'ta kolon **zorunludur**;
 > boş satır reddedilir (§(1): varsayılan yok).
+> *13.10.2026 — geri not: şablon ve doğrulama tek tanımdan türer (X-16).*
 >
 > **(7) X-2'nin konusu değişti.** `recordDealerPayment` Faz 1A'da sökülür. X-2'nin BLOCKER
 > ilkesi — ödeme kaydı ve `uretBelgeNo()` **aynı transaction'da** — artık **bütün tahsilatlar**
@@ -4482,8 +4491,11 @@ yazıyor. E-3 §(4) de `ImportParti.dosya_adi` kolonunu koyuyor. Ama `ImportPart
 >
 > **(3) Geri alma D-6'daki gibidir; koşulu C-3 §(6)'dır:**
 > - Partiye bağlı kayıtlar başka hiçbir belgeye bağlı olmamalıdır.
+>   *13.10.2026 — geri not: koşul partinin **tamamına** bakar; kısmi geri alma yoktur (X-16 §(10)).*
 > - Geri almayı yalnız yönetici yapar, gerekçe zorunludur, işlem loglanır.
 > - **Açılış stoğu partisi geri alınmaz**; hata `DZL` ile düzeltilir (D-6, B-7).
+>   *13.10.2026 — geri not: **açılış bakiyesi partisi de geri alınmaz**; hata `TERS_KAYIT` ile
+>   düzeltilir (X-16 §(10); `ACL` numaralı kayıttır, A-14 §(6)/(8)).*
 >
 > **(4) Dosya saklanmaz** (E-3 §(2)).
 >
@@ -4516,6 +4528,7 @@ X-1 §(7). Ama görünürlüğü, atanması, devri ve pasif satıcı durumu yaz�
 >
 > **(2) Atama.** `SATICI`'nın açtığı doktorun sahibi kendisidir. `YONETICI` doktor açarken sahip
 > seçebilir ya da boş bırakabilir.
+> *13.10.2026 — geri not: import'ta da aynı kural geçerlidir (X-17 §(7), X-16 §(5)).*
 >
 > **(3) Sipariş.** `SATICI` yalnız sahibi olduğu doktora sipariş girer. **Sahipsiz doktora kimse
 > sipariş giremez.** Siparişin satıcısı **sipariş anındaki sahiptir** ve sonradan değişmez;
@@ -4598,12 +4611,51 @@ X-8 ile bayi de doktor tablosuna girdi; bayinin kliniği ve bölgesi yoktur.
 >   `BAYI` satırlarının ikisine de uygulanır.
 > - A-13'ün `telefon` alanı **bu alandır**; ikinci telefon alanı açılmaz.
 > - Ad + klinik benzerlik uyarısı **Faz 2**'dir (Ü-10).
+> - *13.10.2026 — geri not:* kişisel numara varsayımı: §(5) 🟦.
 >
 > **(3) Klinik ve bölge** nullable'dır. `DOKTOR` için **zorunludur** (uygulama kuralı, import dahil —
 > D-6); `BAYI` için boş kalabilir.
 >
 > **(4) Bayiye ayrı kod veya yetkili alanı konmaz.** Tanıma `muhasebe_kodu` ve `fatura_unvani`
 > yeter (A-13; §0.1 kolon testi).
+>
+> **(5) Varsayım yazılıdır: cari, kişiye ait bir telefonla açılır** (doktorun cep telefonu; klinik
+> santrali değil). *(13.10.2026 eki — 19.09 incelemesi, bulgu 2.)*
+> - **Kaynak:** A-9 aynı klinikte birden çok doktoru öngörüyor (aynı VKN, üç cari); §(2) telefonu
+>   UNIQUE yapıyor. İkisi de doğru, ama aralarında yazılmamış bir varsayım vardı: **her carinin
+>   kendine ait bir telefonu vardır.** Satıcının elinde yalnız klinik santrali varsa ikinci doktoru
+>   kaydedemez; meşru bir yol görmezse numara uydurur — §0.2'nin B-7 ekine göre bu tasarım hatasıdır.
+> - Alan etiketi **"Cep telefonu (kişisel)"**dir — **yalnız `DOKTOR`'da**. `BAYI` bir firmadır, kişisel
+>   telefonu olmayabilir; etiketi **"Telefon"**dur ve firma numarası girilir. *(13.10.2026 — kullanıcı
+>   kararı.)* UNIQUE ve `TELEFON_KAYITLI` iki sınıfta da aynen geçerlidir (§(2)); varsayım ve aşağıdaki
+>   🟦 kaydı **`DOKTOR` içindir** — çoklu kayıt sorunu A-9'un aynı klinikteki doktorlarından doğar.
+> - UNIQUE ihlali `SERT`'tir; kural kodu **`TELEFON_KAYITLI`**'dır. Hata metni numaranın kime ait
+>   olduğunu söylemez (X-4 §(9), X-13 §(1)) ve kullanıcıyı yöneticiye yönlendirir.
+> - **Meşru yol yöneticidir.** Yönetici bütün carileri görür. Ya gerçek bir mükerrer kayıt bulur
+>   (FR-09 amacına uygun çalışmıştır) ya da ilk kayıttaki santral numarasını düzeltir.
+> - Import'ta aynı numarayı paylaşan **bütün satırlar** reddedilir, yalnız ikincisi değil. İlk satırı
+>   kabul etmek, santral numarasıyla açılmış bir kaydı meşrulaştırmak olurdu. Kural hem dosya içinde
+>   hem kayıtlı carilere karşı uygulanır (X-16 §(1)).
+>
+> **🟦 Varsayılan kaydı — kişisel telefon varsayımı**
+>
+> | Alan | İçerik |
+> |---|---|
+> | **Varsayılan davranış** | UNIQUE korunur. Mükerrer numara X-16 önizlemesinde kural koduna göre sayılır ve X-16 §(4) gereği yazmayı durdurur. |
+> | **Cevabın değiştirdiği katman** | Şema (UNIQUE kısıtı) — yalnız aşağıdaki dal tetiklenirse. |
+> | **Kilitlenme anı** | **Doktor listesinin teslimi** (devreye alma). |
+>
+> **Ölçüm ayrı bir araç değildir.** `CARI` import'unun doğrula ve önizle aşamaları yazmadan çalışır;
+> önizlemedeki `TELEFON_KAYITLI` adedi ölçümün kendisidir. Liste import ekranı hazır olmadan gelirse
+> aynı sayım elle yapılır: benzersiz normalize numara adedi, satır adedine eşit mi?
+>
+> **Dal (bugünden yazılı):**
+> 1. Adetler eşit değilse **önce veri tarafına** gidilir: satıcılardan kişisel numaralar toplanır.
+> 2. Kalan satırlar için §(2) yeniden açılır (`FAZ1_UYGULAMA_KAPSAMI.md` §C).
+> 3. **İkinci telefon alanı seçenek değildir** (§(2)).
+>
+> *Varsayılan seçimi (§0.6, geri dönüşü en ucuz olan):* UNIQUE'i sonradan kaldırmak tek satırlık bir
+> migration'dır. Sonradan koymak ise mükerrer canlı veriyi temizlemeyi gerektirir.
 >
 > **Şemaya etki:**
 > - Vade değişiklik izi kalır, bağı cari harekete taşınır.
@@ -4726,6 +4778,173 @@ boş olamaz, dönemi kimin ve neden kapattığı yazılmaz. Sahipsizliğe geçi�
   yeni kilit noktaları (sipariş, devir, pasifleştirme, rol değişikliği) ADR-008 §6 yazım testine uygulamada girer.
 - **`IS_AKISI_OZETI.md`** sahiplik bölümü.
 
+### 5.20 X-16 · İçe aktarım sözleşmesi ve cari şablonu — karar metni *(13.10.2026)*
+
+*Öneri 19.09.2026 incelemesinden (bulgu 1 + genişletme; 24.09'da bulgu 6 ile §(12) eklendi);
+onay 13.10.2026. Öneri belgesi `docs/arsiv/KARAR_ONERISI_2026-09-19.md`.*
+
+**Boşluğun kaynağı:** K-7 §(2) (07.09) cari şablonunu *"D-6'daki A-13 alanları"* diye tarif ediyor.
+D-6 ekleri de *"kimlik ve `fatura_` alanları + `cari_tip` (A-13)"* diyor. Sonra iki karar import'ta
+zorunlu alan ekledi ve ikisi de şablona yansımadı: X-8 §(6) `hesap_sinifi`; X-15 §(3) klinik ve bölge
+(*"import dahil"*). Cariye fiyat listesi ataması (X-10 §(6)) import'ta yazılı değildi; kimin import
+çalıştırabileceği de yazılı değildi. *(Sorumlu satıcı kolonu 01.10.2026'da X-17 §(7) ile yazıldı.)*
+
+Sonuçları:
+- **`hesap_sinifi` kolonu olmadan** ya bütün dosya reddedilir ya da bir geliştirici uygulama
+  katmanında `?? "DOKTOR"` yazar. İkincisinde bayiden prim doğar ve RULE-15 sessizce delinir.
+- **Sorun tek kolon değildir.** Şablon ile karar kitabı arasında bağ yok; her yeni karar kolon
+  ekledikçe şablon kopuyor.
+
+> **KARAR (X-16):** **İçe aktarım, elle girişin toplu hâlidir. Şablon sistemden üretilir; belgede
+> kolon listesi tutulmaz.**
+> *(Değerlendirilen (b) — K-7'ye açık kolon tablosu yazılır, kod ona uyar — reddedildi: iki kaynak
+> kalır ve ilk yeni kararda aynı kopma tekrarlanır.)*
+>
+> **(1) Import'a özgü doğrulama yoktur.** Her import satırı, aynı kaydı elle açan akışın
+> doğrulamasından **aynen** geçer.
+> - Elle girişte reddedilen satır, import'ta da **aynı kural koduyla** reddedilir.
+> - Import'a özgü gevşeme ya da varsayılan yoktur.
+> - `CARI` satırının karşılığı **`YONETICI`'nin cari açma akışıdır**.
+> - *Elle giriş yolu olmayan türlerde (`ACILIS_BAKIYESI`, `ACILIS_STOGU`) doğrulama, import
+>   tanımının kendisidir.*
+>
+> **Küme kuralları partinin tamamına uygulanır.** Tekillik ve aralık çakışması gibi kurallar tek
+> satıra değil **yazma sonrası duruma** bakar. Elle girişte bu küme *veritabanı + eklenen satır*,
+> import'ta *veritabanı + partinin bütün satırlarıdır* — sınırı §(4)'ün tek transaction'ı çizer.
+> **Kural aynıdır; değişen kümenin sınırıdır.** Bu, import'a özgü bir kural ya da gevşeme değildir.
+>
+> **Çakışmada reddedilenler:**
+> - **Dosya içi çakışmada çakışan satırların hepsi** reddedilir, yalnız ikincisi değil (X-15 §(5)
+>   deseni).
+> - **Kayıtlı veriyle çakışmada** yalnız dosyadaki satır reddedilir.
+> - Her iki hâlde de kural kodu, aynı kuralın elle girişte döndürdüğü koddur; parametreler çakışan
+>   satır numaralarını taşır (X-4 §(3)).
+>
+> **(2) Her veri türünün tek bir içe aktarım tanımı vardır** (X-12 kataloğu). Şablon, doğrulama ve
+> önizleme özeti bu tanımdan türer; mekanizma `docs/adr/ADR-006`'dır. Bir alanın zorunlu olup
+> olmadığı **o alanı koyan kararda** yazılıdır (A-13, X-8, X-15, X-17, bu madde). Kolonların dökümü
+> hiçbir belgede kopyalanmaz.
+>
+> **(3) Dosya düzeyi sert kısıt.** Zorunlu bir kolonu eksik olan ya da tanınmayan bir kolon taşıyan
+> dosya **bütünüyle reddedilir**; satır doğrulamasına geçilmez. Eski sürüm bir şablon bu kontrolde
+> kendiliğinden yakalanır, ayrı sürüm alanı gerekmez.
+>
+> **(4) Kısmi yazma yoktur.** Reddedilen satır varken yazma adımı açılmaz. Satır hatalarının hepsi
+> birlikte döner (X-4 §(7)).
+> *Gerekçe: "geçerlileri yaz" akışında 6 bayi satırı reddedilip 240 doktor yazılırsa, sistem bayisiz
+> canlıya çıkar ve bu hiçbir ekranda görünmez.*
+>
+> **(5) `CARI` tanımı iki alan taşır:**
+> - **Sorumlu satıcı:** aktif `SATICI`'nın kullanıcı e-postası. Kuralı X-17 §(7)'dedir ve burada
+>   kopyalanmaz: `DOKTOR`'da boş bırakılabilir (doktor sahipsiz açılır, X-13 §(2)); `BAYI`'de doluysa
+>   satır `BAYI_SAHIP_ATANAMAZ` ile reddedilir; atama `degistirDoktorSahibi()` ile yazılır.
+> - **Fiyat listesi kodu:** boşsa varsayılan liste geçerlidir (X-10). Tanınmayan kod reddedilir.
+>
+> **(6) `CARI` içe aktarımını yalnız `YONETICI` çalıştırır.** (5)'teki iki alanı yalnız yönetici
+> yazabilir (X-13 §(5), X-10 §(6)); daha geniş bir yetki bu iki kuralı import üzerinden deler.
+> Diğer türlerin yetkisi D-2 ekran matrisinde yazılır (`FAZ1_UYGULAMA_KAPSAMI.md` §C-n).
+>
+> **(7) Önizleme özeti, yazma onayıdır.** "Yaz" düğmesi özetin altında durur; özetsiz yazma yolu
+> yoktur. `CARI` özeti şunları gösterir:
+> - sınıf dağılımı (`DOKTOR` / `BAYI` adedi)
+> - satıcı başına doktor adedi ve sahipsiz doktor adedi
+> - fiyat listesi boş `BAYI` adedi (`BILGI`)
+> - reddedilen satırların kural koduna göre adedi
+> - açılacak kayıt adedi (§(9))
+>
+> *Gerekçe: yanlış sınıflanmış bir bayiyi ay sonu prim raporundan önce görebilecek tek insan gözü
+> burasıdır.*
+>
+> **Diğer türlerin özeti kendi tanımındadır** (ADR-006 §1); kural burada kopyalanmaz.
+> `ACILIS_BAKIYESI` özeti D-6 ekindedir (24.09.2026).
+>
+> **(8) Hesap sınıfının kaynağı her akışta açıktır** (X-8 §(1)):
+> - `SATICI` akışı `DOKTOR` değerini **açıkça** verir.
+> - Import değeri satırdan okur.
+> - `YONETICI` formunda sınıf **seçili gelmez** ve seçilmeden kayıt yapılamaz.
+>
+> *Ekranda önceden seçili gelen değer, adı konmamış bir varsayılandır.*
+>
+> **(9) İçe aktarım yalnız kayıt açar; var olan kaydı güncellemez.** Anahtarı (`CARI` için normalize
+> telefon, X-15 §(2)) kayıtlı bir satır `TELEFON_KAYITLI` ile reddedilir ve §(4) gereği dosyanın
+> tamamı bekler. **Kayıtlı satırın "atlanması" diye bir davranış yoktur** — atlamak, dosyadaki satır
+> ile kayıtlı kayıt arasındaki farkı gizler ve yönetici dosyanın uygulandığını sanır.
+> - **Dosya yalnız açılacak kayıtları taşır.** Önizlemedeki *"açılacak kayıt adedi"*, gönderenin
+>   beyan ettiği adetle karşılaştırılır; tutmuyorsa dosya yanlıştır.
+> - **Açılmış bir kaydın düzeltme yolu, onu açan akışın kendisidir:** tek cari ekranı
+>   (`FAZ1 §D.3` madde 7). Aynı alanlar, aynı doğrulama, aynı log (A-13, RULE-13).
+> - *Gerekçe: import bir **devreye alma aracıdır** (D-6 kapsamı, §(6) yetkisi). Sonraki eklemelerin
+>   olağan yolu cari ekranıdır. Toplu güncelleme ayrı bir yetenektir; §0.6 gereği en dar varsayılan
+>   seçilir.*
+> - **Kapsam dışı, Faz 2 adayı:** iş anahtarına göre toplu güncelleme (upsert). *Bu kararın koşulu:
+>   müşteri cari listesini düzenli olarak dosyayla güncelleyecekse D-6'nın kapsam cümlesi yeniden
+>   yazılır ve asıl karar upsert değil, import'un ne olduğudur.*
+>
+> **(10) Geri alma, ana verinin düzeltme yolu değildir.** Geri alma D-6 ve X-12 §(3)'teki gibi
+> durur; koşulu C-3 §(6)'dır.
+> - **Kısmi geri alma yoktur.** Koşul partinin **tamamına** bakar: partiye bağlı tek bir kayıt bile
+>   belgeye bağlıysa parti geri alınmaz ve **hiçbir kayıt silinmez**. *Gerekçe §(4)'ün aynasıdır —
+>   234 kayıt silinip 12'si kalırsa sistem eksik cari listesiyle yaşar, yönetici "geri aldım" der ve
+>   bu hiçbir ekranda görünmez.*
+> - **Koşul sağlanmadığında düzeltme yolu elle düzeltmedir** (§(9)). Geri alma bir kolaylıktır, tek
+>   çare değildir.
+> - **Açılış bakiyesi hatası `TERS_KAYIT` ile düzeltilir** (X-11 tip kataloğu); parti geri alınmaz.
+>   *Açılış stoğunun `DZL`/`ACILIS_DUZELTME` yolunun (D-6, B-7) cari tarafındaki karşılığıdır.
+>   `ACL` hareketi kendisi numaralı bir kayıttır (A-14 §(8)); numara oluşumda doğar, ölmez
+>   (A-14 §(6)).*
+> - Geri alma tek transaction'dır ve **ADR-006'nın geri alıcısıdır**. Sahiplik izini silen yol da
+>   bu tanımın içindedir (X-17 §(10)) ve X-17 §(1)'in CI kontrolünün kapsamına girer.
+>
+> **(11) `CARI` listesi de yazılı teyit ister.** K-7 §(4)'ün açılış bakiyesi ve oranlar için koyduğu
+> kural cari listesine genişletilir: nihai liste yüklenmeden önce müşteriden **yazılı onay** alınır.
+> - *Gerekçe: üç aşamalı import dosyanın **biçimini** doğrular, **doğruluğunu** değil. Doğruluğun tek
+>   ölçüsü müşterinin onayıdır.*
+> - **Sınır — garanti değildir:** müşteri bayat bir listeyi de onaylayabilir. Kural hatayı imkânsız
+>   yapmaz; **görünür ve sahipli** yapar.
+>
+> **(12) İçe aktarım, o fazda düzeltme yolu olmayan bir alanı yazmaz** *(24.09.2026 — bulgu 6)*.
+> Bir alan şablonda yer alıyorsa, yanlış geldiğinde düzeltileceği bir yol **aynı fazda**
+> bulunmalıdır. Düzeltme yolu §(9)'daki gibi elle giriş ekranı, ya da tipe özgü bir ters kayıt
+> olabilir.
+> - **Uygulaması — `FIYAT_LISTESI` şablonunda tarih kolonu yoktur.** `gecerli_baslangic` /
+>   `gecerli_bitis` şemada ve DB kısıtında **vardır** (X-10 §(1), B-5) ama Faz 1'de **doldurulmaz**:
+>   satırlar süresizdir.
+>   *Gerekçe: X-10 §(7) tarih alanlarının **ekranını Faz 2'ye** bıraktı. Şablon tarih taşısaydı
+>   import, Faz 1'de hiçbir ekranın gösteremediği ve düzeltemediği bir veri yazardı; yanlış tarihli
+>   satır `cozumleBirimFiyat()`'ta **`SERT` "fiyat çözümlenemedi"** üretir (X-10 §(3)) ve o ürüne
+>   sipariş girilemez. §(9) gereği yeniden yükleme de düzeltmez — import kayıt güncellemez. §0.2'nin
+>   tahliye vanası kuralı bunu **kullanıcı hatası değil tasarım hatası** sayar.*
+>   *§0.6 aynı yeri gösterir: kolonsuz şablon Faz 2'de **eklenerek** büyür; kolonlu şablonun hatası
+>   ancak **silinerek** düzelir ve Faz 1'de silme ekranı yoktur.*
+> - **Faz 1'de B-5 çakışma kısıtının fiilî karşılığı** `(liste, ürün, min_adet)` tekilliğidir —
+>   bütün satırlar süresiz olduğu için iki satır daima çakışır.
+> - **Diğer türlerde bu madde bir şey değiştirmez:** `CARI` → tek cari ekranı (§(9)) ·
+>   `ACILIS_BAKIYESI` → `TERS_KAYIT` (§(10)) · `ACILIS_STOGU` → `DZL`/`ACILIS_DUZELTME` (D-6, B-7) ·
+>   `URUN` → ürün ekranı. Düzeltme yolu olmayan tek alan tarih alanlarıydı.
+> - **Faz 2'de tarih ekranı açıldığında** şablon kendiliğinden tarih kolonu kazanır (ADR-006 §3:
+>   şablon elle giriş şemasından üretilir); bu maddenin ayrıca değiştirilmesi gerekmez.
+>
+> **Kapsam dışı, kalıcı:** import'a özgü doğrulama kuralı · kısmi yazma · **kısmi geri alma** ·
+> **kayıtlı satırın atlanması** · **import'tan cari silme** (silme C-3 §(6) yoludur) · kolon eşleme
+> ekranı · müşteriye özel şablon.
+> **Şemaya etki:** yok. İki alan zaten `Doktor`'da (X-10, X-13); parti FK X-12'de.
+> **Katalog:** kural kodu `ICE_AKTARIM_KOLON_EKSIK` · `ICE_AKTARIM_KOLON_TANINMIYOR` ·
+> `URUN_KODU_KAYITLI` · `FIYAT_SATIRI_CAKISIYOR` (X-4 §(3)). *Son kod tek bir kuralın adıdır — "bu
+> satır zaten var": Faz 1'de `(liste, ürün, min_adet)` anahtarı, Faz 2'de tarih aralığı da dahil
+> (B-5). Öneride 24.09'da `FIYAT_ARALIGI_CAKISIYOR` idi; §(12) ile Faz 1'de tarih kolonu kalmayınca
+> ad, henüz var olmayan bir mekanizmayı anlatır olmuştu.* *(`TELEFON_KAYITLI` X-15 §(5)'tedir.)*
+> **Geri çekme:** yok — bugün import kodu yok.
+> **Geri not:** K-7 §(2) · K-7 §(4) · D-6 (ekler ve *"geri alınabilir"*) · A-13 §(4) · X-8 §(6) ·
+> X-12 §(3) · X-13 §(2) · X-15 §(2) (bu turda düşüldü).
+
+**Bu kararla güncellenen yerler (13.10.2026)** — eski hükümlerin gövdesi değişmez, tarihli not düşülür:
+- **KARARLAR** K-7 §(2) ve §(4) · D-6 (§3.4 tablosu) · A-13 §(4) · X-8 §(6) · X-12 §(3) ve §4 satırı ·
+  X-13 §(2) · X-15 §(2) ve yeni §(5) · §4 etki ve katalog satırları · §5 tablosu · §6.
+- **`docs/adr/ADR-006`** yazıldı (öneri taslağından; ADR-007 atıfları X-17'ye çevrildi). `docs/adr/README.md` dizini.
+- **`FAZ1_UYGULAMA_KAPSAMI.md`** — §B.4 kural kodları · §B.5 satırları · §C-y · §C-aa · §D.3 madde 7.
+- **`KABUL_KRITERLERI.md`** — `X-16-1` ve `X-15-5-1` iskelet satırları (metin 1B madde 7'de, testten önce — X-7 §(6)).
+- **`YOL_HARITASI.md`** §7.1 — geri not kuralı (öneri §8).
+
 ## 6. Faz 0 çıkış kontrol listesi
 
 **Tamamlananlar**
@@ -4828,6 +5047,7 @@ boş olamaz, dönemi kimin ve neden kapattığı yazılmaz. Sahipsizliğe geçi�
 - [x] **C-1 iç karar olarak yeniden sınıflandırıldı; §0.6 otomatik ✅ kuralı kaldırıldı** *(🟦 → ✅ · kilitlenme anı alanı kalktı · teyit metni 3. madde bilgilendirme · §(6) geri notu)* — **09.10.2026** · şemaya etki yok
 - [x] **🟦 tarama uygulandı; C-1 revizyon 2 (e-belge stratejisi) ve D-3 revizyonu** *(X-11 · X-12 · A-4 · A-8 → ✅ · K-10 yeni kilit · K-4 ayrıştı · e-belge modülü çekirdek sonrası ilk modül · kargo e-belgeden sonra, BYOI)* — **10.10.2026** · şemaya etki yok
 - [x] **C-1 revizyon 3 — modül sınırı ve e-belge modülü kararları** *(§1.3 §F · ortak model modülde · zamanlayıcı altyapısı · durum makinesi · cari uzantısı · birim/istisna · K-8 kontör 🟦 · K-9 §B kargo anahtarı açıklaması)* — **12.10.2026** · şemaya etki yok
+- [x] **X-16 karara bağlandı** *(import elle girişin toplu hâli · şablon tek tanımdan, ADR-006 · kısmi yazma yok · `CARI` yalnız `YONETICI` · kısmi geri alma yok · açılış bakiyesi partisi geri alınmaz)* + **X-15 §(5) 🟦** *(kişisel telefon varsayımı, kilit: doktor listesi teslimi)* — **13.10.2026** · şemaya etki yok
 - [x] **Belge uyum denetimi yapıldı** *(13.09.2026)*: bu dosya ile diğer altı dosya arasındaki
       çelişkiler tarandı; **on üç kalemlik geri çekme listesi** *(15.09: X-9 ve X-10 ile on beş)* `FAZ1_UYGULAMA_KAPSAMI.md` §A'da
       açıldı ve **`YOL_HARITASI.md` §7.1 belge rejimi** yazıldı.

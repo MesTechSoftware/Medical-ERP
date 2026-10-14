@@ -3,7 +3,7 @@
 > **Bu dosya ana plandır.** Yeni bir sohbete başlarken önce bunu ver.
 > Sıra bağlayıcıdır — bir faz bitmeden sonrakine geçilmez, faz atlanmaz.
 >
-> Son güncelleme: 13 Ekim 2026 · **Faz 1A KAPANDI (07.10.2026 — C0…C10, `CM`; PR #15)** · **şu an Faz 1B — başlamadı.** Önünde karar engeli: X-16 + X-15 §(5) + ADR-006 (`docs/KARAR ONERISI.md` §11) — 1B madde 3/4/7'yi bloklar · 1B ilk tahmini §8'de
+> Son güncelleme: 13 Ekim 2026 · **Faz 1A KAPANDI (07.10.2026 — C0…C10, `CM`; PR #15)** · **şu an Faz 1B — başlamadı.** ~~Önünde karar engeli: X-16 + X-15 §(5) + ADR-006~~ → **13.10.2026: karara bağlandı** (KARARLAR §5.20, X-15 §(5) 🟦, `docs/adr/ADR-006`) — **1B'nin önünde karar engeli yok** · 1B ilk tahmini §8'de
 >
 > *16 Eylül 2026 durumu:* **Faz 0 KAPANDI · Faz 1A commit dizisi yazıldı (`FAZ1_UYGULAMA_KAPSAMI.md` §D) → Şerit A (PRD taraması) ve C0…C7b başlayabilir · Şerit A ✅ kapandı · X-8…X-15 ✅ · ADR-001…005 ✅ · **açık karar yok** — C0…C7b başlayabilir, `CM` onların ardından
 >
@@ -130,8 +130,8 @@ veri üstünde migration'ı pahalı olduğundan Faz 1'de netleşmeli.
 | **`IS_AKISI_OZETI.md`** | Sistem iş diliyle ne yapıyor + eksik gereksinim kontrol listesi | 🟢 canlı · **Sınıf 3 · Ayna** *(14.09.2026'da atandı — §7.1-A)* |
 | **`PROJE_DURUMU.md`** | Teknik envanter — ne var, hangi sürüm | 🟢 canlı *(2 belge hatası düzeltildi 11.09)* |
 | **`MEVCUT_SISTEM_DURUMU.md`** | Teknik envanter **ölçümü** — 14.09.2026, HEAD `3825241`; §D commit dizisinin sayı kaynağı | 📌 **kayıt · Sınıf 4** *(15.09.2026'da atandı — §7.1-A)*. Sürekli ayna `PROJE_DURUMU.md`'dir |
-| **`docs/TRACEABILITY.md`** | FR/RULE × kod × test matrisi | 🟢 canlı, faz sonunda güncellenir *(§6 karar senkronizasyonu eklendi)* · ⚠️ `docs/` bugün git'te değil — C0 |
-| **`docs/DENETIM_BULGULARI.md`** | 8 Ağustos denetim raporu | 📌 referans *(üstte güncel durum notu)* · ⚠️ `docs/` bugün git'te değil — C0 |
+| **`docs/TRACEABILITY.md`** | FR/RULE × kod × test matrisi | 🟢 canlı, faz sonunda güncellenir *(§6 karar senkronizasyonu eklendi)* |
+| **`docs/DENETIM_BULGULARI.md`** | 8 Ağustos denetim raporu | 📌 referans *(üstte güncel durum notu)* |
 | **`DUZELTME_BRIFI.md`** | Faz 1 görev talimatı (F-00…F-12) | 📌 Faz 1'de kullanılır *(🟡 açıldı; K-1/2/3 ✅)* |
 | **Görev Brifi (Faz 0-Demo)** | Ürünleştirme 8 görevi | 📌 Faz 2'de kullanılır, **genişletilecek** |
 | `UYGULAMA_PLANI.md` | v2 inşa planı | 📦 arşiv — işi bitti |
@@ -525,14 +525,14 @@ Her dosya bir **soruya** cevap verir. Sınıfı, güncelleme tetikleyicisini bel
 | **Faz geçişi** | `YOL_HARITASI.md` §8 + çıkış kriterleri · **tüm 🟦 listesi** | §0.6: *"her faz geçişinde 🟦 listesi tek tek gözden geçirilir"* |
 | **Mimari seçim (nasıl)** | `docs/adr/` | KARARLAR'a **girmez** — sınır kuralı `docs/adr/README.md`'de. Plan dosyası ADR'ye **atıf yapar**, metni kopyalamaz |
 | **Müşteri cevabı geldi** | `KARARLAR.md` 🟦 → ✅ | Varsayılan teyit edilir **veya değişir**; değişirse plan sınıfı da güncellenir |
-| **Kilitlenme anı geçti** | `KARARLAR.md` | §0.6: **kilitlenme anı geçmiş 🟦 otomatik ✅ sayılır** |
+| **Kilitlenme anı geçti** | `KARARLAR.md` | ~~§0.6: **kilitlenme anı geçmiş 🟦 otomatik ✅ sayılır**~~ *(13.10.2026 — geri not: §0.6'nın otomatik ✅ kuralı 09.10.2026'da kaldırıldı. Tarih tek başına kaydı kapatmaz; 🟦 → ✅ yalnız belgelenmiş kilitlenme olayıyla ya da iç karar olarak yeniden sınıflandırmayla olur.)* |
 
 ### C · Tur sonu ritüeli — dört soru
 
 Her iş turunun (commit grubu / haftalık kapanış) sonunda sırayla sorulur.
 **Sıra bağlayıcıdır** — 2'yi atlayıp 3'e geçmek 11.09 hatasıdır.
 
-1. **Yeni karar verdim mi?** → `KARARLAR.md` + kabul kriteri.
+1. **Yeni karar verdim mi?** → `KARARLAR.md` + kabul kriteri + **geri notlar** (§G).
 2. **Bu karar bugün kodda olan bir şeyi geçersizleştirdi mi?** → §A'ya GÇ satırı.
    *Bu soru sorulmazsa çelişki sessizce birikir.*
 3. **Hangi dosya artık yanlış bir şey söylüyor?** → sınıf 2 ve 3'te ⛔/⚠️.
@@ -578,6 +578,21 @@ Bulgular `FAZ1_UYGULAMA_KAPSAMI.md` §C'ye (açık madde defteri) yazılır, KAR
 *K-9 §A-3'ün "üç ayda bir geri dönüş testi" kuralının belge tarafındaki karşılığıdır:
 **test edilmemiş yedek yedek değildir; denetlenmemiş belge belge değildir.***
 
+### G · Geri not kuralı *(19.09.2026 önerisi, 13.10.2026'da işlendi)*
+
+> **Geri not kuralı.** Bir karar, daha önceki bir maddenin söylediğini değiştiriyor ya da
+> genişletiyorsa, o maddeye **aynı gün** tarihli bir not düşülür. Karar metni sonunda bir
+> **"Geri not:"** satırı taşır. Atıf yaptığı her maddeye not düşülmeden karar ✅ olmaz.
+>
+> **İçe aktarılan bir tabloya zorunlu alan ekleyen karar**, bunu "Şemaya etki" bölümünde yazar.
+> Şablon kendiliğinden güncellenir (KARARLAR X-16); bu satır, önizleme özetinin de değişmesi
+> gerekip gerekmediğinin kararda düşünülmesini sağlar.
+
+**Gerekçe:** A-13 §(4)'teki telefon ve K-7 §(2)'deki şablon aynı hatanın iki örneğidir. X-15,
+A-13'ün alanını değiştirdi; X-8 ve X-15, K-7'nin şablonunu genişletti. İki durumda da eski maddeye
+not düşülmedi. Kuralın maliyeti karar başına birkaç dakikadır. *Bu bir süreç kuralıdır, karar
+değildir; §C tur sonu ritüelinin 1. sorusuna eklenir.*
+
 ---
 
 ## 8. Takvim özeti
@@ -615,7 +630,7 @@ Bulgular `FAZ1_UYGULAMA_KAPSAMI.md` §C'ye (açık madde defteri) yazılır, KAR
 | | **Toplam** | **40–67 iş günü ≈ 8–13 hafta** |
 
 **Tahmini değiştirecek bilinenler:**
-- **Karar engeli:** X-16 + X-15 §(5) + ADR-006 kapanmadan madde 3/4/7 başlayamaz. Bu süre tabloya dâhil değildir.
+- ~~**Karar engeli:** X-16 + X-15 §(5) + ADR-006 kapanmadan madde 3/4/7 başlayamaz. Bu süre tabloya dâhil değildir.~~ *(13.10.2026: üçü de kapandı — engel kalktı.)*
 - **En büyük belirsizlik madde 7 ve madde 4'tedir.** Tahmin, madde 4 bittiğinde ve madde 7'nin ilk belge akışı bittiğinde **yeniden yapılır.**
 - `import.azamiDosyaBoyutMb` değeri D-6'dan önce gerekir (devreye alma bilgisi).
 

@@ -5,6 +5,10 @@
 > **Kullanım:** Onaylanan her bölüm hedef dosyaya **aynen** işlenir (§6 ve §7 tabloları). Ardından bu dosya `arsiv/`e gider.
 > **01.10.2026 — §2 (X-17) karara bağlandı:** KARARLAR **§5.19**'a revize hâliyle işlendi (iz olay kaydı, sahip FK `RESTRICT`, kural kodları, silme/geri alma hükmü). Bu belgedeki §2 ve ADR-007 taslağı **artık geçerli metin değildir**. X-16, X-15 §(5) eki ve ADR-006 öneri olarak kalır.
 > *Satır numaraları proje kopyalarına göredir; depoda kaymış olabilir.*
+> **13.10.2026 — kalan bölümler karara bağlandı, belge arşivlendi** (eski adı `docs/KARAR ONERISI.md`).
+> X-16 → KARARLAR **§5.20** · X-15 §(5) → KARARLAR **§5.18 (5)** 🟦 · ADR-006 → **`docs/adr/ADR-006-ice-aktarim-tek-tanim.md`** ·
+> geri not kuralı (§8) → `YOL_HARITASI.md` §7.1-G. **Bu belgedeki hiçbir metin artık geçerli değildir**; ADR-007 taslağı
+> yazılmadı (numara boş kalır). §10'daki kabul kriteri taslakları 1B madde 7'de kriter yazılırken **girdi** olarak okunur.
 
 ---
 
