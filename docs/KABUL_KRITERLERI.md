@@ -54,7 +54,12 @@
 | A-2-1 | | 1B-7 *(tutar hesabı 1B-5)* |
 | A-3-1 | | 1B-7 |
 | A-4-1 | | 1B-7 |
-| A-5-1 | | 1B-1 *(sayılan belgeler filtresi)* |
+| A-5-1 | `TEKLIF` aşamasındaki siparişin satırları sayılan sipariş ve sayılan sevk satırı kümesine girmez. | 1B-1 · `sayilan-belgeler.itest.ts` |
+| A-5-2 | `IPTAL` durumundaki sipariş sayılmaz (X-6 §(9), K-1). | 1B-1 · `sayilan-belgeler.itest.ts` |
+| A-5-3 | Bedelsiz satır (A-2) sayılan sevk satırı kümesine girmez. | 1B-1 · `sayilan-belgeler.itest.ts` |
+| A-5-4 | `ACILIS` ve `VADE_FARKI` cari hareketleri sayılan cari hareket kümesine girmez; bakiye hesabı bu filtreyi kullanmaz (A-6, A-7, X-11 §(6)). | 1B-1 · `sayilan-belgeler.itest.ts` |
+| A-5-5 | Konsinye çıkış, stok transferi ve stok düzeltmesinden doğan stok hareketi sayılan stok hareketi değildir (A-4, B-7). | 1B-1 · `sayilan-belgeler.itest.ts` |
+| A-5-6 | Ciro raporları sevk satırlarını yalnız bu filtreyle okur (K-4 §(2), X-1 §(5)); `TEKLIF`, iptal ve bedelsiz satır ciroya yansımaz. | 1B-1 · `reports-service.itest.ts` |
 | A-6-1 | | 1B-7 |
 | A-7-1 | | 1B-7 |
 | A-8-1 | | 1B-1 |

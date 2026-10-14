@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { prisma } from "@/lib/db";
 import { degistirDoktorSahibi } from "@/lib/sahiplik";
-import { getCiroTotal, getSellerReports } from "@/lib/reports-service";
+import { getCiroTotal, getDoctorReports, getSellerReports } from "@/lib/reports-service";
 import { referansVeri, yeniDoktorVerisi } from "../../test/integration/referans";
 
 // Satıcı raporundaki tahsilat satıcının sorumlu olduğu doktorların AKTİF tahsilatlarıdır
@@ -75,6 +75,7 @@ describe("ciro — matrah, sevk edilen mal (A-3 · Ü-3 C sınıfı)", () => {
         sellerId: ali.id,
         doctorId: d1.id,
         paymentTermDays: 30,
+        stage: "ONAYLI",
         items: {
           create: [
             { productId: urun.id, quantity: 10, listPrice: "100", unitPrice: "90", vatRate: "20" },
@@ -114,6 +115,40 @@ describe("ciro — matrah, sevk edilen mal (A-3 · Ü-3 C sınıfı)", () => {
     const [r] = await getSellerReports();
     expect(r.ciro.toFixed(2)).toBe("360.00");
     expect(r.ortalamaIskonto?.toFixed(2)).toBe("10.00");
+  });
+
+  it("TEKLIF ve iptal siparişin sevk satırı ciroya girmez — sayılan belgeler filtresi (A-5-6)", async () => {
+    const { kdv20 } = await referansVeri();
+    const ali = await satici("Ali", "ali@medikal.local");
+    const d1 = await doktor("Dr. A", ali.id);
+    const urun = await prisma.product.create({ data: { name: "Ü", code: "U1", taxRateId: kdv20.id } });
+
+    const sevkliSiparis = async (documentNo: string, stage: "TEKLIF" | "ONAYLI", status: "BEKLIYOR" | "IPTAL", unitPrice: string) => {
+      const o = await prisma.order.create({
+        data: {
+          documentNo,
+          sellerId: ali.id,
+          doctorId: d1.id,
+          paymentTermDays: 30,
+          stage,
+          status,
+          items: { create: [{ productId: urun.id, quantity: 1, listPrice: unitPrice, unitPrice, vatRate: "20" }] },
+        },
+        include: { items: true },
+      });
+      await prisma.shipment.create({
+        data: { documentNo: `SVK-${documentNo}`, orderId: o.id, items: { create: [{ orderItemId: o.items[0].id, quantity: 1 }] } },
+      });
+    };
+    await sevkliSiparis("SIP-A", "ONAYLI", "BEKLIYOR", "100");
+    await sevkliSiparis("SIP-B", "TEKLIF", "BEKLIYOR", "7000");
+    await sevkliSiparis("SIP-C", "ONAYLI", "IPTAL", "9000");
+
+    expect((await getCiroTotal()).toFixed(2)).toBe("100.00");
+    const [r] = await getSellerReports();
+    expect(r.ciro.toFixed(2)).toBe("100.00");
+    const [dr] = await getDoctorReports();
+    expect(dr.ciro.toFixed(2)).toBe("100.00");
   });
 
   it("sevkiyat yoksa ciro sıfırdır (R-11: CM → 1B arası sevkiyat satırı yazılmaz)", async () => {

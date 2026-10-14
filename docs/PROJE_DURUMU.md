@@ -117,6 +117,7 @@ kongre tabloları · e-belge ve kargo modül tabloları (KARARLAR §1.3 §(10): 
 - **Satır tutarı** tek fonksiyonda: `hesaplaSatirTutarlari()` — satır bazında yuvarlama, belge toplamı = Σ satır (C-6). KDV saklanmaz.
 - **Sahiplik** tek yazma noktasından: `degistirDoktorSahibi()` (X-17); BAYI satırında sahip boş — DB `CHECK`.
 - **Belge numarası** `uretBelgeNo()` ile, global tekil; eşzamanlılık testli. *X-2 kabul testi 1B madde 2.*
+- **Sayılan belgeler** tek filtreden (`sayilanBelgeler`, A-5 — 1B madde 1, 14.10.2026): `TEKLIF` ve `IPTAL` sipariş, bedelsiz satır, `ACILIS`/`VADE_FARKI` cari hareketi, konsinye/transfer/düzeltme stok hareketi sayılmaz. Ciro raporları (satıcı, doktor, toplam) bu filtreyle okur. *Dashboard'daki iş kuyruğu sayıları (bugünkü/bekleyen/hazırlanan sipariş) filtre dışıdır — operasyon sayımıdır, ciro değil.*
 - **Cari bakiye** saklanmaz, hesaplanır (RULE-08).
 - **Bir doktorun tek sahibi satıcı**; sahibi olmayan satıcı sipariş açamaz (RULE-02).
 - **Denetim izi** merkezî ve sanitize'lı (RULE-13).
@@ -128,12 +129,12 @@ kongre tabloları · e-belge ve kargo modül tabloları (KARARLAR §1.3 §(10): 
 
 - **Git:** `origin` = GitHub `MesTechSoftware/Medical-ERP`. `docs/` sürüm kontrolünde (C0). İş akışı: branch → PR → `main`.
 - **CI** (`.github/workflows/ci.yml`, push `main` + tüm PR'lar; PostgreSQL 17 servisi): `npm ci` → `prisma generate` → `migrate deploy` → **typecheck + lint + birim + entegrasyon + e2e**. Son koşu **yeşil** — `main` @ `2265b8d`, run `38340305135`.
-- **Test sayıları (13.10.2026 ölçümü):**
+- **Test sayıları (14.10.2026 ölçümü — birim ve entegrasyon; e2e 13.10):**
 
   | Şerit | Dosya | Test | Komut |
   |---|---|---|---|
   | Birim | 10 | **81** | `npm test` |
-  | Entegrasyon | 8 | **58** | `npm run test:integration` |
+  | Entegrasyon | 9 | **64** | `npm run test:integration` |
   | E2E | — | **32** | `npm run test:e2e` |
 
   Entegrasyon dosyaları: `db` · `collections` · `orders` · `reports-service` · `sahiplik` ·
@@ -163,7 +164,7 @@ Demo hesapları (yalnız `db:seed:demo`, üretime taşınmaz): `admin@medikal.lo
 ## Faz 1B'de gelecekler (henüz kodda yok)
 
 Sıra ve ayrıntı `FAZ1_UYGULAMA_KAPSAMI.md` §D.3'tedir. Özetle: tek çağrı noktası
-fonksiyonlarının tamamı ve sayılan belgeler filtresi · belge numarası kabul testi · sevkiyat
+fonksiyonlarının kalanı *(sayılan belgeler filtresi ✅ 14.10)* · belge numarası kabul testi · sevkiyat
 bazlı prim + üç rolün yetki matrisi · yeni oturum katmanı, hata/uyarı yüzeyi, taban etiketi,
 tevsik ve vade uyarıları · fiyat hesabının tamamlanması · dışa aktarım + fatura hazırlık
 çıktısı · stok düzeltme, iade/konsinye/transfer, kısmi sevkiyat, tek cari ekranı, fiyat listesi
