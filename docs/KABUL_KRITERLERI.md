@@ -128,6 +128,8 @@
 | X-13-1 | | 1B-3 |
 | X-14-1 | | 1B-3 · 1B-7 |
 | X-15-1 | | 1B-7 |
+| X-15-5-1 | | 1B-7 *(X-15 §(5) — telefon varsayımı)* |
+| X-16-1 | | 1B-7 *(taslaklar: `docs/arsiv/KARAR_ONERISI_2026-09-19.md` §10)* |
 | X-17-1 | | 1B-3 *(1A-CM: ilk sürüm, `CHECK` ve FK testli)* |
 
 ## Ü · Ürünleştirme kararları
