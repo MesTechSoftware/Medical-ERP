@@ -1,6 +1,7 @@
 import Decimal from "decimal.js";
 import { prisma } from "@/lib/db";
 import { hesaplaSatirTutarlari, type SatirGirdisi } from "@/lib/satir-tutarlari";
+import { sayilanBelgeler } from "@/lib/sayilan-belgeler";
 
 /**
  * Raporlar (FR-62, FR-63). Tahsilat oranı C4'te söküldü — kalıcı (X-1 §(1)).
@@ -8,8 +9,9 @@ import { hesaplaSatirTutarlari, type SatirGirdisi } from "@/lib/satir-tutarlari"
  * Ciro daima MATRAHTIR (KDV hariç) ve SEVK EDİLEN maldan doğar (A-3, Ü-3 §(5)):
  * sevkiyat satırı × sipariş satırının donmuş fiyatı, `hesaplaSatirTutarlari()` ile.
  * Tahsilat daima BRÜTTÜR (Ü-3 §(4)); veritabanında `SUM()` ile alınır.
- * Sayılan belgeler filtresi ve dönem 1B'dedir (X-1). `CM` → 1B arası sevkiyat
- * satırını yazan akış yoktur; ciro boş görünür (FAZ1 R-11).
+ * Sevk satırları yalnız sayılan belgeler filtresiyle okunur (A-5, X-1 §(5)); dönem
+ * parametresi 1B madde 3'tedir (X-1). `CM` → 1B madde 7 arası sevkiyat satırını
+ * yazan akış yoktur; ciro boş görünür (FAZ1 R-11).
  */
 
 const SEVK_SATIRI = {
@@ -52,7 +54,7 @@ export async function getSellerReports(): Promise<SellerReport[]> {
     sellers.map(async (s) => {
       const [sevk, collected, doktorSayisi] = await Promise.all([
         prisma.shipmentItem.findMany({
-          where: { shipment: { order: { sellerId: s.id } } },
+          where: { AND: [sayilanBelgeler.sevkSatiri, { shipment: { order: { sellerId: s.id } } }] },
           select: SEVK_SATIRI,
         }),
         // Tahsilat siparişe eşlenmez (X-6); satıcıya doktorun sorumlusu
@@ -85,17 +87,24 @@ export type DoctorReport = {
 };
 
 export async function getDoctorReports(limit = 50): Promise<DoctorReport[]> {
-  const doctors = await prisma.doctor.findMany({
-    select: {
-      id: true,
-      fullName: true,
-      ownerSeller: { select: { name: true } },
-      orders: { select: { shipments: { select: { items: { select: SEVK_SATIRI } } } } },
-    },
-  });
+  const [doctors, sevk] = await Promise.all([
+    prisma.doctor.findMany({
+      select: { id: true, fullName: true, ownerSeller: { select: { name: true } } },
+    }),
+    prisma.shipmentItem.findMany({
+      where: sayilanBelgeler.sevkSatiri,
+      select: { ...SEVK_SATIRI, shipment: { select: { order: { select: { doctorId: true } } } } },
+    }),
+  ]);
+
+  const doktorSatirlari = new Map<string, SevkSatiri[]>();
+  for (const s of sevk) {
+    const id = s.shipment.order.doctorId;
+    doktorSatirlari.set(id, [...(doktorSatirlari.get(id) ?? []), s]);
+  }
 
   const rows = doctors.map((d) => {
-    const satirlar = d.orders.flatMap((o) => o.shipments.flatMap((sh) => sh.items));
+    const satirlar = doktorSatirlari.get(d.id) ?? [];
     return {
       doctorId: d.id,
       fullName: d.fullName,
@@ -110,6 +119,6 @@ export async function getDoctorReports(limit = 50): Promise<DoctorReport[]> {
 
 /** Toplam ciro — matrah, sevk edilen mal (A-3, Ü-3 C sınıfı). */
 export async function getCiroTotal(): Promise<Decimal> {
-  const sevk = await prisma.shipmentItem.findMany({ select: SEVK_SATIRI });
+  const sevk = await prisma.shipmentItem.findMany({ where: sayilanBelgeler.sevkSatiri, select: SEVK_SATIRI });
   return hesaplaSatirTutarlari(sevk.map(girdi)).toplam.matrah;
 }
