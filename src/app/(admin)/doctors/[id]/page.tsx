@@ -6,7 +6,7 @@ import { formatla } from "@/lib/money";
 import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
 import { formatDate } from "@/lib/format";
 import { formatPhone } from "@/lib/phone";
-import { getDoctorCari } from "@/lib/doctor-cari";
+import { hesaplaDoktorBakiye } from "@/lib/doctor-cari";
 import {
   PageHeader,
   Card,
@@ -14,6 +14,12 @@ import {
   StatusBadge,
   EmptyRow,
 } from "@/components/ui";
+
+const BAKIYE_ETIKETI = {
+  BORC: "Doktor borçlu",
+  ALACAK: "Doktor alacaklı (avans)",
+  KAPALI: "Bakiye kapalı",
+} as const;
 
 /**
  * FR-10: Doktor detayı — cari bakiye, sipariş ve tahsilat geçmişi.
@@ -35,7 +41,7 @@ export default async function DoctorDetailPage({
   if (!doctor) notFound();
 
   const [cari, orders, payments] = await Promise.all([
-    getDoctorCari(id),
+    hesaplaDoktorBakiye(id),
     prisma.order.findMany({
       where: { doctorId: id },
       orderBy: { orderDate: "desc" },
@@ -71,11 +77,12 @@ export default async function DoctorDetailPage({
         {/* Cari hareketten okunur (X-11); CM → 1B arası boş görünür (FAZ1 R-11). */}
         <StatCard label="Toplam Borç" value={formatla(cari.toplamBorc)} />
         <StatCard label="Toplam Alacak" value={formatla(cari.toplamAlacak)} />
+        {/* K-2: çıplak negatif gösterilmez; tutar mutlak değer, yön etikette. */}
         <StatCard
           label="Cari Bakiye"
-          value={formatla(cari.bakiye)}
-          tone={cari.bakiye.gt(0) ? "danger" : "success"}
-          hint={cari.bakiye.gt(0) ? "Şirkete borçlu" : "Bakiye kapalı"}
+          value={formatla(cari.bakiye.abs())}
+          tone={cari.yon === "BORC" ? "danger" : "success"}
+          hint={BAKIYE_ETIKETI[cari.yon]}
         />
       </div>
 

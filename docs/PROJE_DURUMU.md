@@ -118,7 +118,7 @@ kongre tabloları · e-belge ve kargo modül tabloları (KARARLAR §1.3 §(10): 
 - **Sahiplik** tek yazma noktasından: `degistirDoktorSahibi()` (X-17); BAYI satırında sahip boş — DB `CHECK`.
 - **Belge numarası** `uretBelgeNo()` ile, global tekil; eşzamanlılık testli. *X-2 kabul testi 1B madde 2.*
 - **Sayılan belgeler** tek filtreden (`sayilanBelgeler`, A-5 — 1B madde 1, 14.10.2026): `TEKLIF` ve `IPTAL` sipariş, bedelsiz satır, `ACILIS`/`VADE_FARKI` cari hareketi, konsinye/transfer/düzeltme stok hareketi sayılmaz. Ciro raporları (satıcı, doktor, toplam) bu filtreyle okur. *Dashboard'daki iş kuyruğu sayıları (bugünkü/bekleyen/hazırlanan sipariş) filtre dışıdır — operasyon sayımıdır, ciro değil.*
-- **Cari bakiye** saklanmaz, hesaplanır (RULE-08).
+- **Cari bakiye** saklanmaz, hesaplanır (RULE-08): tek `hesaplaDoktorBakiye(doktor, tarih?)` (K-2 — 1B madde 1, 14.10.2026). Bütün hareket tipleri girer; doktor detayında tutar mutlak değer + yön etiketiyle gösterilir (avans çıplak negatif değil). `LedgerEntry` toplamını başka dosyanın alması birim testte kırmızıdır.
 - **Bir doktorun tek sahibi satıcı**; sahibi olmayan satıcı sipariş açamaz (RULE-02).
 - **Denetim izi** merkezî ve sanitize'lı (RULE-13).
 - **Giriş deneme sınırı** bellek içi sayaç — eşikler `policy.auth` (ADR-004, X-9).
@@ -133,8 +133,8 @@ kongre tabloları · e-belge ve kargo modül tabloları (KARARLAR §1.3 §(10): 
 
   | Şerit | Dosya | Test | Komut |
   |---|---|---|---|
-  | Birim | 10 | **81** | `npm test` |
-  | Entegrasyon | 9 | **64** | `npm run test:integration` |
+  | Birim | 11 | **82** | `npm test` |
+  | Entegrasyon | 10 | **71** | `npm run test:integration` |
   | E2E | — | **32** | `npm run test:e2e` |
 
   Entegrasyon dosyaları: `db` · `collections` · `orders` · `reports-service` · `sahiplik` ·

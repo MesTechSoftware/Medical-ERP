@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AUDIT_ACTIONS } from "@/lib/audit";
 import { prisma } from "@/lib/db";
-import { getDoctorCari } from "@/lib/doctor-cari";
+import { hesaplaDoktorBakiye } from "@/lib/doctor-cari";
 import { takvimYili } from "@/lib/zaman";
 import { referansVeri, yeniDoktorVerisi } from "../../../../test/integration/referans";
 
@@ -133,14 +133,14 @@ describe("cari bakiye — cari hareketin toplamı (X-11 §(6), RULE-08)", () => 
   });
 
   it("hareket yoksa bakiye sıfırdır", async () => {
-    const cari = await getDoctorCari(s.doctor.id);
+    const cari = await hesaplaDoktorBakiye(s.doctor.id);
     expect(cari.bakiye.toFixed(2)).toBe("0.00");
   });
 
   it("bakiye = Σ borç − Σ alacak; veritabanında toplanır", async () => {
     await hareket("BORC", "11000.00", "SEVKIYAT");
     await hareket("ALACAK", "5000.50", "TAHSILAT");
-    const cari = await getDoctorCari(s.doctor.id);
+    const cari = await hesaplaDoktorBakiye(s.doctor.id);
     expect(cari.toplamBorc.toFixed(2)).toBe("11000.00");
     expect(cari.toplamAlacak.toFixed(2)).toBe("5000.50");
     expect(cari.bakiye.toFixed(2)).toBe("5999.50");
@@ -149,7 +149,7 @@ describe("cari bakiye — cari hareketin toplamı (X-11 §(6), RULE-08)", () => 
   it("borçtan büyük alacak bakiyeyi eksiye çevirir (K-2: avans ayrı tutulmaz)", async () => {
     await hareket("BORC", "11000", "SEVKIYAT");
     await hareket("ALACAK", "12000", "TAHSILAT");
-    expect((await getDoctorCari(s.doctor.id)).bakiye.toFixed(2)).toBe("-1000.00");
+    expect((await hesaplaDoktorBakiye(s.doctor.id)).bakiye.toFixed(2)).toBe("-1000.00");
   });
 
   it("başka doktorun hareketi sayılmaz", async () => {
@@ -157,7 +157,7 @@ describe("cari bakiye — cari hareketin toplamı (X-11 §(6), RULE-08)", () => 
     await prisma.ledgerEntry.create({
       data: { doctorId: diger.id, type: "ACILIS", direction: "BORC", amount: "999", documentNo: "ACL", createdById: s.admin.id },
     });
-    expect((await getDoctorCari(s.doctor.id)).bakiye.toFixed(2)).toBe("0.00");
+    expect((await hesaplaDoktorBakiye(s.doctor.id)).bakiye.toFixed(2)).toBe("0.00");
   });
 });
 
