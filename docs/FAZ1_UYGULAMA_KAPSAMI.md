@@ -226,7 +226,7 @@ Bayi için **ayrı fonksiyon yazılmaz** (X-8 §(2)). Liste **12'de kapalıdır*
 | 3 | `hesaplaDoktorRisk()` | A-12 | 1B madde 1 · ✅ *(16.10.2026)* `src/lib/doctor-cari.ts` — bakiye + sayılan siparişlerin sevk edilmemiş brüt tutarı; `limitAsildi` (bilgi kademesi). Limit değişikliği logu cari formunun işidir (1B madde 7) |
 | 4 | `hesaplaStok(urun, konum?, tarih?)` | B-4 · K-10 · C-2 · `docs/adr/ADR-005` | **ilk sürüm `CM`** — saklı stok kalkar (§D.1 not 3-c) · kilit biçimi ve `NEGATIF_STOK` izi **1B madde 1** · ✅ *(16.10.2026)* `src/lib/stok.ts` — tek yazım yolu `stokHareketiYaz()`; kilit **ürün satırı** (`SELECT … ORDER BY id FOR UPDATE`, ADR-005 açık kalemi), siparişte `uretBelgeNo()`'dan önce (ADR-008); `NEGATIF_STOK` kalemi döner, `OnayBlogu` kaydı #6 |
 | 5 | `cozumleBirimFiyat()` | B-5 · B-6 · **X-10** | **ilk sürüm `CM`** (liste seçimi) · tamamı **1B madde 5** (barem, tarih, X-4 `SERT`) — §D.1 not 3 |
-| 6 | `acikBlokVarMi()` / `blokKontrolleriniCalistir()` | A-8 | 1B madde 1 |
+| 6 | `acikBlokVarMi()` / `blokKontrolleriniCalistir()` | A-8 | 1B madde 1 · ✅ *(16.10.2026)* `src/lib/onay-blogu.ts` — her kural için son blok belirler (A-8 eki 16.10); gerekçesiz → `ONAY_GEREKLI`, `YONETICI` bloğu aynı işlemde `ONAY`'lar, diğer roller onaya gönderir. **Akışlara bağlanması** (sipariş gerekçe diyaloğu, sevkiyatta `acikBlokVarMi`) X-4 yüzeyiyle **1B madde 4/7**; karar ekranı (*Onay bekleyenler*) **1B madde 7** |
 | 7 | `calistirDisaAktarim(kod, parametreler)` | K-4 · D-5 | 1B madde 6 |
 | 8 | `hesaplaSatirTutarlari()` | C-6 · X-5 | **ilk sürüm `CM`** — saklı toplamlar kalkar (GÇ-18); lint istisnası da bu fonksiyonu arar · tamamı **1B madde 5** |
 | 9 | `uretBelgeNo(onek, tx)` | A-14 | 1B madde 2 |

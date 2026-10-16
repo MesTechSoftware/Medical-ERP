@@ -40,3 +40,10 @@ describe("tek çağrı noktası — stok yazımı ve kilit (B-4-2)", () => {
     expect(ihlaller(/FOR\s+UPDATE/i, join("lib", "stok.ts"))).toEqual([]);
   });
 });
+
+describe("tek çağrı noktası — onay bloğu (A-8-6)", () => {
+  it("OnayBlogu yalnız onay-blogu.ts'de yazılır", () => {
+    const desen = /approvalBlock\.(create|createMany|upsert|update|updateMany|delete|deleteMany)\s*\(|INSERT\s+INTO\s+"ApprovalBlock"/;
+    expect(ihlaller(desen, join("lib", "onay-blogu.ts"))).toEqual([]);
+  });
+});
