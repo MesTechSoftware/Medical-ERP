@@ -29,3 +29,14 @@ describe("tek çağrı noktası — cari bakiye (K-2-4)", () => {
     expect(ihlaller(desen, join("lib", "doctor-cari.ts"))).toEqual([]);
   });
 });
+
+describe("tek çağrı noktası — stok yazımı ve kilit (B-4-2)", () => {
+  it("stok hareketi yalnız stok.ts'de yazılır", () => {
+    const desen = /stockMovement\.(create|createMany|upsert|update|updateMany)\s*\(|INSERT\s+INTO\s+"StockMovement"/;
+    expect(ihlaller(desen, join("lib", "stok.ts"))).toEqual([]);
+  });
+
+  it("FOR UPDATE yalnız stok.ts'de geçer (ADR-008 §(6))", () => {
+    expect(ihlaller(/FOR\s+UPDATE/i, join("lib", "stok.ts"))).toEqual([]);
+  });
+});

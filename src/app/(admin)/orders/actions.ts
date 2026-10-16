@@ -6,7 +6,7 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { OrderStatus } from "@/generated/prisma/enums";
-import { varsayilanDepoId } from "@/lib/stok";
+import { stokHareketiYaz, varsayilanDepoId } from "@/lib/stok";
 
 function revalidateOrders() {
   revalidatePath("/orders");
@@ -82,18 +82,17 @@ export async function cancelOrder(id: string) {
   await prisma.$transaction(async (tx) => {
     // Stok iadesi = GIRIS hareketleri (stok miktarı saklanmaz — ADR-005).
     const locationId = await varsayilanDepoId(tx);
-    for (const item of order.items) {
-      await tx.stockMovement.create({
-        data: {
-          productId: item.productId,
-          locationId,
-          type: "GIRIS",
-          quantity: item.quantity,
-          note: "Sipariş iptali - stok iadesi",
-          orderId: order.id,
-        },
-      });
-    }
+    await stokHareketiYaz(
+      tx,
+      order.items.map((item) => ({
+        productId: item.productId,
+        locationId,
+        type: "GIRIS" as const,
+        quantity: item.quantity,
+        note: "Sipariş iptali - stok iadesi",
+        orderId: order.id,
+      }))
+    );
     await tx.order.update({
       where: { id },
       data: { status: OrderStatus.IPTAL },

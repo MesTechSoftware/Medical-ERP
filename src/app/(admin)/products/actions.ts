@@ -7,7 +7,7 @@ import { requireAdmin } from "@/lib/session";
 import { priceSchema } from "@/lib/validation";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { policy } from "@/lib/policy";
-import { varsayilanDepoId } from "@/lib/stok";
+import { stokHareketiYaz, varsayilanDepoId } from "@/lib/stok";
 import { EntityStatus } from "@/generated/prisma/enums";
 import type { Prisma } from "@/generated/prisma/client";
 import type Decimal from "decimal.js";
@@ -76,15 +76,15 @@ export async function createProduct(
       await varsayilanListeFiyatiYaz(tx, p.id, parsed.listPrice);
       // Başlangıç stoğu varsa hareket kaydı oluştur (stok miktarı saklanmaz — ADR-005).
       if (initialStock > 0) {
-        await tx.stockMovement.create({
-          data: {
+        await stokHareketiYaz(tx, [
+          {
             productId: p.id,
             locationId: await varsayilanDepoId(tx),
             type: "GIRIS",
             quantity: initialStock,
             note: "Başlangıç stok girişi",
           },
-        });
+        ]);
       }
       return p;
     });

@@ -9,7 +9,7 @@ import { priceSchema, quantitySchema } from "@/lib/validation";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { cozumleBirimFiyat } from "@/lib/fiyat";
 import { uretBelgeNo } from "@/lib/belge-no";
-import { varsayilanDepoId } from "@/lib/stok";
+import { stokHareketiYaz, stokKilitle, varsayilanDepoId } from "@/lib/stok";
 import { canSellerOrderForDoctor } from "@/lib/doctor";
 import { policy } from "@/lib/policy";
 
@@ -64,6 +64,8 @@ export async function createOrder(
   let created: { id: string; documentNo: string };
   try {
     created = await prisma.$transaction(async (tx) => {
+      // Kilit sırası: ürün satırları → belge sayacı (ADR-008 §(1)).
+      await stokKilitle(tx, lines.map((l) => l.productId));
       const items = [];
       for (const line of lines) {
         const product = await tx.product.findUnique({
@@ -82,7 +84,6 @@ export async function createOrder(
 
         // RULE-03 taban fiyat reddi C6'da söküldü: iskonto tavanı yok, liste üstü
         // satış serbest (GÇ-8, A-10 · Ü-3 §(10)). Taban etiketi 1B'de gelir.
-        // Negatif stok engellenmez (B-4, GÇ-17); izi 1B madde 1/7'de gelir (R-10).
 
         // Fiyat ve oran sipariş anında DONDURULUR (RULE-04, C-6 §(2-a)).
         items.push({
@@ -111,19 +112,20 @@ export async function createOrder(
 
       // Stok bugün sipariş anında düşer; sevkiyata taşınması 1B madde 7'dir (A-3).
       // Hareketin kaynağı sipariştir (B-7: her hareket bir belgeden doğar).
+      // Negatif stok engellenmez (B-4); NEGATIF_STOK kalemleri OnayBlogu'na
+      // `blokKontrolleriniCalistir()` ile bağlanır (A-8, 1B madde 1 #6).
       const locationId = await varsayilanDepoId(tx);
-      for (const item of items) {
-        await tx.stockMovement.create({
-          data: {
-            productId: item.productId,
-            locationId,
-            type: "CIKIS",
-            quantity: item.quantity,
-            note: "Sipariş çıkışı",
-            orderId: order.id,
-          },
-        });
-      }
+      await stokHareketiYaz(
+        tx,
+        items.map((item) => ({
+          productId: item.productId,
+          locationId,
+          type: "CIKIS" as const,
+          quantity: item.quantity,
+          note: "Sipariş çıkışı",
+          orderId: order.id,
+        }))
+      );
 
       return { id: order.id, documentNo };
     });

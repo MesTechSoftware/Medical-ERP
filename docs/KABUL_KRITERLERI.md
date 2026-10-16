@@ -84,7 +84,10 @@
 | B-1-1 | | 1A-C8 *(kapsam dışı — lot/SKT alanı yok)* |
 | B-2-1 | | 1A-C8 *(kapsam dışı)* |
 | B-3-1 | | 1A-C8 *(barkod alanı ve tablosu yok)* |
-| B-4-1 | | 1B-1 *(1A-CM: `hesaplaStok` ilk sürümü testli)* |
+| B-4-1 | `hesaplaStok(urun, konum?, tarih?)` = Σ giriş − Σ çıkış hareketi; `konum` verilirse yalnız o konum, `tarih` verilirse o günün İstanbul günü sonu itibarıyla (C-2 §(3), E-1 §(5)). | 1B-1 *(1A-CM: ilk sürüm)* · `kisitlar.itest.ts` |
+| B-4-2 | Stok hareketi yalnız `stokHareketiYaz()` ile yazılır. Fonksiyon önce hareketin ürün satırlarını **id sırasıyla** kilitler, sonra stoğu okur ve yazar (ADR-005 §3, ADR-008 §(1)/(3)). Belge numarası alan akışta ürün kilidi `uretBelgeNo()`'dan önce alınır (ADR-008 §(1)). `FOR UPDATE` ve stok hareketi yazımı başka dosyada yoktur (ADR-008 §(6)). | 1B-1 · `tek-cagri.test.ts` · `stok.itest.ts` |
+| B-4-3 | Negatife düşüş engellenmez: hareket yazılır. Yazımdan sonra stoğu sıfırın altında kalan ve o yazımda **çıkış alan** her ürün × konum `NEGATIF_STOK` kalemi olarak döner (önceki ve sonraki miktarla). Giriş alan ya da sıfırda kalan konum kalem değildir. | 1B-1 · `stok.itest.ts` |
+| B-4-4 | Aynı ürüne eşzamanlı iki çıkış aynı ön stoğu göremez: ikinci yazım birincinin commit'ini bekler ve onun sonucunu okur (ADR-008 §(6), F-06). | 1B-1 · `stok.itest.ts` |
 | B-5-1 | | 1B-5 *(1A-CM: tarih çakışması `EXCLUDE` testli)* |
 | B-6-1 | | 1B-5 |
 | B-7-1 | | 1B-7 |
