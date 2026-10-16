@@ -30,6 +30,7 @@
 |---|---|---|
 | §0.2-1 | | 1B-7 *(kayıt silinmez, düzeltme ters kayıttır)* |
 | §0.3-1 | | 1B-4 *(sert / yumuşak / bilgi kademesi — X-4 ile)* |
+| §1.3-1 | Modülün açık/kapalı durumu yalnız `modulAcikMi(kod)` ile okunur; kod kataloğu `policy.modules` anahtarlarıdır. `policy.modules`'u başka dosya okumaz, modül durumu `process.env`'den okunmaz (§1.3 §(4), K-9). | 1B-1 · `modul.test.ts` · `tek-cagri.test.ts` |
 
 ## K · Kurumsal ve ticari
 
@@ -43,7 +44,7 @@
 | K-3-1 | — | konusuz (A-8) |
 | K-4-1 | | 1B-6 |
 | K-5-1 | | 1A-C8 *(izlenebilirlik alanı yok)* |
-| K-6-1 | | 1B-1 *(`modules.congress = false`)* |
+| K-6-1 | Kongre modülü kapalı teslim edilir: `modulAcikMi("congress")` `false` döner (`policy.modules.congress`). | 1B-1 · `modul.test.ts` |
 | K-7-1 | | 1B-7 *(D-6)* · süreç *(yazılı teyit)* |
 | K-8-1 | — | süreç |
 | K-9-1 | | Faz 2–3 *(yedek, restore tatbikatı)* |

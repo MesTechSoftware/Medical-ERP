@@ -230,7 +230,7 @@ Bayi için **ayrı fonksiyon yazılmaz** (X-8 §(2)). Liste **12'de kapalıdır*
 | 7 | `calistirDisaAktarim(kod, parametreler)` | K-4 · D-5 | 1B madde 6 |
 | 8 | `hesaplaSatirTutarlari()` | C-6 · X-5 | **ilk sürüm `CM`** — saklı toplamlar kalkar (GÇ-18); lint istisnası da bu fonksiyonu arar · tamamı **1B madde 5** |
 | 9 | `uretBelgeNo(onek, tx)` | A-14 | 1B madde 2 |
-| 10 | `modulAcikMi(kod)` | K-9 · §1.3 | 1B madde 1 |
+| 10 | `modulAcikMi(kod)` | K-9 · §1.3 | 1B madde 1 · ✅ *(16.10.2026)* `src/lib/modul.ts` — `policy.modules`'tan okur; başka dosya okumaz. Kongre kodu C2'de söküldüğü için bugün çağıranı yok |
 | 11 | `kapsamliDoktorlariGetir(kullanici)` | D-2 · **X-13** §(1) (`SATICI`'ya yalnız kendi `DOKTOR` carileri) | 1B madde 3 (X-1 + D-2 tek commit) |
 | 12 | `degistirDoktorSahibi(doktorlar, yeniSahip \| null, gerekce, tx)` | **X-17** (01.10.2026) | **ilk sürüm `CM`** (şema değişikliğiyle bugünkü `createDoctor`/`transferDoctor` yazımları buraya taşınır) · tamamı **1B madde 3** |
 
@@ -657,7 +657,7 @@ parametrelerini taşır. Koşullu `updateMany` kolonla birlikte gider; bu yüzde
 
 ### §D.3 · Faz 1B — yeniden inşa *(sıra korunuyor)*
 
-1. **Tek çağrı noktası fonksiyonları** — **sayılan belgeler filtresi önce** *(altı dışlama)*
+1. **Tek çağrı noktası fonksiyonları** — **sayılan belgeler filtresi önce** *(altı dışlama)* · ✅ *(16.10.2026 — §B.6 #1 · #2 · #3 · #4 · #6 · #10; PR #19–#23 + #10)*
 2. **A-14 `uretBelgeNo()` + `BelgeSayac`** → ardından **X-2 blocker** *(sırası zorunlu. X-2 artık kod düzeltmesi değil **bütün tahsilat yollarının** — `BAYI` dahil — kabul testidir: ödeme kaydı ve `uretBelgeNo()` aynı transaction'da; KARARLAR X-8 §(7))*
 3. **X-1 + D-2 tek commit** *(D-2 §(4): ayrı yapılırsa ikincisi birincisini bozar)* —
    **`OPERASYON` ekran matrisi burada doğar** (§C-n) · **`BAYI` açma yetkisi de bu matriste yazılır** (X-8 §(5)); `SATICI` `BAYI` göremez ve açamaz (X-8 §(3))
