@@ -9,7 +9,7 @@ import { referansVeri, yeniDoktorVerisi } from "../../../../test/integration/ref
 // Tahsilatın DAYANIKLI davranışı (RULE-12'den Faz 1'de kalan: tahsilat kaydı + cari hareket).
 // Kongre defteri (GÇ-4), mahsup (GÇ-3) ve prim dönemi (GÇ-16) tabloları CM'de şemadan
 // çıktı — "onlara yazmaz" testleri yerini şemaya ve C8 anti-şema testine bıraktı.
-// Tahsilatın cari hareketi 1B madde 2'de yazılır (X-11 §(5)); CM → 1B arası yazılmaz (R-11).
+// Tahsilatın cari hareketi 1B madde 7'de yazılır (X-11 §(5), A-11); o zamana kadar yazılmaz (R-11).
 const h = vi.hoisted(() => ({ adminId: "" }));
 
 vi.mock("@/lib/session", () => ({
@@ -41,6 +41,34 @@ function tahsilatFormu(doctorId: string, paymentMethodId: string, amount = "5000
   fd.set("referenceNo", "DEKONT-001");
   return fd;
 }
+
+describe("tahsilat — numara ve kayıt aynı transaction'da (X-2-1)", () => {
+  let s: Awaited<ReturnType<typeof seed>>;
+
+  beforeEach(async () => {
+    s = await seed();
+  });
+
+  it("tahsilat yazılamazsa THS numarası harcanmaz", async () => {
+    // Numara alındıktan sonra kayıt yabancı anahtarda düşer: olmayan cari.
+    const hatali = await recordCollection({}, tahsilatFormu("olmayan-cari", s.havale.id));
+    expect(hatali.error).toBeDefined();
+    expect(await prisma.doctorPayment.count()).toBe(0);
+
+    expect((await recordCollection({}, tahsilatFormu(s.doctor.id, s.havale.id))).error).toBeUndefined();
+    const [p] = await prisma.doctorPayment.findMany();
+    expect(p.documentNo).toBe(`THS-${takvimYili()}-000001`);
+  });
+
+  it("BAYI carisinin tahsilatı aynı yoldan numaralanır (X-8 §(7))", async () => {
+    const bayi = await prisma.doctor.create({ data: { ...yeniDoktorVerisi("Bayi A.Ş."), accountClass: "BAYI" } });
+    await recordCollection({}, tahsilatFormu(s.doctor.id, s.havale.id));
+    expect((await recordCollection({}, tahsilatFormu(bayi.id, s.havale.id))).error).toBeUndefined();
+
+    const p = await prisma.doctorPayment.findFirstOrThrow({ where: { doctorId: bayi.id } });
+    expect(p.documentNo).toBe(`THS-${takvimYili()}-000002`);
+  });
+});
 
 describe("tahsilat — dayanıklı davranış", () => {
   let s: Awaited<ReturnType<typeof seed>>;
