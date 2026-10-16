@@ -19,8 +19,9 @@ export type CollectionState = { error?: string; ok?: string };
  * C3'te söküldü (GÇ-3, X-6), kongre kazanımı C2'de (GÇ-4).
  *
  * Ödeme yöntemi tanım tablosudur; komisyon oranı kayda kopyalanır ve donar (A-11).
- * Cari hareket (`TAHSILAT`) aynı transaction'da yazılır — 1B madde 2 (X-11 §(5), X-2);
- * `CM` → 1B arası yazılmaz (FAZ1 R-11).
+ * Cari hareket (`TAHSILAT`) aynı transaction'da yazılır (X-11 §(5)) — tahsilat belge akışıyla
+ * 1B madde 7'de (A-11, FAZ1 R-11); o zamana kadar yazılmaz. Numara ve kayıt aynı
+ * transaction'dadır (X-2, 1B madde 2).
  */
 export async function recordCollection(
   _prev: CollectionState,

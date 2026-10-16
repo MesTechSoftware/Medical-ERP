@@ -53,3 +53,18 @@ describe("tek çağrı noktası — modül durumu (§1.3-1)", () => {
     expect(ihlaller(/\bmodules\s*[.[]/, join("lib", "modul.ts"))).toEqual([]);
   });
 });
+
+describe("tek çağrı noktası — belge numarası (A-14-5, X-2-1)", () => {
+  it("sayaç tablosuna yalnız belge-no.ts dokunur", () => {
+    expect(ihlaller(/documentCounter\.|"DocumentCounter"/, join("lib", "belge-no.ts"))).toEqual([]);
+  });
+
+  it("kaynakta elle kurulmuş belge numarası yoktur", () => {
+    expect(ihlaller(/["'`](SIP|SVK|IAD|KNS|TRF|THS|ACL|VDF|DZL)-/, join("lib", "belge-no.ts"))).toEqual([]);
+  });
+
+  it("tahsilat kaydı yalnız tahsilat akışında yazılır", () => {
+    const desen = /doctorPayment\.(create|createMany|upsert)\s*\(|INSERT\s+INTO\s+"DoctorPayment"/;
+    expect(ihlaller(desen, join("app", "(admin)", "collections", "actions.ts"))).toEqual([]);
+  });
+});

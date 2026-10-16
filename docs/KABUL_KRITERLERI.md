@@ -80,7 +80,11 @@
 | A-12-3 | Risk tabanı brüttür: açık satır tutarı `hesaplaSatirTutarlari()` toplamıdır (KDV dahil, satır bazında yuvarlanmış — C-6 §(5)). Bedelsiz satır riske girmez (A-2). | 1B-1 · `risk.itest.ts` |
 | A-12-4 | `kredi_limiti` boşsa doktor limitsizdir, aşım yoktur. Limit doluysa risk limitten **büyükse** aşım vardır; eşitlik aşım değildir. Fonksiyon işlemi durdurmaz — aşım bilgi kademesidir (§0.3). | 1B-1 · `risk.itest.ts` |
 | A-13-1 | | 1B-7 |
-| A-14-1 | | 1B-2 *(1A-CM: `uretBelgeNo` testli)* |
+| A-14-1 | `uretBelgeNo(onek, tx)` `{ÖNEK}-{YIL}-{SIRA}` biçiminde, sırası 6 hane sıfır dolgulu numara üretir; her önek ayrı sayılır (A-14 §(1)/(2)). | 1B-2 *(1A-CM)* · `kisitlar.itest.ts` |
+| A-14-2 | Eşzamanlı transaction'lar aynı numarayı alamaz; numara sayaç satırının kilidi altında alınır (A-14 §(3)). | 1B-2 *(1A-CM)* · `kisitlar.itest.ts` |
+| A-14-3 | Numara belgeyi yazan transaction'ın içinde alınır: transaction geri alınırsa sayaç ilerlemez, boşluk oluşmaz (A-14 §(3)). `uretBelgeNo` transaction istemcisi olmadan çağrılamaz (tip). | 1B-2 *(1A-CM)* · `kisitlar.itest.ts` |
+| A-14-4 | Yıl, kayıt anının **İstanbul** takvim yılıdır ve her yıl sayaç 1'den başlar: 31 Aralık 23:59 (İstanbul) eski yılın, 1 Ocak 00:01 yeni yılın serisinden numara alır (A-14 §(5), E-1 §(3)). | 1B-2 · `belge-no.itest.ts` |
+| A-14-5 | Sayaç tablosuna yalnız `src/lib/belge-no.ts` dokunur; kaynakta elle kurulmuş belge numarası (`"SIP-…"` gibi önekli metin) yoktur — `MAX(belge_no)+1` dahil başka üretim yolu yoktur (A-14 §(3)/(4)). | 1B-2 · `tek-cagri.test.ts` |
 | A-15-1 | | 1B-4 |
 
 ## B · Ürün ve stok
@@ -134,7 +138,7 @@
 | Kod | Kriter | Yazılacağı yer |
 |---|---|---|
 | X-1-1 | | 1B-3 |
-| X-2-1 | | 1B-2 |
+| X-2-1 | Tahsilat kaydı ve `THS` numarası aynı transaction'dadır: tahsilat yazılamazsa numara harcanmaz, sonraki tahsilat aynı numarayı alır. `BAYI` carisinin tahsilatı aynı yoldan numaralanır (X-8 §(7)). Tahsilat kaydını yazan tek yer `recordCollection`'dır — ikinci tahsilat yolu yoktur. | 1B-2 · `collections.itest.ts` · `tek-cagri.test.ts` |
 | X-3-1 | | 1B-4 |
 | X-4-1 | | 1B-4 |
 | X-5-1 | | 1B-5 *(1A-CM: `Decimal`, `formatla`, lint kuralı)* |
