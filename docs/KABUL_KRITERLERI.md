@@ -65,7 +65,12 @@
 | A-5-6 | Ciro raporları sevk satırlarını yalnız bu filtreyle okur (K-4 §(2), X-1 §(5)); `TEKLIF`, iptal ve bedelsiz satır ciroya yansımaz. | 1B-1 · `reports-service.itest.ts` |
 | A-6-1 | | 1B-7 |
 | A-7-1 | | 1B-7 |
-| A-8-1 | | 1B-1 |
+| A-8-1 | `acikBlokVarMi(belgeTipi, belgeId)` her kural kodu için belgenin **son** bloğuna bakar: kararı verilmemiş ya da `RED` ise `true` döner; blok yoksa ya da her kuralın son bloğu `ONAY`'lıysa `false`. Kurallar ayrı değerlendirilir; başka belgenin bloğu sonucu etkilemez. | 1B-1 · `onay-blogu.itest.ts` |
+| A-8-2 | `blokKontrolleriniCalistir()` ihlal yoksa `BASARILI` döner ve blok yazmaz. | 1B-1 · `onay-blogu.itest.ts` |
+| A-8-3 | İhlal varsa ve gerekçe boşsa (yalnız boşluk dahil) `ONAY_GEREKLI` · `YUMUSAK` döner, **bütün** ihlaller sonuçtadır (X-4 §(7)); blok yazılmaz. | 1B-1 · `onay-blogu.itest.ts` |
+| A-8-4 | Gerekçe varsa ve kullanıcı `YONETICI` değilse kural kodu başına bir açık blok yazılır (açan + gerekçe); sonuç `BASARILI_UYARILI`, `onayaGonderildi = true`. Aynı belge ve kural için açık blok varsa ikincisi açılmaz; son bloğu `RED` olan kural için yeni blok açılır ve belge yeniden onaya gider. | 1B-1 · `onay-blogu.itest.ts` |
+| A-8-5 | Gerekçe varsa ve kullanıcı `YONETICI` ise blok yazılır ve aynı işlemde `ONAY` ile kapanır (karar veren = açan, karar notu = gerekçe); `onayaGonderildi = false`, `acikBlokVarMi` `false`. Önceden açık kalmış bloğa burada karar verilmez; o durumda `onayaGonderildi = true`. | 1B-1 · `onay-blogu.itest.ts` |
+| A-8-6 | `OnayBlogu` yalnız `src/lib/onay-blogu.ts`'te yazılır. | 1B-1 · `tek-cagri.test.ts` |
 | A-9-1 | | 1A-C8 *(kurum tablosu yok)* |
 | A-10-1 | | 1B-5 |
 | A-11-1 | | 1B-7 |
