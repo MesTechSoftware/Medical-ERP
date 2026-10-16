@@ -47,3 +47,9 @@ describe("tek çağrı noktası — onay bloğu (A-8-6)", () => {
     expect(ihlaller(desen, join("lib", "onay-blogu.ts"))).toEqual([]);
   });
 });
+
+describe("tek çağrı noktası — modül durumu (§1.3-1)", () => {
+  it("policy.modules yalnız modul.ts'de okunur", () => {
+    expect(ihlaller(/\bmodules\s*[.[]/, join("lib", "modul.ts"))).toEqual([]);
+  });
+});
