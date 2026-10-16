@@ -119,6 +119,7 @@ kongre tabloları · e-belge ve kargo modül tabloları (KARARLAR §1.3 §(10): 
 - **Belge numarası** `uretBelgeNo()` ile, global tekil; eşzamanlılık testli. *X-2 kabul testi 1B madde 2.*
 - **Sayılan belgeler** tek filtreden (`sayilanBelgeler`, A-5 — 1B madde 1, 14.10.2026): `TEKLIF` ve `IPTAL` sipariş, bedelsiz satır, `ACILIS`/`VADE_FARKI` cari hareketi, konsinye/transfer/düzeltme stok hareketi sayılmaz. Ciro raporları (satıcı, doktor, toplam) bu filtreyle okur. *Dashboard'daki iş kuyruğu sayıları (bugünkü/bekleyen/hazırlanan sipariş) filtre dışıdır — operasyon sayımıdır, ciro değil.*
 - **Cari bakiye** saklanmaz, hesaplanır (RULE-08): tek `hesaplaDoktorBakiye(doktor, tarih?)` (K-2 — 1B madde 1, 14.10.2026). Bütün hareket tipleri girer; doktor detayında tutar mutlak değer + yön etiketiyle gösterilir (avans çıplak negatif değil). `LedgerEntry` toplamını başka dosyanın alması birim testte kırmızıdır.
+- **Kredi riski** tek `hesaplaDoktorRisk(doktor)` (A-12 — 1B madde 1, 16.10.2026): cari bakiye + `ONAYLI`, iptal edilmemiş siparişlerin sevk edilmemiş miktarının brüt tutarı. `kredi_limiti` boşsa limitsiz; aşım bilgi kademesidir, işlemi durdurmaz. *Henüz bir ekran çağırmıyor; uyarı gösterimi 1B madde 7.*
 - **Bir doktorun tek sahibi satıcı**; sahibi olmayan satıcı sipariş açamaz (RULE-02).
 - **Denetim izi** merkezî ve sanitize'lı (RULE-13).
 - **Giriş deneme sınırı** bellek içi sayaç — eşikler `policy.auth` (ADR-004, X-9).
@@ -129,16 +130,16 @@ kongre tabloları · e-belge ve kargo modül tabloları (KARARLAR §1.3 §(10): 
 
 - **Git:** `origin` = GitHub `MesTechSoftware/Medical-ERP`. `docs/` sürüm kontrolünde (C0). İş akışı: branch → PR → `main`.
 - **CI** (`.github/workflows/ci.yml`, push `main` + tüm PR'lar; PostgreSQL 17 servisi): `npm ci` → `prisma generate` → `migrate deploy` → **typecheck + lint + birim + entegrasyon + e2e**. Son koşu **yeşil** — `main` @ `2265b8d`, run `38340305135`.
-- **Test sayıları (14.10.2026 ölçümü — birim ve entegrasyon; e2e 13.10):**
+- **Test sayıları (16.10.2026 ölçümü — birim ve entegrasyon; e2e 15.10):**
 
   | Şerit | Dosya | Test | Komut |
   |---|---|---|---|
   | Birim | 11 | **82** | `npm test` |
-  | Entegrasyon | 10 | **71** | `npm run test:integration` |
+  | Entegrasyon | 11 | **79** | `npm run test:integration` |
   | E2E | — | **32** | `npm run test:e2e` |
 
   Entegrasyon dosyaları: `db` · `collections` · `orders` · `reports-service` · `sahiplik` ·
-  `kisitlar` · `anti-sema` · `referans-seed`.
+  `kisitlar` · `anti-sema` · `referans-seed` · `sayilan-belgeler` · `bakiye` · `risk`.
   ⚠️ Dokunulmadan kalan eski birim testleri (`doctor`, `pagination`, `phone`, `audit`) sistemin
   kanıtı değildir; 1A çıkışında yazılı olarak kabul edildi, kapanması 1B'nin işidir.
 - **Üç veritabanı:** `medikal_dev` (geliştirme) · `medikal_test` (e2e, her koşuda reset) ·

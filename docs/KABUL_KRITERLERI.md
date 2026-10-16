@@ -69,7 +69,10 @@
 | A-9-1 | | 1A-C8 *(kurum tablosu yok)* |
 | A-10-1 | | 1B-5 |
 | A-11-1 | | 1B-7 |
-| A-12-1 | | 1B-1 |
+| A-12-1 | `hesaplaDoktorRisk(doktor)` = cari bakiye (`hesaplaDoktorBakiye` ile aynı tanım; avans riski düşürür) + açık sipariş tutarı. Açık sipariş, sayılan sipariş kümesidir (`ONAYLI`, iptal edilmemiş — A-5); `TEKLIF` ve `IPTAL` sipariş riske girmez. Eşleştirme kullanılmaz (X-11 §(8)). | 1B-1 · `risk.itest.ts` |
+| A-12-2 | Açık sipariş tutarı yalnız **sevk edilmemiş miktarı** sayar: satır miktarı − sevk satırlarındaki miktar. Tamamen sevk edilmiş satır riske girmez; kısmi sevkte kalan miktar girer. | 1B-1 · `risk.itest.ts` |
+| A-12-3 | Risk tabanı brüttür: açık satır tutarı `hesaplaSatirTutarlari()` toplamıdır (KDV dahil, satır bazında yuvarlanmış — C-6 §(5)). Bedelsiz satır riske girmez (A-2). | 1B-1 · `risk.itest.ts` |
+| A-12-4 | `kredi_limiti` boşsa doktor limitsizdir, aşım yoktur. Limit doluysa risk limitten **büyükse** aşım vardır; eşitlik aşım değildir. Fonksiyon işlemi durdurmaz — aşım bilgi kademesidir (§0.3). | 1B-1 · `risk.itest.ts` |
 | A-13-1 | | 1B-7 |
 | A-14-1 | | 1B-2 *(1A-CM: `uretBelgeNo` testli)* |
 | A-15-1 | | 1B-4 |

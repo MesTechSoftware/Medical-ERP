@@ -223,7 +223,7 @@ Bayi için **ayrı fonksiyon yazılmaz** (X-8 §(2)). Liste **12'de kapalıdır*
 |---|---|---|---|
 | 1 | **sayılan belgeler filtresi** — altı dışlama: `TEKLIF` · `ACILIS` · `KonsinyeCikis` · `VADE_FARKI` · `StokTransfer` · `StokDuzeltme` (+ bedelsiz satırlar) | A-5 · B-7 · K-4 | **1B madde 1 — ilk iş** · ✅ *(14.10.2026)* `sayilanBelgeler` (`src/lib/sayilan-belgeler.ts`) — dört küme: `siparis` (+ `IPTAL`, X-6 §(9)) · `sevkSatiri` · `cariHareket` · `stokHareketi`; raporlar bu filtreyle okur |
 | 2 | `hesaplaDoktorBakiye(doktor, tarih?)` | K-2 · C-2 · E-1 | 1B madde 1 · F-02 (madde 8) · ✅ *(14.10.2026)* `src/lib/doctor-cari.ts` — tarih İstanbul günü sonu, `yon` (`BORC`/`ALACAK`/`KAPALI`); tek kaynak `tek-cagri.test.ts` ile korunur |
-| 3 | `hesaplaDoktorRisk()` | A-12 | 1B madde 1 |
+| 3 | `hesaplaDoktorRisk()` | A-12 | 1B madde 1 · ✅ *(16.10.2026)* `src/lib/doctor-cari.ts` — bakiye + sayılan siparişlerin sevk edilmemiş brüt tutarı; `limitAsildi` (bilgi kademesi). Limit değişikliği logu cari formunun işidir (1B madde 7) |
 | 4 | `hesaplaStok(urun, konum?, tarih?)` | B-4 · K-10 · C-2 · `docs/adr/ADR-005` | **ilk sürüm `CM`** — saklı stok kalkar (§D.1 not 3-c) · kilit biçimi ve `NEGATIF_STOK` izi **1B madde 1** |
 | 5 | `cozumleBirimFiyat()` | B-5 · B-6 · **X-10** | **ilk sürüm `CM`** (liste seçimi) · tamamı **1B madde 5** (barem, tarih, X-4 `SERT`) — §D.1 not 3 |
 | 6 | `acikBlokVarMi()` / `blokKontrolleriniCalistir()` | A-8 | 1B madde 1 |
