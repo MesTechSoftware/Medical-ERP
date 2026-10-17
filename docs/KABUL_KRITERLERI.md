@@ -149,7 +149,7 @@
 | X-10-1 | | 1B-5 · 1B-7 *(1A-CM: liste seçimi testli)* |
 | X-11-1 | | 1B-1 · 1B-2 · 1B-7 |
 | X-12-1 | | 1B-7 |
-| X-13-1 | | 1B-3 |
+| X-13-1 | `kapsamliDoktorlariGetir(kullanici)` doktor okumasının kapsamını **sorgu süzgeci** olarak döner. `SATICI`'ya yalnız sahibi olduğu `DOKTOR` carileri döner — başka satıcının carisi, sahipsiz cari ve `BAYI` dönmez (X-8 §(3)). `YONETICI` ve `OPERASYON` bütün carileri görür. Satıcı ekranlarının doktor okumaları — doktor listesi, düzenleme sayfası, sipariş formu, hesabım, doktor güncelleme ve sipariş kaydı — bu süzgeçten geçer. Kapsam dışındaki cari bulunmamış gibi davranır, varlığı ima edilmez (X-3 §(8)). Satıcı rota grubunda sahip süzgeci elle yazılmaz (D-2 §(3)). | 1B-3 · `kapsam.itest.ts` · `tek-cagri.test.ts` |
 | X-14-1 | | 1B-3 · 1B-7 |
 | X-15-1 | | 1B-7 |
 | X-15-5-1 | | 1B-7 *(X-15 §(5) — telefon varsayımı)* |

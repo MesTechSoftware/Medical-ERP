@@ -2,7 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireSeller } from "@/lib/session";
 import { formatPhone } from "@/lib/phone";
-import { doctorScopeFor } from "@/lib/doctor";
+import { kapsamliDoktorlariGetir } from "@/lib/doctor";
 import {
   PageHeader,
   LinkButton,
@@ -21,8 +21,8 @@ export default async function DoctorsPage({
   const session = await requireSeller();
   const { page, perPage, skip, take } = getPagination(await searchParams);
 
-  // FR-05: satıcı yalnızca kendi portföyünü görür.
-  const where = doctorScopeFor(session.user);
+  // FR-05: satıcı yalnızca kendi portföyünü görür (X-13 §(1)).
+  const where = kapsamliDoktorlariGetir(session.user);
 
   const [doctors, total] = await Promise.all([
     prisma.doctor.findMany({

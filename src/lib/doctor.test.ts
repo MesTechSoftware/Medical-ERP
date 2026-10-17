@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canSellerOrderForDoctor, doctorScopeFor } from "@/lib/doctor";
+import { canSellerOrderForDoctor } from "@/lib/doctor";
 
 const SELLER_A = "seller-a";
 const SELLER_B = "seller-b";
@@ -57,23 +57,5 @@ describe("canSellerOrderForDoctor — RULE-02 / FR-04", () => {
     });
     if (r.allowed) throw new Error("beklenmedik izin");
     expect(r.reason).toMatch(/pasif/i);
-  });
-});
-
-describe("doctorScopeFor — FR-05 görünürlük", () => {
-  it("admin tüm doktorları görür (kısıt yok)", () => {
-    expect(doctorScopeFor({ id: "admin-1", role: "YONETICI" })).toEqual({});
-  });
-
-  it("satıcı yalnızca kendi portföyünü görür", () => {
-    expect(doctorScopeFor({ id: SELLER_A, role: "SATICI" })).toEqual({
-      ownerSellerId: SELLER_A,
-    });
-  });
-
-  it("yönetici dışındaki rol de kısıtlanır (varsayılan kapalı — OPERASYON matrisi 1B'de)", () => {
-    expect(doctorScopeFor({ id: "x", role: "OPERASYON" })).toEqual({
-      ownerSellerId: "x",
-    });
   });
 });

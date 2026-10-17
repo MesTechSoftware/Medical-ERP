@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireSeller } from "@/lib/session";
+import { kapsamliDoktorlariGetir } from "@/lib/doctor";
 import { formatPhone } from "@/lib/phone";
 import { PageHeader, Card } from "@/components/ui";
 import DoctorForm from "../../DoctorForm";
@@ -16,7 +17,7 @@ export default async function EditDoctorPage({
 
   // FR-05: sahiplik sorguya gömülür — başkasının doktoru 404 döner.
   const doctor = await prisma.doctor.findFirst({
-    where: { id, ownerSellerId: session.user.id },
+    where: { AND: [kapsamliDoktorlariGetir(session.user), { id }] },
   });
   if (!doctor) notFound();
 

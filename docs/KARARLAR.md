@@ -7,7 +7,7 @@
 > "Karar bekleyenler" bölümlerindeki soru metinleri **buraya taşındı**. O bölümler
 > bundan sonra yalnız "bkz. `KARARLAR.md`" der.
 >
-> Son güncelleme: 16 Ekim 2026 (**A-8 eki — `RED`'in sonucu: her kural için son blok geçerli**) · 13 Ekim 2026 (**X-16 kararı — içe aktarım elle girişin toplu hâli, şablon tek tanımdan (ADR-006), kısmi yazma yok · X-15 §(5) kişisel telefon varsayımı 🟦**) · 12 Ekim 2026 (**C-1 revizyon 3 — modül sınırı §1.3 §F, zamanlayıcı altyapısı, e-belge durum makinesi, cari uzantısı, istisna/tevkifat çekirdek kararı · K-8 kontör 🟦 · K-9 §B kargo anahtarı**) · 10 Ekim 2026 (**C-1 revizyon 2 — e-belge modülü çekirdek sonrası ilk modül, ilk adaptör müşterinin entegratörü, tek çatı partnerlikle · D-3 kargo e-belgeden sonra, BYOI · 🟦 tarama: X-11/X-12/A-4/A-8 ✅, K-10 yeni kilit, K-4 ayrıştı**) · 9 Ekim 2026 (**C-1 iç karar olarak ✅ — 🟦 varsayılan kaydı ve kilitlenme anı kaldırıldı; §0.6'nın otomatik ✅ kuralı kaldırıldı — tarih tek başına hiçbir kaydı kapatmaz**) · 1 Ekim 2026 (**X-17 kararı — sahipliğin tek yazma noktası, toplu devir; tek çağrı noktası listesi 11 → 12; `CM`'in önündeki son açık kalem kapandı**) · 24 Eylül 2026 (**D-6 ekleri — açılış bakiyesi import'u**) · 16 Eylül 2026 (**X-11…X-15 kararı + PRD taraması**) · **Faz 0'ın karar adımları tamamlandı · Faz 1A'da açılan X-8…X-17 kapandı (X-16: 13.10.2026) · PRD taraması kapandı — açık (⬜) madde yok.**
+> Son güncelleme: 17 Ekim 2026 (**D-2 eki — `OPERASYON` ekran matrisi: cari açmaz, ürün kartını yalnız görür, rapor ve denetim kaydı görmez**) · 16 Ekim 2026 (**A-8 eki — `RED`'in sonucu: her kural için son blok geçerli**) · 13 Ekim 2026 (**X-16 kararı — içe aktarım elle girişin toplu hâli, şablon tek tanımdan (ADR-006), kısmi yazma yok · X-15 §(5) kişisel telefon varsayımı 🟦**) · 12 Ekim 2026 (**C-1 revizyon 3 — modül sınırı §1.3 §F, zamanlayıcı altyapısı, e-belge durum makinesi, cari uzantısı, istisna/tevkifat çekirdek kararı · K-8 kontör 🟦 · K-9 §B kargo anahtarı**) · 10 Ekim 2026 (**C-1 revizyon 2 — e-belge modülü çekirdek sonrası ilk modül, ilk adaptör müşterinin entegratörü, tek çatı partnerlikle · D-3 kargo e-belgeden sonra, BYOI · 🟦 tarama: X-11/X-12/A-4/A-8 ✅, K-10 yeni kilit, K-4 ayrıştı**) · 9 Ekim 2026 (**C-1 iç karar olarak ✅ — 🟦 varsayılan kaydı ve kilitlenme anı kaldırıldı; §0.6'nın otomatik ✅ kuralı kaldırıldı — tarih tek başına hiçbir kaydı kapatmaz**) · 1 Ekim 2026 (**X-17 kararı — sahipliğin tek yazma noktası, toplu devir; tek çağrı noktası listesi 11 → 12; `CM`'in önündeki son açık kalem kapandı**) · 24 Eylül 2026 (**D-6 ekleri — açılış bakiyesi import'u**) · 16 Eylül 2026 (**X-11…X-15 kararı + PRD taraması**) · **Faz 0'ın karar adımları tamamlandı · Faz 1A'da açılan X-8…X-17 kapandı (X-16: 13.10.2026) · PRD taraması kapandı — açık (⬜) madde yok.**
 > **24.09.2026 — D-6 ekleri (şema değişmedi):** açılış bakiyesi import'unda **işaret kuralı** ve
 > **önizleme özeti** yazıldı. Boşluğun kaynağı 19.09 incelemesinin 4. bulgusudur; D-6 üç aşamayı
 > (doğrula → önizle → yaz) koyuyor ama hiçbirinin içeriğini yazmıyordu. Yeni kural kodu: `TUTAR_NEGATIF`.
@@ -2730,6 +2730,14 @@ kurulur — *ilişkiyi gizlemek çözüm değildir, kurmamak çözümdür.*
 > **(8) Sözleşme maddesi:** hesap paylaşımı **yasaktır**; paylaşılan hesapla yapılan
 > işlemlerin sorumluluğu müşteriye aittir. **Paylaşılan hesap denetim izini bozmaz —
 > sessizce yanlış çalıştırır** (§0.1, A-8): log'daki isim işi yapan kişi olmaz.
+>
+> **✅ Ek (17.10.2026 · ürün sahibi kararı) — `OPERASYON` ekran matrisinin açık dört noktası.**
+> §(1) tablosu `OPERASYON`'un yaptığını sayar; tabloda geçmeyen dört nokta tabloya harfiyen okunarak kapandı:
+> · **Cari açmaz.** "Cari görüntüleme" yalnız görmektir. `DOKTOR`'u `SATICI` ya da `YONETICI` açar
+>   (X-13 §(2)); `BAYI`'yi **yalnız `YONETICI`** açar (X-8 §(5)).
+> · **Ürün kartını görür, açmaz ve düzenlemez.** Ürün tanımı `YONETICI`'dedir; stok hareketi `OPERASYON`'dadır.
+> · **Raporlar ekranını görmez** — prim tablosu (X-1 §(8)) dahil hiçbir raporu.
+> · **Denetim kaydı (audit log) ekranını görmez.**
 
 **Kapsam dışı (D-2), kalıcı:** kullanıcı tanımlı rol · yetki matrisi ekranı · alan bazlı
 yetki · onay hiyerarşisi · çoklu şube yetkisi · doktorun kendi paneli (§3.5).

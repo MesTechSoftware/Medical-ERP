@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { requireSeller } from "@/lib/session";
+import { kapsamliDoktorlariGetir } from "@/lib/doctor";
 import { formatla } from "@/lib/money";
 import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
 import { PageHeader, StatCard } from "@/components/ui";
@@ -16,7 +17,7 @@ export default async function AccountPage() {
   const sellerId = session.user.id;
 
   const doctorCount = await prisma.doctor.count({
-    where: { ownerSellerId: sellerId },
+    where: kapsamliDoktorlariGetir(session.user),
   });
 
   // FR-61: ortalama iskonto (tutar ağırlıklı).

@@ -10,7 +10,7 @@ import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { cozumleBirimFiyat } from "@/lib/fiyat";
 import { uretBelgeNo } from "@/lib/belge-no";
 import { stokHareketiYaz, stokKilitle, varsayilanDepoId } from "@/lib/stok";
-import { canSellerOrderForDoctor } from "@/lib/doctor";
+import { canSellerOrderForDoctor, kapsamliDoktorlariGetir } from "@/lib/doctor";
 import { policy } from "@/lib/policy";
 
 export type OrderFormState = { error?: string };
@@ -40,11 +40,12 @@ export async function createOrder(
 
   // 🔴 FR-04 / RULE-02: sahiplik SUNUCU TARAFINDA doğrulanır. Arayüzde yalnızca
   // kendi doktorları listelenir ama ham istek de aynı kapıdan geçmek zorunda.
-  const doctor = await prisma.doctor.findUnique({
-    where: { id: doctorId },
+  // Kapsam dışındaki cari bulunmamış gibi davranır; varlığı ima edilmez (X-13 §(1), X-3 §(8)).
+  const doctor = await prisma.doctor.findFirst({
+    where: { AND: [kapsamliDoktorlariGetir(session.user), { id: doctorId }] },
     select: { id: true, fullName: true, ownerSellerId: true, status: true, paymentTermDays: true },
   });
-  if (!doctor) return { error: "Doktor bulunamadı." };
+  if (!doctor) return { error: "Bu doktor sizin portföyünüzde değil." };
 
   const ownership = canSellerOrderForDoctor(sellerId, doctor);
   if (!ownership.allowed) return { error: ownership.reason };
