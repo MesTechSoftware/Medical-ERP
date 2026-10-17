@@ -201,7 +201,7 @@ Hepsinin şeması `CM`'dedir. Tüm belgelerde `belge_no` (global UNIQUE, salt ok
 | Fiyat listesi satırı tarih çakışması | sert, **DB** | CM | B-5 · X-10 |
 | `belge_no` global UNIQUE | sert, **DB** | CM | A-14 |
 | `BAYI`'nin sahibi olmaz | sert, **DB** (`CHECK`) | CM | **X-17** §(2) |
-| Sahip aktif `SATICI` | sert (fonksiyon içi) | 1B madde 3 | **X-17** §(2) |
+| Sahip aktif `SATICI` | sert (fonksiyon içi) | 1B madde 3 · ✅ *(CM'de yazıldı; 3b'de kilit altında)* | **X-17** §(2) |
 | VKN/TCKN biçimi (10 = VKN, 11 = TCKN) | sert | 1B madde 7 | A-13 |
 | En az bir aktif `YONETICI` · kendini pasifleştirme yasağı | sert | 1B madde 4 | E-2 |
 | `DZL` geriye tarihlendirilemez | sert | 1B madde 7 | B-7 |
@@ -232,7 +232,7 @@ Bayi için **ayrı fonksiyon yazılmaz** (X-8 §(2)). Liste **12'de kapalıdır*
 | 9 | `uretBelgeNo(onek, tx)` | A-14 | 1B madde 2 · ✅ *(16.10.2026)* `src/lib/belge-no.ts` (ilk sürüm `CM`) — İstanbul yılı ve yıl sıfırlaması testli; sayaç tablosu ve elle kurulmuş numara `tek-cagri.test.ts` ile kapalı |
 | 10 | `modulAcikMi(kod)` | K-9 · §1.3 | 1B madde 1 · ✅ *(16.10.2026)* `src/lib/modul.ts` — `policy.modules`'tan okur; başka dosya okumaz. Kongre kodu C2'de söküldüğü için bugün çağıranı yok |
 | 11 | `kapsamliDoktorlariGetir(kullanici)` | D-2 · **X-13** §(1) (`SATICI`'ya yalnız kendi `DOKTOR` carileri) | 1B madde 3 · ✅ *(17.10.2026)* `src/lib/doctor.ts` — Prisma `where` parçası döner (süzme sorguda); `YONETICI`/`OPERASYON` hepsini görür. Satıcı ekranlarının altı doktor okuması bağlandı; satıcı rota grubunda elle sahip süzgeci `tek-cagri.test.ts` ile kapalı |
-| 12 | `degistirDoktorSahibi(doktorlar, yeniSahip \| null, gerekce, tx)` | **X-17** (01.10.2026) | **ilk sürüm `CM`** (şema değişikliğiyle bugünkü `createDoctor`/`transferDoctor` yazımları buraya taşınır) · tamamı **1B madde 3** |
+| 12 | `degistirDoktorSahibi(doktorlar, yeniSahip \| null, gerekce, tx)` | **X-17** (01.10.2026) | **ilk sürüm `CM`** (şema değişikliğiyle bugünkü `createDoctor`/`transferDoctor` yazımları buraya taşınır) · tamamı **1B madde 3** · ✅ *(17.10.2026, 3b)* `src/lib/sahiplik.ts` — doktor satırı kilidi (id sırası, ADR-008 başı); iz ve denetim kaydı aynı transaction'da; siparişte `siparisSahibiniKilitle()` → `SAHIP_DEGISTI`; toplu devir ve Sahipsiz süzgeci cari listesinde; pasifleştirmede `portfoyuDevret()`. Sahip alanına başka dosyanın yazması ve sayılı liste dışında `FOR UPDATE` `tek-cagri.test.ts` ile kırmızı. *Rol değişikliği ekranı yok; içe aktarım yolu 1B madde 7* |
 
 **Listeye girmeyen tek çıkışlar** (iş kuralı taşımaz):
 - `formatla()` — X-5, `CM`
@@ -659,7 +659,7 @@ parametrelerini taşır. Koşullu `updateMany` kolonla birlikte gider; bu yüzde
 
 1. **Tek çağrı noktası fonksiyonları** — **sayılan belgeler filtresi önce** *(altı dışlama)* · ✅ *(16.10.2026 — §B.6 #1 · #2 · #3 · #4 · #6 · #10; PR #19–#23 + #10)*
 2. ✅ *(16.10.2026 — A-14-1…5, X-2-1)* **A-14 `uretBelgeNo()` + `BelgeSayac`** → ardından **X-2 blocker** *(sırası zorunlu. X-2 artık kod düzeltmesi değil **bütün tahsilat yollarının** — `BAYI` dahil — kabul testidir: ödeme kaydı ve `uretBelgeNo()` aynı transaction'da; KARARLAR X-8 §(7))*
-3. **X-1 + D-2 tek commit** *(D-2 §(4): ayrı yapılırsa ikincisi birincisini bozar)* — *(17.10.2026: üç PR'a bölündü — **3a** #11 kapsam ✅ · **3b** #12 `degistirDoktorSahibi` tamamı (X-17) · **3c** X-1 + D-2 `getSellerReports` ve `OPERASYON` ekran matrisi, tek commit. KARARLAR'ın tek commit hükmü yalnız `getSellerReports`'u bağlar; matrisin açık dört noktası KARARLAR D-2 eki 17.10)* —
+3. **X-1 + D-2 tek commit** *(D-2 §(4): ayrı yapılırsa ikincisi birincisini bozar)* — *(17.10.2026: üç PR'a bölündü — **3a** #11 kapsam ✅ · **3b** #12 `degistirDoktorSahibi` tamamı (X-17) ✅ · **3c** X-1 + D-2 `getSellerReports` ve `OPERASYON` ekran matrisi, tek commit. KARARLAR'ın tek commit hükmü yalnız `getSellerReports`'u bağlar; matrisin açık dört noktası KARARLAR D-2 eki 17.10)* —
    **`OPERASYON` ekran matrisi burada doğar** (§C-n) · **`BAYI` açma yetkisi de bu matriste yazılır** (X-8 §(5)); `SATICI` `BAYI` göremez ve açamaz (X-8 §(3))
 4. **E-2 kimlik katmanı — Yol (b)** *(`docs/adr/ADR-003`)* → **X-3/X-4 hata yüzeyi** → **Ü-3 taban etiketi** →
    **A-15** → **X-6 §(6) vade uyarısı**

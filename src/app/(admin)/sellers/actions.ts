@@ -6,8 +6,18 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
+import { portfoyuDevret } from "@/lib/sahiplik";
 
-export type SellerFormState = { error?: string };
+/**
+ * `degerler`: hata dönüşünde kullanıcının seçimleri. React form action'dan sonra formu
+ * sıfırlar; durum alanı `AKTIF`'e dönerse ikinci gönderim satıcıyı sessizce aktif bırakır.
+ */
+export type SellerFormState = {
+  error?: string;
+  degerler?: { status: string; portfoy: string; portfoyGerekce: string };
+};
+
+class PortfoyHatasi extends Error {}
 
 export async function createSeller(
   _prev: SellerFormState,
@@ -24,7 +34,7 @@ export async function createSeller(
   if (!password || password.length < 4)
     return { error: "Şifre en az 4 karakter olmalıdır." };
 
-  // E-2: aktiflik `isActive`'dir. Pasifleştirmede portföy seçimi 1B madde 3'tedir (X-17 §(5)).
+  // E-2: aktiflik `isActive`'dir. Pasifleştirmede portföy seçimi `updateSeller`'dadır (X-17 §(5)).
   const isActive = formData.get("status") !== "PASIF";
 
   let seller;
@@ -89,10 +99,45 @@ export async function updateSeller(
     where: { id, role: "SATICI" },
   });
 
+  // Pasifleştirme portföyü bekletmez (X-17 §(5)): doktoru olan satıcı için hedef — tek bir
+  // aktif satıcı ya da sahipsiz — ve gerekçe formun zorunlu alanıdır. Otomatik devir yoktur.
+  let portfoy: { hedef: string | null; gerekce: string } | null = null;
+  if (before?.isActive && !isActive) {
+    const doktorSayisi = await prisma.doctor.count({ where: { ownerSellerId: id } });
+    if (doktorSayisi > 0) {
+      const secim = ((formData.get("portfoy") as string) || "").trim();
+      const gerekce = ((formData.get("portfoyGerekce") as string) || "").trim();
+      const degerler = { status: "PASIF", portfoy: secim, portfoyGerekce: gerekce };
+      if (!secim)
+        return {
+          error: `Satıcının ${doktorSayisi} doktoru var. Doktorların devredileceği satıcıyı ya da "sahipsiz bırak"ı seçin.`,
+          degerler,
+        };
+      if (!gerekce) return { error: "Portföy için gerekçe zorunludur.", degerler };
+      portfoy = { hedef: secim === "SAHIPSIZ" ? null : secim, gerekce };
+    }
+  }
+
   let updated;
   try {
-    updated = await prisma.user.update({ where: { id }, data });
-  } catch {
+    // Önce pasifleştirilir: hedef olarak kendisi seçilemez (aktif SATICI kuralı).
+    updated = await prisma.$transaction(async (tx) => {
+      const u = await tx.user.update({ where: { id }, data });
+      if (portfoy) {
+        const sonuc = await portfoyuDevret(tx, id, portfoy.hedef, {
+          metin: portfoy.gerekce,
+          yapanId: session.user.id,
+        });
+        if (sonuc.durum === "HATA") throw new PortfoyHatasi();
+      }
+      return u;
+    });
+  } catch (e) {
+    if (e instanceof PortfoyHatasi)
+      return {
+        error: "Doktorlar yalnız aktif bir satıcıya devredilebilir.",
+        degerler: { status: "PASIF", portfoy: portfoy?.hedef ?? "SAHIPSIZ", portfoyGerekce: portfoy?.gerekce ?? "" },
+      };
     return { error: "Bu e-posta zaten kayıtlı." };
   }
 

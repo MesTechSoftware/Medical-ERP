@@ -125,6 +125,7 @@ kongre tabloları · e-belge ve kargo modül tabloları (KARARLAR §1.3 §(10): 
 - **Modül durumu** tek `modulAcikMi(kod)` (K-9, §1.3 — 1B madde 1, 16.10.2026): `policy.modules`'tan okur; kongre kapalı (K-6). `policy.modules`'u başka dosyanın okuması birim testte kırmızıdır. **1B madde 1 bu işle kapandı.**
 - **Belge numarası** (A-14 — 1B madde 2, 16.10.2026): `uretBelgeNo(onek, tx)` sayaç satırı kilidi altında, belgeyi yazan transaction'da; yıl İstanbul takvim yılı. **X-2 kabul testi yeşil:** tahsilat yazılamazsa `THS` numarası harcanmaz; `BAYI` tahsilatı aynı yoldan. Sayaç tablosuna başka dosyanın dokunması, elle kurulmuş numara ve ikinci tahsilat yolu birim testte kırmızıdır. *Tahsilatın `TAHSILAT` cari hareketi hâlâ yazılmıyor — 1B madde 7 (R-11).*
 - **Doktor kapsamı** tek `kapsamliDoktorlariGetir(kullanici)` (D-2 §(3), X-13 §(1) — 1B madde 3a, 17.10.2026): `SATICI` yalnız sahibi olduğu `DOKTOR` carilerini görür; `YONETICI` ve `OPERASYON` hepsini. Satıcı ekranlarının doktor okumaları (liste, düzenleme, sipariş formu, hesabım, doktor güncelleme, sipariş kaydı) bu süzgeçten geçer; kapsam dışındaki cari "portföyünüzde değil" döner, varlığı ima edilmez. Satıcı rota grubunda elle sahip süzgeci birim testte kırmızıdır.
+- **Doktor sahipliği** tek `degistirDoktorSahibi()` (X-17 — 1B madde 3b, 17.10.2026): doktor satırları id sırasıyla kilitlenir (ADR-008: doktor → ürün → sayaç); iz satırı ve denetim kaydı aynı transaction'da. Sipariş kaydı sahibi kilit altında yeniden okur — arada devir tamamlandıysa reddedilir (`SAHIP_DEGISTI`). Yönetici doktor listesinden **çoklu seçimle** devreder ya da sahipsiz bırakır; listede **Sahipsiz** süzgeci var. Doktoru olan satıcı pasifleştirilirken portföy seçimi (tek satıcıya devret / sahipsiz bırak) ve gerekçe zorunlu. Sahip alanına başka dosyanın yazması birim testte kırmızıdır.
 - **Bir doktorun tek sahibi satıcı**; sahibi olmayan satıcı sipariş açamaz (RULE-02).
 - **Denetim izi** merkezî ve sanitize'lı (RULE-13).
 - **Giriş deneme sınırı** bellek içi sayaç — eşikler `policy.auth` (ADR-004, X-9).
@@ -139,9 +140,9 @@ kongre tabloları · e-belge ve kargo modül tabloları (KARARLAR §1.3 §(10): 
 
   | Şerit | Dosya | Test | Komut |
   |---|---|---|---|
-  | Birim | 12 | **90** | `npm test` |
-  | Entegrasyon | 15 | **110** | `npm run test:integration` |
-  | E2E | — | **32** | `npm run test:e2e` |
+  | Birim | 12 | **91** | `npm test` |
+  | Entegrasyon | 15 | **119** | `npm run test:integration` |
+  | E2E | — | **34** | `npm run test:e2e` |
 
   Entegrasyon dosyaları: `db` · `collections` · `orders` · `reports-service` · `sahiplik` ·
   `kisitlar` · `anti-sema` · `referans-seed` · `sayilan-belgeler` · `bakiye` · `risk` · `stok` · `onay-blogu` · `belge-no` · `kapsam`.

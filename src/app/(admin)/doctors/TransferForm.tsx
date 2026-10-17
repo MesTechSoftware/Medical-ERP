@@ -4,13 +4,15 @@ import { useActionState } from "react";
 import { SubmitButton, FormError } from "@/components/form";
 import { transferDoctor, type TransferState } from "./actions";
 
+/**
+ * Toplu devir formu (X-17 §(4)). Doktor seçimi listedeki kutulardan gelir; kutular
+ * `form={formId}` niteliğiyle bu forma bağlıdır. Gerekçe bir kez girilir.
+ */
 export default function TransferForm({
-  doctorId,
-  currentSellerId,
+  formId,
   sellers,
 }: {
-  doctorId: string;
-  currentSellerId: string | null;
+  formId: string;
   sellers: { id: string; name: string }[];
 }) {
   const [state, formAction] = useActionState<TransferState, FormData>(
@@ -19,20 +21,15 @@ export default function TransferForm({
   );
 
   return (
-    <form action={formAction} className="flex flex-wrap items-end gap-2">
-      <input type="hidden" name="doctorId" value={doctorId} />
-
+    <form id={formId} action={formAction} className="flex flex-wrap items-end gap-2">
       <div>
-        <label
-          htmlFor={`seller-${doctorId}`}
-          className="mb-1 block text-xs text-slate-500"
-        >
-          Yeni sorumlu satıcı
+        <label htmlFor="toplu-satici" className="mb-1 block text-xs text-slate-500">
+          Seçilen doktorların yeni sorumlu satıcısı
         </label>
         <select
-          id={`seller-${doctorId}`}
+          id="toplu-satici"
           name="sellerId"
-          defaultValue={currentSellerId ?? ""}
+          defaultValue=""
           className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-500"
         >
           <option value="">— Sahipsiz havuz —</option>
@@ -45,14 +42,11 @@ export default function TransferForm({
       </div>
 
       <div className="min-w-[180px] flex-1">
-        <label
-          htmlFor={`reason-${doctorId}`}
-          className="mb-1 block text-xs text-slate-500"
-        >
+        <label htmlFor="toplu-gerekce" className="mb-1 block text-xs text-slate-500">
           Gerekçe
         </label>
         <input
-          id={`reason-${doctorId}`}
+          id="toplu-gerekce"
           name="reason"
           placeholder="Örn. bölge değişikliği"
           className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"

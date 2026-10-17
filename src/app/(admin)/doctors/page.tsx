@@ -1,4 +1,3 @@
-import { Fragment } from "react";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
@@ -11,14 +10,21 @@ import TransferForm from "./TransferForm";
 export default async function AdminDoctorsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; per?: string }>;
+  searchParams: Promise<{ page?: string; per?: string; sahip?: string }>;
 }) {
   await requireAdmin();
-  const { page, perPage, skip, take } = getPagination(await searchParams);
+  const params = await searchParams;
+  const { page, perPage, skip, take } = getPagination(params);
+
+  // "Sahipsiz" süzgeci (X-17 §(6)): bayinin sahibi hiç olmaz, sahipsiz sayılmaz (X-8 §(3)).
+  const SAHIPSIZ = { ownerSellerId: null, accountClass: "DOKTOR" } as const;
+  const sahipsizSuzgec = params.sahip === "yok";
+  const where = sahipsizSuzgec ? SAHIPSIZ : {};
 
   // FR-05: admin TÜM doktorları görür.
-  const [doctors, total, sellers] = await Promise.all([
+  const [doctors, total, unowned, sellers] = await Promise.all([
     prisma.doctor.findMany({
+      where,
       orderBy: { fullName: "asc" },
       skip,
       take,
@@ -27,15 +33,14 @@ export default async function AdminDoctorsPage({
         _count: { select: { orders: true } },
       },
     }),
-    prisma.doctor.count(),
+    prisma.doctor.count({ where }),
+    prisma.doctor.count({ where: SAHIPSIZ }),
     prisma.user.findMany({
       where: { role: "SATICI", isActive: true },
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }),
   ]);
-
-  const unowned = doctors.filter((d) => d.ownerSellerId === null).length;
 
   return (
     <div>
@@ -51,11 +56,39 @@ export default async function AdminDoctorsPage({
         </div>
       )}
 
+      <div className="mb-4 flex flex-wrap gap-2">
+        {[
+          { href: "/doctors", label: "Tümü", active: !sahipsizSuzgec },
+          { href: "/doctors?sahip=yok", label: "Sahipsiz", active: sahipsizSuzgec },
+        ].map((f) => (
+          <Link
+            key={f.href}
+            href={f.href}
+            className={
+              "rounded-full px-3 py-1 text-sm font-medium transition " +
+              (f.active
+                ? "bg-slate-900 text-white"
+                : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-100")
+            }
+          >
+            {f.label}
+          </Link>
+        ))}
+      </div>
+
+      {/* Toplu devir (X-17 §(4)): satırlardaki kutular bu forma `form` niteliğiyle bağlıdır. */}
+      <div className="mb-4">
+        <Card>
+          <TransferForm formId="toplu-devir" sellers={sellers} />
+        </Card>
+      </div>
+
       <Card>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
+                <th className="w-8 px-4 py-2"></th>
                 <th className="px-4 py-2 font-medium">Ad Soyad</th>
                 <th className="px-4 py-2 font-medium">Klinik / Bölge</th>
                 <th className="px-4 py-2 font-medium">Telefon</th>
@@ -66,11 +99,22 @@ export default async function AdminDoctorsPage({
             </thead>
             <tbody>
               {doctors.length === 0 && (
-                <EmptyRow colSpan={6} text="Henüz doktor kaydı yok." />
+                <EmptyRow colSpan={7} text="Henüz doktor kaydı yok." />
               )}
               {doctors.map((d) => (
-                <Fragment key={d.id}>
-                  <tr className="border-b border-slate-100">
+                <tr key={d.id} className="border-b border-slate-100 last:border-0">
+                    <td className="px-4 py-3">
+                      {d.accountClass === "DOKTOR" && (
+                        <input
+                          type="checkbox"
+                          id={`sec-${d.id}`}
+                          name="doctorId"
+                          value={d.id}
+                          form="toplu-devir"
+                          aria-label={`${d.fullName} seç`}
+                        />
+                      )}
+                    </td>
                     <td className="px-4 py-3 font-medium text-slate-900">
                       <Link
                         href={`/doctors/${d.id}`}
@@ -106,17 +150,7 @@ export default async function AdminDoctorsPage({
                     <td className="px-4 py-3">
                       <StatusBadge status={d.status} />
                     </td>
-                  </tr>
-                  <tr className="border-b border-slate-100 last:border-0">
-                    <td colSpan={6} className="bg-slate-50/60 px-4 py-2">
-                      <TransferForm
-                        doctorId={d.id}
-                        currentSellerId={d.ownerSellerId}
-                        sellers={sellers}
-                      />
-                    </td>
-                  </tr>
-                </Fragment>
+                </tr>
               ))}
             </tbody>
           </table>
@@ -128,6 +162,7 @@ export default async function AdminDoctorsPage({
         totalPages={pageCount(total, perPage)}
         total={total}
         basePath="/doctors"
+        params={{ sahip: params.sahip }}
       />
     </div>
   );

@@ -7,7 +7,8 @@ import { Client } from "pg";
  * FR-06 admin devredebilir + devir kaydı tutulur ·
  * FR-07 geçmiş siparişler ESKİ satıcıda kalır ·
  * FR-08 sahipsiz havuzdaki doktora sipariş girilemez ·
- * RULE-13 devir audit log'a yazılır.
+ * RULE-13 devir audit log'a yazılır ·
+ * X-17-3 toplu devir · X-17-5 "Sahipsiz" süzgeci.
  */
 
 const connectionString =
@@ -25,20 +26,19 @@ async function query<T = unknown>(sql: string, params: unknown[] = []) {
 }
 
 /**
- * Devir formu doktor adıyla AYNI satırda değil (ad bir <tr>, form alttaki <tr>).
- * TransferForm doktor id'siyle benzersiz alan id'leri ürettiği için onları
- * kullanmak hem kesin hem kırılgan olmayan bir çapa sağlıyor.
+ * Toplu devir (X-17 §(4)): satırlardaki kutular `#sec-<doktorId>`, tek form `#toplu-devir`.
+ * Boş satıcı seçimi sahipsiz havuz demektir.
  */
-function transferForm(page: import("@playwright/test").Page, doctorId: string) {
-  const select = page.locator(`#seller-${doctorId}`);
-  return {
-    select,
-    reason: page.locator(`#reason-${doctorId}`),
-    submit: page
-      .locator("form")
-      .filter({ has: select })
-      .getByRole("button", { name: "Devret" }),
-  };
+async function topluDevir(
+  page: import("@playwright/test").Page,
+  doctorIds: string[],
+  sellerId: string,
+  reason: string
+) {
+  for (const id of doctorIds) await page.locator(`#sec-${id}`).check();
+  await page.locator("#toplu-satici").selectOption(sellerId);
+  await page.locator("#toplu-gerekce").fill(reason);
+  await page.locator("#toplu-devir").getByRole("button", { name: "Devret" }).click();
 }
 
 test("admin doktoru devreder; geçmiş siparişler eski satıcıda kalır (FR-06/FR-07)", async ({
@@ -81,11 +81,8 @@ test("admin doktoru devreder; geçmiş siparişler eski satıcıda kalır (FR-06
 
   // --- Devri arayüzden yap ---
   await page.goto("/doctors");
-  const form = transferForm(page, target.doctorId);
-  await form.select.selectOption(newSeller.id);
-  await form.reason.fill("E2E devir testi");
-  await form.submit.click();
-  await expect(page.getByText("Devir tamamlandı.")).toBeVisible();
+  await topluDevir(page, [target.doctorId], newSeller.id, "E2E devir testi");
+  await expect(page.getByText("Devir tamamlandı: 1 doktor.")).toBeVisible();
 
   // --- FR-06: sahiplik değişti + devir kaydı oluştu ---
   const [doctorAfter] = await query<{ ownerSellerId: string }>(
@@ -131,7 +128,7 @@ test("admin doktoru devreder; geçmiş siparişler eski satıcıda kalır (FR-06
   ]);
 });
 
-test("doktor sahipsiz havuza alınabilir ve uyarı gösterilir (FR-08)", async ({
+test("doktor sahipsiz havuza alınabilir; uyarı ve Sahipsiz süzgeci gösterir (FR-08, X-17-5)", async ({
   page,
 }) => {
   const [doc] = await query<{ id: string; fullName: string; ownerSellerId: string }>(
@@ -141,11 +138,9 @@ test("doktor sahipsiz havuza alınabilir ve uyarı gösterilir (FR-08)", async (
   expect(doc).toBeTruthy();
 
   await page.goto("/doctors");
-  const form = transferForm(page, doc.id);
-  await form.select.selectOption(""); // — Sahipsiz havuz —
-  await form.reason.fill("E2E sahipsiz bırakma"); // gerekçe zorunlu (X-13, X-17)
-  await form.submit.click();
-  await expect(page.getByText("Devir tamamlandı.")).toBeVisible();
+  // Boş seçim = sahipsiz havuz; gerekçe zorunlu (X-13, X-17).
+  await topluDevir(page, [doc.id], "", "E2E sahipsiz bırakma");
+  await expect(page.getByText("Devir tamamlandı: 1 doktor.")).toBeVisible();
 
   const [after] = await query<{ ownerSellerId: string | null }>(
     `SELECT "ownerSellerId" FROM "Doctor" WHERE id = $1`,
@@ -157,9 +152,56 @@ test("doktor sahipsiz havuza alınabilir ve uyarı gösterilir (FR-08)", async (
   await page.reload();
   await expect(page.getByText(/sahipsiz havuzda/i)).toBeVisible();
 
+  // "Sahipsiz" süzgeci yalnız sahipsiz doktorları listeler (X-17-5).
+  const [owned] = await query<{ fullName: string }>(
+    `SELECT "fullName" FROM "Doctor" WHERE "ownerSellerId" IS NOT NULL LIMIT 1`
+  );
+  await page.getByRole("link", { name: "Sahipsiz", exact: true }).click();
+  await expect(page).toHaveURL(/\/doctors\?sahip=yok/);
+  await expect(page.getByRole("link", { name: new RegExp(doc.fullName) })).toBeVisible();
+  await expect(page.getByRole("link", { name: new RegExp(owned.fullName) })).toHaveCount(0);
+
   // Seed durumunu geri al (suite sırası bağımsızlığı).
   await query(`UPDATE "Doctor" SET "ownerSellerId" = $1 WHERE id = $2`, [
     doc.ownerSellerId,
     doc.id,
   ]);
+});
+
+test("toplu devir: iki doktor tek gerekçeyle, her birine iz satırı (X-17-3)", async ({ page }) => {
+  const docs = await query<{ id: string; ownerSellerId: string }>(
+    `SELECT id, "ownerSellerId" FROM "Doctor" WHERE "ownerSellerId" IS NOT NULL ORDER BY "fullName" LIMIT 2`
+  );
+  expect(docs).toHaveLength(2);
+  const [hedef] = await query<{ id: string }>(
+    `SELECT id FROM "User" WHERE role = 'SATICI' AND "isActive" AND id <> ALL($1) LIMIT 1`,
+    [docs.map((d) => d.ownerSellerId)]
+  );
+  expect(hedef).toBeTruthy();
+
+  await page.goto("/doctors");
+
+  // Seçimsiz ve gerekçesiz devir kaydedilmez.
+  await page.locator("#toplu-gerekce").fill("E2E toplu");
+  await page.locator("#toplu-devir").getByRole("button", { name: "Devret" }).click();
+  await expect(page.getByText("Devredilecek doktor seçilmedi.")).toBeVisible();
+  await page.locator(`#sec-${docs[0].id}`).check();
+  await page.locator("#toplu-gerekce").fill("");
+  await page.locator("#toplu-devir").getByRole("button", { name: "Devret" }).click();
+  await expect(page.getByText("Gerekçe zorunludur.")).toBeVisible();
+  await page.locator(`#sec-${docs[0].id}`).uncheck();
+
+  await topluDevir(page, docs.map((d) => d.id), hedef.id, "E2E toplu devir");
+  await expect(page.getByText("Devir tamamlandı: 2 doktor.")).toBeVisible();
+
+  const izler = await query<{ doctorId: string; toSellerId: string }>(
+    `SELECT "doctorId", "toSellerId" FROM "DoctorAssignment" WHERE reason = 'E2E toplu devir'`
+  );
+  expect(izler.map((i) => i.doctorId).sort()).toEqual(docs.map((d) => d.id).sort());
+  expect(izler.every((i) => i.toSellerId === hedef.id)).toBe(true);
+
+  // Seed durumunu geri al (suite sırası bağımsızlığı).
+  for (const d of docs) {
+    await query(`UPDATE "Doctor" SET "ownerSellerId" = $1 WHERE id = $2`, [d.ownerSellerId, d.id]);
+  }
 });

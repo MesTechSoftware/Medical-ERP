@@ -36,8 +36,9 @@ describe("tek çağrı noktası — stok yazımı ve kilit (B-4-2)", () => {
     expect(ihlaller(desen, join("lib", "stok.ts"))).toEqual([]);
   });
 
-  it("FOR UPDATE yalnız stok.ts'de geçer (ADR-008 §(6))", () => {
-    expect(ihlaller(/FOR\s+UPDATE/i, join("lib", "stok.ts"))).toEqual([]);
+  it("FOR UPDATE yalnız sayılı kilit dosyalarında geçer (ADR-008 §(6))", () => {
+    // Sayılı liste: ürün satırı (stok.ts) · doktor satırı (sahiplik.ts, X-17 §(8)).
+    expect(ihlaller(/FOR\s+UPDATE/i, "").sort()).toEqual([join("lib", "sahiplik.ts"), join("lib", "stok.ts")]);
   });
 });
 
@@ -60,6 +61,21 @@ describe("tek çağrı noktası — doktor kapsamı (X-13-1)", () => {
       yol.startsWith(join("app", "(seller)"))
     );
     expect(saticiEkranlari).toEqual([]);
+  });
+});
+
+describe("tek çağrı noktası — doktor sahibi (X-17-1)", () => {
+  it("sahip alanına yalnız sahiplik.ts yazar", () => {
+    const yazim = /\.doctor\.(create|createMany|update|updateMany|upsert)\s*\(/;
+    const sahipAlani = /ownerSeller(Id)?\s*:(?!\s*true\b)/;
+    const hamSql = /UPDATE\s+"Doctor"[^;]*"ownerSellerId"/i;
+    const yazanlar = kaynaklar(KOK)
+      .map((yol) => relative(KOK, yol))
+      .filter((yol) => {
+        const kaynak = readFileSync(join(KOK, yol), "utf8");
+        return (yazim.test(kaynak) && sahipAlani.test(kaynak)) || hamSql.test(kaynak);
+      });
+    expect(yazanlar).toEqual([join("lib", "sahiplik.ts")]);
   });
 });
 

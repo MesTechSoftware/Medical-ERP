@@ -1,25 +1,45 @@
-import type { Prisma } from "@/generated/prisma/client";
+import { Prisma } from "@/generated/prisma/client";
+import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 
 export type SahiplikSonucu =
   | { durum: "TAMAM"; degisen: number }
   | { durum: "HATA"; kuralKodu: "SAHIP_AKTIF_SATICI_DEGIL" | "BAYI_SAHIP_ATANAMAZ" };
 
+type Gerekce = { metin: string; yapanId: string };
+
+/**
+ * Doktor satırlarını id sırasıyla kilitler ve sahiplerini kilit altında döner
+ * (X-17 §(8), ADR-008 §(1)/(3)). Kilit sıranın başıdır: ürün satırlarından ve belge
+ * sayacından önce alınır. Kilit transaction sonuna kadar tutulur.
+ */
+async function doktorKilitle(
+  tx: Prisma.TransactionClient,
+  doktorIdleri: readonly string[]
+): Promise<{ id: string; ownerSellerId: string | null }[]> {
+  const idler = [...new Set(doktorIdleri)].sort();
+  if (idler.length === 0) return [];
+  return tx.$queryRaw`SELECT "id", "ownerSellerId" FROM "Doctor" WHERE "id" IN (${Prisma.join(idler)}) ORDER BY "id" FOR UPDATE`;
+}
+
 /**
  * `degistirDoktorSahibi()` — doktor sahibinin TEK yazma noktası (X-17 §(1)).
- * Tek çağrı noktası listesinin 12. maddesi; bu, `CM` ilk sürümüdür. Doktor satırı
- * kilidi (X-17 §(8), ADR-008) ve CI kontrolü 1B madde 3'tedir.
+ * Tek çağrı noktası listesinin 12. maddesi.
  *
+ * - Doktor satırları önce kilitlenir; sahip kilit altında okunur (X-17 §(8)).
  * - Yeni sahip boş değilse aktif bir `SATICI`'dır (X-17 §(2)).
  * - `BAYI`'nin sahibi olmaz (X-17 §(2)); DB'de ayrıca `CHECK` kısıtıdır.
- * - Sahibi gerçekten değişen her doktor için bir iz satırı yazılır (X-17 §(3)).
- *   Toplu işlemde gerekçe bir kez girilir, her doktora ayrı satır düşer (X-17 §(4)).
+ * - Sahibi gerçekten değişen her doktor için bir iz satırı ve bir denetim kaydı yazılır,
+ *   ikisi de bu transaction'da (X-17 §(3), RULE-13). Toplu işlemde gerekçe bir kez
+ *   girilir, her doktora ayrı satır düşer (X-17 §(4)).
  */
 export async function degistirDoktorSahibi(
   doktorIdleri: readonly string[],
   yeniSahipId: string | null,
-  gerekce: { metin: string; yapanId: string },
+  gerekce: Gerekce,
   tx: Prisma.TransactionClient
 ): Promise<SahiplikSonucu> {
+  await doktorKilitle(tx, doktorIdleri);
+
   if (yeniSahipId) {
     const sahip = await tx.user.findUnique({
       where: { id: yeniSahipId },
@@ -51,6 +71,50 @@ export async function degistirDoktorSahibi(
         reason: gerekce.metin,
       },
     });
+    await createAuditLog(
+      {
+        actorId: gerekce.yapanId,
+        action: AUDIT_ACTIONS.DOCTOR_TRANSFER,
+        entityType: "Doctor",
+        entityId: d.id,
+        before: { ownerSellerId: d.ownerSellerId },
+        after: { ownerSellerId: yeniSahipId, reason: gerekce.metin },
+      },
+      tx
+    );
   }
   return { durum: "TAMAM", degisen: degisenler.length };
+}
+
+/**
+ * Sipariş girişinde sahibi kilit altında doğrular (X-17 §(8)). Siparişi giren satıcı
+ * kilit alındığında hâlâ sahip değilse — arada devir tamamlandıysa — sipariş
+ * `SAHIP_DEGISTI` ile reddedilir. Sipariş transaction'ında ürün kilidinden önce çağrılır.
+ */
+export async function siparisSahibiniKilitle(
+  tx: Prisma.TransactionClient,
+  doktorId: string,
+  saticiId: string
+): Promise<{ durum: "TAMAM" } | { durum: "HATA"; kuralKodu: "SAHIP_DEGISTI" }> {
+  const [doktor] = await doktorKilitle(tx, [doktorId]);
+  return doktor?.ownerSellerId === saticiId ? { durum: "TAMAM" } : { durum: "HATA", kuralKodu: "SAHIP_DEGISTI" };
+}
+
+/**
+ * Pasifleştirilen satıcının portföyü (X-17 §(5)): bütün doktorları tek bir aktif satıcıya
+ * devredilir ya da sahipsiz bırakılır. Hedefi yönetici seçer; otomatik devir yoktur.
+ */
+export async function portfoyuDevret(
+  tx: Prisma.TransactionClient,
+  saticiId: string,
+  yeniSahipId: string | null,
+  gerekce: Gerekce
+): Promise<SahiplikSonucu> {
+  const doktorlar = await tx.doctor.findMany({ where: { ownerSellerId: saticiId }, select: { id: true } });
+  return degistirDoktorSahibi(
+    doktorlar.map((d) => d.id),
+    yeniSahipId,
+    gerekce,
+    tx
+  );
 }
