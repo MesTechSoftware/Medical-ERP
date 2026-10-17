@@ -54,7 +54,7 @@ export default function SellerForm({
       <SelectField
         label="Durum"
         name="status"
-        defaultValue={defaults?.status ?? "AKTIF"}
+        defaultValue={state.degerler?.status ?? defaults?.status ?? "AKTIF"}
         options={[
           { value: "AKTIF", label: "Aktif" },
           { value: "PASIF", label: "Pasif" },
@@ -72,14 +72,14 @@ export default function SellerForm({
           <SelectField
             label="Doktorlar"
             name="portfoy"
-            defaultValue=""
+            defaultValue={state.degerler?.portfoy ?? ""}
             options={[
               { value: "", label: "— Seçiniz —" },
               { value: "SAHIPSIZ", label: "Sahipsiz bırak" },
               ...portfoy.saticilar.map((s) => ({ value: s.id, label: `${s.name} satıcısına devret` })),
             ]}
           />
-          <Field label="Portföy gerekçesi" name="portfoyGerekce" />
+          <Field label="Portföy gerekçesi" name="portfoyGerekce" defaultValue={state.degerler?.portfoyGerekce} />
         </fieldset>
       )}
 

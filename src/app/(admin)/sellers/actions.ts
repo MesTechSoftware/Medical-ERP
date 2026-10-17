@@ -8,7 +8,14 @@ import { requireAdmin } from "@/lib/session";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { portfoyuDevret } from "@/lib/sahiplik";
 
-export type SellerFormState = { error?: string };
+/**
+ * `degerler`: hata dönüşünde kullanıcının seçimleri. React form action'dan sonra formu
+ * sıfırlar; durum alanı `AKTIF`'e dönerse ikinci gönderim satıcıyı sessizce aktif bırakır.
+ */
+export type SellerFormState = {
+  error?: string;
+  degerler?: { status: string; portfoy: string; portfoyGerekce: string };
+};
 
 class PortfoyHatasi extends Error {}
 
@@ -100,11 +107,13 @@ export async function updateSeller(
     if (doktorSayisi > 0) {
       const secim = ((formData.get("portfoy") as string) || "").trim();
       const gerekce = ((formData.get("portfoyGerekce") as string) || "").trim();
+      const degerler = { status: "PASIF", portfoy: secim, portfoyGerekce: gerekce };
       if (!secim)
         return {
           error: `Satıcının ${doktorSayisi} doktoru var. Doktorların devredileceği satıcıyı ya da "sahipsiz bırak"ı seçin.`,
+          degerler,
         };
-      if (!gerekce) return { error: "Portföy için gerekçe zorunludur." };
+      if (!gerekce) return { error: "Portföy için gerekçe zorunludur.", degerler };
       portfoy = { hedef: secim === "SAHIPSIZ" ? null : secim, gerekce };
     }
   }
@@ -125,7 +134,10 @@ export async function updateSeller(
     });
   } catch (e) {
     if (e instanceof PortfoyHatasi)
-      return { error: "Doktorlar yalnız aktif bir satıcıya devredilebilir." };
+      return {
+        error: "Doktorlar yalnız aktif bir satıcıya devredilebilir.",
+        degerler: { status: "PASIF", portfoy: portfoy?.hedef ?? "SAHIPSIZ", portfoyGerekce: portfoy?.gerekce ?? "" },
+      };
     return { error: "Bu e-posta zaten kayıtlı." };
   }
 

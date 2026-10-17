@@ -37,6 +37,9 @@ test("doktoru olan satıcı portföy seçimi olmadan pasifleştirilemez; sahipsi
     await expect(page.getByText(/doktoru var/)).toBeVisible();
     const [hala] = await query<{ isActive: boolean }>(`SELECT "isActive" FROM "User" WHERE id = $1`, [satici.id]);
     expect(hala.isActive).toBe(true);
+    // Hata dönüşünde seçimler korunur: form sıfırlanıp durum AKTIF'e dönerse ikinci
+    // gönderim satıcıyı sessizce aktif bırakır.
+    await expect(page.locator("#status")).toHaveValue("PASIF");
 
     // Sahipsiz bırak + gerekçe → pasifleşir, doktorlar sahipsiz, her birine iz satırı.
     await page.locator("#portfoy").selectOption("SAHIPSIZ");
