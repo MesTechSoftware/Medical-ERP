@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { requireSeller } from "@/lib/session";
+import { kapsamliDoktorlariGetir } from "@/lib/doctor";
 import { PageHeader, Card } from "@/components/ui";
 import { cozumleBirimFiyat } from "@/lib/fiyat";
 import { hesaplaStok } from "@/lib/stok";
@@ -11,7 +12,7 @@ export default async function NewOrderPage() {
 
   // FR-05: yalnızca satıcının KENDİ aktif doktorları seçilebilir.
   const doctors = await prisma.doctor.findMany({
-    where: { ownerSellerId: session.user.id, status: "AKTIF" },
+    where: { AND: [kapsamliDoktorlariGetir(session.user), { status: "AKTIF" }] },
     orderBy: { fullName: "asc" },
     select: { id: true, fullName: true, clinic: true, title: true },
   });

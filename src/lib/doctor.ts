@@ -1,3 +1,6 @@
+import type { Prisma } from "@/generated/prisma/client";
+import type { Role } from "@/generated/prisma/enums";
+
 /**
  * Doktor sahipliği kuralları — TEK KAYNAK.
  *
@@ -39,12 +42,13 @@ export function canSellerOrderForDoctor(
 }
 
 /**
- * Satıcının göreceği doktorları sınırlayan Prisma `where` parçası (FR-05).
- * Admin tümünü görür; satıcı yalnızca kendi portföyünü.
+ * `kapsamliDoktorlariGetir(kullanici)` — doktor okumasının kapsamı (D-2 §(3), X-13 §(1)).
+ * Tek çağrı noktası listesinin 11. maddesi. Süzme **sorgudadır**: fonksiyon Prisma
+ * `where` parçası döner, çağıran kendi süzgeciyle `AND` içinde birleştirir.
+ *
+ * - `SATICI` yalnız sahibi olduğu `DOKTOR` carilerini görür; `BAYI` göremez (X-8 §(3)).
+ * - `YONETICI` ve `OPERASYON` bütün carileri görür.
  */
-export function doctorScopeFor(user: {
-  id: string;
-  role: string;
-}): { ownerSellerId?: string } {
-  return user.role === "YONETICI" ? {} : { ownerSellerId: user.id };
+export function kapsamliDoktorlariGetir(kullanici: { id: string; role: Role }): Prisma.DoctorWhereInput {
+  return kullanici.role === "SATICI" ? { ownerSellerId: kullanici.id, accountClass: "DOKTOR" } : {};
 }

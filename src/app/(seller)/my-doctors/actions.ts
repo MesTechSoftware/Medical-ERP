@@ -7,6 +7,7 @@ import { requireSeller } from "@/lib/session";
 import { tryNormalizePhone, formatPhone } from "@/lib/phone";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { degistirDoktorSahibi } from "@/lib/sahiplik";
+import { kapsamliDoktorlariGetir } from "@/lib/doctor";
 
 export type DoctorFormState = { error?: string };
 
@@ -87,7 +88,7 @@ export async function createDoctor(
         tx
       );
       if (sonuc.durum === "HATA") throw new Error(sonuc.kuralKodu);
-      return { ...created, ownerSellerId: sellerId };
+      return tx.doctor.findUniqueOrThrow({ where: { id: created.id } });
     });
   } catch {
     // Yarış durumu: aynı anda iki istek aynı telefonu yazmaya çalıştıysa
@@ -119,8 +120,11 @@ export async function updateDoctor(
   const parsed = parseDoctorForm(formData);
   if (parsed.error) return { error: parsed.error };
 
-  const before = await prisma.doctor.findUnique({ where: { id } });
-  if (!before || before.ownerSellerId !== sellerId) {
+  // Kapsam dışındaki cari bulunmamış gibi davranır (X-13 §(1), X-3 §(8)).
+  const before = await prisma.doctor.findFirst({
+    where: { AND: [kapsamliDoktorlariGetir(session.user), { id }] },
+  });
+  if (!before) {
     return { error: "Bu doktor sizin portföyünüzde değil." };
   }
 

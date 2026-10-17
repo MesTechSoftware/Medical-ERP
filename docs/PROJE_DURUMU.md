@@ -124,6 +124,7 @@ kongre tabloları · e-belge ve kargo modül tabloları (KARARLAR §1.3 §(10): 
 - **Onay bloğu** (A-8 — 1B madde 1, 16.10.2026): `acikBlokVarMi()` her kural için son bloğa bakar (`RED` ve kararsız durdurur, `ONAY` geçirir); `blokKontrolleriniCalistir()` X-4 sonucunu döner ve bloğu yazar. **Henüz hiçbir akış çağırmıyor** — sipariş/sevkiyat bağlantısı ve onay ekranı 1B madde 4/7. `OnayBlogu`'nu başka dosyanın yazması birim testte kırmızıdır.
 - **Modül durumu** tek `modulAcikMi(kod)` (K-9, §1.3 — 1B madde 1, 16.10.2026): `policy.modules`'tan okur; kongre kapalı (K-6). `policy.modules`'u başka dosyanın okuması birim testte kırmızıdır. **1B madde 1 bu işle kapandı.**
 - **Belge numarası** (A-14 — 1B madde 2, 16.10.2026): `uretBelgeNo(onek, tx)` sayaç satırı kilidi altında, belgeyi yazan transaction'da; yıl İstanbul takvim yılı. **X-2 kabul testi yeşil:** tahsilat yazılamazsa `THS` numarası harcanmaz; `BAYI` tahsilatı aynı yoldan. Sayaç tablosuna başka dosyanın dokunması, elle kurulmuş numara ve ikinci tahsilat yolu birim testte kırmızıdır. *Tahsilatın `TAHSILAT` cari hareketi hâlâ yazılmıyor — 1B madde 7 (R-11).*
+- **Doktor kapsamı** tek `kapsamliDoktorlariGetir(kullanici)` (D-2 §(3), X-13 §(1) — 1B madde 3a, 17.10.2026): `SATICI` yalnız sahibi olduğu `DOKTOR` carilerini görür; `YONETICI` ve `OPERASYON` hepsini. Satıcı ekranlarının doktor okumaları (liste, düzenleme, sipariş formu, hesabım, doktor güncelleme, sipariş kaydı) bu süzgeçten geçer; kapsam dışındaki cari "portföyünüzde değil" döner, varlığı ima edilmez. Satıcı rota grubunda elle sahip süzgeci birim testte kırmızıdır.
 - **Bir doktorun tek sahibi satıcı**; sahibi olmayan satıcı sipariş açamaz (RULE-02).
 - **Denetim izi** merkezî ve sanitize'lı (RULE-13).
 - **Giriş deneme sınırı** bellek içi sayaç — eşikler `policy.auth` (ADR-004, X-9).
@@ -134,16 +135,16 @@ kongre tabloları · e-belge ve kargo modül tabloları (KARARLAR §1.3 §(10): 
 
 - **Git:** `origin` = GitHub `MesTechSoftware/Medical-ERP`. `docs/` sürüm kontrolünde (C0). İş akışı: branch → PR → `main`.
 - **CI** (`.github/workflows/ci.yml`, push `main` + tüm PR'lar; PostgreSQL 17 servisi): `npm ci` → `prisma generate` → `migrate deploy` → **typecheck + lint + birim + entegrasyon + e2e**. Son koşu **yeşil** — `main` @ `2265b8d`, run `38340305135`.
-- **Test sayıları (16.10.2026 ölçümü — birim ve entegrasyon; e2e 15.10):**
+- **Test sayıları (17.10.2026 ölçümü — birim ve entegrasyon; e2e 15.10):**
 
   | Şerit | Dosya | Test | Komut |
   |---|---|---|---|
-  | Birim | 12 | **92** | `npm test` |
-  | Entegrasyon | 14 | **105** | `npm run test:integration` |
+  | Birim | 12 | **90** | `npm test` |
+  | Entegrasyon | 15 | **110** | `npm run test:integration` |
   | E2E | — | **32** | `npm run test:e2e` |
 
   Entegrasyon dosyaları: `db` · `collections` · `orders` · `reports-service` · `sahiplik` ·
-  `kisitlar` · `anti-sema` · `referans-seed` · `sayilan-belgeler` · `bakiye` · `risk` · `stok` · `onay-blogu` · `belge-no`.
+  `kisitlar` · `anti-sema` · `referans-seed` · `sayilan-belgeler` · `bakiye` · `risk` · `stok` · `onay-blogu` · `belge-no` · `kapsam`.
   ⚠️ Dokunulmadan kalan eski birim testleri (`doctor`, `pagination`, `phone`, `audit`) sistemin
   kanıtı değildir; 1A çıkışında yazılı olarak kabul edildi, kapanması 1B'nin işidir.
 - **Üç veritabanı:** `medikal_dev` (geliştirme) · `medikal_test` (e2e, her koşuda reset) ·
