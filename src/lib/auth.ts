@@ -27,8 +27,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         const user = await prisma.user.findUnique({ where: { email } });
-        // OPERASYON'un davranışı 1B madde 3'te doğar (GÇ-7); o güne kadar giriş yapamaz.
-        if (!user || !user.isActive || user.role === "OPERASYON") {
+        if (!user || !user.isActive) {
           recordFailure(email);
           logAttempt(user?.id ?? null, "hatali_kimlik");
           await createAuditLog({

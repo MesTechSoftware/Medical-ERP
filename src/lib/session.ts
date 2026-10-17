@@ -45,6 +45,18 @@ export async function requireAdmin() {
   return session;
 }
 
+/**
+ * Yönetim rota grubu: YONETICI ve OPERASYON (D-2 §(1)). Yalnız YONETICI'nin işleri —
+ * ürün tanımı, kullanıcı yönetimi, devir, vade, raporlar, denetim kaydı — ayrıca
+ * `requireAdmin()` çağırır (D-2 17.10 eki).
+ */
+export async function requireStaff() {
+  const session = await requireSession();
+  const { role } = session.user;
+  if (role !== "YONETICI" && role !== "OPERASYON") redirect(homeFor(role));
+  return session;
+}
+
 /** SATICI değilse kendi ana sayfasına yönlendirir. */
 export async function requireSeller() {
   const session = await requireSession();

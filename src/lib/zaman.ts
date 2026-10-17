@@ -65,3 +65,20 @@ export function takvimYili(an: Date = simdi()): number {
 export function gunEkle(gun: Date, adet: number): Date {
   return new Date(Date.UTC(gun.getUTCFullYear(), gun.getUTCMonth(), gun.getUTCDate() + adet));
 }
+
+/** `an`ın dilimdeki takvim ayı (rapor ekranının varsayılan dönemi — X-1 §(2)). */
+export function takvimAyi(an: Date = simdi()): { yil: number; ay: number } {
+  const { yil, ay } = takvimGunu(an);
+  return { yil, ay };
+}
+
+/** Dilimdeki takvim ayının yarı açık aralığı: [ay başı, sonraki ay başı). */
+export function ayAraligi(yil: number, ay: number): { baslangic: Date; bitis: Date } {
+  return { baslangic: geceYarisi(yil, ay, 1), bitis: geceYarisi(yil, ay + 1, 1) };
+}
+
+/** "Tüm zamanlar" — aralık parametresinin bilinçli seçimi (X-1 §(2)); varsayılan değildir. */
+export const TUM_ZAMANLAR: Readonly<{ baslangic: Date; bitis: Date }> = Object.freeze({
+  baslangic: new Date("1970-01-01T00:00:00Z"),
+  bitis: new Date("9999-12-31T00:00:00Z"),
+});

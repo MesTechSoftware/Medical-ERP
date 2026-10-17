@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { requireAdmin } from "@/lib/session";
+import { requireStaff } from "@/lib/session";
 import { formatla } from "@/lib/money";
 import { formatDate } from "@/lib/format";
 import { PageHeader, Card, EmptyRow } from "@/components/ui";
@@ -13,7 +13,7 @@ export default async function CollectionsPage({
 }: {
   searchParams: Promise<{ page?: string; per?: string }>;
 }) {
-  await requireAdmin();
+  await requireStaff();
   const { page, perPage, skip, take } = getPagination(await searchParams);
 
   const [doctors, payments, total, paymentMethods] = await Promise.all([

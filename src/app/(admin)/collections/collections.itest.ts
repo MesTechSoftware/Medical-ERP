@@ -14,6 +14,7 @@ const h = vi.hoisted(() => ({ adminId: "" }));
 
 vi.mock("@/lib/session", () => ({
   requireAdmin: async () => ({ user: { id: h.adminId, role: "YONETICI" } }),
+  requireStaff: async () => ({ user: { id: h.adminId, role: "YONETICI" } }),
 }));
 vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
 

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { requireAdmin } from "@/lib/session";
+import { requireStaff } from "@/lib/session";
 import { quantitySchema } from "@/lib/validation";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { hesaplaStok, stokHareketiYaz, varsayilanDepoId } from "@/lib/stok";
@@ -13,7 +13,7 @@ export async function addStockEntry(
   _prev: StockFormState,
   formData: FormData
 ): Promise<StockFormState> {
-  const session = await requireAdmin();
+  const session = await requireStaff();
 
   const productId = formData.get("productId") as string;
   const quantity = parseInt(String(formData.get("quantity") ?? ""), 10);

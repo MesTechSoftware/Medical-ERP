@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { requireAdmin } from "@/lib/session";
+import { requireStaff } from "@/lib/session";
 import { formatPhone } from "@/lib/phone";
 import { PageHeader, Card, StatusBadge, EmptyRow } from "@/components/ui";
 import Pagination from "@/components/Pagination";
@@ -12,7 +12,9 @@ export default async function AdminDoctorsPage({
 }: {
   searchParams: Promise<{ page?: string; per?: string; sahip?: string }>;
 }) {
-  await requireAdmin();
+  const session = await requireStaff();
+  // Cariyi OPERASYON da görür (X-13 §(1)); devir yalnız YONETICI (X-13 §(5)) — yetki action'dadır.
+  const devirYetkisi = session.user.role === "YONETICI";
   const params = await searchParams;
   const { page, perPage, skip, take } = getPagination(params);
 
@@ -77,11 +79,13 @@ export default async function AdminDoctorsPage({
       </div>
 
       {/* Toplu devir (X-17 §(4)): satırlardaki kutular bu forma `form` niteliğiyle bağlıdır. */}
-      <div className="mb-4">
-        <Card>
-          <TransferForm formId="toplu-devir" sellers={sellers} />
-        </Card>
-      </div>
+      {devirYetkisi && (
+        <div className="mb-4">
+          <Card>
+            <TransferForm formId="toplu-devir" sellers={sellers} />
+          </Card>
+        </div>
+      )}
 
       <Card>
         <div className="overflow-x-auto">
@@ -104,7 +108,7 @@ export default async function AdminDoctorsPage({
               {doctors.map((d) => (
                 <tr key={d.id} className="border-b border-slate-100 last:border-0">
                     <td className="px-4 py-3">
-                      {d.accountClass === "DOKTOR" && (
+                      {devirYetkisi && d.accountClass === "DOKTOR" && (
                         <input
                           type="checkbox"
                           id={`sec-${d.id}`}

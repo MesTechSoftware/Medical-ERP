@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bugun, gunAraligi, gunEkle, takvimYili } from "@/lib/zaman";
+import { ayAraligi, bugun, gunAraligi, gunEkle, takvimAyi, takvimYili } from "@/lib/zaman";
 
 // E-1: "gün" İstanbul takvim günüdür; sunucunun dilimi belirleyici değildir.
 // Testler UTC anlarla yazılır — makinenin dilimi sonucu değiştiremez.
@@ -39,5 +39,22 @@ describe("takvimYili — A-14 sayaç yılı", () => {
 describe("gunEkle", () => {
   it("takvim gününe gün ekler", () => {
     expect(gunEkle(new Date("2026-02-27T00:00:00Z"), 2).toISOString()).toBe("2026-03-01T00:00:00.000Z");
+  });
+});
+
+describe("ayAraligi / takvimAyi — dönem ayı (X-1 §(2), E-1 §(4))", () => {
+  it("İstanbul ayının yarı açık sınırlarını UTC olarak verir", () => {
+    const { baslangic, bitis } = ayAraligi(2026, 10);
+    expect(baslangic.toISOString()).toBe("2026-09-30T21:00:00.000Z");
+    expect(bitis.toISOString()).toBe("2026-10-31T21:00:00.000Z");
+  });
+
+  it("yıl sonunu aşar", () => {
+    expect(ayAraligi(2026, 12).bitis.toISOString()).toBe("2026-12-31T21:00:00.000Z");
+  });
+
+  it("ayın ilk gecesi İstanbul'da o aya düşer", () => {
+    // 2026-09-30 22:30 UTC = 2026-10-01 01:30 İstanbul
+    expect(takvimAyi(new Date("2026-09-30T22:30:00Z"))).toEqual({ yil: 2026, ay: 10 });
   });
 });

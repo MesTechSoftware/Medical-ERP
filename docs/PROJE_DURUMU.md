@@ -73,7 +73,7 @@ tablo/kolon İngilizce `camelCase`, enum değerleri Türkçe. Prisma'nın ifade 
 
 **Şemada var, davranışı 1B'de:** cari hareket, belge numarası sayacı, oturum, onay bloğu,
 iade/konsinye/transfer/stok düzeltme belgeleri, kısmi sevkiyat, fiyat listesi ekranı, dışa
-aktarım kütüğü, import partisi, `OPERASYON` rolünün yetkileri. Hangi tablonun hangi 1B
+aktarım kütüğü, import partisi. Hangi tablonun hangi 1B
 maddesinde canlanacağı: `FAZ1_UYGULAMA_KAPSAMI.md` §B tablosu.
 
 **Şemada yok (anti-şema testiyle korunur — C8):** `tenantId` · lot/seri/GTIN/karekod/SKT ·
@@ -97,15 +97,18 @@ kongre tabloları · e-belge ve kargo modül tabloları (KARARLAR §1.3 §(10): 
 - ✅ Siparişler — liste / detay + durum yönetimi *(tek parça sevkiyat — kısmi sevkiyat 1B)*
 - ✅ Kargo — sevkiyat: kargo firması + takip no **elle**; gönderi tarihi otomatik. *İrsaliye no alanı şemada var, formda yok (1B). Takip linki şablonu ekranda kullanılmıyor.*
 - ✅ Tahsilatlar — tutar, tarih, **ödeme yöntemi** (tanım tablosu), referans no; siparişe eşlenmez
-- ✅ Raporlar — satıcı performansı, doktor ciro sıralaması, toplam ciro. Ciro **KDV hariç**, tahsilat **KDV dahil**, taban kolon başlığında *(tahsilat oranı, kanal ve yaşlandırma raporları söküldü)*
+- ✅ Raporlar — **dönem seçimli** (varsayılan içinde bulunulan ay, "tüm zamanlar" ayrı seçim — X-1): satıcı başına ciro, **hakediş**, tahsilat; doktor ciro sıralaması; dönem cirosu. Ciro **KDV hariç**, tahsilat **KDV dahil**, taban kolon başlığında *(tahsilat oranı, kanal ve yaşlandırma raporları söküldü)*. Yalnız `YONETICI`
 - ✅ Denetim kaydı — salt okunur, filtreli
-- ❌ Primler · Kongreler · Bayiler · Bayi sevkiyat — **söküldü** (C2, C4, C5). Yeni prim (sevkiyat bazlı) 1B madde 3; kongre Faz 3+ modül; bayi = `Doctor` satırı (1B madde 7)
+- ❌ Primler · Kongreler · Bayiler · Bayi sevkiyat — **söküldü** (C2, C4, C5). Yeni hakediş (sevkiyat satırına donmuş oran) raporda — 1B madde 3c; *oranı satıra yazan sevkiyat akışı 1B madde 7*; kongre Faz 3+ modül; bayi = `Doctor` satırı (1B madde 7)
 
 **Satıcı** (`src/app/(seller)/`)
 - ✅ Siparişlerim — liste / yeni / detay; fiyat girişi KDV hariç, tek fiyat yolu `cozumleBirimFiyat()`
 - ✅ Doktorlarım — liste / yeni / düzenle (yalnız kendi portföyü)
 - ✅ Hesabım — doktor sayısı + ortalama iskonto
+- ✅ Raporum — kendi dönem cirosu, hakedişi, tahsilatı (D-2 §(1); kısıt sorguda)
 - ❌ Primlerim · Kongreler — söküldü
+
+**Operasyon** (`OPERASYON`, yönetim rota grubu — D-2 §(1) + 17.10 eki, 1B madde 3c): Dashboard (ana sayfa) · siparişler (hazırla/teslim/iptal) · kargo · tahsilat (kayıt/iptal) · stok girişi · doktorlar, ürünler, satıcılar **salt okuma**. Raporlar ve denetim kaydı kapalı; devir, vade, ürün tanımı ve kullanıcı yönetimi `YONETICI`'de. *Sipariş girişi ve cari açma ekranı 1B madde 7.*
 
 **Ortak:** rol bazlı kök yönlendirme · giriş · KVKK/gizlilik · `error.tsx` / `loading.tsx` /
 `not-found.tsx` · `scripts/backup.ts` (`pg_dump`).
@@ -126,6 +129,8 @@ kongre tabloları · e-belge ve kargo modül tabloları (KARARLAR §1.3 §(10): 
 - **Belge numarası** (A-14 — 1B madde 2, 16.10.2026): `uretBelgeNo(onek, tx)` sayaç satırı kilidi altında, belgeyi yazan transaction'da; yıl İstanbul takvim yılı. **X-2 kabul testi yeşil:** tahsilat yazılamazsa `THS` numarası harcanmaz; `BAYI` tahsilatı aynı yoldan. Sayaç tablosuna başka dosyanın dokunması, elle kurulmuş numara ve ikinci tahsilat yolu birim testte kırmızıdır. *Tahsilatın `TAHSILAT` cari hareketi hâlâ yazılmıyor — 1B madde 7 (R-11).*
 - **Doktor kapsamı** tek `kapsamliDoktorlariGetir(kullanici)` (D-2 §(3), X-13 §(1) — 1B madde 3a, 17.10.2026): `SATICI` yalnız sahibi olduğu `DOKTOR` carilerini görür; `YONETICI` ve `OPERASYON` hepsini. Satıcı ekranlarının doktor okumaları (liste, düzenleme, sipariş formu, hesabım, doktor güncelleme, sipariş kaydı) bu süzgeçten geçer; kapsam dışındaki cari "portföyünüzde değil" döner, varlığı ima edilmez. Satıcı rota grubunda elle sahip süzgeci birim testte kırmızıdır.
 - **Doktor sahipliği** tek `degistirDoktorSahibi()` (X-17 — 1B madde 3b, 17.10.2026): doktor satırları id sırasıyla kilitlenir (ADR-008: doktor → ürün → sayaç); iz satırı ve denetim kaydı aynı transaction'da. Sipariş kaydı sahibi kilit altında yeniden okur — arada devir tamamlandıysa reddedilir (`SAHIP_DEGISTI`). Yönetici doktor listesinden **çoklu seçimle** devreder ya da sahipsiz bırakır; listede **Sahipsiz** süzgeci var. Doktoru olan satıcı pasifleştirilirken portföy seçimi (tek satıcıya devret / sahipsiz bırak) ve gerekçe zorunlu. Sahip alanına başka dosyanın yazması birim testte kırmızıdır.
+- **Satıcı raporu** tek `getSellerReports(kullanici, { baslangic, bitis })` (X-1 + D-2 — 1B madde 3c, 17.10.2026): dönem zorunlu; ciro sevkiyat tarihiyle siparişin satıcısına, hakediş = satır matrahı × donmuş oran (`hesaplaSatirTutarlari()`), tahsilat tahsilat tarihiyle **tahsilat anındaki sahibe** (iz kaydından). `SATICI` yalnız kendi satırını alır, `OPERASYON` alamaz.
+- **Ekran matrisi** sunucuda (D-2 — 1B madde 3c): yönetim grubu `requireStaff()` (YONETICI + OPERASYON), yalnız yöneticinin işleri `requireAdmin()`; her action'ın guard'ı `yetki.test.ts`'teki matrise karşı birim testte denetlenir.
 - **Bir doktorun tek sahibi satıcı**; sahibi olmayan satıcı sipariş açamaz (RULE-02).
 - **Denetim izi** merkezî ve sanitize'lı (RULE-13).
 - **Giriş deneme sınırı** bellek içi sayaç — eşikler `policy.auth` (ADR-004, X-9).
@@ -136,13 +141,13 @@ kongre tabloları · e-belge ve kargo modül tabloları (KARARLAR §1.3 §(10): 
 
 - **Git:** `origin` = GitHub `MesTechSoftware/Medical-ERP`. `docs/` sürüm kontrolünde (C0). İş akışı: branch → PR → `main`.
 - **CI** (`.github/workflows/ci.yml`, push `main` + tüm PR'lar; PostgreSQL 17 servisi): `npm ci` → `prisma generate` → `migrate deploy` → **typecheck + lint + birim + entegrasyon + e2e**. Son koşu **yeşil** — `main` @ `2265b8d`, run `38340305135`.
-- **Test sayıları (17.10.2026 ölçümü — birim ve entegrasyon; e2e 15.10):**
+- **Test sayıları (17.10.2026 ölçümü — birim ve entegrasyon koşuldu; e2e sayısı `--list` ile, koşusu CI'da):**
 
   | Şerit | Dosya | Test | Komut |
   |---|---|---|---|
-  | Birim | 12 | **91** | `npm test` |
-  | Entegrasyon | 15 | **119** | `npm run test:integration` |
-  | E2E | — | **34** | `npm run test:e2e` |
+  | Birim | 14 | **109** | `npm test` |
+  | Entegrasyon | 15 | **128** | `npm run test:integration` |
+  | E2E | 16 | **45** | `npm run test:e2e` |
 
   Entegrasyon dosyaları: `db` · `collections` · `orders` · `reports-service` · `sahiplik` ·
   `kisitlar` · `anti-sema` · `referans-seed` · `sayilan-belgeler` · `bakiye` · `risk` · `stok` · `onay-blogu` · `belge-no` · `kapsam`.

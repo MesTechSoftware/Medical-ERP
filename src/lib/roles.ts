@@ -5,13 +5,12 @@ import type { Role } from "@/generated/prisma/enums";
  *
  * Tüm guard'lar ve kök yönlendirme buradan okur (BRK-10).
  *
- * `OPERASYON` 1A'da şemada vardır, davranışı yoktur (GÇ-7): ekran matrisi 1B madde 3'te
- * doğar. O güne kadar giriş yapamaz (`auth.ts`) ve ana sayfası yoktur.
+ * `OPERASYON`'un ana sayfası Dashboard'dur (D-2 17.10 eki).
  */
 export const ROLE_HOME: Record<Role, string> = {
   YONETICI: "/dashboard",
   SATICI: "/my-orders",
-  OPERASYON: "/login",
+  OPERASYON: "/dashboard",
 };
 
 export function homeFor(role: Role): string {

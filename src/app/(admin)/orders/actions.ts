@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireAdmin } from "@/lib/session";
+import { requireStaff } from "@/lib/session";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { OrderStatus } from "@/generated/prisma/enums";
 import { stokHareketiYaz, varsayilanDepoId } from "@/lib/stok";
@@ -16,7 +16,7 @@ function revalidateOrders() {
 
 /** BEKLIYOR -> HAZIRLANIYOR */
 export async function prepareOrder(id: string) {
-  const session = await requireAdmin();
+  const session = await requireStaff();
   const res = await prisma.order.updateMany({
     where: { id, status: "BEKLIYOR" },
     data: { status: OrderStatus.HAZIRLANIYOR },
@@ -37,7 +37,7 @@ export async function prepareOrder(id: string) {
 
 /** KARGOLANDI -> TESLIM_EDILDI */
 export async function markDelivered(id: string) {
-  const session = await requireAdmin();
+  const session = await requireStaff();
   let changed = 0;
   await prisma.$transaction(async (tx) => {
     const updated = await tx.order.updateMany({
@@ -68,7 +68,7 @@ export async function markDelivered(id: string) {
 
 /** Siparişi iptal eder ve stoğu geri yükler. */
 export async function cancelOrder(id: string) {
-  const session = await requireAdmin();
+  const session = await requireStaff();
 
   const order = await prisma.order.findUnique({
     where: { id },

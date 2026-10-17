@@ -291,7 +291,7 @@ Bayi için **ayrı fonksiyon yazılmaz** (X-8 §(2)). Liste **12'de kapalıdır*
 | §C-j | Audit sanitize kapsamı | ✅ 15.09.2026 — **`CM`'in teslim şartı** | §D.0 |
 | §C-l | İsimlendirme rejimi | ✅ 15.09.2026 — karma | `docs/adr/ADR-001` |
 | §C-m | Migration stratejisi | ✅ 15.09.2026 — fresh init | `docs/adr/ADR-002` |
-| §C-n | `OPERASYON` ekran matrisi | 🔵 **uygulama kalemi** — karar var (D-2 §(4)) | 1B madde 3 (X-1 ile tek commit) |
+| §C-n | `OPERASYON` ekran matrisi | ✅ 17.10.2026 — D-2 §(1) + 17.10 eki; `requireStaff()` / `requireAdmin()` ayrımı, matris `src/lib/yetki.test.ts`'te | 1B madde 3c (X-1 ile tek commit) |
 | §C-o | Bayi yönetim ekranları ve tabloları (C5 ↔ D-2 §(6) ↔ A-9 ↔ X-2) | ✅ 15.09.2026 | KARARLAR **X-8** |
 | §C-p | `LoginAttempt` ↔ E-2 §(8) | ✅ 15.09.2026 | KARARLAR **X-9** · `docs/adr/ADR-004` |
 | §C-q | Fiyat listesinin cariye bağlanışı | ✅ 15.09.2026 — cariye atanan liste | KARARLAR **X-10** |
@@ -659,7 +659,7 @@ parametrelerini taşır. Koşullu `updateMany` kolonla birlikte gider; bu yüzde
 
 1. **Tek çağrı noktası fonksiyonları** — **sayılan belgeler filtresi önce** *(altı dışlama)* · ✅ *(16.10.2026 — §B.6 #1 · #2 · #3 · #4 · #6 · #10; PR #19–#23 + #10)*
 2. ✅ *(16.10.2026 — A-14-1…5, X-2-1)* **A-14 `uretBelgeNo()` + `BelgeSayac`** → ardından **X-2 blocker** *(sırası zorunlu. X-2 artık kod düzeltmesi değil **bütün tahsilat yollarının** — `BAYI` dahil — kabul testidir: ödeme kaydı ve `uretBelgeNo()` aynı transaction'da; KARARLAR X-8 §(7))*
-3. **X-1 + D-2 tek commit** *(D-2 §(4): ayrı yapılırsa ikincisi birincisini bozar)* — *(17.10.2026: üç PR'a bölündü — **3a** #11 kapsam ✅ · **3b** #12 `degistirDoktorSahibi` tamamı (X-17) ✅ · **3c** X-1 + D-2 `getSellerReports` ve `OPERASYON` ekran matrisi, tek commit. KARARLAR'ın tek commit hükmü yalnız `getSellerReports`'u bağlar; matrisin açık dört noktası KARARLAR D-2 eki 17.10)* —
+3. **X-1 + D-2 tek commit** *(D-2 §(4): ayrı yapılırsa ikincisi birincisini bozar)* — *(17.10.2026: üç PR'a bölündü — **3a** #11 kapsam ✅ · **3b** #12 `degistirDoktorSahibi` tamamı (X-17) ✅ · **3c** X-1 + D-2 `getSellerReports` ve `OPERASYON` ekran matrisi, tek commit ✅ *(17.10.2026 — dönem zorunlu, hakediş `hesaplaSatirTutarlari()`'nda (X-5 §(4)), tahsilat tahsilat anındaki sahibe (X-1 eki); `OPERASYON` girişi açıldı, ana sayfası Dashboard; satıcı ekranı `/my-report`; yönetici cari/`BAYI` açma ekranı 1B-7)*. KARARLAR'ın tek commit hükmü yalnız `getSellerReports`'u bağlar; matrisin açık dört noktası KARARLAR D-2 eki 17.10)* —
    **`OPERASYON` ekran matrisi burada doğar** (§C-n) · **`BAYI` açma yetkisi de bu matriste yazılır** (X-8 §(5)); `SATICI` `BAYI` göremez ve açamaz (X-8 §(3))
 4. **E-2 kimlik katmanı — Yol (b)** *(`docs/adr/ADR-003`)* → **X-3/X-4 hata yüzeyi** → **Ü-3 taban etiketi** →
    **A-15** → **X-6 §(6) vade uyarısı**
