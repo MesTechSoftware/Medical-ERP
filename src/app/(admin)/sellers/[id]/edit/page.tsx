@@ -15,6 +15,16 @@ export default async function EditSellerPage({
   });
   if (!seller) notFound();
 
+  // Pasifleştirmede portföy seçimi (X-17 §(5)): hedef yalnız başka bir aktif satıcıdır.
+  const [doktorSayisi, saticilar] = await Promise.all([
+    prisma.doctor.count({ where: { ownerSellerId: id } }),
+    prisma.user.findMany({
+      where: { role: "SATICI", isActive: true, id: { not: id } },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+  ]);
+
   const action = updateSeller.bind(null, id);
 
   return (
@@ -25,6 +35,7 @@ export default async function EditSellerPage({
           action={action}
           submitLabel="Kaydet"
           isEdit
+          portfoy={seller.isActive && doktorSayisi > 0 ? { doktorSayisi, saticilar } : undefined}
           defaults={{
             name: seller.name,
             email: seller.email,

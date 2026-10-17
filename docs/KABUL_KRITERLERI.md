@@ -154,7 +154,11 @@
 | X-15-1 | | 1B-7 |
 | X-15-5-1 | | 1B-7 *(X-15 §(5) — telefon varsayımı)* |
 | X-16-1 | | 1B-7 *(taslaklar: `docs/arsiv/KARAR_ONERISI_2026-09-19.md` §10)* |
-| X-17-1 | | 1B-3 *(1A-CM: ilk sürüm, `CHECK` ve FK testli)* |
+| X-17-1 | Doktorun sahibi yalnız `degistirDoktorSahibi(doktorlar, yeniSahip | null, gerekce, tx)` ile değişir. Yeni sahip boş değilse aktif bir `SATICI`'dır (`SAHIP_AKTIF_SATICI_DEGIL`); `BAYI`'nin sahibi olmaz (`BAYI_SAHIP_ATANAMAZ`, ayrıca DB `CHECK`). Sahibi değişen her doktor için iz satırı (eski sahip, yeni sahip, yapan, zaman, gerekçe) ve denetim kaydı **aynı transaction'da** yazılır; transaction geri alınırsa ikisi de yazılmaz. Sahip alanına fonksiyon dışından yazan kod birim testte kırmızıdır. | 1B-3 · `sahiplik.itest.ts` · `tek-cagri.test.ts` *(1A-CM: ilk sürüm, `CHECK` ve FK testli)* |
+| X-17-2 | Sahipliği değiştiren ve sipariş giren transaction ilgili doktor satırlarını **id sırasıyla**, ürün satırlarından ve belge sayacından önce kilitler (ADR-008). Aynı doktora eşzamanlı devir ve sipariş: devir önce kilidi alırsa sipariş bekler ve sahip değiştiği için `SAHIP_DEGISTI` ile reddedilir; sipariş önce kilidi alırsa devir bekler, sipariş eski sahibe yazılır. `FOR UPDATE` yalnız `stok.ts` ve `sahiplik.ts`'de geçer. | 1B-3 · `sahiplik.itest.ts` · `tek-cagri.test.ts` |
+| X-17-3 | Devir cari listesinden **çoklu seçimle** yapılır; gerekçe bir kez girilir, her doktora ayrı iz satırı düşer. Seçimsiz ya da gerekçesiz devir kaydedilmez. Hedef "sahipsiz" olabilir. Devri yalnız `YONETICI` yapar. | 1B-3 · `doctor-transfer.spec.ts` |
+| X-17-4 | Doktoru olan bir `SATICI` pasifleştirilirken portföy seçimi (**tek bir aktif satıcıya devret** ya da **sahipsiz bırak**) ve gerekçe zorunludur; seçim ya da gerekçe yoksa form kaydedilmez, satıcı aktif kalır. Seçimle pasifleştirme ve sahiplik değişikliği tek transaction'dır; formun gerekçesi her iz satırına yazılır. Yeniden aktifleştirilen satıcıya doktorlar geri dönmez. *Rol değişikliği ekranı Faz 1'de yoktur; açıldığında aynı yoldan geçer.* | 1B-3 · `sahiplik.itest.ts` · `seller-deactivation.spec.ts` |
+| X-17-5 | Cari listesinde **"Sahipsiz" süzgeci** yalnız sahipsiz `DOKTOR` carilerini listeler. Sahipsiz uyarısındaki sayı bütün sahipsiz `DOKTOR`'ları sayar, yalnız açık sayfayı değil; `BAYI` sahipsiz sayılmaz. | 1B-3 · `doctor-transfer.spec.ts` |
 
 ## Ü · Ürünleştirme kararları
 

@@ -1,4 +1,5 @@
 import Decimal from "decimal.js";
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { formatla } from "@/lib/money";
 
@@ -155,19 +156,28 @@ type AuditInput = {
   after?: unknown;
 };
 
-/** Denetim kaydı oluşturur. Hata olursa yutar (ana işlemi bozmaz). */
-export async function createAuditLog(input: AuditInput): Promise<void> {
+/**
+ * Denetim kaydı oluşturur. Hata olursa yutar (ana işlemi bozmaz).
+ *
+ * `tx` verilirse kayıt iş transaction'ının içinde yazılır ve hata **yutulmaz**: log
+ * yazılamazsa iş de geri alınır. Kaydın işle aynı transaction'da olmasını isteyen
+ * kurallar içindir (X-17 §(3) sahiplik değişikliği).
+ */
+export async function createAuditLog(input: AuditInput, tx?: Prisma.TransactionClient): Promise<void> {
+  const data = {
+    actorId: input.actorId ?? null,
+    action: input.action,
+    entityType: input.entityType,
+    entityId: input.entityId ?? null,
+    beforeData: serialize(input.before),
+    afterData: serialize(input.after),
+  };
+  if (tx) {
+    await tx.auditLog.create({ data });
+    return;
+  }
   try {
-    await prisma.auditLog.create({
-      data: {
-        actorId: input.actorId ?? null,
-        action: input.action,
-        entityType: input.entityType,
-        entityId: input.entityId ?? null,
-        beforeData: serialize(input.before),
-        afterData: serialize(input.after),
-      },
-    });
+    await prisma.auditLog.create({ data });
   } catch (err) {
     console.error("[audit] kayıt oluşturulamadı:", err);
   }

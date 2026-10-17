@@ -12,6 +12,7 @@ import { uretBelgeNo } from "@/lib/belge-no";
 import { stokHareketiYaz, stokKilitle, varsayilanDepoId } from "@/lib/stok";
 import { canSellerOrderForDoctor, kapsamliDoktorlariGetir } from "@/lib/doctor";
 import { policy } from "@/lib/policy";
+import { siparisSahibiniKilitle } from "@/lib/sahiplik";
 
 export type OrderFormState = { error?: string };
 
@@ -65,7 +66,12 @@ export async function createOrder(
   let created: { id: string; documentNo: string };
   try {
     created = await prisma.$transaction(async (tx) => {
-      // Kilit sırası: ürün satırları → belge sayacı (ADR-008 §(1)).
+      // Kilit sırası: doktor satırı → ürün satırları → belge sayacı (ADR-008 §(1)).
+      // Sahip kilit altında yeniden okunur: arada devir tamamlandıysa sipariş
+      // reddedilir; satıcı alanı sipariş anındaki sahiptir (X-17 §(8), X-13 §(3)).
+      const sahip = await siparisSahibiniKilitle(tx, doctorId, sellerId);
+      if (sahip.durum === "HATA")
+        throw new Error("Bu doktorun sorumlu satıcısı değişti; sipariş kaydedilmedi.");
       await stokKilitle(tx, lines.map((l) => l.productId));
       const items = [];
       for (const line of lines) {
