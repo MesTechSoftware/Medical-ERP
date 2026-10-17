@@ -29,13 +29,15 @@ export default function SellerForm({
   /** Doktoru olan aktif satıcıda pasifleştirme için portföy seçimi (X-17 §(5)). */
   portfoy?: { doktorSayisi: number; saticilar: { id: string; name: string }[] };
 }) {
-  const [state, formAction] = useActionState<SellerFormState, FormData>(
-    action,
+  // Her yanıt formu yeniden kurar (`key`): React action sonrası formu sıfırlar, `<select>`
+  // eski varsayılana (AKTIF) döner. Yeni form `state.degerler` ile açılır (X-17 §(5)).
+  const [state, formAction] = useActionState<SellerFormState & { n?: number }, FormData>(
+    async (prev, formData) => ({ ...(await action(prev, formData)), n: (prev.n ?? 0) + 1 }),
     {}
   );
 
   return (
-    <form action={formAction} className="max-w-lg space-y-4">
+    <form key={state.n ?? 0} action={formAction} className="max-w-lg space-y-4">
       <Field label="Ad Soyad" name="name" required defaultValue={defaults?.name} />
       <Field
         label="E-posta"
