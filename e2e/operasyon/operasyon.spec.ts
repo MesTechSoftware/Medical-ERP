@@ -28,7 +28,7 @@ test("menü raporları ve denetim kaydını göstermez; rol etiketi Operasyon", 
   await expect(menu.getByRole("link", { name: "Satıcılar" })).toBeVisible();
   await expect(menu.getByRole("link", { name: "Raporlar" })).toHaveCount(0);
   await expect(menu.getByRole("link", { name: "Audit Log" })).toHaveCount(0);
-  await expect(menu.getByText("Operasyon", { exact: true })).toBeVisible();
+  await expect(page.locator("header").getByText("Operasyon", { exact: true })).toBeVisible();
 });
 
 for (const yol of ["/reports", "/audit-logs", "/products/new", "/sellers/new"]) {
