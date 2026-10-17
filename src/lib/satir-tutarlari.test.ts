@@ -121,3 +121,40 @@ describe("hesaplaKomisyonTutari (A-11)", () => {
     expect(hesaplaKomisyonTutari("500", "0").toFixed(2)).toBe("0.00");
   });
 });
+
+// X-14 §(4) · C-6 §(6): hakediş = satır matrahı × satıra donmuş oran. Ham aritmetik
+// yalnız bu fonksiyondadır (X-5 §(4)); rapor toplamı buradan alır (X-1).
+describe("hesaplaSatirTutarlari — hakediş (X-14-1 · D-4-1)", () => {
+  const primli = (birimFiyat: string, miktar: number, primOrani: string | null, bedelsiz = false): SatirGirdisi => ({
+    ...satir(birimFiyat, miktar, "20"),
+    primOrani,
+    bedelsiz,
+  });
+
+  it("matrah × oran / 100, 2 hane, yarım sıfırdan uzağa", () => {
+    expect(tek(primli("90", 4, "5")).hakedis.toFixed(2)).toBe("18.00"); // 360 × %5
+    expect(tek(primli("0.10", 1, "5")).hakedis.toFixed(2)).toBe("0.01"); // 0,005 → 0,01
+  });
+
+  it("oranı boş satır ve bedelsiz satır hakediş doğurmaz", () => {
+    expect(tek(primli("100", 1, null)).hakedis.toFixed(2)).toBe("0.00");
+    expect(tek(satir("100", 1, "20")).hakedis.toFixed(2)).toBe("0.00");
+    expect(tek(primli("100", 1, "5", true)).hakedis.toFixed(2)).toBe("0.00");
+  });
+
+  it("belge hakedişi satır hakedişlerinin toplamıdır; her satır kendi oranıyla", () => {
+    const { toplam } = hesaplaSatirTutarlari([primli("100", 1, "5"), primli("200", 1, "10"), primli("50", 1, null)]);
+    expect(toplam.hakedis.toFixed(2)).toBe("25.00");
+  });
+
+  it("hakediş satır bazında yuvarlanır, sonra toplanır (C-6 §(5) deseni)", () => {
+    // Her satır 0,10 × %5 = 0,005 → 0,01; toplam üzerinden yuvarlansaydı 0,010 → 0,01.
+    const { toplam } = hesaplaSatirTutarlari([primli("0.10", 1, "5"), primli("0.10", 1, "5")]);
+    expect(toplam.hakedis.toFixed(2)).toBe("0.02");
+  });
+
+  it("geçersiz oranı reddeder", () => {
+    expect(() => tek(primli("100", 1, "-1"))).toThrow();
+    expect(() => tek(primli("100", 1, "100.01"))).toThrow();
+  });
+});

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { requireAdmin } from "@/lib/session";
 import { formatla } from "@/lib/money";
 import { cozumleBirimFiyat } from "@/lib/fiyat";
 import { PageHeader, Card } from "@/components/ui";
@@ -11,6 +12,7 @@ export default async function EditProductPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireAdmin(); // ürün tanımı yalnız YONETICI (D-2 17.10 eki)
   const { id } = await params;
   const product = await prisma.product.findUnique({ where: { id } });
   if (!product) notFound();

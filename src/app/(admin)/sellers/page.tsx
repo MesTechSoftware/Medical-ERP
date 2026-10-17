@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { requireStaff } from "@/lib/session";
 import {
   PageHeader,
   LinkButton,
@@ -15,6 +16,9 @@ export default async function SellersPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
+  const session = await requireStaff();
+  // OPERASYON satıcıları salt okur; ekleme/düzenleme/silme kullanıcı yönetimidir (D-2 17.10 eki).
+  const yonetici = session.user.role === "YONETICI";
   const { error } = await searchParams;
   const [sellers, doctorCounts] = await Promise.all([
     prisma.user.findMany({
@@ -35,7 +39,7 @@ export default async function SellersPage({
       <PageHeader
         title="Satıcılar"
         description="Satıcı yönetimi"
-        action={<LinkButton href="/sellers/new">Yeni Satıcı</LinkButton>}
+        action={yonetici && <LinkButton href="/sellers/new">Yeni Satıcı</LinkButton>}
       />
 
       {error === "used" && (
@@ -88,19 +92,21 @@ export default async function SellersPage({
                       <StatusBadge status={s.isActive ? "AKTIF" : "PASIF"} />
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-3">
-                        <Link
-                          href={`/sellers/${s.id}/edit`}
-                          className="text-sm font-medium text-slate-600 hover:text-slate-900"
-                        >
-                          Düzenle
-                        </Link>
-                        <form action={deleteSeller.bind(null, s.id)}>
-                          <ConfirmSubmit confirmText={`"${s.name}" silinsin mi?`}>
-                            Sil
-                          </ConfirmSubmit>
-                        </form>
-                      </div>
+                      {yonetici && (
+                        <div className="flex items-center justify-end gap-3">
+                          <Link
+                            href={`/sellers/${s.id}/edit`}
+                            className="text-sm font-medium text-slate-600 hover:text-slate-900"
+                          >
+                            Düzenle
+                          </Link>
+                          <form action={deleteSeller.bind(null, s.id)}>
+                            <ConfirmSubmit confirmText={`"${s.name}" silinsin mi?`}>
+                              Sil
+                            </ConfirmSubmit>
+                          </form>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 );

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { requireAdmin } from "@/lib/session";
+import { requireAdmin, requireStaff } from "@/lib/session";
 import { amountSchema } from "@/lib/validation";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { uretBelgeNo } from "@/lib/belge-no";
@@ -27,7 +27,7 @@ export async function recordCollection(
   _prev: CollectionState,
   formData: FormData
 ): Promise<CollectionState> {
-  const session = await requireAdmin();
+  const session = await requireStaff();
 
   const doctorId = (formData.get("doctorId") as string)?.trim();
   const paymentMethodId = (formData.get("paymentMethodId") as string)?.trim();
@@ -91,7 +91,7 @@ export async function cancelCollection(
   _prev: CollectionState,
   formData: FormData
 ): Promise<CollectionState> {
-  const session = await requireAdmin();
+  const session = await requireStaff();
   const paymentId = (formData.get("paymentId") as string)?.trim();
   const reason = ((formData.get("reason") as string) || "").trim() || null;
   if (!paymentId) return { error: "Tahsilat seçilmedi." };

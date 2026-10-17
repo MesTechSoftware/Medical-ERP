@@ -1,0 +1,105 @@
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join, relative } from "node:path";
+
+import { describe, expect, it } from "vitest";
+
+import { ROLE_HOME } from "@/lib/roles";
+
+// D-2-1 · D-2 §(1) ve 17.10 eki: ekran matrisi. Yetki SUNUCUDA uygulanır — her server
+// action ve her yönetim sayfası kendi guard'ını çağırır; menüden gizlemek yetki değildir
+// (D-2 §(3)). Matris bu dosyadadır: yeni bir action ya da sayfa buraya yazılmadan kırmızıdır.
+
+const APP = join(__dirname, "..", "app");
+
+const ACTION_YETKISI: Record<string, "requireAdmin" | "requireStaff" | "requireSeller"> = {
+  // OPERASYON: sipariş, sevkiyat, tahsilat, stok hareketi (D-2 §(1)).
+  "(admin)/orders/actions.ts#prepareOrder": "requireStaff",
+  "(admin)/orders/actions.ts#markDelivered": "requireStaff",
+  "(admin)/orders/actions.ts#cancelOrder": "requireStaff",
+  "(admin)/shipping/actions.ts#shipOrder": "requireStaff",
+  "(admin)/collections/actions.ts#recordCollection": "requireStaff",
+  "(admin)/collections/actions.ts#cancelCollection": "requireStaff",
+  "(admin)/stock/actions.ts#addStockEntry": "requireStaff",
+  // Yalnız YONETICI: vade (X-15), devir (X-13 §(5)), ürün tanımı, kullanıcı yönetimi.
+  "(admin)/collections/actions.ts#changeDueDate": "requireAdmin",
+  "(admin)/doctors/actions.ts#transferDoctor": "requireAdmin",
+  "(admin)/products/actions.ts#createProduct": "requireAdmin",
+  "(admin)/products/actions.ts#updateProduct": "requireAdmin",
+  "(admin)/products/actions.ts#deleteProduct": "requireAdmin",
+  "(admin)/sellers/actions.ts#createSeller": "requireAdmin",
+  "(admin)/sellers/actions.ts#updateSeller": "requireAdmin",
+  "(admin)/sellers/actions.ts#deleteSeller": "requireAdmin",
+  // SATICI ekranları.
+  "(seller)/my-orders/actions.ts#createOrder": "requireSeller",
+  "(seller)/my-doctors/actions.ts#createDoctor": "requireSeller",
+  "(seller)/my-doctors/actions.ts#updateDoctor": "requireSeller",
+};
+
+// Yönetim rota grubunun layout'u YONETICI + OPERASYON'u alır; yalnız YONETICI'nin
+// sayfaları kendi guard'ını taşır (17.10 eki: raporlar, denetim kaydı; ürün ve satıcı
+// ekleme/düzenleme kullanıcı yönetimi ve ürün tanımıdır).
+const YALNIZ_YONETICI_SAYFALARI = [
+  "(admin)/reports/page.tsx",
+  "(admin)/audit-logs/page.tsx",
+  "(admin)/products/new/page.tsx",
+  "(admin)/products/[id]/edit/page.tsx",
+  "(admin)/sellers/new/page.tsx",
+  "(admin)/sellers/[id]/edit/page.tsx",
+];
+
+function dosyalar(dizin: string, ad: RegExp): string[] {
+  return readdirSync(dizin).flatMap((d) => {
+    const yol = join(dizin, d);
+    if (statSync(yol).isDirectory()) return dosyalar(yol, ad);
+    return ad.test(d) ? [relative(APP, yol)] : [];
+  });
+}
+
+/** Her export edilen action'ın gövdesinde çağrılan ilk `require*()` guard'ı. */
+function actionGuardlari(): Record<string, string | null> {
+  const sonuc: Record<string, string | null> = {};
+  for (const dosya of dosyalar(APP, /^actions\.ts$/)) {
+    const kaynak = readFileSync(join(APP, dosya), "utf8");
+    const parcalar = kaynak.split(/^export async function /m).slice(1);
+    for (const p of parcalar) {
+      const ad = p.match(/^(\w+)/)![1];
+      sonuc[`${dosya}#${ad}`] = p.match(/await (require\w+)\(/)?.[1] ?? null;
+    }
+  }
+  return sonuc;
+}
+
+describe("ekran matrisi — sunucu guard'ları (D-2-1)", () => {
+  it("her server action matristeki guard'ı çağırır; matrise yazılmamış action yoktur", () => {
+    expect(actionGuardlari()).toEqual(ACTION_YETKISI);
+  });
+
+  it("yönetim layout'u YONETICI ve OPERASYON'u alır", () => {
+    expect(readFileSync(join(APP, "(admin)/layout.tsx"), "utf8")).toMatch(/await requireStaff\(\)/);
+  });
+
+  it("yalnız YONETICI'nin sayfaları kendi requireAdmin()'ini çağırır", () => {
+    for (const sayfa of YALNIZ_YONETICI_SAYFALARI) {
+      expect(readFileSync(join(APP, sayfa), "utf8"), sayfa).toMatch(/await requireAdmin\(\)/);
+    }
+  });
+
+  it("OPERASYON giriş yapar; ana sayfası Dashboard'dur", () => {
+    expect(ROLE_HOME.OPERASYON).toBe("/dashboard");
+    expect(readFileSync(join(APP, "..", "lib", "auth.ts"), "utf8")).not.toMatch(/OPERASYON/);
+  });
+});
+
+describe("cari açma — BAYI yalnız YONETICI (X-8-1)", () => {
+  it("satıcı ekranından açılan cari daima DOKTOR'dur", () => {
+    const kaynak = readFileSync(join(APP, "(seller)/my-doctors/actions.ts"), "utf8");
+    expect(kaynak).toMatch(/accountClass:\s*"DOKTOR"/);
+    expect(kaynak).not.toMatch(/accountClass:(?!\s*"DOKTOR")/);
+  });
+
+  it("yönetim rota grubunda cari açan action yoktur (OPERASYON cari açmaz; yönetici ekranı 1B-7)", () => {
+    for (const dosya of dosyalar(join(APP, "(admin)"), /^actions\.ts$/)) {
+      expect(readFileSync(join(APP, dosya), "utf8"), dosya).not.toMatch(/doctor\.create\s*\(/);
+    }
+  });
+});

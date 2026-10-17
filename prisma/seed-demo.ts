@@ -69,6 +69,16 @@ async function main() {
     )
   );
 
+  // --- Operasyon (D-2 §(1)) ---
+  const operasyon = await prisma.user.create({
+    data: {
+      name: "Operasyon Sorumlusu",
+      email: "operasyon@medikal.local",
+      passwordHash: await bcrypt.hash("operasyon123", 10),
+      role: "OPERASYON",
+    },
+  });
+
   // --- Ürünler ---
   // Liste fiyatı NET (KDV hariç) ve varsayılan listenin satırıdır (X-10 §(5)).
   // Stok saklanmaz; başlangıç stoğu GIRIS hareketidir (ADR-005).
@@ -272,6 +282,7 @@ async function main() {
   console.log("Demo seed tamamlandı.");
   console.log(`  Yönetici: ${admin.email} / admin123`);
   console.log(`  Satıcı:   ${sellers.map((s) => s.email).join(", ")} / satici123`);
+  console.log(`  Operasyon: ${operasyon.email} / operasyon123`);
 }
 
 main()

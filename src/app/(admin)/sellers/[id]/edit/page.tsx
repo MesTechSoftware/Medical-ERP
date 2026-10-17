@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { requireAdmin } from "@/lib/session";
 import { PageHeader, Card } from "@/components/ui";
 import SellerForm from "../../SellerForm";
 import { updateSeller } from "../../actions";
@@ -9,6 +10,7 @@ export default async function EditSellerPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireAdmin(); // kullanıcı yönetimi yalnız YONETICI (D-2 §(1))
   const { id } = await params;
   const seller = await prisma.user.findFirst({
     where: { id, role: "SATICI" },

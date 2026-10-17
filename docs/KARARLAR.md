@@ -7,7 +7,7 @@
 > "Karar bekleyenler" bölümlerindeki soru metinleri **buraya taşındı**. O bölümler
 > bundan sonra yalnız "bkz. `KARARLAR.md`" der.
 >
-> Son güncelleme: 17 Ekim 2026 (**D-2 eki — `OPERASYON` ekran matrisi: cari açmaz, ürün kartını yalnız görür, rapor ve denetim kaydı görmez**) · 16 Ekim 2026 (**A-8 eki — `RED`'in sonucu: her kural için son blok geçerli**) · 13 Ekim 2026 (**X-16 kararı — içe aktarım elle girişin toplu hâli, şablon tek tanımdan (ADR-006), kısmi yazma yok · X-15 §(5) kişisel telefon varsayımı 🟦**) · 12 Ekim 2026 (**C-1 revizyon 3 — modül sınırı §1.3 §F, zamanlayıcı altyapısı, e-belge durum makinesi, cari uzantısı, istisna/tevkifat çekirdek kararı · K-8 kontör 🟦 · K-9 §B kargo anahtarı**) · 10 Ekim 2026 (**C-1 revizyon 2 — e-belge modülü çekirdek sonrası ilk modül, ilk adaptör müşterinin entegratörü, tek çatı partnerlikle · D-3 kargo e-belgeden sonra, BYOI · 🟦 tarama: X-11/X-12/A-4/A-8 ✅, K-10 yeni kilit, K-4 ayrıştı**) · 9 Ekim 2026 (**C-1 iç karar olarak ✅ — 🟦 varsayılan kaydı ve kilitlenme anı kaldırıldı; §0.6'nın otomatik ✅ kuralı kaldırıldı — tarih tek başına hiçbir kaydı kapatmaz**) · 1 Ekim 2026 (**X-17 kararı — sahipliğin tek yazma noktası, toplu devir; tek çağrı noktası listesi 11 → 12; `CM`'in önündeki son açık kalem kapandı**) · 24 Eylül 2026 (**D-6 ekleri — açılış bakiyesi import'u**) · 16 Eylül 2026 (**X-11…X-15 kararı + PRD taraması**) · **Faz 0'ın karar adımları tamamlandı · Faz 1A'da açılan X-8…X-17 kapandı (X-16: 13.10.2026) · PRD taraması kapandı — açık (⬜) madde yok.**
+> Son güncelleme: 17 Ekim 2026 (**D-2 eki — `OPERASYON` ekran matrisi: cari açmaz, ürün kartını yalnız görür, rapor ve denetim kaydı görmez; Dashboard'u görür, Satıcılar ekranını salt okur · X-1 eki — dönem tahsilatı tahsilat anındaki sahibe sayılır**) · 16 Ekim 2026 (**A-8 eki — `RED`'in sonucu: her kural için son blok geçerli**) · 13 Ekim 2026 (**X-16 kararı — içe aktarım elle girişin toplu hâli, şablon tek tanımdan (ADR-006), kısmi yazma yok · X-15 §(5) kişisel telefon varsayımı 🟦**) · 12 Ekim 2026 (**C-1 revizyon 3 — modül sınırı §1.3 §F, zamanlayıcı altyapısı, e-belge durum makinesi, cari uzantısı, istisna/tevkifat çekirdek kararı · K-8 kontör 🟦 · K-9 §B kargo anahtarı**) · 10 Ekim 2026 (**C-1 revizyon 2 — e-belge modülü çekirdek sonrası ilk modül, ilk adaptör müşterinin entegratörü, tek çatı partnerlikle · D-3 kargo e-belgeden sonra, BYOI · 🟦 tarama: X-11/X-12/A-4/A-8 ✅, K-10 yeni kilit, K-4 ayrıştı**) · 9 Ekim 2026 (**C-1 iç karar olarak ✅ — 🟦 varsayılan kaydı ve kilitlenme anı kaldırıldı; §0.6'nın otomatik ✅ kuralı kaldırıldı — tarih tek başına hiçbir kaydı kapatmaz**) · 1 Ekim 2026 (**X-17 kararı — sahipliğin tek yazma noktası, toplu devir; tek çağrı noktası listesi 11 → 12; `CM`'in önündeki son açık kalem kapandı**) · 24 Eylül 2026 (**D-6 ekleri — açılış bakiyesi import'u**) · 16 Eylül 2026 (**X-11…X-15 kararı + PRD taraması**) · **Faz 0'ın karar adımları tamamlandı · Faz 1A'da açılan X-8…X-17 kapandı (X-16: 13.10.2026) · PRD taraması kapandı — açık (⬜) madde yok.**
 > **24.09.2026 — D-6 ekleri (şema değişmedi):** açılış bakiyesi import'unda **işaret kuralı** ve
 > **önizleme özeti** yazıldı. Boşluğun kaynağı 19.09 incelemesinin 4. bulgusudur; D-6 üç aşamayı
 > (doğrula → önizle → yaz) koyuyor ama hiçbirinin içeriğini yazmıyordu. Yeni kural kodu: `TUTAR_NEGATIF`.
@@ -2738,6 +2738,9 @@ kurulur — *ilişkiyi gizlemek çözüm değildir, kurmamak çözümdür.*
 > · **Ürün kartını görür, açmaz ve düzenlemez.** Ürün tanımı `YONETICI`'dedir; stok hareketi `OPERASYON`'dadır.
 > · **Raporlar ekranını görmez** — prim tablosu (X-1 §(8)) dahil hiçbir raporu.
 > · **Denetim kaydı (audit log) ekranını görmez.**
+> · **Dashboard'u görür; giriş sonrası ana sayfası Dashboard'dur.** Ekran prim/hakediş taşımaz.
+> · **Satıcılar ekranını salt okur** — liste ve satıcı detayı. Satıcı ekleme, düzenleme,
+>   pasifleştirme ve silme kullanıcı yönetimidir, **yalnız `YONETICI`**.
 
 **Kapsam dışı (D-2), kalıcı:** kullanıcı tanımlı rol · yetki matrisi ekranı · alan bazlı
 yetki · onay hiyerarşisi · çoklu şube yetkisi · doktorun kendi paneli (§3.5).
@@ -3440,6 +3443,12 @@ Netsis) — bizde yoktur ve **kalıcı olarak olmayacaktır** (K-2, A-7).
 > **(11) "Para hesaba geçti" olayı sistemde yoktur ve bayrağı konmaz.**
 > `Tahsilat.hesaba_gecti_mi` benzeri hiçbir alan konmaz (§0.1, sekizinci uygulama).
 > **Tahsilat kaydının kendisi "para alındı" beyanıdır.**
+>
+> **✅ Ek (17.10.2026 · ürün sahibi kararı) — dönem tahsilatının satıcısı.** Tahsilat siparişe
+> eşlenmez (X-6); satıcı raporundaki dönem tahsilatı, **tahsilat anında doktorun sahibi olan
+> satıcıya** sayılır. Sahip, sahiplik iz kaydından okunur (X-17 §(3)). Devir geçmiş tahsilatı
+> taşımaz; geçmiş dönem raporu devirden etkilenmez (§(6), X-13 §(4) deseni). Tahsilat anında
+> sahipsiz olan doktorun ve `BAYI`'nin tahsilatı hiçbir satıcıya sayılmaz.
 >
 > **Kapsam dışı, kalıcı:** tahsilat oranı metriği · tahsilat bazlı prim hakedişi · prim
 > tahakkuk belgesi, prim ödeme kaydı, bordro, prim onay iş akışı · dönem kapatma/kilitleme ·

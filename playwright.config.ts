@@ -67,5 +67,14 @@ export default defineConfig({
         storageState: "playwright/.auth/seller.json",
       },
     },
+    {
+      name: "operasyon",
+      testMatch: "operasyon/**/*.spec.ts",
+      dependencies: ["setup"],
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: "playwright/.auth/operasyon.json",
+      },
+    },
   ],
 });

@@ -119,9 +119,9 @@
 | Kod | Kriter | Yazılacağı yer |
 |---|---|---|
 | D-1-1 | | 1B-7 *(olay noktaları, boş handler)* |
-| D-2-1 | | 1B-3 |
+| D-2-1 | Roller üç değerli kapalı katalogdur. `OPERASYON` giriş yapar; ana sayfası Dashboard'dur. Sipariş hazırlama, teslim ve iptal, kargolama, tahsilat kaydı ve iptali, stok girişi `YONETICI` ve `OPERASYON` içindir. Ürün açma/düzenleme/silme, satıcı ekleme/düzenleme/silme, doktor devri ve vade değişikliği yalnız `YONETICI` içindir; yetkisiz rolün çağrısı **sunucuda** reddedilir. `OPERASYON` Raporlar ve Denetim kaydı ekranlarına giremez, menüsünde görmez; ürünleri, cariyi ve satıcıları salt okur — ekleme/düzenleme sayfaları onu ana sayfasına yönlendirir. `SATICI` yönetim ekranlarına giremez. *Sipariş girişi ekranı 1B-7'dedir.* | 1B-3 · `yetki.test.ts` · `operasyon.spec.ts` |
 | D-3-1 | | 1B-7 |
-| D-4-1 | | 1B-3 *(prim hedefe bağlanmaz — X-1)* |
+| D-4-1 | Hakediş yalnız satırın matrahı ve satıra donmuş oranla hesaplanır; satıcının dönem cirosu, hedefi ya da kotası oranı değiştirmez — aynı sevkiyat satırı hangi dönem toplamı içinde okunursa okunsun aynı hakedişi verir. | 1B-3 · `reports-service.itest.ts` |
 | D-5-1 | | 1B-6 |
 | D-6-1 | | 1B-7 |
 
@@ -137,20 +137,20 @@
 
 | Kod | Kriter | Yazılacağı yer |
 |---|---|---|
-| X-1-1 | | 1B-3 |
+| X-1-1 | `getSellerReports(kullanici, { baslangic, bitis })` dönemi zorunlu, yarı açık aralık olarak alır. Satıcı başına üç mutlak sayı döner, oran dönmez: **dönem cirosu** (matrah; sevkiyat tarihi dönemde olan, siparişin satıcısına ait, sayılan belgeler filtresinden geçen sevkiyat satırları) · **dönem hakedişi** (satır matrahı × satıra donmuş oran; oranı boş satır hakediş doğurmaz) · **dönem tahsilatı** (brüt; tahsilat tarihi dönemde olan aktif tahsilatlar, **tahsilat anında doktorun sahibi olan** satıcıya). Devir ve oran değişikliği geçmiş dönem raporunu değiştirmez. `SATICI` yalnız kendi satırını alır; `OPERASYON` çağırırsa reddedilir; `YONETICI` bütün satıcıları alır. Ekranın varsayılan dönemi içinde bulunulan aydır; "tüm zamanlar" ayrı seçimdir. `SATICI` kendi raporunu kendi ekranında görür. | 1B-3 · `reports-service.itest.ts` · `operasyon.spec.ts` |
 | X-2-1 | Tahsilat kaydı ve `THS` numarası aynı transaction'dadır: tahsilat yazılamazsa numara harcanmaz, sonraki tahsilat aynı numarayı alır. `BAYI` carisinin tahsilatı aynı yoldan numaralanır (X-8 §(7)). Tahsilat kaydını yazan tek yer `recordCollection`'dır — ikinci tahsilat yolu yoktur. | 1B-2 · `collections.itest.ts` · `tek-cagri.test.ts` |
 | X-3-1 | | 1B-4 |
 | X-4-1 | | 1B-4 |
 | X-5-1 | | 1B-5 *(1A-CM: `Decimal`, `formatla`, lint kuralı)* |
 | X-6-1 | | 1B-1 · 1B-4 *(§(6) vade uyarısı)* |
 | X-7-1 | | 1B-10 *(matris yeniden kurulur)* |
-| X-8-1 | | 1B-3 · 1B-7 |
+| X-8-1 | `SATICI` `BAYI` carisini görmez (X-13-1) ve açamaz: satıcı ekranından açılan cari daima `DOKTOR`'dur. `BAYI`'yi yalnız `YONETICI` açar; `OPERASYON` cari açmaz. *Yönetici cari açma ekranı ve `hesap_sinifi` süzgeci 1B-7'dedir.* | 1B-3 · 1B-7 · `kapsam.itest.ts` · `yetki.test.ts` |
 | X-9-1 | | 1A-C7b *(bellek içi sayaç testli)* |
 | X-10-1 | | 1B-5 · 1B-7 *(1A-CM: liste seçimi testli)* |
 | X-11-1 | | 1B-1 · 1B-2 · 1B-7 |
 | X-12-1 | | 1B-7 |
 | X-13-1 | `kapsamliDoktorlariGetir(kullanici)` doktor okumasının kapsamını **sorgu süzgeci** olarak döner. `SATICI`'ya yalnız sahibi olduğu `DOKTOR` carileri döner — başka satıcının carisi, sahipsiz cari ve `BAYI` dönmez (X-8 §(3)). `YONETICI` ve `OPERASYON` bütün carileri görür. Satıcı ekranlarının doktor okumaları — doktor listesi, düzenleme sayfası, sipariş formu, hesabım, doktor güncelleme ve sipariş kaydı — bu süzgeçten geçer. Kapsam dışındaki cari bulunmamış gibi davranır, varlığı ima edilmez (X-3 §(8)). Satıcı rota grubunda sahip süzgeci elle yazılmaz (D-2 §(3)). | 1B-3 · `kapsam.itest.ts` · `tek-cagri.test.ts` |
-| X-14-1 | | 1B-3 · 1B-7 |
+| X-14-1 | Hakediş = sevkiyat satırının matrahı × satıra donmuş oran (`hesaplaSatirTutarlari()`, X-5 §(4)); tutar saklanmaz, raporda hesaplanır. Satıcının oranı sonradan değişirse geçmiş satırların hakedişi değişmez. `BAYI` ve bedelsiz satır hakediş doğurmaz. *Oranın sevkiyat anında satıra yazılması 1B-7'dedir (sevkiyat satırını yazan akış).* | 1B-3 · 1B-7 · `satir-tutarlari.test.ts` · `reports-service.itest.ts` |
 | X-15-1 | | 1B-7 |
 | X-15-5-1 | | 1B-7 *(X-15 §(5) — telefon varsayımı)* |
 | X-16-1 | | 1B-7 *(taslaklar: `docs/arsiv/KARAR_ONERISI_2026-09-19.md` §10)* |

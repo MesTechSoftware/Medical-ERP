@@ -4,7 +4,7 @@ import Decimal from "decimal.js";
 import { formatla } from "@/lib/money";
 import { hesaplaStok } from "@/lib/stok";
 import { getCiroTotal } from "@/lib/reports-service";
-import { gunAraligi, simdi } from "@/lib/zaman";
+import { gunAraligi, simdi, TUM_ZAMANLAR } from "@/lib/zaman";
 import { PageHeader, Card, StatCard, EmptyRow } from "@/components/ui";
 
 const CRITICAL_STOCK = 10;
@@ -30,7 +30,7 @@ export default async function DashboardPage() {
     }),
     prisma.order.count({ where: { status: "BEKLIYOR" } }),
     prisma.order.count({ where: { status: "HAZIRLANIYOR" } }),
-    getCiroTotal(),
+    getCiroTotal(TUM_ZAMANLAR), // "Toplam" kartı: tüm zamanlar bilinçli seçimdir (X-1 §(2))
     prisma.doctorPayment.aggregate({
       where: { status: "AKTIF" },
       _sum: { amount: true },
@@ -71,7 +71,7 @@ export default async function DashboardPage() {
       {/* Bayi kanal kartları C5'te söküldü — bayi bir cari tipidir (X-8). */}
       <div className="mb-4 grid gap-4 sm:grid-cols-2">
         {/* Ciro matrahtır ve sevk edilen maldan doğar (A-3, Ü-3 §(5)); CM → 1B arası boş (R-11). */}
-        <StatCard label="Toplam Ciro" value={formatla(toplamCiro)} hint="KDV hariç" />
+        <StatCard label="Toplam Ciro" value={formatla(toplamCiro)} hint="KDV hariç · tüm zamanlar" />
         <StatCard label="Toplam Tahsilat" value={formatla(toplamTahsilat)} />
       </div>
 

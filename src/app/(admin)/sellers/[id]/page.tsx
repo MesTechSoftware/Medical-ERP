@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { requireStaff } from "@/lib/session";
 import { formatla } from "@/lib/money";
 import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
 import { formatDate } from "@/lib/format";
@@ -17,6 +18,7 @@ export default async function SellerDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const session = await requireStaff();
   const { id } = await params;
   const seller = await prisma.user.findFirst({ where: { id, role: "SATICI" } });
   if (!seller) notFound();
@@ -41,12 +43,15 @@ export default async function SellerDetailPage({
         title={seller.name}
         description={`${seller.email}${seller.phone ? " · " + seller.phone : ""}`}
         action={
-          <Link
-            href={`/sellers/${id}/edit`}
-            className="text-sm font-medium text-slate-600 hover:text-slate-900"
-          >
-            Düzenle
-          </Link>
+          // OPERASYON salt okur (D-2 17.10 eki).
+          session.user.role === "YONETICI" && (
+            <Link
+              href={`/sellers/${id}/edit`}
+              className="text-sm font-medium text-slate-600 hover:text-slate-900"
+            >
+              Düzenle
+            </Link>
+          )
         }
       />
 

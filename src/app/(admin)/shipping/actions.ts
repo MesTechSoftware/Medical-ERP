@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireAdmin } from "@/lib/session";
+import { requireStaff } from "@/lib/session";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { OrderStatus } from "@/generated/prisma/enums";
 import { uretBelgeNo } from "@/lib/belge-no";
@@ -15,7 +15,7 @@ import { bugun, simdi } from "@/lib/zaman";
  * `CM`'de sevkiyat bugünkü gibi siparişin tamamıdır ve yalnız başlık yazar.
  */
 export async function shipOrder(orderId: string, formData: FormData) {
-  const session = await requireAdmin();
+  const session = await requireStaff();
 
   const carrierId = ((formData.get("carrierId") as string) || "").trim() || null;
   const trackingNumber =

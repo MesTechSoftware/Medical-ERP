@@ -1,5 +1,5 @@
 import AppShell, { type NavItem } from "@/components/AppShell";
-import { requireAdmin } from "@/lib/session";
+import { requireStaff } from "@/lib/session";
 import {
   LayoutDashboard,
   Globe,
@@ -26,17 +26,22 @@ const navItems: NavItem[] = [
   { href: "/audit-logs", label: "Audit Log", icon: ShieldCheck },
 ];
 
+// D-2 17.10 eki: OPERASYON raporları ve denetim kaydını görmez. Menü yalnız görünümdür;
+// yetki sayfanın kendi `requireAdmin()`'indedir.
+const YALNIZ_YONETICI = new Set(["/reports", "/audit-logs"]);
+
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await requireAdmin();
+  const session = await requireStaff();
+  const yonetici = session.user.role === "YONETICI";
   return (
     <AppShell
-      navItems={navItems}
-      userName={session.user.name ?? "Yönetici"}
-      roleLabel="Yönetici"
+      navItems={yonetici ? navItems : navItems.filter((n) => !YALNIZ_YONETICI.has(n.href))}
+      userName={session.user.name ?? (yonetici ? "Yönetici" : "Operasyon")}
+      roleLabel={yonetici ? "Yönetici" : "Operasyon"}
     >
       {children}
     </AppShell>

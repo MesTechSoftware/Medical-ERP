@@ -28,6 +28,8 @@ export type SatirGirdisi = {
   /** Yüzde, ör. 20 (C-6 §(2-a): satıra değer olarak donar). */
   kdvOrani: ParaDegeri;
   bedelsiz?: boolean;
+  /** Sevkiyat satırına donmuş prim oranı, yüzde (X-14 §(3)); boşsa hakediş doğmaz. */
+  primOrani?: ParaDegeri | null;
 };
 
 export type SatirTutari = {
@@ -36,6 +38,8 @@ export type SatirTutari = {
   toplam: Decimal;
   /** Yüzde, 2 hane. Bedelsiz satırda ve liste fiyatı 0 ise `null`. */
   iskontoOran: Decimal | null;
+  /** Matrah × donmuş oran / 100, 2 hane (X-14 §(4), C-6 §(6)). */
+  hakedis: Decimal;
 };
 
 export type BelgeTutari = {
@@ -44,6 +48,8 @@ export type BelgeTutari = {
   toplam: Decimal;
   /** Tutar ağırlıklı ortalama iskonto (%); hesaba giren satır yoksa `null`. */
   iskontoOran: Decimal | null;
+  /** Satır hakedişlerinin toplamı (X-1). */
+  hakedis: Decimal;
 };
 
 const SIFIR = new D(0);
@@ -61,6 +67,7 @@ export function hesaplaSatirTutarlari(satirlar: readonly SatirGirdisi[]): {
   let kdvT = SIFIR;
   let listeT = SIFIR;
   let birimT = SIFIR;
+  let hakedisT = SIFIR;
 
   const sonuc = satirlar.map((s) => {
     if (!Number.isInteger(s.miktar) || s.miktar <= 0) {
@@ -70,8 +77,12 @@ export function hesaplaSatirTutarlari(satirlar: readonly SatirGirdisi[]): {
     if (oran.isNegative() || oran.gt(100)) {
       throw new Error(`Geçersiz KDV oranı: ${oran.toFixed()}`);
     }
+    const primOrani = s.primOrani == null ? null : new D(s.primOrani as Decimal.Value);
+    if (primOrani && (primOrani.isNegative() || primOrani.gt(100))) {
+      throw new Error(`Geçersiz prim oranı: ${primOrani.toFixed()}`);
+    }
     if (s.bedelsiz) {
-      return { matrah: SIFIR, kdvTutar: SIFIR, toplam: SIFIR, iskontoOran: null };
+      return { matrah: SIFIR, kdvTutar: SIFIR, toplam: SIFIR, iskontoOran: null, hakedis: SIFIR };
     }
 
     const birim = new D(s.birimFiyat as Decimal.Value);
@@ -79,13 +90,15 @@ export function hesaplaSatirTutarlari(satirlar: readonly SatirGirdisi[]): {
     const matrah = birim.times(s.miktar).toDecimalPlaces(2);
     const kdvTutar = matrah.times(oran).div(100).toDecimalPlaces(2);
     const toplam = matrah.plus(kdvTutar);
+    const hakedis = primOrani ? matrah.times(primOrani).div(100).toDecimalPlaces(2) : SIFIR;
 
     matrahT = matrahT.plus(matrah);
     kdvT = kdvT.plus(kdvTutar);
     listeT = listeT.plus(liste.times(s.miktar));
     birimT = birimT.plus(birim.times(s.miktar));
+    hakedisT = hakedisT.plus(hakedis);
 
-    return { matrah, kdvTutar, toplam, iskontoOran: iskonto(liste, birim) };
+    return { matrah, kdvTutar, toplam, iskontoOran: iskonto(liste, birim), hakedis };
   });
 
   return {
@@ -95,6 +108,7 @@ export function hesaplaSatirTutarlari(satirlar: readonly SatirGirdisi[]): {
       kdvTutar: kdvT,
       toplam: matrahT.plus(kdvT),
       iskontoOran: iskonto(listeT, birimT),
+      hakedis: hakedisT,
     },
   };
 }

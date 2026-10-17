@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { formatla } from "@/lib/money";
 import { cozumleBirimFiyat } from "@/lib/fiyat";
 import { hesaplaStok } from "@/lib/stok";
+import { requireStaff } from "@/lib/session";
 import {
   PageHeader,
   LinkButton,
@@ -20,6 +21,9 @@ export default async function ProductsPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
+  const session = await requireStaff();
+  // OPERASYON ürünü görür, açmaz ve düzenlemez (D-2 17.10 eki); yetki action'dadır.
+  const yonetici = session.user.role === "YONETICI";
   const { error } = await searchParams;
   const urunler = await prisma.product.findMany({
     orderBy: { createdAt: "desc" },
@@ -42,7 +46,7 @@ export default async function ProductsPage({
       <PageHeader
         title="Ürünler"
         description="Ürün kataloğu ve güncel stok durumu"
-        action={<LinkButton href="/products/new">Yeni Ürün</LinkButton>}
+        action={yonetici && <LinkButton href="/products/new">Yeni Ürün</LinkButton>}
       />
 
       {error === "used" && (
@@ -102,19 +106,21 @@ export default async function ProductsPage({
                     <StatusBadge status={p.status} />
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-3">
-                      <Link
-                        href={`/products/${p.id}/edit`}
-                        className="text-sm font-medium text-slate-600 hover:text-slate-900"
-                      >
-                        Düzenle
-                      </Link>
-                      <form action={deleteProduct.bind(null, p.id)}>
-                        <ConfirmSubmit confirmText={`"${p.name}" silinsin mi?`}>
-                          Sil
-                        </ConfirmSubmit>
-                      </form>
-                    </div>
+                    {yonetici && (
+                      <div className="flex items-center justify-end gap-3">
+                        <Link
+                          href={`/products/${p.id}/edit`}
+                          className="text-sm font-medium text-slate-600 hover:text-slate-900"
+                        >
+                          Düzenle
+                        </Link>
+                        <form action={deleteProduct.bind(null, p.id)}>
+                          <ConfirmSubmit confirmText={`"${p.name}" silinsin mi?`}>
+                            Sil
+                          </ConfirmSubmit>
+                        </form>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}
