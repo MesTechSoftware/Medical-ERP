@@ -1,40 +1,70 @@
 import { cache } from "react";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 import { homeFor } from "@/lib/roles";
+import {
+  oturumDogrula,
+  oturumIptal,
+  oturumOlustur,
+  sureAyari,
+  type OturumKullanicisi,
+} from "@/lib/oturum";
 
 /**
- * Oturum doğrulama.
+ * Oturum çerezi ve rota korumaları (E-2 §(4), `docs/adr/ADR-003`).
  *
- * JWT stratejisi kullandığımız için token, giriş anındaki rol/durum
- * SNAPSHOT'ını taşır. Kullanıcı pasifleştirilse veya rolü değişse bile eski
- * token geçerli kalmaya devam ederdi — yani "satıcıyı pasifleştir" işlemi
- * açık oturumu kesmiyordu. Bu yüzden her istekte kullanıcıyı veritabanından
- * doğruluyoruz.
+ * Çerez opaktır: yalnız token taşır; rol, kimlik ve imza yoktur. Doğrulama `oturum.ts`'teki
+ * lookup'tır — rol ve aktiflik her istekte veritabanından okunur, pasifleştirme ve rol
+ * değişikliği bir sonraki istekte geçerlidir.
  *
- * `cache()` ile istek başına tekilleştirilir: aynı render'da layout + sayfa +
- * action'lar defalarca çağırsa da tek sorgu atılır.
+ * `cache()` ile istek başına tekilleştirilir: aynı render'da layout + sayfa + action'lar
+ * defalarca çağırsa da tek sorgu atılır.
  */
-const loadActiveUser = cache(async (userId: string) => {
-  return prisma.user.findUnique({
-    where: { id: userId },
-    select: { id: true, name: true, email: true, role: true, isActive: true },
-  });
+
+const CEREZ = "oturum";
+
+export type Session = { user: OturumKullanicisi };
+
+const loadSession = cache(async (): Promise<Session | null> => {
+  const token = (await cookies()).get(CEREZ)?.value;
+  if (!token) return null;
+  const user = await oturumDogrula(token);
+  return user ? { user } : null;
 });
 
+/** Oturum varsa döner, yoksa `null`. Yönlendirmez. */
+export async function getSession(): Promise<Session | null> {
+  return loadSession();
+}
+
+/**
+ * Oturum açar ve çerezi yazar. Yalnız server action'dan çağrılır (render'da çerez yazılamaz).
+ * Çerez bayrakları FAZ1 §D.4 madde 7: `Secure` canlıda TLS'e bağlıdır (G-3).
+ */
+export async function startSession(userId: string): Promise<void> {
+  const token = await oturumOlustur(userId);
+  (await cookies()).set(CEREZ, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    // Mutlak süre kaymaz; çerez de onunla biter. Asıl kontrol DB'dedir.
+    maxAge: Math.floor(sureAyari().mutlakMs / 1000),
+  });
+}
+
+/** Çıkış: bu oturumu iptal eder ve çerezi siler. */
+export async function endSession(): Promise<void> {
+  const jar = await cookies();
+  const token = jar.get(CEREZ)?.value;
+  if (token) await oturumIptal(token);
+  jar.delete(CEREZ);
+}
+
 /** Oturum yoksa veya kullanıcı artık geçerli değilse /login'e yönlendirir. */
-export async function requireSession() {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/login");
-
-  const user = await loadActiveUser(session.user.id);
-  if (!user || !user.isActive) redirect("/login");
-
-  // Token'daki role değil, veritabanındaki güncel role güvenilir.
-  session.user.role = user.role;
-  session.user.name = user.name;
-  session.user.email = user.email;
+export async function requireSession(): Promise<Session> {
+  const session = await loadSession();
+  if (!session) redirect("/login");
   return session;
 }
 

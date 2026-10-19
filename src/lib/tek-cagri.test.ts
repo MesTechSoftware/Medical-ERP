@@ -93,3 +93,16 @@ describe("tek çağrı noktası — belge numarası (A-14-5, X-2-1)", () => {
     expect(ihlaller(desen, join("app", "(admin)", "collections", "actions.ts"))).toEqual([]);
   });
 });
+
+describe("tek çağrı noktası — oturum (E-2-1, E-2-3)", () => {
+  it("oturum tablosuna yalnız oturum.ts yazar", () => {
+    const desen = /\.session\.(create|createMany|upsert|update|updateMany|delete|deleteMany)\s*\(|(INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+"Session"/;
+    expect(ihlaller(desen, join("lib", "oturum.ts"))).toEqual([]);
+  });
+
+  it("next-auth yoktur ve uygulamada route handler kalmaz (ADR-003)", () => {
+    expect(ihlaller(/from\s+["']next-auth/, "")).toEqual([]);
+    const routeHandler = kaynaklar(join(KOK, "app")).filter((yol) => /[/\\]route\.tsx?$/.test(yol));
+    expect(routeHandler).toEqual([]);
+  });
+});

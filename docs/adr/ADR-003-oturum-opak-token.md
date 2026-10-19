@@ -4,7 +4,7 @@
 - **Tarih:** 15.09.2026
 - **Kaynak soru:** `FAZ1_UYGULAMA_KAPSAMI.md` §C-g — **yol (b)**
 - **Bağlı KARARLAR maddeleri:** **E-2** (özellikle §(4) *oturum veritabanındadır*, §(5) parola politikası, §(6) pasifleştirme anında etkili, §(7) son yönetici, §(8) giriş denemeleri log'a) · D-2 §3 · C-3 §4 · `policy.ts`: `auth.oturumHareketsizlikSaat` (`4`), `auth.oturumMutlakSaat` (`12`)
-- **Uygulandığı commit:** şema → `CM` (Faz 1A) · mekanizma → Faz 1B madde 4
+- **Uygulandığı commit:** şema → `CM` (Faz 1A) · mekanizma → Faz 1B madde 4a (19.10.2026 — `src/lib/oturum.ts`, `src/lib/session.ts`; `next-auth` ve `AUTH_SECRET` kalktı)
 - **Aynı gün düzeltmesi (15.09.2026):** ADR henüz repoya girmeden (C0 öncesi) *"Değerlendirilen
   alternatifler"* bölümündeki teknik not **doğrulandı** ve gerekçeye alındı; *"Bağlı açık karar"*
   X-9 ile kapandı. Karar değişmedi.

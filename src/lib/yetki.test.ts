@@ -86,7 +86,7 @@ describe("ekran matrisi — sunucu guard'ları (D-2-1)", () => {
 
   it("OPERASYON giriş yapar; ana sayfası Dashboard'dur", () => {
     expect(ROLE_HOME.OPERASYON).toBe("/dashboard");
-    expect(readFileSync(join(APP, "..", "lib", "auth.ts"), "utf8")).not.toMatch(/OPERASYON/);
+    expect(readFileSync(join(APP, "..", "lib", "auth-actions.ts"), "utf8")).not.toMatch(/OPERASYON/);
   });
 });
 

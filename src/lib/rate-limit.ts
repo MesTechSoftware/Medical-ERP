@@ -9,9 +9,8 @@
  * mekanizma TEK SÜREÇ varsayar. Birden fazla süreç çalışacağı gün bu dosya
  * geçersizleşir — önce KARARLAR açılır (ADR-004 "Geçerlilik sınırı").
  *
- * Enforcement tek noktada: Credentials `authorize` (src/lib/auth.ts). Böylece
- * hem login formu hem de ham `/api/auth/callback/credentials` POST'u korunur.
- * `loginAction` yalnızca kullanıcıya uygun mesajı göstermek için okur.
+ * Enforcement tek noktada: `loginAction` (src/lib/auth-actions.ts). Uygulamada
+ * route handler yoktur (ADR-003); kimlik doğrulamaya başka giriş yolu yoktur.
  */
 import { policy } from "@/lib/policy";
 

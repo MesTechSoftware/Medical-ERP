@@ -14,7 +14,7 @@ kabul kriterleri için `docs/KABUL_KRITERLERI.md`, kararlar için `docs/KARARLAR
 
 - **Next.js 16.2.10** (App Router, Server Components + Server Actions) — full-stack, tek proje
 - **PostgreSQL + Prisma 7.8** — driver adapter zorunlu (`@prisma/adapter-pg` + `pg`)
-- **Auth.js (NextAuth v5 beta)** — Credentials, rol bazlı (ADMIN / SELLER / DEALER)
+- **Kimlik doğrulama:** kendi oturum tablosu, opak token + bcryptjs (`docs/adr/ADR-003`) — roller YONETICI / OPERASYON / SATICI
 - **Zod 4** doğrulama · **Tailwind CSS 4** + `lucide-react` ikonlar
 - **Test:** vitest (birim) + Playwright 1.61 (e2e)
 
@@ -37,15 +37,14 @@ npm run dev                 # http://localhost:3000
 
 ### Ortam Değişkenleri
 
-`.env` repoda yoktur; `.env.example` şablonundan üretilir. İki değişken gerekir:
+`.env` repoda yoktur; `.env.example` şablonundan üretilir. Uygulamanın tek zorunlu değişkeni:
 
 | Değişken       | Açıklama                                                                                     |
 | -------------- | -------------------------------------------------------------------------------------------- |
 | `DATABASE_URL` | PostgreSQL bağlantı dizesi — dev için `postgresql://medikal:medikal_dev@localhost:5432/medikal_dev?schema=public` |
-| `AUTH_SECRET`  | Auth.js JWT imzalama anahtarı — `openssl rand -base64 32` ile üret                             |
 
 > `DATABASE_URL` yoksa uygulama **başlangıçta hata fırlatır** (`src/lib/db.ts` fail-fast) — sessizce
-> yanlış veritabanına bağlanmaz. `AUTH_SECRET` boş bırakılırsa giriş akışı çalışmaz.
+> yanlış veritabanına bağlanmaz. Oturum veritabanındadır; imza anahtarı gerekmez (`docs/adr/ADR-003`).
 
 ## Demo Hesapları
 
@@ -247,9 +246,6 @@ durur.
 
 ### Known Limitations
 
-- **Auth.js v5 beta:** next-auth'un stable sürümü v4'tür ama v4 farklı bir API'dir (App
-  Router `auth()`/`handlers` yok). v4'e geçmek downgrade + yeniden yazım olacağından bilinçli
-  olarak **v5 beta**'da kalınmıştır.
 - **Rate-limit e-posta bazlı:** hedefli DoS'a (bir kullanıcıyı bilerek kilitleme) açıktır — kabul
   edilen denge. Çok yüksek trafikte `LoginAttempt` yerine Redis değerlendirilmeli.
 - **e-Fatura / kargo API entegrasyonu yok:** yalnızca raporlama yapılır (bilinçli erteleme).
