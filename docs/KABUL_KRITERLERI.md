@@ -130,7 +130,10 @@
 | Kod | Kriter | Yazılacağı yer |
 |---|---|---|
 | E-1-1 | | 1B-1 *(nokta/aralık okuma)* · 1A-CM *(`zaman.ts` testli)* |
-| E-2-1 | | 1B-4 |
+| E-2-1 | Oturum veritabanındadır. Girişte 256-bit rastgele bir token üretilir; veritabanında token değil yalnız SHA-256 hash'i durur. Çerez yalnız token taşır, `HttpOnly` ve `SameSite=Lax`'tır, canlıda `Secure`'dur. Her istekte çerezdeki token hash'lenip oturum tablosunda aranır; kullanıcının rolü ve aktifliği o anda okunur — rolü değişen kullanıcı bir sonraki istekte yeni rolüyle karşılanır. Bulunmayan, iptal edilmiş ya da pasif kullanıcıya ait oturum giriş sayfasına yönlendirir. Kodda `next-auth` ve imzalı çerez anahtarı yoktur. | 1B-4 · `oturum.test.ts` · `oturum.itest.ts` · `session-revocation.spec.ts` |
+| E-2-2 | Hareketsizlik süresi `auth.oturumHareketsizlikSaat` (4 saat) **kayar**: son görülme anından itibaren sayılır. Mutlak süre `auth.oturumMutlakSaat` (12 saat) **kaymaz**: oturumun açılışından sayılır, hareketle uzamaz. Süresi dolan oturum giriş sayfasına yönlendirir. Son görülme anı her istekte değil, kayıt 5 dakikadan eskiyse yazılır. | 1B-4 · `oturum.test.ts` · `oturum.itest.ts` |
+| E-2-3 | Kullanıcının pasifleştirilmesi açık oturumlarının hepsini **aynı transaction'da** iptal eder; pasifleştirilen kullanıcının açık sayfası bir sonraki istekte giriş sayfasına düşer, yeniden aktifleştirme eski oturumu geri getirmez. Çıkış yalnız o oturumu iptal eder. Oturum satırı silinmez, iptal zamanı yazılır (C-3). Oturum tablosuna yalnız oturum dosyası yazar. | 1B-4 · `oturum.itest.ts` · `tek-cagri.test.ts` · `session-revocation.spec.ts` |
+| E-2-4 | Uygulamada route handler yoktur; her yazma server action'dır. Başka bir origin'den gönderilen server action çağrısı reddedilir ve etkisi olmaz. | 1B-4 · `csrf.spec.ts` |
 | E-3-1 | | 1B-7 *(dosya boyutu)* · 1A-C8 *(dosya alanı yok)* |
 
 ## X · Denetim sonrası kararlar

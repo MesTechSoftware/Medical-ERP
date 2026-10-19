@@ -45,7 +45,7 @@ madde 7'de kalkar. 1A çıkış kriterlerinin tamamı işaretli (`FAZ1_UYGULAMA_
 | Framework        | Next.js **16.2.10** (App Router, Server Components + Actions, Turbopack) |
 | Dil / UI         | TypeScript 5, React **19.2.4**, Tailwind CSS 4 |
 | Veritabanı       | **PostgreSQL 17** + Prisma **7.8** (driver adapter: `@prisma/adapter-pg` + `pg`) |
-| Kimlik doğrulama | Auth.js / NextAuth **v5 beta**, Credentials + bcryptjs, **JWT** — ⏳ *1B madde 4'te tamamen sökülür, yerine opak token + DB oturumu (`docs/adr/ADR-003`). Oturum tablosu (`Session`) şemada hazır, henüz kullanılmıyor.* |
+| Kimlik doğrulama | Kendi oturum tablosu (`Session`): opak 256-bit token, DB'de SHA-256 hash, `HttpOnly`/`SameSite=Lax` çerez; rol ve aktiflik her istekte okunur; 4 saat kayar / 12 saat mutlak; pasifleştirme oturumları aynı transaction'da iptal eder — *1B madde 4a, 19.10.2026 (`docs/adr/ADR-003`).* Parola bcryptjs. `next-auth` ve `AUTH_SECRET` yok; uygulamada route handler yok. ⏳ `mustChangePassword` akışı ve son-yönetici kısıtı madde 4b |
 | Doğrulama        | Zod 4 |
 | Para             | **`Decimal`** — birim fiyat `Decimal(18,4)` · tutar `Decimal(18,2)` · oran `Decimal(5,2)` · miktar tam sayı (X-5). Ham aritmetik `hesaplaSatirTutarlari()` ve `cozumleBirimFiyat()` içinde; istemciye `formatla()` ile `string` gider; `.toNumber()`/`Number()`/`parseFloat` kaçışı **lint kuralıyla** yasak |
 | Zaman            | An `timestamptz` (UTC), takvim günü `date`; yorum `Europe/Istanbul` (E-1); `TZ=UTC` CI, `docker-compose.yml` ve `.env.example`'da tanımlı |
@@ -62,7 +62,7 @@ tablo/kolon İngilizce `camelCase`, enum değerleri Türkçe. Prisma'nın ifade 
 
 | Grup | Modeller |
 |---|---|
-| Kimlik | `User` (rol `YONETICI`/`OPERASYON`/`SATICI`, `isActive`, `mustChangePassword`, `commissionRate`) · `Session` *(1B madde 4)* |
+| Kimlik | `User` (rol `YONETICI`/`OPERASYON`/`SATICI`, `isActive`, `mustChangePassword`, `commissionRate`) · `Session` *(1B madde 4a)* |
 | Tanım tabloları | `TaxRate` · `PaymentMethod` · `Carrier` · `StockLocation` · `StockAdjustmentReason` · `DocumentCounter` |
 | Cari | `Doctor` (`accountClass` DOKTOR/BAYI, `partyType`, `taxId`, fatura alanları, `creditLimit`, `paymentTermDays`, `priceListId`) · `DoctorAssignment` · `LedgerEntry` (cari hareket — X-11) · `DueDateChange` |
 | Ürün ve fiyat | `Product` (fiyat ve stok kolonu yok) · `PriceList` · `PriceListItem` |

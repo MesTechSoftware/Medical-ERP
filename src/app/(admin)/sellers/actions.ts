@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { portfoyuDevret } from "@/lib/sahiplik";
+import { kullaniciOturumlariniSonlandir } from "@/lib/oturum";
 
 /**
  * `degerler`: hata dönüşünde kullanıcının seçimleri. React form action'dan sonra formu
@@ -123,6 +124,8 @@ export async function updateSeller(
     // Önce pasifleştirilir: hedef olarak kendisi seçilemez (aktif SATICI kuralı).
     updated = await prisma.$transaction(async (tx) => {
       const u = await tx.user.update({ where: { id }, data });
+      // E-2 §(6): pasifleştirme açık oturumları aynı transaction'da sonlandırır.
+      if (before?.isActive && !isActive) await kullaniciOturumlariniSonlandir(tx, id);
       if (portfoy) {
         const sonuc = await portfoyuDevret(tx, id, portfoy.hedef, {
           metin: portfoy.gerekce,

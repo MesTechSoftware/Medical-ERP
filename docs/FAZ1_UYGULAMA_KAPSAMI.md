@@ -681,6 +681,11 @@ parametrelerini taşır. Koşullu `updateMany` kolonla birlikte gider; bu yüzde
 
 Bunlar **karar değil**, Yol (b)'nin doğurduğu uygulama kalemleridir; 1B madde 4'te çözülür:
 
+> **19.10.2026 — madde 4a:** 1, 2, 5, 6, 7 çözüldü (kriterler E-2-1…4). (1) eşik 5 dakika — `oturum.ts`
+> `SON_GORULME_ESIGI_MS` · (2) `csrf.spec.ts` — yabancı Origin'li server action reddedilir · (5) `e2e/admin/session-revocation.spec.ts`
+> (seller'daki eski spec silindi) · (6) **iptal işareti** — `Session.revokedAt`, satır silinmez (C-3) · (7) `HttpOnly` +
+> `SameSite=Lax`, `Secure` yalnız `NODE_ENV=production`. **3 ve 4 madde 4b'de** (kullanıcı yönetimiyle birlikte).
+
 1. **`lastSeenAt` yazma sıklığı.** Her istekte yazılırsa her sayfa gezinmesi bir DB write
    demektir. **Eşikli güncelleme** (ör. kayıt 5 dakikadan eskiyse yaz).
    *Not: `requireSession()` bugün de 1 sorgu atıyor (`session.ts:20-23`, `cache()` sarmalı);
