@@ -83,6 +83,7 @@ async function sevkliSiparis(
           unitPrice: s.unitPrice,
           vatRate: "20",
           isFree: s.isFree ?? false,
+          freeReason: s.isFree ? "NUMUNE" : null,
         })),
       },
     },

@@ -14,6 +14,8 @@ import Pagination from "@/components/Pagination";
 import { getPagination, pageCount } from "@/lib/pagination";
 import { Tutar } from "@/components/Tutar";
 import { SATIR_TABANI, tabanli } from "@/lib/taban";
+import { belgeOnayDurumlari } from "@/lib/onay-blogu";
+import { OnayEtiketi } from "@/components/OnayEtiketi";
 
 export default async function MyOrdersPage({
   searchParams,
@@ -37,6 +39,7 @@ export default async function MyOrdersPage({
     }),
     prisma.order.count({ where }),
   ]);
+  const onayDurumu = await belgeOnayDurumlari("SIP", orders.map((o) => o.id));
 
   return (
     <div>
@@ -83,7 +86,10 @@ export default async function MyOrdersPage({
                     <Tutar deger={siparisToplami(o.items).toplam} taban={SATIR_TABANI.toplam} baslikta />
                   </td>
                   <td className="px-4 py-3">
-                    <StatusBadge status={o.status} />
+                    <span className="flex flex-wrap items-center gap-1">
+                      <StatusBadge status={o.status} />
+                      <OnayEtiketi durum={onayDurumu.get(o.id)} />
+                    </span>
                   </td>
                   <td className="px-4 py-3 text-right">
                     <Link

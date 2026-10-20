@@ -62,7 +62,7 @@ const siparis = (no: string, stage: "ONAYLI" | "TEKLIF", status: "BEKLIYOR" | "I
       items: {
         create: [
           { productId: s.urun.id, quantity: 3, listPrice: "100", unitPrice: "33.335", vatRate: "20" },
-          { productId: s.urun.id, quantity: 1, listPrice: "100", unitPrice: "0", vatRate: "20", isFree: true },
+          { productId: s.urun.id, quantity: 1, listPrice: "100", unitPrice: "0", vatRate: "20", isFree: true, freeReason: "NUMUNE" },
         ],
       },
     },

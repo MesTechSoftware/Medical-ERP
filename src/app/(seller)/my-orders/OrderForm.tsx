@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useMemo, useState } from "react";
+import { startTransition, useActionState, useMemo, useState } from "react";
 import { SubmitButton } from "@/components/form";
 import { SonucGosterimi, type SonucDurumu } from "@/components/Sonuc";
 import { Tutar } from "@/components/Tutar";
 import { MATRAH, SATIR_TABANI, tabanli } from "@/lib/taban";
 import { formatla, paraOku } from "@/lib/money";
 import { hesaplaSatirTutarlari } from "@/lib/satir-tutarlari";
+import { BEDELSIZ_SEBEP_ADI } from "@/lib/sozluk";
+import type { FreeReason } from "@/generated/prisma/enums";
 import { createOrder } from "./actions";
 
 type Product = {
@@ -20,8 +22,18 @@ type Product = {
   stock: number;
 };
 
-/** Boş bırakılan fiyat = ürünün liste fiyatı. */
-type Row = { key: number; productId: string; quantity: number; priceText: string };
+/** Boş bırakılan fiyat = ürünün liste fiyatı. Bedelsiz satırın tutarı 0'dır (A-2). */
+type Row = {
+  key: number;
+  productId: string;
+  quantity: number;
+  priceText: string;
+  bedelsiz: boolean;
+  sebep: FreeReason;
+  aciklama: string;
+};
+
+const YENI_SATIR = { productId: "", quantity: 1, priceText: "", bedelsiz: false, sebep: "NUMUNE", aciklama: "" } as const;
 
 export type DoctorOption = {
   id: string;
@@ -37,10 +49,9 @@ export default function OrderForm({
   products: Product[];
   doctors: DoctorOption[];
 }) {
-  const [state, formAction] = useActionState<SonucDurumu, FormData>(createOrder, null);
-  const [rows, setRows] = useState<Row[]>([
-    { key: 1, productId: "", quantity: 1, priceText: "" },
-  ]);
+  const [state, formAction, gonderiliyor] = useActionState<SonucDurumu, FormData>(createOrder, null);
+  const [rows, setRows] = useState<Row[]>([{ key: 1, ...YENI_SATIR }]);
+  const [doctorId, setDoctorId] = useState("");
 
   const productMap = useMemo(
     () => new Map(products.map((p) => [p.id, p])),
@@ -73,6 +84,7 @@ export default function OrderForm({
       listeFiyat: c.product!.listPrice!,
       kdvOrani: c.product!.vatRate,
       miktar: c.row.quantity,
+      bedelsiz: c.row.bedelsiz,
     }))
   );
   const tutarOf = new Map(gecerli.map((c, i) => [c.row.key, hesap.satirlar[i]]));
@@ -83,13 +95,13 @@ export default function OrderForm({
     productId: c.row.productId,
     quantity: c.row.quantity,
     birimFiyat: c.birimFiyat!,
+    ...(c.row.bedelsiz
+      ? { bedelsiz: { sebep: c.row.sebep, ...(c.row.aciklama.trim() ? { aciklama: c.row.aciklama.trim() } : {}) } }
+      : {}),
   }));
 
   function addRow() {
-    setRows((rs) => [
-      ...rs,
-      { key: Date.now(), productId: "", quantity: 1, priceText: "" },
-    ]);
+    setRows((rs) => [...rs, { key: Date.now(), ...YENI_SATIR }]);
   }
   function removeRow(key: number) {
     setRows((rs) => (rs.length > 1 ? rs.filter((r) => r.key !== key) : rs));
@@ -99,7 +111,16 @@ export default function OrderForm({
   }
 
   return (
-    <form action={formAction} className="space-y-6">
+    // Form action'ının kendiliğinden sıfırlaması kullanılmaz: gerekçe diyaloğu (A-8) aynı formu
+    // yeniden gönderir ve sıfırlama denetimli alanların DOM değerini de boşaltırdı.
+    <form
+      className="space-y-6"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const veri = new FormData(e.currentTarget);
+        startTransition(() => formAction(veri));
+      }}
+    >
       <input type="hidden" name="items" value={JSON.stringify(items)} />
 
       {/* Doktor artık serbest metin değil, portföydeki bir varlık (BRK-02).
@@ -124,7 +145,8 @@ export default function OrderForm({
             id="doctorId"
             name="doctorId"
             required
-            defaultValue=""
+            value={doctorId}
+            onChange={(e) => setDoctorId(e.target.value)}
             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-500"
           >
             <option value="" disabled>
@@ -224,7 +246,8 @@ export default function OrderForm({
                   step="0.01"
                   min={0}
                   placeholder={p?.listPrice ?? "—"}
-                  value={row.priceText}
+                  disabled={row.bedelsiz}
+                  value={row.bedelsiz ? "" : row.priceText}
                   onChange={(e) =>
                     updateRow(row.key, { priceText: e.target.value })
                   }
@@ -246,6 +269,53 @@ export default function OrderForm({
                   <Tutar deger={totals?.matrah} taban={SATIR_TABANI.matrah} baslikta />
                 </div>
               </div>
+
+              {/* A-2: bedelsiz satır — sebep kapalı listeden; "Diğer"de açıklama zorunlu. Numune
+                  dışındaki sebepler siparişi yönetici onayına gönderir (A-2 eki 20.10.2026). */}
+              <div className="flex items-center gap-2 pb-2">
+                <input
+                  id={`free-${row.key}`}
+                  type="checkbox"
+                  checked={row.bedelsiz}
+                  onChange={(e) => updateRow(row.key, { bedelsiz: e.target.checked })}
+                />
+                <label htmlFor={`free-${row.key}`} className="text-xs text-slate-600">
+                  Bedelsiz
+                </label>
+              </div>
+              {row.bedelsiz && (
+                <div className="w-36">
+                  <label htmlFor={`reason-${row.key}`} className="mb-1 block text-xs text-slate-500">
+                    Bedelsiz sebebi
+                  </label>
+                  <select
+                    id={`reason-${row.key}`}
+                    value={row.sebep}
+                    onChange={(e) => updateRow(row.key, { sebep: e.target.value as FreeReason })}
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-500"
+                  >
+                    {Object.entries(BEDELSIZ_SEBEP_ADI).map(([kod, ad]) => (
+                      <option key={kod} value={kod}>
+                        {ad}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {row.bedelsiz && row.sebep === "DIGER" && (
+                <div className="min-w-[160px] flex-1">
+                  <label htmlFor={`note-${row.key}`} className="mb-1 block text-xs text-slate-500">
+                    Açıklama
+                  </label>
+                  <input
+                    id={`note-${row.key}`}
+                    maxLength={200}
+                    value={row.aciklama}
+                    onChange={(e) => updateRow(row.key, { aciklama: e.target.value })}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
+                  />
+                </div>
+              )}
 
               <button
                 type="button"
@@ -288,7 +358,7 @@ export default function OrderForm({
       <SonucGosterimi sonuc={state} />
 
       <div className="flex items-center gap-3">
-        <SubmitButton disabled={items.length === 0}>
+        <SubmitButton disabled={items.length === 0 || gonderiliyor}>
           Siparişi Oluştur
         </SubmitButton>
         <Link

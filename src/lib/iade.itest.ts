@@ -49,6 +49,7 @@ async function sevkEdilmisSiparis(kalemler: { miktar: number; birim: string; bed
           unitPrice: k.birim,
           vatRate: "20",
           isFree: k.bedelsiz ?? false,
+          freeReason: k.bedelsiz ? "NUMUNE" : null,
         })),
       },
     },

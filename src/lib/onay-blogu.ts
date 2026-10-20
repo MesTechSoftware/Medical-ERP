@@ -1,4 +1,5 @@
 import type { Prisma } from "@/generated/prisma/client";
+import type { FreeReason } from "@/generated/prisma/enums";
 import type { BelgeOneki } from "@/lib/belge-no";
 import { prisma } from "@/lib/db";
 import type { KuralKodu } from "@/lib/sonuc";
@@ -16,7 +17,18 @@ type Db = Prisma.TransactionClient | typeof prisma;
  */
 
 /** Blok doğuran kural kodları — X-4 kataloğunun alt kümesi (§(3)); veritabanında `varchar`. */
-export type BlokKuralKodu = Extract<KuralKodu, "NEGATIF_STOK">;
+export type BlokKuralKodu = Extract<KuralKodu, "NEGATIF_STOK" | "BEDELSIZ_ONAYI">;
+
+/**
+ * A-2 eki (20.10.2026): bedelsiz satırın onay kuralı sebebe bağlıdır — numune onaysız geçer,
+ * diğer sebepler `BEDELSIZ_ONAYI` bloğu açar. Kodda kapalıdır.
+ */
+export const BEDELSIZ_ONAY_GEREKIR: Record<FreeReason, boolean> = {
+  NUMUNE: false,
+  PROMOSYON: true,
+  MAL_FAZLASI: true,
+  DIGER: true,
+};
 
 export type BlokIhlali = {
   kuralKodu: BlokKuralKodu;
@@ -62,6 +74,34 @@ export async function sonBlokDurumu(
     select: { decision: true },
   });
   return b ? (b.decision ?? "BEKLIYOR") : "YOK";
+}
+
+/**
+ * Ekranlar için belgelerin onay durumu (A-8): her kuralın son bloğuna bakılır; bir kural
+ * kararsızsa `BEKLIYOR`, değilse bir kuralın son kararı `RED` ise `RED`. Geçen belge haritada yoktur.
+ */
+export async function belgeOnayDurumlari(
+  belgeTipi: BelgeOneki,
+  belgeIdleri: readonly string[],
+  db: Db = prisma
+): Promise<Map<string, "BEKLIYOR" | "RED">> {
+  const bloklar = await db.approvalBlock.findMany({
+    where: { documentType: belgeTipi, documentId: { in: [...belgeIdleri] } },
+    orderBy: [{ openedAt: "desc" }, { id: "desc" }],
+    select: { documentId: true, ruleCode: true, decision: true },
+  });
+  const son = new Map<string, string | null>();
+  for (const b of bloklar) {
+    const k = `${b.documentId}|${b.ruleCode}`;
+    if (!son.has(k)) son.set(k, b.decision);
+  }
+  const durum = new Map<string, "BEKLIYOR" | "RED">();
+  for (const [k, karar] of son) {
+    const id = k.slice(0, k.indexOf("|"));
+    if (karar === null) durum.set(id, "BEKLIYOR");
+    else if (karar === "RED" && !durum.has(id)) durum.set(id, "RED");
+  }
+  return durum;
 }
 
 /**

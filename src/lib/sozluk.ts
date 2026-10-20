@@ -1,4 +1,5 @@
 import { formatla } from "@/lib/money";
+import type { FreeReason } from "@/generated/prisma/enums";
 import type { BlokKuralKodu } from "@/lib/onay-blogu";
 import type { Bildirim, KuralKodu, Parametreler } from "@/lib/sonuc";
 import { BRUT, TABAN_ETIKETI } from "@/lib/taban";
@@ -53,6 +54,7 @@ export const KURAL_METNI: Record<KuralKodu, (p: Parametreler) => string> = {
     "Bu ürün siparişlerde kullanıldığı için silinemez. Bunun yerine durumunu Pasif yapın.",
   FIYAT_COZUMLENEMEDI: (p) => `${p.urun} için fiyat çözümlenemedi.`,
   SIPARIS_KALEMI_GECERSIZ: () => "En az bir ürün ve geçerli miktar giriniz.",
+  BEDELSIZ_ACIKLAMA_ZORUNLU: () => "Bedelsiz satırda \"Diğer\" sebebi için açıklama zorunludur.",
   SIPARIS_DURUMU_UYGUN_DEGIL: () => "Siparişin durumu bu işleme uygun değil; sayfayı yenileyin.",
   SIPARIS_IPTAL_EDILEMEZ: () =>
     "Sevk edilmiş, teslim edilmiş ya da zaten iptal edilmiş sipariş iptal edilemez; sevk edilen mal iade ile geri alınır.",
@@ -82,13 +84,24 @@ export const KURAL_METNI: Record<KuralKodu, (p: Parametreler) => string> = {
     "tahsil edilmesi hâlindeki yükümlülüğü değerlendirmez.",
 
   NEGATIF_STOK: (p) => `Stok yetersiz${p.urun ? ` (${p.urun})` : ""}: işlem sonrası stok ${p.sonra} adet olur.`,
+  BEDELSIZ_ONAYI: (p) => `Bedelsiz satır (${p.urun}, ${BEDELSIZ_SEBEP_ADI[p.sebep as FreeReason] ?? p.sebep}) yönetici onayı gerektirir.`,
   ONAY_BEKLIYOR: () => "Bu sipariş yönetici onayı bekliyor; karar verilmeden sevk edilemez.",
+  ONAY_REDDEDILDI: () => "Bu siparişin onay talebi reddedildi; sevk edilemez.",
   ONAY_KARARI_VERILMIS: () => "Bu onay talebine zaten karar verilmiş.",
 };
 
 /** Onay bekleyenler ekranında bloğun kural adı (A-8); blok parametre saklamaz. */
 export const BLOK_KURAL_ADI: Record<BlokKuralKodu, string> = {
   NEGATIF_STOK: "Negatif stok",
+  BEDELSIZ_ONAYI: "Bedelsiz satır",
+};
+
+/** Bedelsiz satır sebebi (A-2 eki 20.10.2026). */
+export const BEDELSIZ_SEBEP_ADI: Record<FreeReason, string> = {
+  NUMUNE: "Numune",
+  PROMOSYON: "Promosyon",
+  MAL_FAZLASI: "Mal fazlası",
+  DIGER: "Diğer",
 };
 
 export function bildirimMetni(b: Pick<Bildirim, "kural_kodu" | "parametreler">): string {

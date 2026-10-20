@@ -5,6 +5,8 @@ import { Tutar } from "@/components/Tutar";
 import { MATRAH, SATIR_TABANI, tabanli } from "@/lib/taban";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { hesaplaSatirTutarlari } from "@/lib/satir-tutarlari";
+import type { FreeReason } from "@/generated/prisma/enums";
+import { BEDELSIZ_SEBEP_ADI } from "@/lib/sozluk";
 
 type OrderWithRelations = {
   id: string;
@@ -25,6 +27,8 @@ type OrderWithRelations = {
     unitPrice: Decimal.Value;
     vatRate: Decimal.Value;
     isFree: boolean;
+    freeReason: FreeReason | null;
+    freeNote: string | null;
     product: { name: string; code: string };
   }[];
   /** En son sevkiyat (A-3 kısmi sevkiyat ekranı 1B'dedir). */
@@ -117,6 +121,12 @@ export default function OrderDetail({
                     <span className="ml-1 text-xs text-slate-400">
                       {it.product.code}
                     </span>
+                    {it.freeReason && (
+                      <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">
+                        Bedelsiz · {BEDELSIZ_SEBEP_ADI[it.freeReason]}
+                        {it.freeNote ? ` — ${it.freeNote}` : ""}
+                      </span>
+                    )}
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums">
                     {it.quantity}

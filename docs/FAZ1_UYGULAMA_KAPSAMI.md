@@ -878,6 +878,17 @@ liste ataması) + fiyat listesi ekranı · **7f** D-6 import (X-16 / ADR-006 sı
 - Kapsam dışı: iade faturası/fatura hazırlık veri setinde iade satırı (K-4, e-belge modülü) · iade kargosu (D-3) ·
   hasarlı iadenin zayiatı (B-7, 7d4).
 
+**Madde 7d2 — A-2 bedelsiz satır (20.10.2026, kriterler A-2-1, A-2-2; KARARLAR A-2 eki 20.10).** Notlar (karar değil):
+
+- **Şema:** `FreeReason` enum, `OrderItem.freeReason` serbest metinden enum'a yerinde çevrildi, `freeNote`
+  (`VarChar(200)`); iki `CHECK` (migration `bedelsiz_sebep`). Onay politikası `BEDELSIZ_ONAY_GEREKIR` (`onay-blogu.ts`).
+- Satıcı formu: satır başına "Bedelsiz" + sebep (+ "Diğer"de açıklama); birim fiyat alanı kapanır, önizleme 0 gösterir.
+  Form artık form action sıfırlamasını kullanmaz (gerekçe diyaloğu denetimli alanları boşaltıyordu).
+- `belgeOnayDurumlari()` + `OnayEtiketi`: "Onay bekliyor" / "Onay reddedildi" Siparişlerim ve Kargo ekranında.
+- **Açık:** `RED`'den sonra satıcının yeni gerekçeyle yeniden onaya göndermesi için ekran yok (A-8 eki 16.10
+  izin verir); bugün reddedilen sipariş iptal edilir. Sipariş girişini yalnız `SATICI` yapar; yönetici girişi
+  (onayın aynı işlemde verilmesi) sipariş ekranı yönetime açıldığında devreye girer.
+
 ---
 
 ### §D.5 · 1A'nın **yapmadıkları** — sınırı yazılı tutmak için

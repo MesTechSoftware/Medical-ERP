@@ -33,7 +33,7 @@ function siparis(satirlar: Satir[], stage: "TEKLIF" | "ONAYLI" = "ONAYLI", statu
           unitPrice: s.birim,
           vatRate: s.kdv ?? "20",
           isFree: s.bedelsiz ?? false,
-          freeReason: s.bedelsiz ? "Numune" : null,
+          freeReason: s.bedelsiz ? "NUMUNE" : null,
         })),
       },
     },
