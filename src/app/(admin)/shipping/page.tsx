@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { formatla } from "@/lib/money";
 import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { PageHeader, Card, StatusBadge, EmptyRow } from "@/components/ui";
 import { IslemFormu } from "@/components/Sonuc";
 import { shipOrder } from "./actions";
+import { Tutar } from "@/components/Tutar";
+import { SATIR_TABANI } from "@/lib/taban";
 
 export default async function ShippingPage() {
   const [pending, shipped, carriers] = await Promise.all([
@@ -77,7 +78,7 @@ export default async function ShippingPage() {
                       </span>
                     </div>
                     <span className="text-sm font-medium tabular-nums text-slate-900">
-                      {formatla(siparisToplami(o.items).toplam)}
+                      <Tutar deger={siparisToplami(o.items).toplam} taban={SATIR_TABANI.toplam} />
                     </span>
                   </div>
                   <IslemFormu

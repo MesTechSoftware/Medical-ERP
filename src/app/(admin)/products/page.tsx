@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { formatla } from "@/lib/money";
+import { Tutar } from "@/components/Tutar";
+import { MATRAH, tabanli } from "@/lib/taban";
 import { cozumleBirimFiyat } from "@/lib/fiyat";
 import { hesaplaStok } from "@/lib/stok";
 import { requireStaff } from "@/lib/session";
@@ -53,7 +55,7 @@ export default async function ProductsPage() {
                 <th className="px-4 py-2 font-medium">Ürün</th>
                 <th className="px-4 py-2 font-medium">Kod</th>
                 <th className="px-4 py-2 text-right font-medium">
-                  Liste (net)
+                  {tabanli("Liste Fiyatı", MATRAH)}
                 </th>
                 <th className="px-4 py-2 text-right font-medium">KDV</th>
                 <th className="px-4 py-2 text-right font-medium">Stok</th>
@@ -75,7 +77,7 @@ export default async function ProductsPage() {
                   </td>
                   <td className="px-4 py-3 text-slate-500">{p.code}</td>
                   <td className="px-4 py-3 text-right tabular-nums">
-                    {formatla(p.listPrice)}
+                    <Tutar deger={p.listPrice} taban={MATRAH} baslikta />
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums text-slate-500">
                     {formatla(p.taxRate.rate, "oran")}

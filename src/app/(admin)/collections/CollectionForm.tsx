@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { Field, SelectField, TextArea, SubmitButton } from "@/components/form";
 import { SonucGosterimi, type SonucDurumu } from "@/components/Sonuc";
 import { recordCollection } from "./actions";
+import { BRUT, TABAN_ETIKETI } from "@/lib/taban";
 
 const ALANLAR = ["doctorId", "amount", "paymentMethodId"] as const;
 
@@ -29,7 +30,8 @@ export default function CollectionForm({
           ...doctors.map((d) => ({ value: d.id, label: d.label })),
         ]}
       />
-      <Field label="Tutar (₺)" name="amount" required sonuc={state} />
+      {/* Tahsilat brüttür (Ü-3 §(4)). */}
+      <Field label={`Tutar — ${TABAN_ETIKETI[BRUT]} (₺)`} name="amount" required sonuc={state} />
       <SelectField
         label="Yöntem"
         name="paymentMethodId"

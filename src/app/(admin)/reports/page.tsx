@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/session";
-import { formatla } from "@/lib/money";
+import { Tutar } from "@/components/Tutar";
+import { MATRAH, tabanli } from "@/lib/taban";
 import { donemCoz } from "@/lib/donem";
 import DonemSecici from "@/components/DonemSecici";
 import SaticiRaporTablosu from "@/components/SaticiRaporTablosu";
@@ -40,7 +41,7 @@ export default async function ReportsPage({
 
       {/* FR-60: kanal karşılaştırması C5'te söküldü (X-8) */}
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard label="Dönem Cirosu" value={formatla(ciro)} hint="KDV hariç" />
+        <StatCard label="Dönem Cirosu" value={<Tutar deger={ciro} taban={MATRAH} />} />
       </div>
 
       {/* FR-62: satıcı performans karşılaştırması · X-1: dönem cirosu, hakediş, tahsilat */}
@@ -63,7 +64,7 @@ export default async function ReportsPage({
                 <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
                   <th className="px-3 py-2 font-medium">Doktor</th>
                   <th className="px-3 py-2 font-medium">Satıcı</th>
-                  <th className="px-3 py-2 text-right font-medium">Ciro (KDV hariç)</th>
+                  <th className="px-3 py-2 text-right font-medium">{tabanli("Ciro", MATRAH)}</th>
                 </tr>
               </thead>
               <tbody>
@@ -79,7 +80,7 @@ export default async function ReportsPage({
                       {d.sellerName ?? "—"}
                     </td>
                     <td className="px-3 py-2 text-right tabular-nums">
-                      {formatla(d.ciro)}
+                      <Tutar deger={d.ciro} taban={MATRAH} baslikta />
                     </td>
                   </tr>
                 ))}

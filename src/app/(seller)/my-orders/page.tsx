@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireSeller } from "@/lib/session";
-import { formatla } from "@/lib/money";
 import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
 import { formatDate } from "@/lib/format";
 import {
@@ -13,6 +12,8 @@ import {
 } from "@/components/ui";
 import Pagination from "@/components/Pagination";
 import { getPagination, pageCount } from "@/lib/pagination";
+import { Tutar } from "@/components/Tutar";
+import { SATIR_TABANI, tabanli } from "@/lib/taban";
 
 export default async function MyOrdersPage({
   searchParams,
@@ -54,7 +55,7 @@ export default async function MyOrdersPage({
                 <th className="px-4 py-2 font-medium">Doktor</th>
                 <th className="px-4 py-2 font-medium">Hastane</th>
                 <th className="px-4 py-2 text-right font-medium">Kalem</th>
-                <th className="px-4 py-2 text-right font-medium">Tutar</th>
+                <th className="px-4 py-2 text-right font-medium">{tabanli("Tutar", SATIR_TABANI.toplam)}</th>
                 <th className="px-4 py-2 font-medium">Durum</th>
                 <th className="px-4 py-2"></th>
               </tr>
@@ -79,7 +80,7 @@ export default async function MyOrdersPage({
                     {o.items.length}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums">
-                    {formatla(siparisToplami(o.items).toplam)}
+                    <Tutar deger={siparisToplami(o.items).toplam} taban={SATIR_TABANI.toplam} baslikta />
                   </td>
                   <td className="px-4 py-3">
                     <StatusBadge status={o.status} />

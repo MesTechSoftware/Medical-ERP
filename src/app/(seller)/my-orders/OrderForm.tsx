@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
 import { SubmitButton } from "@/components/form";
 import { SonucGosterimi, type SonucDurumu } from "@/components/Sonuc";
+import { Tutar } from "@/components/Tutar";
+import { MATRAH, SATIR_TABANI, tabanli } from "@/lib/taban";
 import { formatla, paraOku } from "@/lib/money";
 import { hesaplaSatirTutarlari } from "@/lib/satir-tutarlari";
 import { createOrder } from "./actions";
@@ -208,13 +210,13 @@ export default function OrderForm({
               </div>
 
               {/* FR-12: satıcı birim fiyatı değiştirebilir. Taban fiyat reddi C6'da
-                  söküldü (GÇ-8, A-10); yerine taban etiketi 1B'de gelir. */}
+                  söküldü (GÇ-8, A-10); giriş matrahtır, etiketi yanında (Ü-3 §(6)). */}
               <div className="w-32">
                 <label
                   htmlFor={`price-${row.key}`}
                   className="mb-1 block text-xs text-slate-500"
                 >
-                  Birim (KDV hariç)
+                  {tabanli("Birim", MATRAH)}
                 </label>
                 <input
                   id={`price-${row.key}`}
@@ -234,14 +236,14 @@ export default function OrderForm({
               <div className="w-24 text-right">
                 <span className="mb-1 block text-xs text-slate-500">KDV</span>
                 <div className="py-2 text-sm tabular-nums text-slate-500">
-                  {totals ? formatla(totals.kdvTutar) : "—"}
+                  <Tutar deger={totals?.kdvTutar} taban={SATIR_TABANI.kdvTutar} baslikta />
                 </div>
               </div>
 
               <div className="w-28 text-right">
-                <span className="mb-1 block text-xs text-slate-500">Tutar (KDV hariç)</span>
+                <span className="mb-1 block text-xs text-slate-500">{tabanli("Tutar", SATIR_TABANI.matrah)}</span>
                 <div className="py-2 text-sm font-medium tabular-nums text-slate-900">
-                  {totals ? formatla(totals.matrah) : "—"}
+                  <Tutar deger={totals?.matrah} taban={SATIR_TABANI.matrah} baslikta />
                 </div>
               </div>
 
@@ -263,16 +265,22 @@ export default function OrderForm({
       <div className="flex justify-end">
         <dl className="w-64 space-y-1 text-sm">
           <div className="flex justify-between text-slate-600">
-            <dt>Ara Toplam (KDV hariç)</dt>
-            <dd className="tabular-nums">{formatla(hesap.toplam.matrah)}</dd>
+            <dt>{tabanli("Ara Toplam", SATIR_TABANI.matrah)}</dt>
+            <dd className="tabular-nums">
+              <Tutar deger={hesap.toplam.matrah} taban={SATIR_TABANI.matrah} baslikta />
+            </dd>
           </div>
           <div className="flex justify-between text-slate-600">
             <dt>KDV</dt>
-            <dd className="tabular-nums">{formatla(hesap.toplam.kdvTutar)}</dd>
+            <dd className="tabular-nums">
+              <Tutar deger={hesap.toplam.kdvTutar} taban={SATIR_TABANI.kdvTutar} baslikta />
+            </dd>
           </div>
           <div className="flex justify-between border-t border-slate-200 pt-1 font-semibold text-slate-900">
-            <dt>Genel Toplam</dt>
-            <dd className="tabular-nums">{formatla(hesap.toplam.toplam)}</dd>
+            <dt>{tabanli("Genel Toplam", SATIR_TABANI.toplam)}</dt>
+            <dd className="tabular-nums">
+              <Tutar deger={hesap.toplam.toplam} taban={SATIR_TABANI.toplam} baslikta />
+            </dd>
           </div>
         </dl>
       </div>

@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { Field, SelectField, SubmitButton } from "@/components/form";
 import { SonucGosterimi, type SonucDurumu } from "@/components/Sonuc";
 import type { IslemSonucu } from "@/lib/sonuc";
+import { MATRAH, TABAN_ETIKETI } from "@/lib/taban";
 
 type Action = (prev: SonucDurumu, formData: FormData) => Promise<IslemSonucu>;
 
@@ -40,7 +41,7 @@ export default function ProductForm({
       {/* Fiyatlar NET (KDV hariç) girilir — kanonik değer nettir (FR-19). */}
       {/* Liste fiyatı varsayılan fiyat listesinin satırına yazılır (X-10 §(5)). */}
       <Field
-        label="Liste Fiyatı — KDV hariç (₺)"
+        label={`Liste Fiyatı — ${TABAN_ETIKETI[MATRAH]} (₺)`}
         name="listPrice"
         required
         defaultValue={defaults?.listPrice}

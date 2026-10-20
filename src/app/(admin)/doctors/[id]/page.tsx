@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireStaff } from "@/lib/session";
-import { formatla } from "@/lib/money";
+import { Tutar } from "@/components/Tutar";
+import { BRUT, SATIR_TABANI, tabanli } from "@/lib/taban";
 import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
 import { formatDate } from "@/lib/format";
 import { formatPhone } from "@/lib/phone";
@@ -75,12 +76,12 @@ export default async function DoctorDetailPage({
           tone={doctor.ownerSeller ? "default" : "danger"}
         />
         {/* Cari hareketten okunur (X-11); CM → 1B arası boş görünür (FAZ1 R-11). */}
-        <StatCard label="Toplam Borç" value={formatla(cari.toplamBorc)} />
-        <StatCard label="Toplam Alacak" value={formatla(cari.toplamAlacak)} />
+        <StatCard label="Toplam Borç" value={<Tutar deger={cari.toplamBorc} taban={BRUT} />} />
+        <StatCard label="Toplam Alacak" value={<Tutar deger={cari.toplamAlacak} taban={BRUT} />} />
         {/* K-2: çıplak negatif gösterilmez; tutar mutlak değer, yön etikette. */}
         <StatCard
           label="Cari Bakiye"
-          value={formatla(cari.bakiye.abs())}
+          value={<Tutar deger={cari.bakiye.abs()} taban={BRUT} />}
           tone={cari.yon === "BORC" ? "danger" : "success"}
           hint={BAKIYE_ETIKETI[cari.yon]}
         />
@@ -98,7 +99,7 @@ export default async function DoctorDetailPage({
                   <th className="px-3 py-2 font-medium">Belge No</th>
                   <th className="px-3 py-2 font-medium">Tarih</th>
                   <th className="px-3 py-2 font-medium">Satıcı</th>
-                  <th className="px-3 py-2 text-right font-medium">Tutar</th>
+                  <th className="px-3 py-2 text-right font-medium">{tabanli("Tutar", SATIR_TABANI.toplam)}</th>
                   <th className="px-3 py-2 font-medium">Durum</th>
                 </tr>
               </thead>
@@ -122,7 +123,7 @@ export default async function DoctorDetailPage({
                         {o.seller?.name ?? "—"}
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums">
-                        {formatla(siparisToplami(o.items).toplam)}
+                        <Tutar deger={siparisToplami(o.items).toplam} taban={SATIR_TABANI.toplam} baslikta />
                       </td>
                       <td className="px-3 py-2">
                         <StatusBadge status={o.status} />
@@ -145,7 +146,7 @@ export default async function DoctorDetailPage({
                 <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
                   <th className="px-3 py-2 font-medium">Tarih</th>
                   <th className="px-3 py-2 font-medium">Yöntem</th>
-                  <th className="px-3 py-2 text-right font-medium">Tutar</th>
+                  <th className="px-3 py-2 text-right font-medium">{tabanli("Tutar", BRUT)}</th>
                   <th className="px-3 py-2 font-medium">Durum</th>
                 </tr>
               </thead>
@@ -168,7 +169,7 @@ export default async function DoctorDetailPage({
                       {p.paymentMethod.name}
                     </td>
                     <td className="px-3 py-2 text-right tabular-nums">
-                      {formatla(p.amount)}
+                      <Tutar deger={p.amount} taban={BRUT} baslikta />
                     </td>
                     <td className="px-3 py-2">
                       {p.status === "IPTAL" ? "İptal" : "Aktif"}

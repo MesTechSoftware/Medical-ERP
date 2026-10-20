@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import Decimal from "decimal.js";
-import { formatla } from "@/lib/money";
+import { Tutar } from "@/components/Tutar";
+import { BRUT, MATRAH } from "@/lib/taban";
 import { hesaplaStok } from "@/lib/stok";
 import { getCiroTotal } from "@/lib/reports-service";
 import { gunAraligi, simdi, TUM_ZAMANLAR } from "@/lib/zaman";
@@ -71,8 +72,8 @@ export default async function DashboardPage() {
       {/* Bayi kanal kartları C5'te söküldü — bayi bir cari tipidir (X-8). */}
       <div className="mb-4 grid gap-4 sm:grid-cols-2">
         {/* Ciro matrahtır ve sevk edilen maldan doğar (A-3, Ü-3 §(5)); CM → 1B arası boş (R-11). */}
-        <StatCard label="Toplam Ciro" value={formatla(toplamCiro)} hint="KDV hariç · tüm zamanlar" />
-        <StatCard label="Toplam Tahsilat" value={formatla(toplamTahsilat)} />
+        <StatCard label="Toplam Ciro" value={<Tutar deger={toplamCiro} taban={MATRAH} />} hint="tüm zamanlar" />
+        <StatCard label="Toplam Tahsilat" value={<Tutar deger={toplamTahsilat} taban={BRUT} />} />
       </div>
 
 

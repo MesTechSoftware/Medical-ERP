@@ -1,6 +1,8 @@
 import { Card, StatusBadge } from "@/components/ui";
 import type Decimal from "decimal.js";
 import { formatla } from "@/lib/money";
+import { Tutar } from "@/components/Tutar";
+import { MATRAH, SATIR_TABANI, tabanli } from "@/lib/taban";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { hesaplaSatirTutarlari } from "@/lib/satir-tutarlari";
 
@@ -95,12 +97,12 @@ export default function OrderDetail({
                 <th className="px-3 py-2 font-medium">Ürün</th>
                 <th className="px-3 py-2 text-right font-medium">Miktar</th>
                 <th className="px-3 py-2 text-right font-medium">
-                  Birim Fiyat (net)
+                  {tabanli("Birim Fiyat", MATRAH)}
                 </th>
-                <th className="px-3 py-2 text-right font-medium">Net Tutar</th>
+                <th className="px-3 py-2 text-right font-medium">{tabanli("Tutar", SATIR_TABANI.matrah)}</th>
                 <th className="px-3 py-2 text-right font-medium">KDV</th>
                 <th className="px-3 py-2 text-right font-medium">
-                  Tutar (KDV dahil)
+                  {tabanli("Tutar", SATIR_TABANI.toplam)}
                 </th>
               </tr>
             </thead>
@@ -120,19 +122,19 @@ export default function OrderDetail({
                     {it.quantity}
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums">
-                    {formatla(it.unitPrice)}
+                    <Tutar deger={it.unitPrice} taban={MATRAH} baslikta />
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums">
-                    {formatla(hesap.satirlar[i].matrah)}
+                    <Tutar deger={hesap.satirlar[i].matrah} taban={SATIR_TABANI.matrah} baslikta />
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums text-slate-500">
-                    {formatla(hesap.satirlar[i].kdvTutar)}
+                    <Tutar deger={hesap.satirlar[i].kdvTutar} taban={SATIR_TABANI.kdvTutar} baslikta />
                     <span className="ml-1 text-xs text-slate-400">
                       {formatla(it.vatRate, "oran")}
                     </span>
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums">
-                    {formatla(hesap.satirlar[i].toplam)}
+                    <Tutar deger={hesap.satirlar[i].toplam} taban={SATIR_TABANI.toplam} baslikta />
                   </td>
                 </tr>
               ))}
@@ -141,10 +143,10 @@ export default function OrderDetail({
             <tfoot className="border-t border-slate-200">
               <tr>
                 <td colSpan={4} className="px-3 py-1.5 text-right text-slate-600">
-                  Ara Toplam (KDV hariç)
+                  {tabanli("Ara Toplam", SATIR_TABANI.matrah)}
                 </td>
                 <td className="px-3 py-1.5 text-right tabular-nums text-slate-600">
-                  {formatla(hesap.toplam.matrah)}
+                  <Tutar deger={hesap.toplam.matrah} taban={SATIR_TABANI.matrah} baslikta />
                 </td>
               </tr>
               <tr>
@@ -152,15 +154,15 @@ export default function OrderDetail({
                   KDV
                 </td>
                 <td className="px-3 py-1.5 text-right tabular-nums text-slate-600">
-                  {formatla(hesap.toplam.kdvTutar)}
+                  <Tutar deger={hesap.toplam.kdvTutar} taban={SATIR_TABANI.kdvTutar} baslikta />
                 </td>
               </tr>
               <tr>
                 <td colSpan={4} className="px-3 py-3 text-right font-medium">
-                  Genel Toplam
+                  {tabanli("Genel Toplam", SATIR_TABANI.toplam)}
                 </td>
                 <td className="px-3 py-3 text-right text-base font-semibold tabular-nums">
-                  {formatla(hesap.toplam.toplam)}
+                  <Tutar deger={hesap.toplam.toplam} taban={SATIR_TABANI.toplam} baslikta />
                 </td>
               </tr>
             </tfoot>
