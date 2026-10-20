@@ -3,7 +3,7 @@ import { requireSeller } from "@/lib/session";
 import { kapsamliDoktorlariGetir } from "@/lib/doctor";
 import { PageHeader, Card } from "@/components/ui";
 import { cozumleBirimFiyat } from "@/lib/fiyat";
-import { hesaplaStok } from "@/lib/stok";
+import { hesaplaStok, varsayilanDepoId } from "@/lib/stok";
 import { formatla } from "@/lib/money";
 import OrderForm from "../OrderForm";
 import { bugun } from "@/lib/zaman";
@@ -26,6 +26,8 @@ export default async function NewOrderPage() {
 
   // Önizleme varsayılan listeyle yapılır; sunucu siparişte carinin listesini
   // yeniden çözer (X-10). Liste ataması 1B madde 7'dedir.
+  // Satış depodan yapılır (A-4): konsinyedeki mal satılabilir stok değildir.
+  const depoId = await varsayilanDepoId();
   const products = await Promise.all(
     urunler.map(async (u) => {
       const fiyat = await cozumleBirimFiyat(u.id, null, { miktar: 1, gun: bugun() });
@@ -35,7 +37,7 @@ export default async function NewOrderPage() {
         code: u.code,
         listPrice: fiyat.durum === "TAMAM" ? formatla(fiyat.listeFiyat, "ham") : null,
         vatRate: formatla(u.taxRate.rate, "ham"),
-        stock: await hesaplaStok(u.id),
+        stock: await hesaplaStok(u.id, depoId),
       };
     })
   );

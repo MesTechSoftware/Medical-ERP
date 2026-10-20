@@ -7,6 +7,9 @@ import { quantitySchema } from "@/lib/validation";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { hesaplaStok, stokHareketiYaz, varsayilanDepoId } from "@/lib/stok";
 import { basarili, engel, type IslemSonucu } from "@/lib/sonuc";
+import type { Prisma } from "@/generated/prisma/client";
+import { IsHatasi } from "@/lib/hata";
+import { konsinyeCikisYaz, stokTransferYaz } from "@/lib/stok-transfer";
 
 export async function addStockEntry(
   _prev: unknown,
@@ -44,4 +47,53 @@ export async function addStockEntry(
   revalidatePath("/stock");
   revalidatePath("/products");
   return basarili();
+}
+
+/** Tek satırlık konum belgesi formu: ürün + miktar (A-4, B-4). */
+function kalem(formData: FormData) {
+  const v = String(formData.get("quantity") ?? "").trim();
+  return [{ urunId: String(formData.get("productId") ?? ""), miktar: /^\d+$/.test(v) ? parseInt(v, 10) : NaN }];
+}
+
+type Yapan = { id: string; rol: "YONETICI" | "OPERASYON" | "SATICI" };
+
+async function konumBelgesi(yaz: (tx: Prisma.TransactionClient) => Promise<{ documentNo: string }>): Promise<IslemSonucu> {
+  try {
+    const r = await prisma.$transaction(yaz);
+    revalidatePath("/stock");
+    revalidatePath("/products");
+    return basarili({ documentNo: r.documentNo });
+  } catch (e) {
+    if (e instanceof IsHatasi) return e.sonuc;
+    throw e;
+  }
+}
+
+/** Konsinye çıkış (A-4): depodan doktorun konsinye konumuna; mali sonucu yok. */
+export async function addConsignment(_prev: unknown, formData: FormData): Promise<IslemSonucu> {
+  const session = await requireStaff();
+  const yapan: Yapan = { id: session.user.id, rol: session.user.role };
+  return konumBelgesi((tx) =>
+    konsinyeCikisYaz(tx, {
+      doktorId: String(formData.get("doctorId") ?? ""),
+      kalemler: kalem(formData),
+      yapan,
+      gerekce: (formData.get("gerekce") as string) || null,
+    })
+  );
+}
+
+/** Stok transferi (B-4): konumdan depoya; kullanılan konsinye mal böyle depoya alınır (A-4 eki). */
+export async function addTransfer(_prev: unknown, formData: FormData): Promise<IslemSonucu> {
+  const session = await requireStaff();
+  const yapan: Yapan = { id: session.user.id, rol: session.user.role };
+  return konumBelgesi((tx) =>
+    stokTransferYaz(tx, {
+      kaynakId: String(formData.get("fromLocationId") ?? ""),
+      hedefId: String(formData.get("toLocationId") ?? ""),
+      kalemler: kalem(formData),
+      yapan,
+      gerekce: (formData.get("gerekce") as string) || null,
+    })
+  );
 }

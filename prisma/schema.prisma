@@ -216,6 +216,9 @@ model StockLocation {
   type      StockLocationType
   isActive  Boolean           @default(true)
   sortOrder Int               @default(0)
+  // A-4 eki (20.10.2026): her doktorun tek konsinye konumu; KONSINYE ise dolu, DEPO ise boş (CHECK).
+  doctor    Doctor?           @relation(fields: [doctorId], references: [id])
+  doctorId  String?           @unique
 
   movements        StockMovement[]
   returns          ReturnNote[]
@@ -292,12 +295,13 @@ model Doctor {
   status    EntityStatus @default(AKTIF)
   createdAt DateTime     @default(now()) @db.Timestamptz(3)
 
-  orders       Order[]
-  assignments  DoctorAssignment[]
-  payments     DoctorPayment[]
-  ledger       LedgerEntry[]
-  returns      ReturnNote[]
-  consignments ConsignmentIssue[]
+  orders         Order[]
+  assignments    DoctorAssignment[]
+  payments       DoctorPayment[]
+  ledger         LedgerEntry[]
+  returns        ReturnNote[]
+  consignments   ConsignmentIssue[]
+  konsinyeKonumu StockLocation?
 
   @@index([ownerSellerId])
   @@index([fullName])
