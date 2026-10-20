@@ -62,3 +62,51 @@ export async function ilkGiris(page: Page, email: string, gecici = GECICI_PAROLA
   await page.getByRole("button", { name: "Parolayı Değiştir" }).click();
   await expect(page).not.toHaveURL(/\/parola-degistir/);
 }
+
+const TEST_DB =
+  process.env.TEST_DATABASE_URL ?? "postgresql://medikal:medikal_dev@localhost:5432/medikal_test?schema=public";
+
+/** Test veritabanında tek sorgu (medikal_test). */
+export async function sorgu<T = Record<string, unknown>>(sql: string, params: unknown[] = []): Promise<T[]> {
+  const { Client } = await import("pg");
+  const client = new Client({ connectionString: TEST_DB });
+  await client.connect();
+  try {
+    return (await client.query(sql, params)).rows as T[];
+  } finally {
+    await client.end();
+  }
+}
+
+/**
+ * Stoğu hiç olmayan yeni ürünle `HAZIRLANIYOR` sipariş (2 adet) — sevkiyatı negatif stok
+ * onayına düşer (A-8). Doktor ve ürün benzersizdir; başka testin stoğuna dokunmaz.
+ */
+export async function stoksuzSiparis() {
+  const ek = `${Date.now() % 100000}`.padStart(5, "0") + `${Math.floor(Math.random() * 100)}`.padStart(2, "0");
+  const doktorAdi = `Dr. Onay ${ek}`;
+  const urunAdi = `Stoksuz Ürün ${ek}`;
+  const [{ id: doktorId }] = await sorgu<{ id: string }>(
+    `INSERT INTO "Doctor" (id, "accountClass", "fullName", clinic, region, "phoneNormalized", "partyType", status)
+     VALUES ($1, 'DOKTOR', $2, 'Klinik', 'Bölge', $3, 'TUZEL_KISI', 'AKTIF') RETURNING id`,
+    [`e2e-dr-${ek}`, doktorAdi, `+90538${ek}`]
+  );
+  await sorgu(
+    `INSERT INTO "Product" (id, name, code, "taxRateId") SELECT $1, $2, $3, "taxRateId" FROM "Product" LIMIT 1`,
+    [`e2e-urun-${ek}`, urunAdi, `E2E-${ek}`]
+  );
+  const siparisId = `e2e-sip-${ek}`;
+  const kalemId = `e2e-kal-${ek}`;
+  const documentNo = `E2E-SIP-${ek}`;
+  await sorgu(
+    `INSERT INTO "Order" (id, "documentNo", "doctorId", stage, status, "paymentTermDays", "updatedAt")
+     VALUES ($1, $2, $3, 'ONAYLI', 'HAZIRLANIYOR', 30, now())`,
+    [siparisId, documentNo, doktorId]
+  );
+  await sorgu(
+    `INSERT INTO "OrderItem" (id, "orderId", "productId", quantity, "listPrice", "unitPrice", "vatRate")
+     VALUES ($1, $2, $3, 2, 100, 100, 20)`,
+    [kalemId, siparisId, `e2e-urun-${ek}`]
+  );
+  return { doktorAdi, urunAdi, siparisId, kalemId, documentNo };
+}

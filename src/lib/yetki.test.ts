@@ -29,6 +29,7 @@ const ACTION_YETKISI: Record<string, "requireAdmin" | "requireStaff" | "requireS
   "(admin)/users/actions.ts#createUser": "requireAdmin",
   "(admin)/users/actions.ts#updateUser": "requireAdmin",
   "(admin)/exports/actions.ts#disaAktar": "requireAdmin", // D-5 §(4)
+  "(admin)/approvals/actions.ts#blokKarari": "requireAdmin", // A-8: karar yetkisi yönetici
   // SATICI ekranları.
   "(seller)/my-orders/actions.ts#createOrder": "requireSeller",
   "(seller)/my-doctors/actions.ts#createDoctor": "requireSeller",
@@ -42,6 +43,7 @@ const YALNIZ_YONETICI_SAYFALARI = [
   "(admin)/reports/page.tsx",
   "(admin)/audit-logs/page.tsx",
   "(admin)/exports/page.tsx",
+  "(admin)/approvals/page.tsx",
   "(admin)/products/new/page.tsx",
   "(admin)/products/[id]/edit/page.tsx",
   "(admin)/users/new/page.tsx",

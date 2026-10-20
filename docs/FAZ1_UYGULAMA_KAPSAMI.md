@@ -847,6 +847,21 @@ liste ataması) + fiyat listesi ekranı · **7f** D-6 import (X-16 / ADR-006 sı
 - K-1 sipariş iptalinin ters kaydı: sevk edilmiş sipariş iptal edilemediği (7a) ve borç yalnız sevkiyatta doğduğu
   için sipariş iptalinde çevrilecek cari hareket yoktur; sevk edilen borcun düzeltmesi iadedir (A-1, 7d).
 
+**Madde 7c — A-8 onay akışı, negatif stok (20.10.2026, kriterler A-8-7 … A-8-10; KARARLAR A-8 eki 20.10).** Notlar (karar değil):
+
+- `sevkiyatYaz()` negatif stoğu **hiçbir şey yazmadan önce** `negatifStokOnizle()` ile (ürün kilidi altında) hesaplar;
+  `stokHareketiYaz()` aynı hesabı kullanır. Siparişin son `NEGATIF_STOK` bloğu `sonBlokDurumu()` ile kilit altında
+  okunur — `acikBlokVarMi()` bütün kurallara bakar, sevkiyat ise "ihlal şu an sürüyor mu"ya göre davranır (RED +
+  yeterli stok → geçer). Onaya gönderilen sevkiyatta transaction yalnız bloğu yazar; sevkiyat sonucu birleşik tiptir
+  (`SEVK_EDILDI` | `ONAYA_GONDERILDI`).
+- `/approvals` "Onay Bekleyenler" yalnız `YONETICI` (menü + `requireAdmin`); karar `blokKarariVer()` koşullu
+  `updateMany`. `OPERASYON` bekleyen siparişi Kargo ekranında "Onay bekliyor" etiketiyle görür.
+- `IslemFormu` artık form action'ının kendiliğinden sıfırlamasını kullanmaz (`onSubmit` + `startTransition`): gerekçe
+  diyaloğu aynı formu yeniden gönderdiğinde girilen kısmi miktar kaybolmaz; basılan düğmenin değeri gönderilir.
+- Blok parametre saklamaz; ekran kural adını `BLOK_KURAL_ADI`'ndan gösterir. Kararlar ayrıca denetim kaydına
+  yazılmaz — kalıcı iz bloğun kendisidir (X-4 §(6)).
+- B-7 stok düzeltmesinin negatif stoğu (§(7) "aynı mekanizma") 7d'de düzeltme akışıyla bağlanır.
+
 ---
 
 ### §D.5 · 1A'nın **yapmadıkları** — sınırı yazılı tutmak için

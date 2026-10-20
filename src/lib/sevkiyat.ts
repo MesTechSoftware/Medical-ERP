@@ -2,10 +2,11 @@ import type { Prisma } from "@/generated/prisma/client";
 import { uretBelgeNo } from "@/lib/belge-no";
 import { sevkiyatHareketiYaz } from "@/lib/cari-hareket";
 import { IsHatasi } from "@/lib/hata";
+import { blokKontrolleriniCalistir, sonBlokDurumu, type BlokIhlali } from "@/lib/onay-blogu";
 import { policy } from "@/lib/policy";
 import { hesaplaSatirTutarlari } from "@/lib/satir-tutarlari";
-import { sert, type Bildirim } from "@/lib/sonuc";
-import { stokHareketiYaz, stokKilitle, varsayilanDepoId } from "@/lib/stok";
+import { sert, yumusak, type Bildirim } from "@/lib/sonuc";
+import { negatifStokOnizle, stokHareketiYaz, stokKilitle, varsayilanDepoId } from "@/lib/stok";
 import { bugun, gunEkle, simdi } from "@/lib/zaman";
 
 /**
@@ -18,7 +19,13 @@ import { bugun, gunEkle, simdi } from "@/lib/zaman";
  * cari hareketi (tutar `hesaplaSatirTutarlari()`'ndan, vade sevk gününden işler — A-7).
  *
  * İş kuralı ihlalinde `IsHatasi` fırlatır (çağıran transaction'ı geri alır, X-4 §(2)).
- * Negatif stok engellenmez (B-4); `OnayBlogu`'na bağlanması onay akışıyla gelir (A-8).
+ *
+ * Negatif stok yumuşak kısıttır (B-4, A-8 eki 20.10.2026): hiçbir şey yazılmadan önce denetlenir,
+ * blok **siparişe** bağlanır ve sonuç doğuran adım olan sevkiyatı durdurur. Gerekçesiz →
+ * `ONAY_GEREKLI` · `YONETICI` gerekçeyle sevk eder (blok aynı işlemde `ONAY`) · diğer rol
+ * gerekçe yazarsa sevkiyat yazılmaz, yalnız blok yazılır (`ONAYA_GONDERILDI`). Siparişin son
+ * `NEGATIF_STOK` bloğu kararsızsa sevkiyat durur; `ONAY`'lıysa siparişin sevkiyatları sorulmadan
+ * geçer; `RED`'den sonra yeni gerekçe yeni blok açar.
  */
 export type SevkiyatGirdisi = {
   siparisId: string;
@@ -26,13 +33,16 @@ export type SevkiyatGirdisi = {
   carrierId: string | null;
   trackingNumber: string | null;
   externalDispatchNo: string | null;
-  yapanId: string;
+  yapan: { id: string; rol: "YONETICI" | "OPERASYON" | "SATICI" };
+  /** Yumuşak kısıt gerekçesi (A-8); ilk gönderimde boştur. */
+  gerekce: string | null;
 };
 
-export async function sevkiyatYaz(
-  tx: Prisma.TransactionClient,
-  girdi: SevkiyatGirdisi
-): Promise<{ sevkiyatId: string; documentNo: string; tamamlandi: boolean }> {
+export type SevkiyatSonucu =
+  | { durum: "SEVK_EDILDI"; sevkiyatId: string; documentNo: string; tamamlandi: boolean }
+  | { durum: "ONAYA_GONDERILDI"; ihlaller: BlokIhlali[] };
+
+export async function sevkiyatYaz(tx: Prisma.TransactionClient, girdi: SevkiyatGirdisi): Promise<SevkiyatSonucu> {
   // 0 bu sevkiyatta gönderilmeyen kalemdir; tam sayı olmayan ya da negatif miktar reddedilir.
   const kalemler = girdi.kalemler.filter((k) => k.miktar !== 0);
   if (kalemler.length === 0 || kalemler.some((k) => !Number.isInteger(k.miktar) || k.miktar < 0)) {
@@ -91,6 +101,38 @@ export async function sevkiyatYaz(
       ? null
       : (siparis.seller?.commissionRate ?? (siparis.seller ? policy.finance.primOraniVarsayilan : null));
 
+  const konumId = await varsayilanDepoId(tx);
+  const cikislar = kalemler.map((k) => ({
+    productId: kalan.get(k.siparisKalemiId)!.productId,
+    locationId: konumId,
+    type: "CIKIS" as const,
+    quantity: k.miktar,
+    note: "Sevkiyat çıkışı",
+  }));
+
+  // A-8: blok kilit altında okunur; numara ve hiçbir kayıt bundan önce yazılmaz.
+  const onay = await sonBlokDurumu("SIP", siparis.id, "NEGATIF_STOK", tx);
+  if (onay === "BEKLIYOR") throw new IsHatasi([sert("ONAY_BEKLIYOR")]);
+  if (onay !== "ONAY") {
+    const urunAdi = new Map(satirlar.map((s) => [s.productId, s.product.name]));
+    const blok = await blokKontrolleriniCalistir(tx, {
+      belgeTipi: "SIP",
+      belgeId: siparis.id,
+      ihlaller: (await negatifStokOnizle(tx, cikislar)).map((n) => ({
+        kuralKodu: n.kuralKodu,
+        parametreler: { urun: urunAdi.get(n.urunId) ?? "", sonra: n.sonra },
+      })),
+      yapan: girdi.yapan,
+      gerekce: girdi.gerekce,
+    });
+    if (blok.durum === "ONAY_GEREKLI") {
+      throw new IsHatasi(blok.ihlaller.map((i) => yumusak(i.kuralKodu, i.parametreler)));
+    }
+    if (blok.durum === "BASARILI_UYARILI" && blok.onayaGonderildi) {
+      return { durum: "ONAYA_GONDERILDI", ihlaller: blok.ihlaller };
+    }
+  }
+
   const gun = bugun();
   const documentNo = await uretBelgeNo("SVK", tx);
   const sevkiyat = await tx.shipment.create({
@@ -113,17 +155,9 @@ export async function sevkiyatYaz(
     },
   });
 
-  const konumId = await varsayilanDepoId(tx);
   await stokHareketiYaz(
     tx,
-    kalemler.map((k) => ({
-      productId: kalan.get(k.siparisKalemiId)!.productId,
-      locationId: konumId,
-      type: "CIKIS" as const,
-      quantity: k.miktar,
-      note: "Sevkiyat çıkışı",
-      shipmentId: sevkiyat.id,
-    }))
+    cikislar.map((c) => ({ ...c, shipmentId: sevkiyat.id }))
   );
 
   // Borç sevk edilen miktarın toplamıdır; her sevkiyat kendi satırlarını yuvarlar (A-3 C-6 eki).
@@ -141,7 +175,7 @@ export async function sevkiyatYaz(
       vade: gunEkle(gun, siparis.paymentTermDays),
       documentNo,
       shipmentId: sevkiyat.id,
-      yapanId: girdi.yapanId,
+      yapanId: girdi.yapan.id,
     });
   }
 
@@ -151,5 +185,5 @@ export async function sevkiyatYaz(
   if (tamamlandi) {
     await tx.order.update({ where: { id: siparis.id }, data: { status: "KARGOLANDI" } });
   }
-  return { sevkiyatId: sevkiyat.id, documentNo, tamamlandi };
+  return { durum: "SEVK_EDILDI", sevkiyatId: sevkiyat.id, documentNo, tamamlandi };
 }

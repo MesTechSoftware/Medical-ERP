@@ -9,7 +9,7 @@ import { Tutar } from "@/components/Tutar";
 import { SATIR_TABANI } from "@/lib/taban";
 
 export default async function ShippingPage() {
-  const [pending, shipped, carriers] = await Promise.all([
+  const [pending, shipped, carriers, bekleyenBloklar] = await Promise.all([
     prisma.order.findMany({
       where: { status: "HAZIRLANIYOR" },
       orderBy: { orderDate: "asc" },
@@ -47,7 +47,13 @@ export default async function ShippingPage() {
       orderBy: { sortOrder: "asc" },
       select: { id: true, name: true },
     }),
+    // A-8: kararı verilmemiş negatif stok bloğu olan sipariş sevk edilemez.
+    prisma.approvalBlock.findMany({
+      where: { documentType: "SIP", ruleCode: "NEGATIF_STOK", decision: null },
+      select: { documentId: true },
+    }),
   ]);
+  const onayBekliyor = new Set(bekleyenBloklar.map((b) => b.documentId));
 
   return (
     <div>
@@ -85,7 +91,12 @@ export default async function ShippingPage() {
                         {formatDate(o.orderDate)}
                       </span>
                     </div>
-                    <span className="text-sm font-medium tabular-nums text-slate-900">
+                    <span className="flex items-center gap-2 text-sm font-medium tabular-nums text-slate-900">
+                      {onayBekliyor.has(o.id) && (
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                          Onay bekliyor
+                        </span>
+                      )}
                       <Tutar deger={siparisToplami(o.items).toplam} taban={SATIR_TABANI.toplam} />
                     </span>
                   </div>

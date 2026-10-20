@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@/lib/db";
 import { IsHatasi } from "@/lib/hata";
 import { degistirDoktorSahibi } from "@/lib/sahiplik";
-import { sevkiyatYaz } from "@/lib/sevkiyat";
+import { blokKarariVer } from "@/lib/onay-blogu";
+import { sevkiyatYaz, type SevkiyatSonucu } from "@/lib/sevkiyat";
 import { hesaplaStok } from "@/lib/stok";
 import { bugun, gunEkle, takvimYili } from "@/lib/zaman";
 import { referansVeri, yeniDoktorVerisi } from "../../test/integration/referans";
@@ -62,9 +63,25 @@ async function siparis(opts: { status?: "BEKLIYOR" | "HAZIRLANIYOR"; satici?: st
   });
 }
 
+/** Sevkiyat yazıldı mı — değilse test düşer (onaya gönderilen sevkiyat burada beklenmez). */
+function sevkEdildi(r: SevkiyatSonucu) {
+  if (r.durum !== "SEVK_EDILDI") throw new Error(`Beklenmeyen sonuç: ${r.durum}`);
+  return r;
+}
+const yonetici = () => ({ id: s.yonetici.id, rol: "YONETICI" as const });
 const sevk = (siparisId: string, kalemler: { siparisKalemiId: string; miktar: number }[]) =>
-  prisma.$transaction((tx) =>
-    sevkiyatYaz(tx, { siparisId, kalemler, carrierId: null, trackingNumber: null, externalDispatchNo: "IRS-1", yapanId: s.yonetici.id })
+  prisma.$transaction(async (tx) =>
+    sevkEdildi(
+      await sevkiyatYaz(tx, {
+        siparisId,
+        kalemler,
+        carrierId: null,
+        trackingNumber: null,
+        externalDispatchNo: "IRS-1",
+        yapan: yonetici(),
+        gerekce: null,
+      })
+    )
   );
 const kodlar = async (p: Promise<unknown>) => {
   try {
@@ -134,14 +151,17 @@ describe("sevkiyat — borç, prim, stok sevkiyatta doğar (A-3-1)", () => {
   it("aynı kalemin eşzamanlı iki sevkiyatı kalanı aşamaz: ikinci, birincinin commit'ini bekler ve reddedilir", async () => {
     const o = await siparis();
     const birinci = prisma.$transaction(async (tx) => {
-      const r = await sevkiyatYaz(tx, {
-        siparisId: o.id,
-        kalemler: [{ siparisKalemiId: o.items[0].id, miktar: 10 }],
-        carrierId: null,
-        trackingNumber: null,
-        externalDispatchNo: null,
-        yapanId: s.yonetici.id,
-      });
+      const r = sevkEdildi(
+        await sevkiyatYaz(tx, {
+          siparisId: o.id,
+          kalemler: [{ siparisKalemiId: o.items[0].id, miktar: 10 }],
+          carrierId: null,
+          trackingNumber: null,
+          externalDispatchNo: null,
+          yapan: yonetici(),
+          gerekce: null,
+        })
+      );
       await bekle(300);
       return r;
     });
@@ -204,7 +224,8 @@ describe("iptal — sevk edilmiş sipariş iptal edilemez (A-3-1, K-1)", () => {
         carrierId: null,
         trackingNumber: null,
         externalDispatchNo: null,
-        yapanId: s.yonetici.id,
+        yapan: yonetici(),
+        gerekce: null,
       });
       await bekle(300);
     });
@@ -217,5 +238,129 @@ describe("iptal — sevk edilmiş sipariş iptal edilemez (A-3-1, K-1)", () => {
     expect(await cancelOrder(o2.id)).toBeUndefined(); // başarıda redirect
     expect((await prisma.order.findUniqueOrThrow({ where: { id: o2.id } })).status).toBe("IPTAL");
     expect(await hesaplaStok(s.urun.id)).toBe(98);
+  });
+});
+
+describe("negatif stok onayı sevkiyatta (A-8-7 … A-8-10)", () => {
+  // Stok 100; sipariş 150 → sevkiyat stoğu -50'ye düşürür.
+  let operasyon: { id: string; rol: "OPERASYON" };
+  beforeEach(async () => {
+    const u = await prisma.user.create({
+      data: { name: "O", email: "o@medikal.local", passwordHash: "x", role: "OPERASYON" },
+    });
+    operasyon = { id: u.id, rol: "OPERASYON" };
+  });
+  const dene = (
+    o: { id: string; items: { id: string }[] },
+    yapan: { id: string; rol: "YONETICI" | "OPERASYON" },
+    gerekce: string | null,
+    miktar = 150
+  ) =>
+    prisma.$transaction((tx) =>
+      sevkiyatYaz(tx, {
+        siparisId: o.id,
+        kalemler: [{ siparisKalemiId: o.items[0].id, miktar }],
+        carrierId: null,
+        trackingNumber: null,
+        externalDispatchNo: null,
+        yapan,
+        gerekce,
+      })
+    );
+  const bildirimler = async (p: Promise<unknown>) => {
+    try {
+      await p;
+      return [];
+    } catch (e) {
+      if (e instanceof IsHatasi) return e.sonuc.bildirimler.map((b) => [b.kademe, b.kural_kodu, b.parametreler]);
+      throw e;
+    }
+  };
+  const yazilanlar = async () => ({
+    sevkiyat: await prisma.shipment.count(),
+    sayac: await prisma.documentCounter.count(),
+    cari: await prisma.ledgerEntry.count(),
+    stok: await hesaplaStok(s.urun.id),
+  });
+  const bloklar = () =>
+    prisma.approvalBlock.findMany({
+      orderBy: { openedAt: "asc" },
+      select: { documentType: true, documentId: true, ruleCode: true, openedById: true, openReason: true, decision: true, decidedById: true },
+    });
+
+  it("A-8-7: gerekçesiz sevkiyat YUMUSAK döner (ürün ve sonraki stok); numara, sevkiyat, blok yazılmaz", async () => {
+    const o = await siparis({ kalemler: [{ miktar: 150, birim: "10" }] });
+    expect(await bildirimler(dene(o, yonetici(), null))).toEqual([["YUMUSAK", "NEGATIF_STOK", { urun: "Stent", sonra: -50 }]]);
+    expect(await bildirimler(dene(o, operasyon, "  "))).toHaveLength(1);
+    expect(await yazilanlar()).toEqual({ sevkiyat: 0, sayac: 0, cari: 0, stok: 100 });
+    expect(await bloklar()).toEqual([]);
+  });
+
+  it("A-8-8: YONETICI gerekçeyle sevk eder; siparişe bağlı blok aynı işlemde ONAY'lanır", async () => {
+    const o = await siparis({ kalemler: [{ miktar: 150, birim: "10" }] });
+    expect((await dene(o, yonetici(), "Mal yolda, sayım hatalı")).durum).toBe("SEVK_EDILDI");
+    expect(await hesaplaStok(s.urun.id)).toBe(-50);
+    expect(await bloklar()).toEqual([
+      {
+        documentType: "SIP",
+        documentId: o.id,
+        ruleCode: "NEGATIF_STOK",
+        openedById: s.yonetici.id,
+        openReason: "Mal yolda, sayım hatalı",
+        decision: "ONAY",
+        decidedById: s.yonetici.id,
+      },
+    ]);
+  });
+
+  it("A-8-9: OPERASYON'un gerekçesi sevkiyatı yazmaz, siparişi onaya gönderir; karar verilene kadar kimse sevk edemez; ONAY'dan sonra sorulmadan sevk edilir", async () => {
+    const o = await siparis({ kalemler: [{ miktar: 150, birim: "10" }] });
+    const r = await dene(o, operasyon, "Acil vaka");
+    expect(r).toEqual({ durum: "ONAYA_GONDERILDI", ihlaller: [{ kuralKodu: "NEGATIF_STOK", parametreler: { urun: "Stent", sonra: -50 } }] });
+    expect(await yazilanlar()).toEqual({ sevkiyat: 0, sayac: 0, cari: 0, stok: 100 });
+    expect((await bloklar()).map((b) => [b.openedById, b.openReason, b.decision])).toEqual([[operasyon.id, "Acil vaka", null]]);
+
+    // Karar bekleyen blok sevkiyatı durdurur — stok yetse bile, yönetici için de.
+    expect(await bildirimler(dene(o, operasyon, "Tekrar"))).toEqual([["SERT", "ONAY_BEKLIYOR", {}]]);
+    expect(await bildirimler(dene(o, yonetici(), "Ben onaylıyorum", 1))).toEqual([["SERT", "ONAY_BEKLIYOR", {}]]);
+    expect(await bloklar()).toHaveLength(1);
+
+    const [blok] = await prisma.approvalBlock.findMany({ select: { id: true } });
+    await prisma.$transaction((tx) => blokKarariVer(tx, { blokId: blok.id, karar: "ONAY", not: "Uygun", yapanId: s.yonetici.id }));
+    // Siparişin sonraki sevkiyatları da sorulmadan geçer (son blok ONAY).
+    expect((await dene(o, operasyon, null, 100)).durum).toBe("SEVK_EDILDI");
+    expect((await dene(o, operasyon, null, 50)).durum).toBe("SEVK_EDILDI");
+    expect(await hesaplaStok(s.urun.id)).toBe(-50);
+    expect(await bloklar()).toHaveLength(1);
+  });
+
+  it("A-8-10: RED'den sonra yeni gerekçe yeni blok açar; stok yeterliyse RED sevkiyatı durdurmaz", async () => {
+    const o = await siparis({ kalemler: [{ miktar: 150, birim: "10" }] });
+    await dene(o, operasyon, "İlk");
+    const [blok] = await prisma.approvalBlock.findMany({ select: { id: true } });
+    await prisma.$transaction((tx) => blokKarariVer(tx, { blokId: blok.id, karar: "RED", not: "Stok gelsin", yapanId: s.yonetici.id }));
+
+    expect(await bildirimler(dene(o, operasyon, null))).toEqual([["YUMUSAK", "NEGATIF_STOK", { urun: "Stent", sonra: -50 }]]);
+    expect((await dene(o, operasyon, "İkinci")).durum).toBe("ONAYA_GONDERILDI");
+    expect((await bloklar()).map((b) => [b.openReason, b.decision])).toEqual([
+      ["İlk", "RED"],
+      ["İkinci", null],
+    ]);
+
+    const o2 = await siparis({ kalemler: [{ miktar: 150, birim: "10" }] });
+    await dene(o2, operasyon, "Üçüncü");
+    const acik = await prisma.approvalBlock.findFirstOrThrow({ where: { documentId: o2.id }, select: { id: true } });
+    await prisma.$transaction((tx) => blokKarariVer(tx, { blokId: acik.id, karar: "RED", not: "Hayır", yapanId: s.yonetici.id }));
+    expect((await dene(o2, operasyon, null, 100)).durum).toBe("SEVK_EDILDI");
+  });
+
+  it("karar koşullu yazılır: kararlı bloğa ikinci karar yazılmaz", async () => {
+    const o = await siparis({ kalemler: [{ miktar: 150, birim: "10" }] });
+    await dene(o, operasyon, "Acil");
+    const [blok] = await prisma.approvalBlock.findMany({ select: { id: true } });
+    const karar = (k: "ONAY" | "RED") =>
+      prisma.$transaction((tx) => blokKarariVer(tx, { blokId: blok.id, karar: k, not: "n", yapanId: s.yonetici.id }));
+    expect((await Promise.all([karar("ONAY"), karar("RED")])).sort()).toEqual([false, true]);
+    expect(await prisma.approvalBlock.count({ where: { decision: { not: null } } })).toBe(1);
   });
 });

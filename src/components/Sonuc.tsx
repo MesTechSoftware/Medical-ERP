@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { startTransition, useActionState, useState } from "react";
 import type { IslemSonucu, Parametreler } from "@/lib/sonuc";
 import { bildirimMetni } from "@/lib/sozluk";
 
@@ -10,6 +10,7 @@ import { bildirimMetni } from "@/lib/sozluk";
  * - `SERT`: alanı olan bildirim alanın altında, alan işaretli (`Field`'ler `alanHatasi` ile);
  *   alanı olmayan ya da formda gösterilmeyen alanın bildirimi form kutusunda.
  * - `YUMUSAK`: onay diyaloğu; gerekçe zorunlu, aynı formla yeniden gönderilir (`gerekce`).
+ *   Yetkisiz kullanıcının gerekçesi belgeyi onaya gönderir: şeritte "onaya gönderildi" (A-8).
  * - `BILGI`: işlem tamamlanır; sonuç ekranında kapatılabilir şerit.
  *
  * Hiçbir bildirim atılmaz (X-4 §(7)): formun göstermediği alanın hatası kutuya düşer.
@@ -96,6 +97,9 @@ export function SonucGosterimi({
           className="flex items-start justify-between gap-3 rounded-lg bg-sky-50 px-3 py-2 text-sm text-sky-800"
         >
           <ul className="space-y-1">
+            {sonuc.parametreler?.onayaGonderildi === 1 && (
+              <li className="font-medium">Onaya gönderildi; yönetici kararından sonra devam edilebilir.</li>
+            )}
             {[...yumusak, ...bilgi].map((b, i) => (
               <li key={i}>{bildirimMetni(b)}</li>
             ))}
@@ -121,7 +125,9 @@ export function SonucGosterimi({
 
 /**
  * Alansız tek düğmeli işlem formu (durum geçişi, silme, sevk): action'ın sonucu formun
- * içinde aynı desenle gösterilir.
+ * içinde aynı desenle gösterilir. Form, action'dan sonra sıfırlanmaz: `YUMUSAK` diyaloğu
+ * aynı formu gerekçeyle yeniden gönderir ve girilen değerler (ör. kısmi sevk miktarı)
+ * korunmalıdır — React form action'ı denetimsiz alanları kendiliğinden sıfırlardı.
  */
 export function IslemFormu({
   action,
@@ -134,7 +140,15 @@ export function IslemFormu({
 }) {
   const [sonuc, formAction] = useActionState<SonucDurumu, FormData>(action, null);
   return (
-    <form action={formAction} className={className}>
+    <form
+      className={className}
+      onSubmit={(e) => {
+        e.preventDefault();
+        // Basılan düğmenin `name`/`value`'su da gönderilir (ör. onay/red).
+        const veri = new FormData(e.currentTarget, (e.nativeEvent as SubmitEvent).submitter);
+        startTransition(() => formAction(veri));
+      }}
+    >
       {children}
       <SonucGosterimi sonuc={sonuc} />
     </form>
