@@ -685,6 +685,13 @@ Bunlar **karar değil**, Yol (b)'nin doğurduğu uygulama kalemleridir; 1B madde
 > `SON_GORULME_ESIGI_MS` · (2) `csrf.spec.ts` — yabancı Origin'li server action reddedilir · (5) `e2e/admin/session-revocation.spec.ts`
 > (seller'daki eski spec silindi) · (6) **iptal işareti** — `Session.revokedAt`, satır silinmez (C-3) · (7) `HttpOnly` +
 > `SameSite=Lax`, `Secure` yalnız `NODE_ENV=production`. **3 ve 4 madde 4b'de** (kullanıcı yönetimiyle birlikte).
+>
+> **20.10.2026 — madde 4b:** 3 ve 4 çözüldü (kriterler E-2-5…9; değerler KARARLAR E-2 20.10 eki). (3) `requireSession()`
+> geçici parolalı kullanıcıyı `/parola-degistir`'e yönlendirir — bütün guard'lar oradan geçtiği için sayfalar ve server
+> action'lar birlikte kapanır; sayfa yalnız bayraklı kullanıcıya açıktır · (4) `kullanici.ts` — `YONETICI` pasifleştiren
+> transaction `SERIALIZABLE` koşar (eşzamanlı iki pasifleştirmede write skew'i PostgreSQL reddeder); satır kilidi
+> kullanılmadı, çünkü yeni kilit kaynağı ADR-008'in yerine yenisini gerektirirdi. `kullanici.itest.ts` iki bağlantılı testi
+> `SERIALIZABLE` olmadan kırmızıdır (20.10.2026 doğrulandı).
 
 1. **`lastSeenAt` yazma sıklığı.** Her istekte yazılırsa her sayfa gezinmesi bir DB write
    demektir. **Eşikli güncelleme** (ör. kayıt 5 dakikadan eskiyse yaz).

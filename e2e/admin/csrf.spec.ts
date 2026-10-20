@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { Client } from "pg";
-import { login, unique } from "../helpers";
+import { ilkGiris, yeniKullanici } from "../helpers";
 
 /**
  * E-2-4 — CSRF regresyon testi (FAZ1 §D.4 madde 2). Uygulamada route handler yoktur; her yazma
@@ -30,17 +30,11 @@ async function acikOturumSayisi(email: string): Promise<number> {
 }
 
 test("başka origin'den gelen server action reddedilir ve etkisi olmaz (E-2-4)", async ({ page, browser }) => {
-  const email = `${unique("csrf")}@test.local`;
-  await page.goto("/sellers/new");
-  await page.getByLabel("Ad Soyad").fill(unique("CSRF Satıcı"));
-  await page.getByLabel("E-posta").fill(email);
-  await page.getByLabel("Şifre", { exact: true }).fill("test123");
-  await page.getByRole("button", { name: "Satıcı Ekle" }).click();
-  await expect(page).toHaveURL(/\/sellers$/);
+  const email = await yeniKullanici(page, { prefix: "csrf" });
 
   const ctx = await browser.newContext({ storageState: { cookies: [], origins: [] } });
   const satici = await ctx.newPage();
-  await login(satici, { email, password: "test123" });
+  await ilkGiris(satici, email);
   await expect(satici).toHaveURL(/\/my-orders/);
   expect(await acikOturumSayisi(email)).toBe(1);
 

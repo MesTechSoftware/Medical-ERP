@@ -3920,6 +3920,19 @@ D-2 §3'ün kuralı burada da geçerli: *"yarım izolasyon, izolasyonsuzluktan p
 > **Kapsam dışı, kalıcı:** self-servis kayıt · SSO/LDAP/sosyal giriş · kullanıcı davet akışı ·
 > eşzamanlı oturum sınırı · IP/cihaz kısıtı · oturum geçmişi ekranı · kullanıcı profil/tercih
 > ekranı · kurulum sihirbazı · uygulama içi ekran kilidi · görüntüleme ve erişim logu (C-3).
+>
+> **✅ Ek (20.10.2026 · ürün sahibi kararı) — kullanıcı yönetiminin açık dört noktası.**
+> §(1), §(3) ve §(5) mekanizmayı koyar, değeri yazmaz; dört nokta 1B madde 4b öncesinde kapandı:
+> · **Tek ekran: Kullanıcılar.** Satıcılar ekranı Kullanıcılar ekranı olur; `YONETICI` hesabı
+>   açarken rolü (`SATICI` · `OPERASYON` · `YONETICI`) seçer. Rol **açılışta verilir, sonra
+>   değişmez** — rol değişikliği ekranı Faz 1'de yoktur (X-17 §(5) notu). `OPERASYON` ekranı
+>   D-2 17.10 ekindeki gibi salt okur ve yalnız satıcıları görür.
+> · **Asgari parola uzunluğu 8 karakterdir**; karmaşıklık kuralı (büyük harf, rakam, sembol)
+>   konmaz. Yaygın parola listesi koda gömülüdür; listedeki parola büyük/küçük harf farkı
+>   gözetilmeden reddedilir.
+> · **Yöneticinin verdiği her parola geçicidir:** hesap açılışında da sıfırlamada da
+>   `parola_degistirmeli = true` olur — §(2)'nin ilk yönetici deseni bütün hesaplara uygulanır.
+> · **Sıfırlama açık oturumları sonlandırır** — pasifleştirmeyle aynı transaction deseni (§(6)).
 
 ### 5.7 E-3 · Dosya eki — karar metni *(09.09.2026)*
 

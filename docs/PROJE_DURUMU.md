@@ -45,7 +45,7 @@ madde 7'de kalkar. 1A çıkış kriterlerinin tamamı işaretli (`FAZ1_UYGULAMA_
 | Framework        | Next.js **16.2.10** (App Router, Server Components + Actions, Turbopack) |
 | Dil / UI         | TypeScript 5, React **19.2.4**, Tailwind CSS 4 |
 | Veritabanı       | **PostgreSQL 17** + Prisma **7.8** (driver adapter: `@prisma/adapter-pg` + `pg`) |
-| Kimlik doğrulama | Kendi oturum tablosu (`Session`): opak 256-bit token, DB'de SHA-256 hash, `HttpOnly`/`SameSite=Lax` çerez; rol ve aktiflik her istekte okunur; 4 saat kayar / 12 saat mutlak; pasifleştirme oturumları aynı transaction'da iptal eder — *1B madde 4a, 19.10.2026 (`docs/adr/ADR-003`).* Parola bcryptjs. `next-auth` ve `AUTH_SECRET` yok; uygulamada route handler yok. ⏳ `mustChangePassword` akışı ve son-yönetici kısıtı madde 4b |
+| Kimlik doğrulama | Kendi oturum tablosu (`Session`): opak 256-bit token, DB'de SHA-256 hash, `HttpOnly`/`SameSite=Lax` çerez; rol ve aktiflik her istekte okunur; 4 saat kayar / 12 saat mutlak; pasifleştirme oturumları aynı transaction'da iptal eder — *1B madde 4a, 19.10.2026 (`docs/adr/ADR-003`).* Parola bcryptjs. `next-auth` ve `AUTH_SECRET` yok; uygulamada route handler yok. `mustChangePassword` akışı ve son-yönetici kısıtı madde 4b'de (20.10.2026) |
 | Doğrulama        | Zod 4 |
 | Para             | **`Decimal`** — birim fiyat `Decimal(18,4)` · tutar `Decimal(18,2)` · oran `Decimal(5,2)` · miktar tam sayı (X-5). Ham aritmetik `hesaplaSatirTutarlari()` ve `cozumleBirimFiyat()` içinde; istemciye `formatla()` ile `string` gider; `.toNumber()`/`Number()`/`parseFloat` kaçışı **lint kuralıyla** yasak |
 | Zaman            | An `timestamptz` (UTC), takvim günü `date`; yorum `Europe/Istanbul` (E-1); `TZ=UTC` CI, `docker-compose.yml` ve `.env.example`'da tanımlı |
@@ -92,7 +92,8 @@ kongre tabloları · e-belge ve kargo modül tabloları (KARARLAR §1.3 §(10): 
 - ✅ Gösterge paneli — özet kartlar, kritik stok *(alacak tablosu, yaşlandırma, bayi kartları söküldü)*
 - ✅ Ürünler — liste / yeni / düzenle: ad, kod, **KDV oranı tanım tablosundan** (`taxRateId`), liste fiyatı (varsayılan fiyat listesine yazılır), başlangıç stoğu. *Taban fiyat alanı yok.*
 - ✅ Stok — giriş + hareketler (miktar hareketlerden türer — ADR-005)
-- ✅ Satıcılar — liste / yeni / düzenle / detay (prim oranı dahil)
+- ✅ Kullanıcılar (`/users`, eski Satıcılar — 1B-4b, 20.10.2026) — liste (rol kolonu) / yeni (rol seçimi, geçici parola, gerekçe) / düzenle (geçici parola atama, pasifleştirme; rol değişmez) / satıcı detayı. Silme yok (E-2 §(6)). Son aktif yönetici ve kendini pasifleştirme sert kısıt (`kullanici.ts`, SERIALIZABLE)
+- ✅ Parola değiştirme (`/parola-degistir`) — geçici parolalı kullanıcı her guard'da buraya yönlenir (E-2-7); politika `parola.ts` (8 karakter + yaygın parola listesi)
 - ✅ Doktorlar — liste / detay (cari, sipariş/tahsilat geçmişi) + satıcı devri *(fatura bilgileri formu, tek cari ekranı ve bayi süzgeci 1B madde 7)*
 - ✅ Siparişler — liste / detay + durum yönetimi *(tek parça sevkiyat — kısmi sevkiyat 1B)*
 - ✅ Kargo — sevkiyat: kargo firması + takip no **elle**; gönderi tarihi otomatik. *İrsaliye no alanı şemada var, formda yok (1B). Takip linki şablonu ekranda kullanılmıyor.*

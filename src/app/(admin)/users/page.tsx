@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireStaff } from "@/lib/session";
+import { ROLE_LABEL } from "@/lib/roles";
 import {
   PageHeader,
   LinkButton,
@@ -8,22 +9,16 @@ import {
   StatusBadge,
   EmptyRow,
 } from "@/components/ui";
-import ConfirmSubmit from "@/components/ConfirmSubmit";
-import { deleteSeller } from "./actions";
 
-export default async function SellersPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ error?: string }>;
-}) {
+export default async function UsersPage() {
   const session = await requireStaff();
-  // OPERASYON satıcıları salt okur; ekleme/düzenleme/silme kullanıcı yönetimidir (D-2 17.10 eki).
+  // Kullanıcı yönetimi yalnız YONETICI'dedir. OPERASYON yalnız satıcıları görür ve salt okur
+  // (D-2 17.10 eki, E-2 20.10 eki).
   const yonetici = session.user.role === "YONETICI";
-  const { error } = await searchParams;
-  const [sellers, doctorCounts] = await Promise.all([
+  const [users, doctorCounts] = await Promise.all([
     prisma.user.findMany({
-      where: { role: "SATICI" },
-      orderBy: { name: "asc" },
+      where: yonetici ? {} : { role: "SATICI" },
+      orderBy: [{ role: "asc" }, { name: "asc" }],
     }),
     prisma.doctor.groupBy({
       by: ["ownerSellerId"],
@@ -37,24 +32,18 @@ export default async function SellersPage({
   return (
     <div>
       <PageHeader
-        title="Satıcılar"
-        description="Satıcı yönetimi"
-        action={yonetici && <LinkButton href="/sellers/new">Yeni Satıcı</LinkButton>}
+        title="Kullanıcılar"
+        description={yonetici ? "Hesaplar yalnız buradan açılır" : "Satıcılar"}
+        action={yonetici && <LinkButton href="/users/new">Yeni Kullanıcı</LinkButton>}
       />
-
-      {error === "used" && (
-        <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-          Bu satıcının sipariş kaydı olduğu için silinemez. Bunun yerine
-          &quot;Pasif&quot; yapabilirsiniz.
-        </div>
-      )}
 
       <Card>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
-                <th className="px-4 py-2 font-medium">Satıcı</th>
+                <th className="px-4 py-2 font-medium">Kullanıcı</th>
+                <th className="px-4 py-2 font-medium">Rol</th>
                 <th className="px-4 py-2 font-medium">İletişim</th>
                 <th className="px-4 py-2 text-right font-medium">Doktor</th>
                 <th className="px-4 py-2 font-medium">Durum</th>
@@ -62,49 +51,50 @@ export default async function SellersPage({
               </tr>
             </thead>
             <tbody>
-              {sellers.length === 0 && (
-                <EmptyRow colSpan={5} text="Henüz satıcı eklenmemiş." />
+              {users.length === 0 && (
+                <EmptyRow colSpan={6} text="Henüz kullanıcı yok." />
               )}
-              {sellers.map((s) => {
+              {users.map((u) => {
+                const satici = u.role === "SATICI";
                 return (
                   <tr
-                    key={s.id}
+                    key={u.id}
                     className="border-b border-slate-100 last:border-0"
                   >
                     <td className="px-4 py-3">
-                      <Link
-                        href={`/sellers/${s.id}`}
-                        className="font-medium text-slate-900 hover:underline"
-                      >
-                        {s.name}
-                      </Link>
+                      {satici ? (
+                        <Link
+                          href={`/users/${u.id}`}
+                          className="font-medium text-slate-900 hover:underline"
+                        >
+                          {u.name}
+                        </Link>
+                      ) : (
+                        <span className="font-medium text-slate-900">{u.name}</span>
+                      )}
                     </td>
+                    <td className="px-4 py-3 text-slate-600">{ROLE_LABEL[u.role]}</td>
                     <td className="px-4 py-3 text-slate-500">
-                      <div>{s.email}</div>
-                      {s.phone && (
-                        <div className="text-xs text-slate-400">{s.phone}</div>
+                      <div>{u.email}</div>
+                      {u.phone && (
+                        <div className="text-xs text-slate-400">{u.phone}</div>
                       )}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums">
-                      {doktorSayisi.get(s.id) ?? 0}
+                      {satici ? (doktorSayisi.get(u.id) ?? 0) : "—"}
                     </td>
                     <td className="px-4 py-3">
-                      <StatusBadge status={s.isActive ? "AKTIF" : "PASIF"} />
+                      <StatusBadge status={u.isActive ? "AKTIF" : "PASIF"} />
                     </td>
                     <td className="px-4 py-3">
                       {yonetici && (
                         <div className="flex items-center justify-end gap-3">
                           <Link
-                            href={`/sellers/${s.id}/edit`}
+                            href={`/users/${u.id}/edit`}
                             className="text-sm font-medium text-slate-600 hover:text-slate-900"
                           >
                             Düzenle
                           </Link>
-                          <form action={deleteSeller.bind(null, s.id)}>
-                            <ConfirmSubmit confirmText={`"${s.name}" silinsin mi?`}>
-                              Sil
-                            </ConfirmSubmit>
-                          </form>
                         </div>
                       )}
                     </td>

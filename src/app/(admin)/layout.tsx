@@ -17,7 +17,7 @@ const navItems: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/products", label: "Ürünler", icon: Globe },
   { href: "/stock", label: "Stok", icon: Layers },
-  { href: "/sellers", label: "Satıcılar", icon: Users },
+  { href: "/users", label: "Kullanıcılar", icon: Users },
   { href: "/doctors", label: "Doktorlar", icon: Stethoscope },
   { href: "/orders", label: "Siparişler", icon: ClipboardList },
   { href: "/shipping", label: "Kargo", icon: Truck },

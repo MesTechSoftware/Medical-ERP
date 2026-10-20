@@ -54,6 +54,10 @@ export const AUDIT_ACTIONS = {
   AUTH_LOGIN_SUCCESS: "AUTH_LOGIN_SUCCESS",
   AUTH_LOGIN_FAILURE: "AUTH_LOGIN_FAILURE",
   AUTH_LOGOUT: "AUTH_LOGOUT",
+  USER_CREATE: "USER_CREATE",
+  USER_UPDATE: "USER_UPDATE",
+  USER_PASSWORD_RESET: "USER_PASSWORD_RESET",
+  PASSWORD_CHANGE: "PASSWORD_CHANGE",
 } as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];
@@ -99,6 +103,10 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   AUTH_LOGIN_SUCCESS: "Giriş başarılı",
   AUTH_LOGIN_FAILURE: "Giriş başarısız",
   AUTH_LOGOUT: "Çıkış",
+  USER_CREATE: "Kullanıcı açma",
+  USER_UPDATE: "Kullanıcı güncelleme",
+  USER_PASSWORD_RESET: "Parola sıfırlama",
+  PASSWORD_CHANGE: "Parola değişikliği",
 };
 
 // Log'a asla yazılmayacak alanlar (iç içe nesnelerde de temizlenir).
