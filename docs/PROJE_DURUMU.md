@@ -122,6 +122,8 @@ kodu kataloğu `sonuc.ts`, metni tek sözlük `sozluk.ts`; gösterim tek bileşe
 ya da kolon başlığında gösterilir; cari/tahsilat brüt, ciro/hakediş matrah, sipariş satırı matrah + toplam brüt.
 **Nakit tevsik uyarısı (A-15, 1B-4f):** tahsilat kaydında aynı cari + aynı gün nakit toplamı limiti aşarsa `BILGI`
 şeridi; kayıt engellenmez. Limit (`finance.nakitTevsikLimiti`) devreye almada dolar — bugün `null`, uyarı kapalı.
+**Vade uyarısı (X-6 §(6), 1B-4g):** cari borçluyken vadesi geçmiş borç hareketi varsa doktor kartında ve tahsilat
+sonucunda `BILGI` (en eski vade; tutar yok). Borç hareketini yazan sevkiyat akışı 1B-7'de.
 
 ## Kodda uygulanmış iş kuralları (seçme)
 

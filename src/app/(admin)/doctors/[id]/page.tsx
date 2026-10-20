@@ -7,7 +7,9 @@ import { BRUT, SATIR_TABANI, tabanli } from "@/lib/taban";
 import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
 import { formatDate } from "@/lib/format";
 import { formatPhone } from "@/lib/phone";
-import { hesaplaDoktorBakiye } from "@/lib/doctor-cari";
+import { hesaplaDoktorBakiye, vadesiGecmisUyarisi } from "@/lib/doctor-cari";
+import { SonucGosterimi } from "@/components/Sonuc";
+import { sonucOlustur } from "@/lib/sonuc";
 import {
   PageHeader,
   Card,
@@ -41,8 +43,9 @@ export default async function DoctorDetailPage({
   });
   if (!doctor) notFound();
 
-  const [cari, orders, payments] = await Promise.all([
+  const [cari, vadeUyarisi, orders, payments] = await Promise.all([
     hesaplaDoktorBakiye(id),
+    vadesiGecmisUyarisi(id),
     prisma.order.findMany({
       where: { doctorId: id },
       orderBy: { orderDate: "desc" },
@@ -68,6 +71,13 @@ export default async function DoctorDetailPage({
           .filter(Boolean)
           .join(" · ")}
       />
+
+      {/* X-6 §(6): vadesi geçmiş hareketin varlığı — BILGI şeridi, tutar yok. */}
+      {vadeUyarisi && (
+        <div className="mb-4">
+          <SonucGosterimi sonuc={sonucOlustur([vadeUyarisi])} />
+        </div>
+      )}
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard

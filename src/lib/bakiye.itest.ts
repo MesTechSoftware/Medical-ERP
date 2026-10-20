@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { prisma } from "@/lib/db";
-import { hesaplaDoktorBakiye } from "@/lib/doctor-cari";
+import { hesaplaDoktorBakiye, vadesiGecmisUyarisi } from "@/lib/doctor-cari";
 import { yeniDoktorVerisi } from "../../test/integration/referans";
 
 // `hesaplaDoktorBakiye(doktor, tarih?)` — KABUL_KRITERLERI K-2-1…K-2-3.
@@ -85,5 +85,62 @@ describe("hesaplaDoktorBakiye — tarih itibarıyla (K-2-3)", () => {
     await hareket("SEVKIYAT", "BORC", "75");
     const b = await prisma.$transaction((tx) => hesaplaDoktorBakiye(doktorId, undefined, tx));
     expect(b.bakiye.toFixed(2)).toBe("75.00");
+  });
+});
+
+describe("vadesiGecmisUyarisi — tutar değil varlık, yalnız borçluyken (X-6-1)", () => {
+  const BUGUN = new Date("2026-10-20T00:00:00Z"); // `date` kolonu biçiminde İstanbul günü
+  const borc = (amount: string, dueDate: string) =>
+    prisma.ledgerEntry.create({
+      data: {
+        doctorId: doktorId,
+        type: "SEVKIYAT",
+        direction: "BORC",
+        amount,
+        dueDate: new Date(`${dueDate}T00:00:00Z`),
+        documentNo: "T",
+        createdById: yapanId,
+      },
+    });
+
+  it("borçluyken vadesi geçmiş borç varsa en eski vadeyle BILGI döner; tutar taşımaz", async () => {
+    await borc("100", "2026-09-01");
+    await borc("200", "2026-08-15");
+    await borc("300", "2026-12-01"); // vadesi gelmemiş
+    expect(await vadesiGecmisUyarisi(doktorId, BUGUN)).toEqual({
+      kademe: "BILGI",
+      kural_kodu: "VADESI_GECMIS_HAREKET",
+      parametreler: { enEskiVade: "2026-08-15" },
+    });
+  });
+
+  it("vadesi bugün olan hareket geçmiş sayılmaz", async () => {
+    await borc("100", "2026-10-20");
+    expect(await vadesiGecmisUyarisi(doktorId, BUGUN)).toBeNull();
+  });
+
+  it("bakiye kapalı ya da alacaklıysa vadesi geçmiş borç olsa da uyarı yoktur (20.10 eki)", async () => {
+    await borc("100", "2026-08-15");
+    await hareket("TAHSILAT", "ALACAK", "100");
+    expect(await vadesiGecmisUyarisi(doktorId, BUGUN)).toBeNull();
+    await hareket("TAHSILAT", "ALACAK", "50");
+    expect(await vadesiGecmisUyarisi(doktorId, BUGUN)).toBeNull();
+  });
+
+  it("ters kayıtla çevrilmiş borç sayılmaz", async () => {
+    const iptal = await borc("100", "2026-08-15");
+    await prisma.ledgerEntry.create({
+      data: {
+        doctorId: doktorId,
+        type: "TERS_KAYIT",
+        direction: "ALACAK",
+        amount: "100",
+        documentNo: "T",
+        createdById: yapanId,
+        reversedEntryId: iptal.id,
+      },
+    });
+    await borc("50", "2026-09-10");
+    expect((await vadesiGecmisUyarisi(doktorId, BUGUN))?.parametreler).toEqual({ enEskiVade: "2026-09-10" });
   });
 });

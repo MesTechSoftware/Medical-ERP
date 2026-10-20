@@ -61,6 +61,7 @@ export const KURAL_KODLARI = [
   "CARI_HAREKET_BULUNAMADI",
   "VADE_YALNIZ_BORC",
   "NAKIT_TEVSIK_LIMITI",
+  "VADESI_GECMIS_HAREKET",
   // OnayBlogu (A-8)
   "NEGATIF_STOK",
 ] as const;

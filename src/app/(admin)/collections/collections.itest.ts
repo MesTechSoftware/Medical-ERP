@@ -360,3 +360,25 @@ describe("nakit tevsik uyarısı — BILGI, kayıt engellenmez (A-15-1)", () => 
     expect(await uyari("2026-09-26T21:30:00Z")).toBeNull();
   });
 });
+
+describe("tahsilat ekranında vade uyarısı (X-6-1)", () => {
+  it("borçlu carinin vadesi geçmiş hareketi varsa tahsilat sonucu BILGI taşır; tutar yok", async () => {
+    const s = await seed();
+    await prisma.ledgerEntry.create({
+      data: {
+        doctorId: s.doctor.id,
+        type: "SEVKIYAT",
+        direction: "BORC",
+        amount: "10000",
+        dueDate: new Date("2020-01-31T00:00:00Z"),
+        documentNo: "T",
+        createdById: h.adminId,
+      },
+    });
+    expect(await recordCollection(null, tahsilatFormu(s.doctor.id, s.havale.id, "1000"))).toEqual({
+      durum: "BASARILI_UYARILI",
+      kademe: "BILGI",
+      bildirimler: [{ kademe: "BILGI", kural_kodu: "VADESI_GECMIS_HAREKET", parametreler: { enEskiVade: "2020-01-31" } }],
+    });
+  });
+});
