@@ -759,6 +759,17 @@ Bunlar **karar değil**, Yol (b)'nin doğurduğu uygulama kalemleridir; 1B madde
 - **KDV tutarı** taban değildir; kolon/satır adı "KDV"dir (`SATIR_TABANI.kdvTutar`).
 - `StatCard.value` `ReactNode` oldu (kartta tutar + etiket).
 
+**Madde 4f — A-15 nakit tevsik uyarısı (20.10.2026, kriter A-15-1).** Uygulama notları (karar değil):
+
+- `src/lib/tevsik.ts` `nakitTevsikUyarisi(tx, { doctorId, an, yon }, limit?)` — tahsilat yazıldıktan sonra aynı
+  transaction'da çağrılır; toplama SQL'dedir (`aggregate`), sonuç saklanmaz. İlk `BILGI` üreticisidir: tahsilat
+  sayfada kalır, şerit başarı metniyle birlikte görünür.
+- **Sayılan:** aynı cari, aynı İstanbul günü (`paidAt`), `tip = NAKIT`, aynı yön (§(4) — netleştirilmez), **iptal
+  edilmemiş** tahsilat. İptal edilen tahsilat gerçekleşmemiş sayılır. "Aşar" = toplam > limit.
+- `finance.nakitTevsikLimiti` tipi `string | null` oldu (TL, brüt); değer hâlâ `null` — devreye almada müşavir
+  teyidiyle dolar. Bu yüzden canlı/e2e ortamında uyarı kapalıdır; davranış entegrasyon testinde limit verilerek,
+  şerit deseni bileşen testinde (`sonuc.test.ts`) sınanır.
+
 ---
 
 ### §D.5 · 1A'nın **yapmadıkları** — sınırı yazılı tutmak için

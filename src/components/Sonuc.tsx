@@ -33,7 +33,7 @@ export function SonucGosterimi({
   sonuc: SonucDurumu;
   /** Formun kendi altında hata gösterdiği alan adları. */
   alanlar?: readonly string[];
-  /** `BASARILI` sonuçta gösterilecek metin; sayfada kalan formlar içindir. */
+  /** İşlem tamamlandığında (`BASARILI` ya da `BASARILI_UYARILI`) gösterilecek metin; sayfada kalan formlar içindir. */
   basari?: (p: Parametreler) => string;
 }) {
   const [kapatilan, setKapatilan] = useState<SonucDurumu>(null);
@@ -110,7 +110,7 @@ export function SonucGosterimi({
         </div>
       )}
 
-      {sonuc.durum === "BASARILI" && basari && (
+      {(sonuc.durum === "BASARILI" || sonuc.durum === "BASARILI_UYARILI") && basari && (
         <p role="status" className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
           {basari(sonuc.parametreler ?? {})}
         </p>

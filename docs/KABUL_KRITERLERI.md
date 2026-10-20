@@ -85,7 +85,7 @@
 | A-14-3 | Numara belgeyi yazan transaction'ın içinde alınır: transaction geri alınırsa sayaç ilerlemez, boşluk oluşmaz (A-14 §(3)). `uretBelgeNo` transaction istemcisi olmadan çağrılamaz (tip). | 1B-2 *(1A-CM)* · `kisitlar.itest.ts` |
 | A-14-4 | Yıl, kayıt anının **İstanbul** takvim yılıdır ve her yıl sayaç 1'den başlar: 31 Aralık 23:59 (İstanbul) eski yılın, 1 Ocak 00:01 yeni yılın serisinden numara alır (A-14 §(5), E-1 §(3)). | 1B-2 · `belge-no.itest.ts` |
 | A-14-5 | Sayaç tablosuna yalnız `src/lib/belge-no.ts` dokunur; kaynakta elle kurulmuş belge numarası (`"SIP-…"` gibi önekli metin) yoktur — `MAX(belge_no)+1` dahil başka üretim yolu yoktur (A-14 §(3)/(4)). | 1B-2 · `tek-cagri.test.ts` |
-| A-15-1 | | 1B-4 |
+| A-15-1 | Tahsilat kaydında aynı cari + aynı `Europe/Istanbul` günü + `tip = NAKIT` + aynı yön, iptal edilmemiş tahsilatların toplamı `finance.nakitTevsikLimiti`'ni **aşarsa** (eşitlik aşım değildir) aşan işlem dâhil `BILGI` · `NAKIT_TEVSIK_LIMITI` döner: kayıt yazılır, `OnayBlogu` üretilmez, toplam saklanmaz. Limit `null` iken uyarı yoktur. Uyarı metni neyi değerlendirmediğini yazar (kısım kısım ödeme); sistem "uygundur" demez. | 1B-4 · `collections.itest.ts` · `sonuc.test.ts` |
 
 ## B · Ürün ve stok
 
@@ -153,7 +153,7 @@
 | X-4-1 | Her server action `IslemSonucu` döner: `durum` · `kademe` (bildirimlerin en yükseği) · `bildirimler` (`kademe` + `kural_kodu` + `parametreler`, `SERT`'te isteğe bağlı `alan`). İş hatası `throw` edilmez; transaction'ı geri almak için içeride fırlatılan `IsHatasi` action sınırında sonuca döner. `?error=` yönlendirmesi ve metin taşıyan hata alanı yoktur; iş hatası loglanmaz. Tek istisna yalnız yönlendiren çıkış action'ıdır. | 1B-4 · `sonuc.test.ts` |
 | X-4-2 | Sunucu metin üretmez: kural kodu kodda kapalı bir katalogdur (`KURAL_KODLARI`) ve metni tek sözlüktendir (`sozluk.ts`); katalogdaki her kodun metni vardır, sözlükte katalog dışı kod yoktur. Action'lar sözlüğü okumaz; başka dosya kendi mesaj tablosunu tutmaz. | 1B-4 · `sonuc.test.ts` |
 | X-4-3 | Bildirim yutulmaz: bir işlemin bütün bildirimleri kademeye göre sıralı döner ve gösterilir. Sipariş girişinde kalem hataları (fiyat çözümlenemedi, pasif ürün) ilkinde durmadan birlikte döner; sipariş ve belge numarası yazılmaz. | 1B-4 · `sonuc.test.ts` · `orders.itest.ts` |
-| X-4-4 | Gösterim kademe başına tek desendir ve tek bileşendedir (`Sonuc.tsx`): `SERT` bildirim alanı olan formda alanın altında, alan işaretli (`aria-invalid`) ve form kutusunda tekrar edilmez; alanı olmayan ya da formda gösterilmeyen alanın bildirimi form kutusundadır. `YUMUSAK` onay diyaloğudur, gerekçe zorunludur. `BILGI` sonuç ekranında kapatılabilir şerittir. | 1B-4 · `is-sonucu.spec.ts` *(`BILGI` A-15 ile, `YUMUSAK` sipariş akışına bağlandığında 1B-7'de e2e'ye girer)* |
+| X-4-4 | Gösterim kademe başına tek desendir ve tek bileşendedir (`Sonuc.tsx`): `SERT` bildirim alanı olan formda alanın altında, alan işaretli (`aria-invalid`) ve form kutusunda tekrar edilmez; alanı olmayan ya da formda gösterilmeyen alanın bildirimi form kutusundadır. `YUMUSAK` onay diyaloğudur, gerekçe zorunludur. `BILGI` sonuç ekranında kapatılabilir şerittir. | 1B-4 · `is-sonucu.spec.ts` · `sonuc.test.ts` *(bileşen: `BILGI` şeridi başarı metniyle, `YUMUSAK` diyaloğu; `YUMUSAK` sipariş akışına 1B-7'de bağlanır)* |
 | X-5-1 | | 1B-5 *(1A-CM: `Decimal`, `formatla`, lint kuralı)* |
 | X-6-1 | | 1B-1 · 1B-4 *(§(6) vade uyarısı)* |
 | X-7-1 | | 1B-10 *(matris yeniden kurulur)* |

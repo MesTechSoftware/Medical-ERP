@@ -120,6 +120,8 @@ kodu kataloğu `sonuc.ts`, metni tek sözlük `sozluk.ts`; gösterim tek bileşe
 `YUMUSAK` gerekçe diyaloğu, `BILGI` kapatılabilir şerit *(son ikisinin üreticisi A-15 ve 1B-7)*.
 **Taban etiketi (Ü-3, 1B-4e):** ekrandaki her para tutarı `Tutar` bileşeniyle, tabanı (*KDV hariç/dahil*) yanında
 ya da kolon başlığında gösterilir; cari/tahsilat brüt, ciro/hakediş matrah, sipariş satırı matrah + toplam brüt.
+**Nakit tevsik uyarısı (A-15, 1B-4f):** tahsilat kaydında aynı cari + aynı gün nakit toplamı limiti aşarsa `BILGI`
+şeridi; kayıt engellenmez. Limit (`finance.nakitTevsikLimiti`) devreye almada dolar — bugün `null`, uyarı kapalı.
 
 ## Kodda uygulanmış iş kuralları (seçme)
 

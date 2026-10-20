@@ -9,7 +9,8 @@ import { uretBelgeNo } from "@/lib/belge-no";
 import { hesaplaKomisyonTutari } from "@/lib/satir-tutarlari";
 import { simdi } from "@/lib/zaman";
 import { IsHatasi } from "@/lib/hata";
-import { basarili, engel, sert, type IslemSonucu } from "@/lib/sonuc";
+import { basarili, engel, sert, sonucOlustur, type Bildirim, type IslemSonucu } from "@/lib/sonuc";
+import { nakitTevsikUyarisi } from "@/lib/tevsik";
 
 /**
  * 🔴 Tahsilat kaydı — sistemin MERKEZÎ olayı (RULE-12).
@@ -37,8 +38,9 @@ export async function recordCollection(
   if (!paymentMethodId) return engel("ALAN_ZORUNLU", {}, "paymentMethodId");
   const amount = tutar.data;
 
+  let uyarilar: Bildirim[];
   try {
-    await prisma.$transaction(async (tx) => {
+    uyarilar = await prisma.$transaction(async (tx) => {
       const yontem = await tx.paymentMethod.findUnique({ where: { id: paymentMethodId } });
       if (!yontem || !yontem.isActive) throw new IsHatasi([sert("ODEME_YONTEMI_BULUNAMADI", {}, "paymentMethodId")]);
       const documentNo = await uretBelgeNo("THS", tx);
@@ -69,6 +71,9 @@ export async function recordCollection(
         },
         tx
       );
+      // A-15: nakit tevsik uyarısı BILGI'dir — kayıt tamamlanır, uyarı sonuçla döner.
+      const tevsik = await nakitTevsikUyarisi(tx, { doctorId, an: payment.paidAt, yon: payment.direction });
+      return tevsik ? [tevsik] : [];
     });
   } catch (e) {
     // Yalnız iş hatası sonuca döner; teknik hata hata sınırına düşer (X-3 §(4), X-4 §(2)).
@@ -79,7 +84,7 @@ export async function recordCollection(
   revalidatePath("/collections");
   revalidatePath("/doctors");
 
-  return basarili();
+  return sonucOlustur(uyarilar);
 }
 
 /**
