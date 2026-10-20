@@ -61,6 +61,8 @@ export const KURAL_METNI: Record<KuralKodu, (p: Parametreler) => string> = {
   SEVK_KALEMI_YOK: () => "Sevk edilecek en az bir kalem ve geçerli miktar giriniz.",
   SEVK_MIKTARI_ASILDI: (p) => `${p.urun} için sevk edilebilecek kalan miktar ${p.kalan}.`,
   IADE_KALEMI_YOK: () => "İade edilecek en az bir kalem ve geçerli miktar giriniz.",
+  TRANSFER_KALEMI_YOK: () => "En az bir ürün ve geçerli miktar giriniz.",
+  TRANSFER_KONUMU_GECERSIZ: () => "Kaynak ve hedef konum geçerli ve birbirinden farklı olmalıdır; hedef bir depo olmalıdır.",
   IADE_MIKTARI_ASILDI: (p) => `${p.urun} için iade edilebilecek miktar ${p.kalan}.`,
 
   ODEME_YONTEMI_BULUNAMADI: () => "Ödeme yöntemi bulunamadı.",
@@ -85,6 +87,8 @@ export const KURAL_METNI: Record<KuralKodu, (p: Parametreler) => string> = {
 
   NEGATIF_STOK: (p) => `Stok yetersiz${p.urun ? ` (${p.urun})` : ""}: işlem sonrası stok ${p.sonra} adet olur.`,
   BEDELSIZ_ONAYI: (p) => `Bedelsiz satır (${p.urun}, ${BEDELSIZ_SEBEP_ADI[p.sebep as FreeReason] ?? p.sebep}) yönetici onayı gerektirir.`,
+  NEGATIF_STOK_YONETICI_GEREKIR: (p) =>
+    `Stok yetersiz${p.urun ? ` (${p.urun})` : ""}: işlem sonrası stok ${p.sonra} adet olur. Bu işlemi yalnız yönetici gerekçeyle yapabilir; önce stok düzeltmesi gerekebilir.`,
   ONAY_BEKLIYOR: () => "Bu sipariş yönetici onayı bekliyor; karar verilmeden sevk edilemez.",
   ONAY_REDDEDILDI: () => "Bu siparişin onay talebi reddedildi; sevk edilemez.",
   ONAY_KARARI_VERILMIS: () => "Bu onay talebine zaten karar verilmiş.",

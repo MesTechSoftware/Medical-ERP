@@ -17,6 +17,8 @@ const ACTION_YETKISI: Record<string, "requireAdmin" | "requireStaff" | "requireS
   "(admin)/orders/actions.ts#markDelivered": "requireStaff",
   "(admin)/orders/actions.ts#cancelOrder": "requireStaff",
   "(admin)/orders/actions.ts#createReturn": "requireStaff", // A-1 eki: YONETICI + OPERASYON
+  "(admin)/stock/actions.ts#addConsignment": "requireStaff", // A-4: stok hareketi (D-2 §(1))
+  "(admin)/stock/actions.ts#addTransfer": "requireStaff", // B-4
   "(admin)/shipping/actions.ts#shipOrder": "requireStaff",
   "(admin)/collections/actions.ts#recordCollection": "requireStaff",
   "(admin)/collections/actions.ts#cancelCollection": "requireStaff",

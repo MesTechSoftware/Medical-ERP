@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { uretBelgeNo } from "@/lib/belge-no";
 import { hesaplaStok } from "@/lib/stok";
 import { takvimYili } from "@/lib/zaman";
-import { referansVeri } from "../../test/integration/referans";
+import { referansVeri, yeniDoktorVerisi } from "../../test/integration/referans";
 
 // CM migration'ının elle yazılan ve tek noktaya bağlanan kısıtları.
 
@@ -86,7 +86,12 @@ describe("hesaplaStok — konum ve tarih (B-4, C-2, E-1 §(5))", () => {
   it("konum bazında ve gün sonu itibarıyla okur", async () => {
     const ref = await referansVeri();
     const konsinye = await prisma.stockLocation.create({
-      data: { code: "KNS-1", name: "Dr. A konsinye", type: "KONSINYE" },
+      data: {
+        code: "KNS-1",
+        name: "Dr. A konsinye",
+        type: "KONSINYE",
+        doctorId: (await prisma.doctor.create({ data: yeniDoktorVerisi() })).id,
+      },
     });
     const urun = await prisma.product.create({ data: { name: "Ü", code: "U1", taxRateId: ref.kdv20.id } });
     const hareket = (locationId: string, type: "GIRIS" | "CIKIS", quantity: number, an: string) =>

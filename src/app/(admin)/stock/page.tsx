@@ -2,9 +2,12 @@ import { prisma } from "@/lib/db";
 import { PageHeader, Card, EmptyRow } from "@/components/ui";
 import { formatDateTime } from "@/lib/format";
 import StockEntryForm from "./StockEntryForm";
+import KonumBelgesiFormu from "./KonumBelgesiFormu";
+import { addConsignment, addTransfer } from "./actions";
+import { hesaplaStok } from "@/lib/stok";
 
 export default async function StockPage() {
-  const [products, movements] = await Promise.all([
+  const [products, movements, konumlar, doktorlar] = await Promise.all([
     prisma.product.findMany({
       where: { status: "AKTIF" },
       orderBy: { name: "asc" },
@@ -13,9 +16,33 @@ export default async function StockPage() {
     prisma.stockMovement.findMany({
       orderBy: { createdAt: "desc" },
       take: 100,
-      include: { product: { select: { name: true, code: true } } },
+      include: {
+        product: { select: { name: true, code: true } },
+        location: { select: { name: true } },
+      },
+    }),
+    prisma.stockLocation.findMany({
+      where: { isActive: true },
+      orderBy: [{ type: "asc" }, { sortOrder: "asc" }, { name: "asc" }],
+      select: { id: true, name: true, type: true },
+    }),
+    prisma.doctor.findMany({
+      where: { status: "AKTIF" },
+      orderBy: { fullName: "asc" },
+      select: { id: true, fullName: true },
     }),
   ]);
+  const depolar = konumlar.filter((k) => k.type === "DEPO");
+  const konsinyeler = konumlar.filter((k) => k.type === "KONSINYE");
+  // Konsinyedeki mal: konum × ürün, tek okuma yolu hesaplaStok() (B-4); yalnız sıfırdan farklı satırlar.
+  const konsinyeStok = (
+    await Promise.all(
+      konsinyeler.flatMap((k) =>
+        products.map(async (p) => ({ konum: k.name, urun: p.name, miktar: await hesaplaStok(p.id, k.id) }))
+      )
+    )
+  ).filter((r) => r.miktar !== 0);
+  const urunSecenekleri = products.map((p) => ({ value: p.id, label: `${p.name} (${p.code})` }));
 
   return (
     <div>
@@ -32,6 +59,65 @@ export default async function StockPage() {
             </h2>
             <StockEntryForm products={products} />
           </Card>
+
+          <div className="mt-6">
+            <Card>
+              <h2 className="mb-1 text-sm font-semibold text-slate-900">Konsinye Çıkış</h2>
+              <p className="mb-4 text-xs text-slate-500">Mal depodan doktora konsinye bırakılır; satış sayılmaz.</p>
+              <KonumBelgesiFormu
+                ad="konsinye"
+                action={addConsignment}
+                secimler={[{ name: "doctorId", label: "Doktor", options: doktorlar.map((d) => ({ value: d.id, label: d.fullName })) }]}
+                urunler={urunSecenekleri}
+                dugme="Konsinye Çıkış Kaydet"
+                basari="Konsinye çıkış kaydedildi"
+              />
+            </Card>
+          </div>
+
+          {konsinyeler.length > 0 && (
+            <div className="mt-6">
+              <Card>
+                <h2 className="mb-1 text-sm font-semibold text-slate-900">Depoya Transfer</h2>
+                <p className="mb-4 text-xs text-slate-500">
+                  Kullanılan ya da geri gelen konsinye mal depoya alınır; satış ardından normal siparişle girilir.
+                </p>
+                <KonumBelgesiFormu
+                  ad="transfer"
+                  action={addTransfer}
+                  secimler={[
+                    { name: "fromLocationId", label: "Kaynak", options: konumlar.map((k) => ({ value: k.id, label: k.name })) },
+                    // B-4: tek depoda hedef seçimi görünmez (UI satır sayısından türer).
+                    ...(depolar.length > 1
+                      ? [{ name: "toLocationId", label: "Hedef depo", options: depolar.map((k) => ({ value: k.id, label: k.name })) }]
+                      : []),
+                  ]}
+                  gizli={depolar.length === 1 ? { toLocationId: depolar[0].id } : undefined}
+                  urunler={urunSecenekleri}
+                  dugme="Transfer Kaydet"
+                  basari="Transfer kaydedildi"
+                />
+              </Card>
+            </div>
+          )}
+
+          {konsinyeStok.length > 0 && (
+            <div className="mt-6">
+              <Card>
+                <h2 className="mb-3 text-sm font-semibold text-slate-900">Konsinyedeki Mal</h2>
+                <ul className="space-y-1 text-sm text-slate-700">
+                  {konsinyeStok.map((r) => (
+                    <li key={`${r.konum}|${r.urun}`} className="flex justify-between gap-2">
+                      <span>
+                        {r.konum} · {r.urun}
+                      </span>
+                      <span className="tabular-nums">{r.miktar}</span>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            </div>
+          )}
         </div>
 
         <div className="lg:col-span-2">
@@ -83,7 +169,10 @@ export default async function StockPage() {
                         {m.type === "GIRIS" ? "+" : "−"}
                         {m.quantity}
                       </td>
-                      <td className="px-4 py-3 text-slate-500">{m.note}</td>
+                      <td className="px-4 py-3 text-slate-500">
+                        {m.note}
+                        {konumlar.length > 1 && <span className="ml-1 text-xs text-slate-400">· {m.location.name}</span>}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

@@ -889,6 +889,18 @@ liste ataması) + fiyat listesi ekranı · **7f** D-6 import (X-16 / ADR-006 sı
   izin verir); bugün reddedilen sipariş iptal edilir. Sipariş girişini yalnız `SATICI` yapar; yönetici girişi
   (onayın aynı işlemde verilmesi) sipariş ekranı yönetime açıldığında devreye girer.
 
+**Madde 7d3 — A-4 konsinye çıkış + B-4 transfer (20.10.2026, kriterler A-4-1, B-4-5; KARARLAR A-4 eki 20.10).** Notlar (karar değil):
+
+- `src/lib/stok-transfer.ts`: `konsinyeCikisYaz` · `stokTransferYaz` · `konsinyeKonumu` (upsert, doktor başına tek).
+  Negatif stok `negatifStokOnizle()` ile yazımdan önce; yönetici gerekçesi `blokKontrolleriniCalistir()`'a belge
+  tipi `KNS`/`TRF` ile gider (aynı işlemde `ONAY`).
+- **Şema:** `StockLocation.doctorId` (`UNIQUE`, FK) + `CHECK` (migration `konsinye_konumu`). Eski test
+  fikstürleri konsinye konumunu doktora bağlar.
+- Stok ekranı: "Konsinye Çıkış", konsinye varsa "Depoya Transfer" ve "Konsinyedeki Mal" (konum × ürün,
+  `hesaplaStok`); hareket geçmişinde birden çok konum varsa konum adı. Satıcı formu depo stoğunu gösterir; ürün
+  listesi ve Dashboard toplam stoğu (konsinye dahil — mal bizimdir) göstermeye devam eder.
+- Kapsam dışı (KARARLAR §6): konsinye mutabakatı, saha bildirimi, kit/set.
+
 ---
 
 ### §D.5 · 1A'nın **yapmadıkları** — sınırı yazılı tutmak için

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { prisma } from "@/lib/db";
 import { hesaplaStok, stokHareketiYaz } from "@/lib/stok";
-import { referansVeri } from "../../test/integration/referans";
+import { referansVeri, yeniDoktorVerisi } from "../../test/integration/referans";
 
 // `stokHareketiYaz()` — KABUL_KRITERLERI B-4-2…B-4-4.
 
@@ -19,7 +19,9 @@ const bekle = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 beforeEach(async () => {
   const ref = await referansVeri();
-  const kns = await prisma.stockLocation.create({ data: { code: "KNS-S", name: "Konsinye", type: "KONSINYE" } });
+  // Konsinye konumu bir doktora aittir (A-4 eki, CHECK).
+  const doktor = await prisma.doctor.create({ data: yeniDoktorVerisi() });
+  const kns = await prisma.stockLocation.create({ data: { code: "KNS-S", name: "Konsinye", type: "KONSINYE", doctorId: doktor.id } });
   depoId = ref.depo.id;
   konsinyeId = kns.id;
   taxRateId = ref.kdv20.id;

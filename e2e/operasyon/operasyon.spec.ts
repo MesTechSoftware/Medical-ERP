@@ -74,10 +74,11 @@ test("bütün carileri görür; devir formu yoktur (X-13 §(1)/(5))", async ({ p
 test("stok girişi yapar (stok hareketi — D-2 §(1))", async ({ page }) => {
   const not = `E2E operasyon girişi ${Date.now()}`;
   await page.goto("/stock");
-  await page.getByLabel("Ürün").selectOption({ index: 1 });
-  await page.getByLabel("Miktar (adet)").fill("3");
-  await page.getByLabel("Açıklama (opsiyonel)").fill(not);
-  await page.getByRole("button", { name: "Stok Girişi Ekle" }).click();
+  const form = page.locator("form").filter({ has: page.getByRole("button", { name: "Stok Girişi Ekle" }) });
+  await form.getByLabel("Ürün").selectOption({ index: 1 });
+  await form.getByLabel("Miktar (adet)").fill("3");
+  await form.getByLabel("Açıklama (opsiyonel)").fill(not);
+  await form.getByRole("button", { name: "Stok Girişi Ekle" }).click();
   await expect(page.getByText("Stok girişi kaydedildi.")).toBeVisible();
   const hareket = await query(`SELECT id FROM "StockMovement" WHERE note = $1 AND type = 'GIRIS' AND quantity = 3`, [not]);
   expect(hareket).toHaveLength(1);
