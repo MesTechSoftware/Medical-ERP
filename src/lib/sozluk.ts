@@ -64,6 +64,11 @@ export const KURAL_METNI: Record<KuralKodu, (p: Parametreler) => string> = {
   VADESI_GECMIS_HAREKET: (p) =>
     `Vadesi geçmiş hareket var; en eski vade ${String(p.enEskiVade).split("-").reverse().join(".")}. ` +
     "Tahsilatlar borçlarla eşleştirilmez; bu tarih o borcun hâlâ açık olduğunu göstermez.",
+  FATURA_SABLONU_TANIMSIZ: () =>
+    "Fatura hazırlık şablonu tanımlı değil; dosya, entegratörün sütun eşlemesi kurulumda girildikten sonra üretilir.",
+  // K-4 §(6)-d: sistem tarih hesaplar, vergisel sonucu hesaplamaz.
+  FATURA_GERIYE_DONUK: (p) =>
+    `${p.adet} satırın sevk tarihi ${p.gun} günden eski; e-Fatura geriye dönük en fazla ${p.gun} gün düzenlenebilir.`,
   // A-15 §(5): sistem "uygundur" demez; uyarı neyi kontrol etmediğini yazar.
   NAKIT_TEVSIK_LIMITI: (p) =>
     `Bu carinin aynı gün nakit tahsilat toplamı ${formatla(p.toplam)} (${TABAN_ETIKETI[BRUT]}); ${formatla(p.limit)} tevsik sınırını aşıyor. ` +

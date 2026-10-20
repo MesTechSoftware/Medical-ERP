@@ -63,6 +63,9 @@ export const KURAL_KODLARI = [
   "VADE_YALNIZ_BORC",
   "NAKIT_TEVSIK_LIMITI",
   "VADESI_GECMIS_HAREKET",
+  // Dışa aktarım (D-5, K-4 §(6))
+  "FATURA_SABLONU_TANIMSIZ",
+  "FATURA_GERIYE_DONUK",
   // OnayBlogu (A-8)
   "NEGATIF_STOK",
 ] as const;

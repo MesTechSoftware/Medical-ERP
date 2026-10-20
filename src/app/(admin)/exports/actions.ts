@@ -5,17 +5,20 @@ import { requireAdmin } from "@/lib/session";
 import {
   VERI_SETLERI,
   calistirDisaAktarim,
+  faturaGeriyeDonukUyarisi,
+  sablonUygula,
   type DisaAktarimParametresi,
   type VeriSeti,
 } from "@/lib/disa-aktarim";
+import { policy } from "@/lib/policy";
 import { BICIM, type Bicim } from "@/lib/disa-aktarim-yazici";
-import { basarili, engel, type IslemSonucu } from "@/lib/sonuc";
+import { engel, sonucOlustur, type Bildirim, type IslemSonucu } from "@/lib/sonuc";
 import { TUM_ZAMANLAR, bugun, yerelGunAraligi, yerelGunMetni } from "@/lib/zaman";
 
 /** Dosya istemciye base64 gider; sunucuda saklanmaz (D-5 §(10), E-3). */
 export type DisaAktarimSonucu = IslemSonucu & { dosya?: { ad: string; mime: string; icerik: string } };
 
-const ARALIKLI: readonly VeriSeti[] = ["CARI_HAREKET", "TAHSILAT", "SIPARIS"];
+const ARALIKLI: readonly VeriSeti[] = ["CARI_HAREKET", "TAHSILAT", "SIPARIS", "FATURA_HAZIRLIK"];
 
 /**
  * Dışa aktarım — D-5. Yalnız `YONETICI` (§(4)). Her çalıştırma kütüğe yazılır: kullanıcı kimliği,
@@ -29,6 +32,9 @@ export async function disaAktar(_prev: unknown, formData: FormData): Promise<Dis
   const bicim = String(formData.get("bicim") ?? "xlsx") as Bicim;
   if (!VERI_SETLERI.includes(kod)) return engel("ALAN_ZORUNLU", {}, "kod");
   if (!(bicim in BICIM)) return engel("ALAN_ZORUNLU", {}, "bicim");
+  // K-4 §(6)-b: sütun eşlemesi kurulumda girilmeden fatura hazırlık çıktısı verilmez.
+  const sablon = policy.export.sablonTanimi;
+  if (kod === "FATURA_HAZIRLIK" && !sablon) return engel("FATURA_SABLONU_TANIMSIZ", {}, "kod");
 
   let parametre: DisaAktarimParametresi;
   let kutukParametresi: Record<string, string>;
@@ -63,7 +69,14 @@ export async function disaAktar(_prev: unknown, formData: FormData): Promise<Dis
     kutukParametresi = {};
   }
 
-  const cikti = await calistirDisaAktarim(parametre);
+  const veri = await calistirDisaAktarim(parametre);
+  const uyarilar: Bildirim[] = [];
+  let cikti = veri;
+  if (kod === "FATURA_HAZIRLIK" && sablon) {
+    const uyari = faturaGeriyeDonukUyarisi(veri);
+    if (uyari) uyarilar.push(uyari);
+    cikti = sablonUygula(veri, sablon);
+  }
   await prisma.exportLog.create({
     data: {
       userId: session.user.id,
@@ -76,7 +89,7 @@ export async function disaAktar(_prev: unknown, formData: FormData): Promise<Dis
   const { yaz, mime, uzanti } = BICIM[bicim];
   const ek = Object.values(kutukParametresi).join("_");
   return {
-    ...basarili({ satir: cikti.satirlar.length }),
+    ...sonucOlustur(uyarilar, { satir: cikti.satirlar.length }),
     dosya: {
       ad: `${kod.toLowerCase()}${ek ? `_${ek}` : ""}.${uzanti}`,
       mime,

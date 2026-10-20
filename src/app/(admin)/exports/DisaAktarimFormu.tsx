@@ -11,8 +11,9 @@ const VERI_SETI_ADI: Record<string, string> = {
   SIPARIS: "Sipariş",
   STOK: "Stok miktarı",
   DOKTOR_LISTESI: "Doktor listesi",
+  FATURA_HAZIRLIK: "Fatura hazırlık (sevk günü)",
 };
-const ARALIKLI = new Set(["CARI_HAREKET", "TAHSILAT", "SIPARIS"]);
+const ARALIKLI = new Set(["CARI_HAREKET", "TAHSILAT", "SIPARIS", "FATURA_HAZIRLIK"]);
 const ALANLAR = ["kod", "bicim", "baslangic", "bitis", "tarih"] as const;
 
 /** Dosya sunucuda saklanmaz: yanıttaki içerik tarayıcıda indirilir (D-5 §(10)). */

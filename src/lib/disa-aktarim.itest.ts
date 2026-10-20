@@ -1,14 +1,30 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { prisma } from "@/lib/db";
-import { calistirDisaAktarim } from "@/lib/disa-aktarim";
+import { calistirDisaAktarim, faturaGeriyeDonukUyarisi, sablonUygula, type FaturaSablonu } from "@/lib/disa-aktarim";
+import { bugun } from "@/lib/zaman";
 import { referansVeri, yeniDoktorVerisi } from "../../test/integration/referans";
 
-// D-5-1 · D-5-2 — veri setleri ve kütük.
-const h = vi.hoisted(() => ({ adminId: "" }));
+// D-5-1 · D-5-2 · K-4-1 — veri setleri, kütük, fatura hazırlık.
+const h = vi.hoisted(() => ({ adminId: "", sablon: null as unknown }));
 vi.mock("@/lib/session", () => ({
   requireAdmin: async () => ({ user: { id: h.adminId, role: "YONETICI" } }),
 }));
+// `export.sablonTanimi` kurulumda `null`'dır; testte çalışma anında okunan değer verilir.
+vi.mock("@/lib/policy", async (asil) => {
+  const m = await asil<typeof import("@/lib/policy")>();
+  return {
+    policy: {
+      ...m.policy,
+      export: {
+        ...m.policy.export,
+        get sablonTanimi() {
+          return h.sablon;
+        },
+      },
+    },
+  };
+});
 const { disaAktar } = await import("@/app/(admin)/exports/actions");
 
 let s: Awaited<ReturnType<typeof seed>>;
@@ -28,6 +44,7 @@ async function seed() {
 
 beforeEach(async () => {
   s = await seed();
+  h.sablon = null;
 });
 
 // İstanbul 01.10.2026 00:00 = UTC 30.09 21:00; Ekim aralığı [01.10, 01.11).
@@ -176,5 +193,95 @@ describe("dışa aktarım kütüğü (D-5-2)", () => {
 
     await disaAktar(null, form({ kod: "TAHSILAT", bicim: "csv", tumZamanlar: "on" }));
     expect((await prisma.exportLog.findFirstOrThrow()).parameters).toEqual({ donem: "tum", bicim: "csv" });
+  });
+});
+
+describe("fatura hazırlık veri seti (K-4-1)", () => {
+  /** Sevkiyat: iki kalem (biri bedelsiz) + iptal edilmiş siparişin sevkiyatı. */
+  async function sevkiyat(no: string, shippedOn: Date, status: "BEKLIYOR" | "IPTAL" = "BEKLIYOR") {
+    const o = await siparis(`SIP-${no}`, "ONAYLI", status, "2026-10-01T09:00:00Z");
+    const kalemler = await prisma.orderItem.findMany({ where: { orderId: o.id }, orderBy: { isFree: "asc" } });
+    return prisma.shipment.create({
+      data: {
+        documentNo: no,
+        orderId: o.id,
+        shippedOn,
+        externalDispatchNo: `IRS-${no}`,
+        items: { create: kalemler.map((k) => ({ orderItemId: k.id, quantity: k.quantity })) },
+      },
+    });
+  }
+  const SABLON: FaturaSablonu = {
+    sutunlar: [
+      { baslik: "Alıcı VKN", kaynak: "VKN_TCKN" },
+      { baslik: "Mal Hizmet", kaynak: "URUN_ADI" },
+      { baslik: "Miktar", kaynak: "MIKTAR" },
+      { baslik: "KDV Oranı", kaynak: "KDV_ORANI" },
+      { baslik: "Mal Hizmet Tutarı", kaynak: "MATRAH" },
+    ],
+  };
+
+  it("sevk satırından üretilir: bedelsiz satır ve iptal sipariş çıkmaz; muhatap A-13'ten, tutar satır hesabından", async () => {
+    await sevkiyat("SVK-1", new Date("2026-10-05T00:00:00Z"));
+    await sevkiyat("SVK-2", new Date("2026-10-06T00:00:00Z"), "IPTAL");
+    await sevkiyat("SVK-3", new Date("2026-11-01T00:00:00Z")); // aralık dışı
+
+    const c = await calistirDisaAktarim({ kod: "FATURA_HAZIRLIK", aralik: EKIM });
+    const sutun = (kod: string) => c.kolonlar.findIndex((k) => k.kod === kod);
+    expect(c.satirlar).toHaveLength(1);
+    const [r] = c.satirlar;
+    expect([r[sutun("SEVK_TARIHI")], r[sutun("SEVK_BELGE_NO")], r[sutun("HARICI_IRSALIYE_NO")]]).toEqual([
+      "2026-10-05",
+      "SVK-1",
+      "IRS-SVK-1",
+    ]);
+    expect([r[sutun("VKN_TCKN")], r[sutun("FATURA_UNVANI")]]).toEqual(["1234567890", "Kaya Klinik Ltd."]);
+    expect([r[sutun("MATRAH")], r[sutun("KDV_TUTARI")], r[sutun("TOPLAM")]]).toEqual(["100.01", "20.00", "120.01"]);
+  });
+
+  it("şablon görünümü değiştirir: sütunlar şablonun sırası ve başlığıyla, içerik aynı", async () => {
+    await sevkiyat("SVK-1", new Date("2026-10-05T00:00:00Z"));
+    const c = sablonUygula(await calistirDisaAktarim({ kod: "FATURA_HAZIRLIK", aralik: EKIM }), SABLON);
+    expect(c.kolonlar.map((k) => [k.baslik, k.tip])).toEqual([
+      ["Alıcı VKN", "metin"],
+      ["Mal Hizmet", "metin"],
+      ["Miktar", "sayi"],
+      ["KDV Oranı", "sayi"],
+      ["Mal Hizmet Tutarı", "sayi"],
+    ]);
+    expect(c.satirlar).toEqual([["1234567890", "Stent", "3", "20.00", "100.01"]]);
+  });
+
+  it("7 günden eski sevk satırı BILGI üretir; 7 gün tam sınırdır (K-4 §(6)-d)", async () => {
+    await sevkiyat("SVK-1", new Date("2026-10-05T00:00:00Z"));
+    const c = await calistirDisaAktarim({ kod: "FATURA_HAZIRLIK", aralik: EKIM });
+    expect(faturaGeriyeDonukUyarisi(c, new Date("2026-10-12T00:00:00Z"))).toBeNull(); // 7 gün
+    expect(faturaGeriyeDonukUyarisi(c, new Date("2026-10-13T00:00:00Z"))).toEqual({
+      kademe: "BILGI",
+      kural_kodu: "FATURA_GERIYE_DONUK",
+      parametreler: { adet: 1, gun: 7 },
+    });
+  });
+
+  it("şablon tanımsızken dosya verilmez ve kütüğe yazılmaz; tanımlıyken şablonla iner, uyarı sonuçla döner", async () => {
+    await sevkiyat("SVK-1", new Date("2020-01-15T00:00:00Z"));
+    await sevkiyat("SVK-4", bugun());
+    const fd = new FormData();
+    fd.set("kod", "FATURA_HAZIRLIK");
+    fd.set("bicim", "csv");
+    fd.set("tumZamanlar", "on");
+
+    const red = await disaAktar(null, fd);
+    expect(red.bildirimler.map((b) => b.kural_kodu)).toEqual(["FATURA_SABLONU_TANIMSIZ"]);
+    expect(red.dosya).toBeUndefined();
+    expect(await prisma.exportLog.count()).toBe(0);
+
+    h.sablon = SABLON;
+    const r = await disaAktar(null, fd);
+    expect(r).toMatchObject({ durum: "BASARILI_UYARILI", kademe: "BILGI", parametreler: { satir: 2 } });
+    expect(r.bildirimler.map((b) => b.kural_kodu)).toEqual(["FATURA_GERIYE_DONUK"]);
+    const csv = Buffer.from(r.dosya!.icerik, "base64").toString("utf8");
+    expect(csv.split("\r\n")[0]).toBe("\uFEFFAlıcı VKN;Mal Hizmet;Miktar;KDV Oranı;Mal Hizmet Tutarı");
+    expect(await prisma.exportLog.count()).toBe(1);
   });
 });

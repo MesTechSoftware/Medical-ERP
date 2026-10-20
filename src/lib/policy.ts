@@ -1,3 +1,5 @@
+import type { FaturaSablonu } from "@/lib/disa-aktarim";
+
 /**
  * Sistem politikası — kurulum düzeyi config noktaları. TEK KAYNAK.
  *
@@ -43,8 +45,12 @@ export const policy = {
     saklamaSuresiYil: 10,
   },
   export: {
-    /** #12 — Entegratör sütun eşlemesi; kodda sabit format yok. Devreye almada dolar (K-4 §6). */
-    sablonTanimi: null,
+    /**
+     * #12 — Fatura hazırlık sütun eşlemesi (K-4 §(6)-b): entegratörün toplu yükleme şablonundaki
+     * sütun başlıkları ve sırası. Kodda "standart" şablon yazılmaz; devreye almada dolar.
+     * `null` iken fatura hazırlık dosyası verilmez.
+     */
+    sablonTanimi: null as FaturaSablonu | null,
     /** #13 — (K-4 §6-d) */
     faturaGeriyeDonukUyariGun: 7,
   },

@@ -3,8 +3,10 @@ import { prisma } from "@/lib/db";
 import { sayilanBelgeler } from "@/lib/sayilan-belgeler";
 import { hesaplaSatirTutarlari } from "@/lib/satir-tutarlari";
 import { hesaplaStok } from "@/lib/stok";
+import { bilgi, type Bildirim } from "@/lib/sonuc";
 import { BRUT, MATRAH, SATIR_TABANI, tabanli } from "@/lib/taban";
-import { yerelGunMetni } from "@/lib/zaman";
+import { bugun, gunEkle, yerelGunMetni } from "@/lib/zaman";
+import { policy } from "@/lib/policy";
 
 /**
  * Dışa aktarımın TEK yolu — K-4 §(2), D-5. Tek çağrı noktası listesinin 7. maddesi.
@@ -21,17 +23,18 @@ import { yerelGunMetni } from "@/lib/zaman";
  * - Tarih kolonları `YYYY-AA-GG` yerel gündür (E-1 §(8)); stok veri setinde tutar yoktur (C-2 §(4)).
  */
 
-export const VERI_SETLERI = ["CARI_HAREKET", "TAHSILAT", "SIPARIS", "STOK", "DOKTOR_LISTESI"] as const;
+export const VERI_SETLERI = ["CARI_HAREKET", "TAHSILAT", "SIPARIS", "STOK", "DOKTOR_LISTESI", "FATURA_HAZIRLIK"] as const;
 export type VeriSeti = (typeof VERI_SETLERI)[number];
 
 export type Aralik = { baslangic: Date; bitis: Date };
 export type DisaAktarimParametresi =
-  | { kod: "CARI_HAREKET" | "TAHSILAT" | "SIPARIS"; aralik: Aralik }
+  | { kod: "CARI_HAREKET" | "TAHSILAT" | "SIPARIS" | "FATURA_HAZIRLIK"; aralik: Aralik }
   | { kod: "STOK"; tarih: Date }
   | { kod: "DOKTOR_LISTESI" };
 
 export type KolonTipi = "metin" | "sayi" | "tarih";
-export type Kolon = { baslik: string; tip: KolonTipi };
+/** `kod` yalnız şablonla eşlenen veri setinde (fatura hazırlık) doludur. */
+export type Kolon = { baslik: string; tip: KolonTipi; kod?: FaturaKolonu };
 /** Hücre: sayı kolonunda ondalık metin (`Decimal` istemciye/dosyaya `string` gider — X-5 §(6)). */
 export type Hucre = string | null;
 export type VeriSetiCiktisi = { kolonlar: Kolon[]; satirlar: Hucre[][] };
@@ -291,6 +294,144 @@ async function doktorListesi(db: Db): Promise<VeriSetiCiktisi> {
   };
 }
 
+// --- Fatura hazırlık — K-4 §(6) ------------------------------------------------------
+
+/** Fatura hazırlık veri setinin kolon kataloğu — kodda kapalı; şablon bunlardan seçer ve adlandırır. */
+export const FATURA_KOLONLARI = {
+  SEVK_TARIHI: tarih("Sevk Tarihi"),
+  SEVK_BELGE_NO: metin("Sevk Belge No"),
+  HARICI_IRSALIYE_NO: metin("Harici İrsaliye No"),
+  SIPARIS_BELGE_NO: metin("Sipariş Belge No"),
+  CARI_TIPI: metin("Cari Tipi"),
+  VKN_TCKN: metin("VKN / TCKN"),
+  FATURA_UNVANI: metin("Fatura Unvanı"),
+  VERGI_DAIRESI: metin("Vergi Dairesi"),
+  FATURA_ADRESI: metin("Fatura Adresi"),
+  FATURA_ILCE: metin("Fatura İlçe"),
+  FATURA_IL: metin("Fatura İl"),
+  URUN_KODU: metin("Ürün Kodu"),
+  URUN_ADI: metin("Ürün Adı"),
+  MIKTAR: sayi("Miktar"),
+  BIRIM_FIYAT: sayi(tabanli("Birim Fiyat", MATRAH)),
+  KDV_ORANI: sayi("KDV Oranı (%)"),
+  MATRAH: sayi(tabanli("Tutar", SATIR_TABANI.matrah)),
+  KDV_TUTARI: sayi("KDV"),
+  TOPLAM: sayi(tabanli("Toplam", SATIR_TABANI.toplam)),
+} as const satisfies Record<string, Kolon>;
+export type FaturaKolonu = keyof typeof FATURA_KOLONLARI;
+
+/** `export.sablonTanimi` biçimi: entegratör şablonunun sütunları, sırasıyla (K-4 §(6)-b). */
+export type FaturaSablonu = { sutunlar: { baslik: string; kaynak: FaturaKolonu }[] };
+
+async function faturaHazirlik(a: Aralik, db: Db): Promise<VeriSetiCiktisi> {
+  // Sevk günü `date` kolonudur; aralığın İstanbul günleri gün tarihine çevrilir (E-1 §(1)/(4)).
+  const satirlar = await db.shipmentItem.findMany({
+    where: {
+      AND: [sayilanBelgeler.sevkSatiri, { shipment: { shippedOn: { gte: bugun(a.baslangic), lt: bugun(a.bitis) } } }],
+    },
+    orderBy: [{ shipment: { shippedOn: "asc" } }, { shipment: { documentNo: "asc" } }, { id: "asc" }],
+    select: {
+      shipmentId: true,
+      quantity: true,
+      shipment: { select: { documentNo: true, shippedOn: true, externalDispatchNo: true } },
+      orderItem: {
+        select: {
+          unitPrice: true,
+          listPrice: true,
+          vatRate: true,
+          product: { select: { code: true, name: true } },
+          order: {
+            select: {
+              documentNo: true,
+              doctor: {
+                select: {
+                  partyType: true,
+                  taxId: true,
+                  invoiceTitle: true,
+                  taxOffice: true,
+                  invoiceAddress: true,
+                  invoiceDistrict: true,
+                  invoiceCity: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+  // Her sevkiyat kendi satırlarını yuvarlar (A-3 C-6 eki); belge toplamı = Σ satır (§(6)-f).
+  const sevkiyatlar = new Map<string, typeof satirlar>();
+  for (const s of satirlar) sevkiyatlar.set(s.shipmentId, [...(sevkiyatlar.get(s.shipmentId) ?? []), s]);
+  const cikti: Hucre[][] = [];
+  for (const grup of sevkiyatlar.values()) {
+    const { satirlar: tutarlar } = hesaplaSatirTutarlari(
+      grup.map((s) => ({
+        birimFiyat: s.orderItem.unitPrice,
+        listeFiyat: s.orderItem.listPrice,
+        miktar: s.quantity,
+        kdvOrani: s.orderItem.vatRate,
+      }))
+    );
+    grup.forEach((s, n) => {
+      const d = s.orderItem.order.doctor;
+      const deger: Record<FaturaKolonu, Hucre> = {
+        SEVK_TARIHI: gunKolonu(s.shipment.shippedOn),
+        SEVK_BELGE_NO: s.shipment.documentNo,
+        HARICI_IRSALIYE_NO: s.shipment.externalDispatchNo,
+        SIPARIS_BELGE_NO: s.orderItem.order.documentNo,
+        CARI_TIPI: d.partyType,
+        VKN_TCKN: d.taxId,
+        FATURA_UNVANI: d.invoiceTitle,
+        VERGI_DAIRESI: d.taxOffice,
+        FATURA_ADRESI: d.invoiceAddress,
+        FATURA_ILCE: d.invoiceDistrict,
+        FATURA_IL: d.invoiceCity,
+        URUN_KODU: s.orderItem.product.code,
+        URUN_ADI: s.orderItem.product.name,
+        MIKTAR: String(s.quantity),
+        BIRIM_FIYAT: s.orderItem.unitPrice.toFixed(4),
+        KDV_ORANI: s.orderItem.vatRate.toFixed(2),
+        MATRAH: tutarlar[n].matrah.toFixed(2),
+        KDV_TUTARI: tutarlar[n].kdvTutar.toFixed(2),
+        TOPLAM: tutarlar[n].toplam.toFixed(2),
+      };
+      cikti.push((Object.keys(FATURA_KOLONLARI) as FaturaKolonu[]).map((k) => deger[k]));
+    });
+  }
+  return {
+    kolonlar: (Object.entries(FATURA_KOLONLARI) as [FaturaKolonu, Kolon][]).map(([kod, k]) => ({ ...k, kod })),
+    satirlar: cikti,
+  };
+}
+
+/**
+ * Şablon görünümü değiştirir, içeriği değil (K-4 §(3)/(6)-b): şablonun sütunları sırasıyla, kendi
+ * başlıklarıyla yazılır; kaynak kolonun tipi korunur.
+ */
+export function sablonUygula(c: VeriSetiCiktisi, sablon: FaturaSablonu): VeriSetiCiktisi {
+  const sira = sablon.sutunlar.map((s) => c.kolonlar.findIndex((k) => k.kod === s.kaynak));
+  return {
+    kolonlar: sablon.sutunlar.map((s, i) => ({ baslik: s.baslik, tip: c.kolonlar[sira[i]].tip })),
+    satirlar: c.satirlar.map((r) => sira.map((i) => r[i])),
+  };
+}
+
+/**
+ * K-4 §(6)-d: e-Fatura geriye dönük en fazla `export.faturaGeriyeDonukUyariGun` gün düzenlenir.
+ * Sevk günü bugünden bu kadar günden eskiyse `BILGI` — engellenmez, `OnayBlogu` yok. Takvim günüyle sayılır.
+ */
+export function faturaGeriyeDonukUyarisi(
+  c: VeriSetiCiktisi,
+  gun: Date = bugun(),
+  sinir: number = policy.export.faturaGeriyeDonukUyariGun
+): Bildirim | null {
+  const i = c.kolonlar.findIndex((k) => k.kod === "SEVK_TARIHI");
+  const esik = gunKolonu(gunEkle(gun, -sinir))!;
+  const adet = c.satirlar.filter((r) => r[i] !== null && r[i]! < esik).length;
+  return adet > 0 ? bilgi("FATURA_GERIYE_DONUK", { adet, gun: sinir }) : null;
+}
+
 export async function calistirDisaAktarim(p: DisaAktarimParametresi, db: Db = prisma): Promise<VeriSetiCiktisi> {
   switch (p.kod) {
     case "CARI_HAREKET":
@@ -303,5 +444,7 @@ export async function calistirDisaAktarim(p: DisaAktarimParametresi, db: Db = pr
       return stok(p.tarih, db);
     case "DOKTOR_LISTESI":
       return doktorListesi(db);
+    case "FATURA_HAZIRLIK":
+      return faturaHazirlik(p.aralik, db);
   }
 }
