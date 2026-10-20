@@ -27,18 +27,20 @@ export async function addStockEntry(
   if (!product) return { error: "Ürün bulunamadı." };
 
   // Stok miktarı saklanmaz; giriş yalnız hareket yazar (ADR-005).
-  await prisma.$transaction(async (tx) =>
-    stokHareketiYaz(tx, [
+  await prisma.$transaction(async (tx) => {
+    await stokHareketiYaz(tx, [
       { productId, locationId: await varsayilanDepoId(tx), type: "GIRIS", quantity, note: note ?? "Stok girişi" },
-    ])
-  );
-
-  await createAuditLog({
-    actorId: session.user.id,
-    action: AUDIT_ACTIONS.STOCK_ENTRY,
-    entityType: "Product",
-    entityId: productId,
-    after: { quantity, newStock: await hesaplaStok(productId), note },
+    ]);
+    await createAuditLog(
+      {
+        actorId: session.user.id,
+        action: AUDIT_ACTIONS.STOCK_ENTRY,
+        entityType: "Product",
+        entityId: productId,
+        after: { quantity, newStock: await hesaplaStok(productId, undefined, undefined, tx), note },
+      },
+      tx
+    );
   });
 
   revalidatePath("/stock");

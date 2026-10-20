@@ -26,13 +26,12 @@ export async function shipOrder(orderId: string, formData: FormData) {
     redirect("/shipping");
   }
 
-  let documentNo = "";
   await prisma.$transaction(async (tx) => {
     await tx.order.update({
       where: { id: orderId },
       data: { status: OrderStatus.KARGOLANDI },
     });
-    documentNo = await uretBelgeNo("SVK", tx);
+    const documentNo = await uretBelgeNo("SVK", tx);
     await tx.shipment.create({
       data: {
         documentNo,
@@ -44,15 +43,17 @@ export async function shipOrder(orderId: string, formData: FormData) {
         status: OrderStatus.KARGOLANDI,
       },
     });
-  });
-
-  await createAuditLog({
-    actorId: session.user.id,
-    action: AUDIT_ACTIONS.ORDER_STATUS_CHANGE,
-    entityType: "Order",
-    entityId: orderId,
-    before: { status: "HAZIRLANIYOR" },
-    after: { status: "KARGOLANDI", documentNo, carrierId, trackingNumber },
+    await createAuditLog(
+      {
+        actorId: session.user.id,
+        action: AUDIT_ACTIONS.ORDER_STATUS_CHANGE,
+        entityType: "Order",
+        entityId: orderId,
+        before: { status: "HAZIRLANIYOR" },
+        after: { status: "KARGOLANDI", documentNo, carrierId, trackingNumber },
+      },
+      tx
+    );
   });
 
   revalidatePath("/shipping");

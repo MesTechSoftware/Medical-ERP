@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { Prisma } from "@/generated/prisma/client";
 import type { Role } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
@@ -10,6 +9,7 @@ import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { portfoyuDevret } from "@/lib/sahiplik";
 import { kullaniciOturumlariniSonlandir } from "@/lib/oturum";
 import { parolaHashle, parolaHatasi } from "@/lib/parola";
+import { benzersizIhlali } from "@/lib/hata";
 import {
   HESAP_KURALI_MESAJI,
   eszamanlilikHatasi,
@@ -40,10 +40,6 @@ class HesapHatasi extends Error {
 
 const ROLLER: readonly Role[] = ["SATICI", "OPERASYON", "YONETICI"];
 
-function benzersizIhlali(e: unknown): boolean {
-  return e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002";
-}
-
 export async function createUser(_prev: UserFormState, formData: FormData): Promise<UserFormState> {
   const session = await requireAdmin();
 
@@ -61,31 +57,35 @@ export async function createUser(_prev: UserFormState, formData: FormData): Prom
   if (parolaHata) return { error: parolaHata, degerler };
   if (!gerekce) return { error: "Gerekçe zorunludur.", degerler };
 
-  let user;
+  const passwordHash = await parolaHashle(password);
   try {
-    user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        phone,
-        role,
-        passwordHash: await parolaHashle(password),
-        // Yöneticinin verdiği parola geçicidir (E-2 20.10 eki).
-        mustChangePassword: true,
-      },
+    await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          name,
+          email,
+          phone,
+          role,
+          passwordHash,
+          // Yöneticinin verdiği parola geçicidir (E-2 20.10 eki).
+          mustChangePassword: true,
+        },
+      });
+      await createAuditLog(
+        {
+          actorId: session.user.id,
+          action: AUDIT_ACTIONS.USER_CREATE,
+          entityType: "User",
+          entityId: user.id,
+          after: { ...user, gerekce }, // passwordHash sanitize ile çıkarılır
+        },
+        tx
+      );
     });
   } catch (e) {
     if (benzersizIhlali(e)) return { error: "Bu e-posta zaten kayıtlı.", degerler };
     throw e;
   }
-
-  await createAuditLog({
-    actorId: session.user.id,
-    action: AUDIT_ACTIONS.USER_CREATE,
-    entityType: "User",
-    entityId: user.id,
-    after: { ...user, gerekce }, // passwordHash sanitize ile çıkarılır
-  });
 
   revalidatePath("/users");
   redirect("/users");
@@ -156,9 +156,8 @@ export async function updateUser(
     }
   }
 
-  let updated;
   try {
-    updated = await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx) => {
       if (pasiflestiriliyor) {
         const engel = await pasiflestirmeEngeli(tx, before, session.user.id);
         if (engel) throw new HesapHatasi(engel);
@@ -174,7 +173,29 @@ export async function updateUser(
         });
         if (sonuc.durum === "HATA") throw new PortfoyHatasi();
       }
-      return u;
+      await createAuditLog(
+        {
+          actorId: session.user.id,
+          action: AUDIT_ACTIONS.USER_UPDATE,
+          entityType: "User",
+          entityId: id,
+          before, // passwordHash sanitize ile çıkarılır
+          after: gerekce ? { ...u, gerekce } : u,
+        },
+        tx
+      );
+      if (password) {
+        await createAuditLog(
+          {
+            actorId: session.user.id,
+            action: AUDIT_ACTIONS.USER_PASSWORD_RESET,
+            entityType: "User",
+            entityId: id,
+            after: { gerekce },
+          },
+          tx
+        );
+      }
     }, pasiflestiriliyor ? pasiflestirmeTxSecenekleri(before.role) : {});
   } catch (e) {
     if (e instanceof HesapHatasi) return { error: HESAP_KURALI_MESAJI[e.kural], degerler };
@@ -184,24 +205,6 @@ export async function updateUser(
       return { error: "Aynı anda başka bir değişiklik yapıldı; tekrar deneyin.", degerler };
     if (benzersizIhlali(e)) return { error: "Bu e-posta zaten kayıtlı.", degerler };
     throw e;
-  }
-
-  await createAuditLog({
-    actorId: session.user.id,
-    action: AUDIT_ACTIONS.USER_UPDATE,
-    entityType: "User",
-    entityId: id,
-    before, // passwordHash sanitize ile çıkarılır
-    after: gerekce ? { ...updated, gerekce } : updated,
-  });
-  if (password) {
-    await createAuditLog({
-      actorId: session.user.id,
-      action: AUDIT_ACTIONS.USER_PASSWORD_RESET,
-      entityType: "User",
-      entityId: id,
-      after: { gerekce },
-    });
   }
 
   revalidatePath("/users");

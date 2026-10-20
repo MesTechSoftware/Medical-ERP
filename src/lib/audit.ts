@@ -1,15 +1,14 @@
 import Decimal from "decimal.js";
 import type { Prisma } from "@/generated/prisma/client";
-import { prisma } from "@/lib/db";
 import { formatla } from "@/lib/money";
 
 /**
  * Denetim kaydı (audit log) yardımcıları.
  *
  * Tasarım kararları:
- * - **Best-effort:** audit yazımı başarısız olsa bile ana iş bozulmaz (try/catch).
- *   Çağıran taraf `await` eder ama redirect'ten ÖNCE ve iş transaction'ı
- *   COMMIT olduktan SONRA çağırır (audit hatası işi geri almaz).
+ * - **İşle aynı transaction'da (X-3 §(4)):** kayıt, kaydettiği işin transaction'ında yazılır;
+ *   yazılamazsa iş de geri alınır ve hata yutulmaz. Kullanıcıya "tamamlandı" denen her iş
+ *   denetim kaydıyla birlikte vardır; "tamamlanamadı" denen işin kalıntısı yoktur.
  * - **Merkezî sanitize:** hassas alanlar (şifre/token) action bazında değil,
  *   burada tek noktada temizlenir. Yeni action eklendiğinde sızma riski sıfır.
  */
@@ -148,11 +147,7 @@ export function sanitizeAuditData(data: unknown): unknown {
 
 function serialize(data: unknown): string | null {
   if (data === undefined || data === null) return null;
-  try {
-    return JSON.stringify(sanitizeAuditData(data));
-  } catch {
-    return null;
-  }
+  return JSON.stringify(sanitizeAuditData(data));
 }
 
 type AuditInput = {
@@ -165,13 +160,10 @@ type AuditInput = {
 };
 
 /**
- * Denetim kaydı oluşturur. Hata olursa yutar (ana işlemi bozmaz).
- *
- * `tx` verilirse kayıt iş transaction'ının içinde yazılır ve hata **yutulmaz**: log
- * yazılamazsa iş de geri alınır. Kaydın işle aynı transaction'da olmasını isteyen
- * kurallar içindir (X-17 §(3) sahiplik değişikliği).
+ * Denetim kaydı oluşturur. `db` iş transaction'ıdır; tek yazımlık olaylar (giriş denemesi)
+ * için `prisma` verilir. Hata yutulmaz (X-3 §(4)).
  */
-export async function createAuditLog(input: AuditInput, tx?: Prisma.TransactionClient): Promise<void> {
+export async function createAuditLog(input: AuditInput, db: Prisma.TransactionClient): Promise<void> {
   const data = {
     actorId: input.actorId ?? null,
     action: input.action,
@@ -180,13 +172,5 @@ export async function createAuditLog(input: AuditInput, tx?: Prisma.TransactionC
     beforeData: serialize(input.before),
     afterData: serialize(input.after),
   };
-  if (tx) {
-    await tx.auditLog.create({ data });
-    return;
-  }
-  try {
-    await prisma.auditLog.create({ data });
-  } catch (err) {
-    console.error("[audit] kayıt oluşturulamadı:", err);
-  }
+  await db.auditLog.create({ data });
 }

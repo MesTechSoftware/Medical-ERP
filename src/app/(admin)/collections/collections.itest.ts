@@ -50,15 +50,25 @@ describe("tahsilat — numara ve kayıt aynı transaction'da (X-2-1)", () => {
     s = await seed();
   });
 
-  it("tahsilat yazılamazsa THS numarası harcanmaz", async () => {
-    // Numara alındıktan sonra kayıt yabancı anahtarda düşer: olmayan cari.
-    const hatali = await recordCollection({}, tahsilatFormu("olmayan-cari", s.havale.id));
-    expect(hatali.error).toBeDefined();
+  it("tahsilat yazılamazsa THS numarası harcanmaz; teknik hata mesaja çevrilmez (X-3-3)", async () => {
+    // Numara alındıktan sonra kayıt yabancı anahtarda düşer: olmayan cari. Teknik hatadır —
+    // iş mesajına dönmez, hata sınırına fırlar (X-3 §(4)).
+    await expect(recordCollection({}, tahsilatFormu("olmayan-cari", s.havale.id))).rejects.toThrow();
     expect(await prisma.doctorPayment.count()).toBe(0);
+    expect(await prisma.auditLog.count()).toBe(0);
 
     expect((await recordCollection({}, tahsilatFormu(s.doctor.id, s.havale.id))).error).toBeUndefined();
     const [p] = await prisma.doctorPayment.findMany();
     expect(p.documentNo).toBe(`THS-${takvimYili()}-000001`);
+  });
+
+  it("pasif ödeme yöntemi iş hatasıdır: mesaj döner, numara ve kayıt yazılmaz (X-3-3)", async () => {
+    await prisma.paymentMethod.update({ where: { id: s.havale.id }, data: { isActive: false } });
+    expect(await recordCollection({}, tahsilatFormu(s.doctor.id, s.havale.id))).toEqual({
+      error: "Ödeme yöntemi bulunamadı.",
+    });
+    expect(await prisma.doctorPayment.count()).toBe(0);
+    expect(await prisma.documentCounter.count()).toBe(0);
   });
 
   it("BAYI carisinin tahsilatı aynı yoldan numaralanır (X-8 §(7))", async () => {
