@@ -16,6 +16,7 @@ import {
 import ConfirmSubmit from "@/components/ConfirmSubmit";
 import { IslemFormu } from "@/components/Sonuc";
 import { deleteProduct } from "./actions";
+import { bugun } from "@/lib/zaman";
 
 const CRITICAL_STOCK = 10;
 
@@ -30,7 +31,7 @@ export default async function ProductsPage() {
   // Liste fiyatı varsayılan listenin satırıdır (X-10 §(5)); stok hareketlerden türer (ADR-005).
   const products = await Promise.all(
     urunler.map(async (p) => {
-      const fiyat = await cozumleBirimFiyat(p.id, null);
+      const fiyat = await cozumleBirimFiyat(p.id, null, { miktar: 1, gun: bugun() });
       return {
         ...p,
         listPrice: fiyat.durum === "TAMAM" ? fiyat.listeFiyat : null,

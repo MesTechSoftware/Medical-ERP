@@ -6,6 +6,7 @@ import { cozumleBirimFiyat } from "@/lib/fiyat";
 import { hesaplaStok } from "@/lib/stok";
 import { formatla } from "@/lib/money";
 import OrderForm from "../OrderForm";
+import { bugun } from "@/lib/zaman";
 
 export default async function NewOrderPage() {
   const session = await requireSeller();
@@ -27,7 +28,7 @@ export default async function NewOrderPage() {
   // yeniden çözer (X-10). Liste ataması 1B madde 7'dedir.
   const products = await Promise.all(
     urunler.map(async (u) => {
-      const fiyat = await cozumleBirimFiyat(u.id, null);
+      const fiyat = await cozumleBirimFiyat(u.id, null, { miktar: 1, gun: bugun() });
       return {
         id: u.id,
         name: u.name,

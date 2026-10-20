@@ -15,6 +15,7 @@ import { policy } from "@/lib/policy";
 import { siparisSahibiniKilitle } from "@/lib/sahiplik";
 import { IsHatasi } from "@/lib/hata";
 import { engel, sert, type Bildirim, type IslemSonucu } from "@/lib/sonuc";
+import { bugun } from "@/lib/zaman";
 
 const orderLinesSchema = z
   .array(
@@ -63,6 +64,7 @@ export async function createOrder(
   const parsedLines = orderLinesSchema.safeParse(raw);
   if (!parsedLines.success) return engel("SIPARIS_KALEMI_GECERSIZ");
   const lines = parsedLines.data;
+  const gun = bugun();
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -92,7 +94,8 @@ export async function createOrder(
         // Liste fiyatı tek yoldan çözülür; atanmış listede satır yoksa varsayılana
         // düşülmez (X-10 §(3)) — `SERT`, satır kaydedilemez (X-4 §(4)). Satıcının
         // girdiği fiyat ayrıca saklanır (X-5 §(9)).
-        const fiyat = await cozumleBirimFiyat(product.id, doctor.id, tx);
+        // Barem satırın miktarına, geçerlilik siparişin gününe bakar (B-5, B-6).
+        const fiyat = await cozumleBirimFiyat(product.id, doctor.id, { miktar: line.quantity, gun }, tx);
         if (fiyat.durum === "HATA") {
           hatalar.push(sert("FIYAT_COZUMLENEMEDI", { urun: product.name }));
           continue;

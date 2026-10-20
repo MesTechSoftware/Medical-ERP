@@ -83,6 +83,19 @@ describe("sipariş oluşturma (CM)", () => {
     expect(item.unitPrice.toFixed(2)).toBe("1000.00");
   });
 
+  it("barem satırın miktarına göre çözülür ve liste fiyatı olarak donar (B-6-1)", async () => {
+    await prisma.priceListItem.create({
+      data: { priceListId: s.ref.liste.id, productId: s.product.id, listPrice: "900", minQuantity: 10 },
+    });
+    await createOrder(null, siparisFormu(s.doctor.id, s.product.id, undefined, 9));
+    await createOrder(null, siparisFormu(s.doctor.id, s.product.id, undefined, 10));
+    const kalemler = await prisma.orderItem.findMany({ orderBy: { quantity: "asc" } });
+    expect(kalemler.map((k) => [k.quantity, k.listPrice.toFixed(2), k.unitPrice.toFixed(2)])).toEqual([
+      [9, "1000.00", "1000.00"],
+      [10, "900.00", "900.00"],
+    ]);
+  });
+
   it("sipariş SIP numarası alır; numaralar sıralıdır (A-14)", async () => {
     await createOrder(null, siparisFormu(s.doctor.id, s.product.id));
     await createOrder(null, siparisFormu(s.doctor.id, s.product.id));

@@ -114,6 +114,17 @@ describe("hesaplaSatirTutarlari — 🔴 belge toplamı = satır toplamlarının
   });
 });
 
+describe("hesaplaSatirTutarlari — kısmi sevkiyat (C-6-1, A-3 C-6 eki)", () => {
+  it("her sevkiyat kendi matrah ve KDV'sini yuvarlar; toplam tek seferdekinden farklı olabilir", () => {
+    // 0,125 × 2 = 0,25 tek sevkiyatta; iki ayrı sevkiyatta 0,125 → 0,13 her biri → 0,26.
+    const tekSefer = tek(satir("0.125", 2, "20"));
+    const parca = tek(satir("0.125", 1, "20"));
+    expect(tekSefer.matrah.toFixed(2)).toBe("0.25");
+    expect(parca.matrah.plus(parca.matrah).toFixed(2)).toBe("0.26");
+    // Doğru olan cari harekettir (C-6 §(7)): her sevkiyatın tutarı kendi hesabıdır, sonradan düzeltilmez.
+  });
+});
+
 describe("hesaplaKomisyonTutari (A-11)", () => {
   it("tutar × oran / 100, 2 hane, yarım sıfırdan uzağa", () => {
     expect(hesaplaKomisyonTutari("1000", "2.5").toFixed(2)).toBe("25.00");
