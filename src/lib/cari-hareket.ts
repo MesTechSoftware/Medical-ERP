@@ -30,6 +30,24 @@ export function sevkiyatHareketiYaz(
   });
 }
 
+/** `IADE` · `ALACAK` — A-1: iade edilen miktarın donmuş fiyatla tutarı; vade taşımaz (borç doğurmaz). */
+export function iadeHareketiYaz(
+  tx: Tx,
+  g: { doctorId: string; tutar: Decimal; documentNo: string; returnNoteId: string; yapanId: string }
+) {
+  return tx.ledgerEntry.create({
+    data: {
+      doctorId: g.doctorId,
+      type: "IADE",
+      direction: "ALACAK",
+      amount: g.tutar,
+      documentNo: g.documentNo,
+      returnNoteId: g.returnNoteId,
+      createdById: g.yapanId,
+    },
+  });
+}
+
 /** `TAHSILAT` — A-11: yönü tahsilattan; tutar brüt tahsil edilen tutardır, komisyon cariye dokunmaz. */
 export function tahsilatHareketiYaz(
   tx: Tx,

@@ -58,6 +58,8 @@ export const KURAL_METNI: Record<KuralKodu, (p: Parametreler) => string> = {
     "Sevk edilmiş, teslim edilmiş ya da zaten iptal edilmiş sipariş iptal edilemez; sevk edilen mal iade ile geri alınır.",
   SEVK_KALEMI_YOK: () => "Sevk edilecek en az bir kalem ve geçerli miktar giriniz.",
   SEVK_MIKTARI_ASILDI: (p) => `${p.urun} için sevk edilebilecek kalan miktar ${p.kalan}.`,
+  IADE_KALEMI_YOK: () => "İade edilecek en az bir kalem ve geçerli miktar giriniz.",
+  IADE_MIKTARI_ASILDI: (p) => `${p.urun} için iade edilebilecek miktar ${p.kalan}.`,
 
   ODEME_YONTEMI_BULUNAMADI: () => "Ödeme yöntemi bulunamadı.",
   TAHSILAT_BULUNAMADI: () => "Tahsilat bulunamadı.",

@@ -16,6 +16,7 @@ const ACTION_YETKISI: Record<string, "requireAdmin" | "requireStaff" | "requireS
   "(admin)/orders/actions.ts#prepareOrder": "requireStaff",
   "(admin)/orders/actions.ts#markDelivered": "requireStaff",
   "(admin)/orders/actions.ts#cancelOrder": "requireStaff",
+  "(admin)/orders/actions.ts#createReturn": "requireStaff", // A-1 eki: YONETICI + OPERASYON
   "(admin)/shipping/actions.ts#shipOrder": "requireStaff",
   "(admin)/collections/actions.ts#recordCollection": "requireStaff",
   "(admin)/collections/actions.ts#cancelCollection": "requireStaff",

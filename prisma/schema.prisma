@@ -580,13 +580,16 @@ model ReturnNote {
 }
 
 model ReturnNoteItem {
-  id           String     @id @default(cuid())
-  returnNote   ReturnNote @relation(fields: [returnNoteId], references: [id], onDelete: Cascade)
-  returnNoteId String
-  orderItem    OrderItem  @relation(fields: [orderItemId], references: [id])
-  orderItemId  String
-  quantity     Int
-  vatRate      Decimal    @db.Decimal(5, 2) // C-6 eki: orijinal satırın donmuş oranı
+  id             String     @id @default(cuid())
+  returnNote     ReturnNote @relation(fields: [returnNoteId], references: [id], onDelete: Cascade)
+  returnNoteId   String
+  orderItem      OrderItem  @relation(fields: [orderItemId], references: [id])
+  orderItemId    String
+  quantity       Int
+  vatRate        Decimal    @db.Decimal(5, 2) // C-6 eki: orijinal satırın donmuş oranı
+  // A-1 eki (20.10.2026): primin ters kaydı satırın en son sevkiyatının oranıyla; iade anında donar.
+  // BAYI ve bedelsiz satırda boş (X-14 §(3)).
+  commissionRate Decimal?   @db.Decimal(5, 2)
 
   @@index([returnNoteId])
 }

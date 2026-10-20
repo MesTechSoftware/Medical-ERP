@@ -13,8 +13,11 @@ import type { Prisma } from "@/generated/prisma/client";
  *   `KonsinyeCikis` → `stokHareketi`  (A-4: konsinye mal hâlâ bizimdir)
  *   `StokTransfer`  → `stokHareketi`
  *   `StokDuzeltme`  → `stokHareketi`  (B-7: mali sonucu yoktur)
- *   + bedelsiz satırlar → `sevkSatiri` (A-2)
+ *   + bedelsiz satırlar → `sevkSatiri`, `iadeSatiri` (A-2)
  *   + `IPTAL` sipariş   → `siparis`   (X-6 §(9): iptalin matrahtan çıkması filtrenin işidir)
+ *
+ * İade satırı (A-1) ciro ve hakedişi iade tarihinde düşürür (A-1 eki 20.10.2026); sevk satırıyla
+ * aynı sipariş ve bedelsiz dışlamasını taşır.
  *
  * Bakiye bu filtreyi KULLANMAZ: açılış ve vade farkı cari bakiyeye girer
  * (X-11 §(6)); filtre yalnız "satış sayılan" kümeleri tanımlar.
@@ -30,6 +33,10 @@ const sevkSatiri = {
   shipment: { order: siparis },
 } satisfies Prisma.ShipmentItemWhereInput;
 
+const iadeSatiri = {
+  orderItem: { isFree: false, order: siparis },
+} satisfies Prisma.ReturnNoteItemWhereInput;
+
 const cariHareket = {
   type: { notIn: ["ACILIS", "VADE_FARKI"] },
 } satisfies Prisma.LedgerEntryWhereInput;
@@ -40,4 +47,4 @@ const stokHareketi = {
   stockAdjustmentId: null,
 } satisfies Prisma.StockMovementWhereInput;
 
-export const sayilanBelgeler = Object.freeze({ siparis, sevkSatiri, cariHareket, stokHareketi });
+export const sayilanBelgeler = Object.freeze({ siparis, sevkSatiri, iadeSatiri, cariHareket, stokHareketi });

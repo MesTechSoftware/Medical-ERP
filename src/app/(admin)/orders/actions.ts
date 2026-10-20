@@ -7,7 +7,9 @@ import { requireStaff } from "@/lib/session";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { OrderStatus } from "@/generated/prisma/enums";
 import { stokHareketiYaz, stokKilitle } from "@/lib/stok";
-import { engel, type IslemSonucu } from "@/lib/sonuc";
+import { IsHatasi } from "@/lib/hata";
+import { iadeYaz } from "@/lib/iade";
+import { basarili, engel, type IslemSonucu } from "@/lib/sonuc";
 
 function revalidateOrders() {
   revalidatePath("/orders");
@@ -130,4 +132,53 @@ export async function cancelOrder(id: string): Promise<IslemSonucu> {
   revalidatePath("/products");
   revalidatePath("/stock");
   redirect(`/orders/${id}`);
+}
+
+const IADE_KALEMI = "iade_";
+
+/**
+ * Mal iadesi (A-1): sevk edilmiş kalemlerden iade miktarı + zorunlu sebep. Belge, depoya stok
+ * girişi ve cari alacak `iadeYaz()`'da aynı transaction'da doğar. `YONETICI` ve `OPERASYON`
+ * girer (A-1 eki 20.10.2026). Başarıda sayfada kalınır; iade listesi yenilenir.
+ */
+export async function createReturn(orderId: string, _prev: unknown, formData: FormData): Promise<IslemSonucu> {
+  const session = await requireStaff();
+
+  const kalemler = [...formData.keys()]
+    .filter((k) => k.startsWith(IADE_KALEMI))
+    .map((k) => {
+      const v = String(formData.get(k) ?? "").trim() || "0";
+      // Tam sayı değilse NaN kalır ve servis reddeder; kesilip sessizce yuvarlanmaz.
+      return { siparisKalemiId: k.slice(IADE_KALEMI.length), miktar: /^\d+$/.test(v) ? parseInt(v, 10) : NaN };
+    });
+
+  try {
+    const iade = await prisma.$transaction(async (tx) => {
+      const r = await iadeYaz(tx, {
+        siparisId: orderId,
+        kalemler,
+        sebep: String(formData.get("reason") ?? ""),
+        yapanId: session.user.id,
+      });
+      await createAuditLog(
+        {
+          actorId: session.user.id,
+          action: AUDIT_ACTIONS.RETURN_CREATE,
+          entityType: "Order",
+          entityId: orderId,
+          after: { iade: r.documentNo, kalemler },
+        },
+        tx
+      );
+      return r;
+    });
+    revalidatePath(`/orders/${orderId}`);
+    revalidatePath("/stock");
+    revalidatePath("/doctors");
+    revalidatePath("/reports");
+    return basarili({ documentNo: iade.documentNo });
+  } catch (e) {
+    if (e instanceof IsHatasi) return e.sonuc;
+    throw e;
+  }
 }

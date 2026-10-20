@@ -81,8 +81,9 @@ export async function sorgu<T = Record<string, unknown>>(sql: string, params: un
 /**
  * Stoğu hiç olmayan yeni ürünle `HAZIRLANIYOR` sipariş (2 adet) — sevkiyatı negatif stok
  * onayına düşer (A-8). Doktor ve ürün benzersizdir; başka testin stoğuna dokunmaz.
+ * `stoklu` verilirse yeni ürüne 10 adet giriş yazılır (sevkiyat onaysız geçer).
  */
-export async function stoksuzSiparis() {
+export async function stoksuzSiparis({ stoklu = false } = {}) {
   const ek = `${Date.now() % 100000}`.padStart(5, "0") + `${Math.floor(Math.random() * 100)}`.padStart(2, "0");
   const doktorAdi = `Dr. Onay ${ek}`;
   const urunAdi = `Stoksuz Ürün ${ek}`;
@@ -95,6 +96,13 @@ export async function stoksuzSiparis() {
     `INSERT INTO "Product" (id, name, code, "taxRateId") SELECT $1, $2, $3, "taxRateId" FROM "Product" LIMIT 1`,
     [`e2e-urun-${ek}`, urunAdi, `E2E-${ek}`]
   );
+  if (stoklu) {
+    await sorgu(
+      `INSERT INTO "StockMovement" (id, "productId", "locationId", type, quantity)
+       SELECT $1, $2, id, 'GIRIS', 10 FROM "StockLocation" WHERE type = 'DEPO' ORDER BY "sortOrder" LIMIT 1`,
+      [`e2e-stok-${ek}`, `e2e-urun-${ek}`]
+    );
+  }
   const siparisId = `e2e-sip-${ek}`;
   const kalemId = `e2e-kal-${ek}`;
   const documentNo = `E2E-SIP-${ek}`;
