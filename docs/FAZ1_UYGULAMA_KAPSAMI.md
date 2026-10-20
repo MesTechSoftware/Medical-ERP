@@ -817,6 +817,25 @@ Bunlar **karar değil**, Yol (b)'nin doğurduğu uygulama kalemleridir; 1B madde
 - A-13 eksik fatura kimliği uyarısı (`BILGI`) bu veri setine bağlanmadı — A-13 akışıyla (1B-7) gelir.
 - K-7 §(4) yazılı teyidi ilk çıktıdan önce alınır — süreçtir, kod kontrol etmez (D-5 §(8)).
 
+**Madde 7 — bölünme (20.10.2026).** Madde tek PR için çok büyük; sıra veri akışına göredir (önce borç ve stoğu
+doğuran akış, sonra onu tüketenler): **7a** A-3 sevkiyat (borç, stok, prim sevkiyatta) · **7b** A-11 tahsilat
+cari hareketi + K-1 iptal ters kaydı + komisyonun yeri · **7c** A-8 onay akışı (sipariş/sevkiyatta `NEGATIF_STOK`
+gerekçe diyaloğu, sevkiyatta `acikBlokVarMi`, onay bekleyenler ekranı) · **7d** A-1 iade, A-2 bedelsiz, A-4
+konsinye, B-4 transfer, B-7 stok düzeltme · **7e** tek cari ekranı (X-8, A-13, A-6 açılış, A-7 vade farkı, X-10
+liste ataması) + fiyat listesi ekranı · **7f** D-6 import (X-16 / ADR-006 sırası).
+
+**Madde 7a — A-3 sevkiyat (20.10.2026, kriterler A-3-1, A-7-1, X-14-2).** Notlar (karar değil):
+
+- `src/lib/sevkiyat.ts` `sevkiyatYaz(tx, girdi)`: ürün kilidi → durum ve kalan kilit altında → `SVK` → satırlar
+  (prim oranı donar) → stok çıkışı (`shipmentId`) → `SEVKIYAT` · `BORC` (vade = sevk günü + `paymentTermDays`).
+  Demo seed sevk edilmiş siparişleri de bu yoldan kurar.
+- **Kilit:** yeni kilit kaynağı açılmadı (ADR-008 geçerlilik sınırı). Sevkiyat ve iptal aynı siparişin ürün
+  satırlarını kilitler; durum, kalan ve "sevkiyat var mı" kilit altında okunur. İki bağlantılı iki test:
+  eşzamanlı iki sevkiyat, sevkiyat × iptal (kilitsiz iptal kırmızı — 20.10 doğrulandı).
+- **Sipariş artık stok düşürmez** ve ürün kilidi almaz (doktor → sayaç). `StockMovement.orderId` eski kayıtlar
+  içindir; iptal, eski akışta sipariş anında yazılmış çıkışı iade girişiyle geri alır.
+- Negatif stok sevkiyatta da engellenmez; `NEGATIF_STOK` kalemleri `OnayBlogu`'na 7c'de bağlanır.
+
 ---
 
 ### §D.5 · 1A'nın **yapmadıkları** — sınırı yazılı tutmak için

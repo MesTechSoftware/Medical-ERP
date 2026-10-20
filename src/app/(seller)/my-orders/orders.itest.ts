@@ -7,7 +7,7 @@ import { takvimYili } from "@/lib/zaman";
 import { referansVeri, yeniDoktorVerisi } from "../../../../test/integration/referans";
 
 // Sipariş oluşturma — CM sonrası tek fiyat yolu (X-10), Decimal (X-5), belge no (A-14),
-// stok hareketten türer ve negatife düşüş engellenmez (ADR-005, B-4).
+// stok sipariş anında düşmez — çıkış sevkiyatta doğar (A-3, sevkiyat.itest.ts).
 // C6 (GÇ-8): taban fiyat reddi yok — iskonto tavanı yok, liste üstü satış serbest.
 const h = vi.hoisted(() => ({ sellerId: "" }));
 
@@ -112,18 +112,16 @@ describe("sipariş oluşturma (CM)", () => {
     expect(order.sellerId).toBe(h.sellerId); // X-13 §(3): sipariş anındaki sahip
   });
 
-  it("stok hareketten türer; çıkışın kaynağı siparişin kendisidir (ADR-005, B-7)", async () => {
+  it("sipariş stok düşürmez; çıkış sevkiyatta doğar (A-3)", async () => {
     await createOrder(null, siparisFormu(s.doctor.id, s.product.id));
-    expect(await hesaplaStok(s.product.id)).toBe(8);
-    const cikis = await prisma.stockMovement.findFirstOrThrow({ where: { type: "CIKIS" } });
-    expect(cikis.orderId).not.toBeNull();
-    expect(cikis.locationId).toBe(s.ref.depo.id);
+    expect(await hesaplaStok(s.product.id)).toBe(10);
+    expect(await prisma.stockMovement.count({ where: { type: "CIKIS" } })).toBe(0);
   });
 
-  it("stok yetersiz olsa da sipariş engellenmez — negatif stok yumuşak kısıttır (B-4, GÇ-17)", async () => {
+  it("stok yetersiz olsa da sipariş engellenmez (B-4, GÇ-17)", async () => {
     const sonuc = await createOrder(null, siparisFormu(s.doctor.id, s.product.id, undefined, 15));
     expect(sonuc).toBeUndefined(); // başarıda redirect
-    expect(await hesaplaStok(s.product.id)).toBe(-5);
+    expect(await prisma.order.count()).toBe(1);
   });
 
   it("varsayılan listede satırı olmayan ürün sipariş edilemez (X-10 §(3))", async () => {

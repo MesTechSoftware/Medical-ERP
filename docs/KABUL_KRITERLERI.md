@@ -56,7 +56,7 @@
 |---|---|---|
 | A-1-1 | | 1B-7 |
 | A-2-1 | | 1B-7 *(tutar hesabı 1B-5)* |
-| A-3-1 | | 1B-7 |
+| A-3-1 | Bir sipariş satırına birden çok sevkiyat bağlanabilir; sevkiyat yalnız `ONAYLI` · `HAZIRLANIYOR` siparişte, kalem başına kalan miktarı aşmayan tam sayıyla yazılır (aşım ve geçersiz miktar `SERT`, hiçbir kayıt ve numara yazılmaz). Doktor borcu, stok çıkışı ve prim oranı sevkiyat anında aynı transaction'da doğar: `SVK` numarası · sevkiyat satırları · kaynağı sevkiyat olan stok çıkışı · `SEVKIYAT` · `BORC` cari hareket (tutar sevk edilen satırların `hesaplaSatirTutarlari()` toplamı, her sevkiyat kendi yuvarlaması; yalnız bedelsiz satırlı sevkiyat borç doğurmaz). Sipariş stok düşürmez. Bütün kalemler sevk edilince sipariş `KARGOLANDI` olur. Aynı siparişin eşzamanlı iki sevkiyatı kalanı aşamaz; sevkiyatı olan sipariş iptal edilemez (eşzamanlı iptal dahil) — iade sürecidir. | 1B-7 · `sevkiyat.itest.ts` · `orders.itest.ts` · `sevkiyat.spec.ts` |
 | A-4-1 | | 1B-7 |
 | A-5-1 | `TEKLIF` aşamasındaki siparişin satırları sayılan sipariş ve sayılan sevk satırı kümesine girmez. | 1B-1 · `sayilan-belgeler.itest.ts` |
 | A-5-2 | `IPTAL` durumundaki sipariş sayılmaz (X-6 §(9), K-1). | 1B-1 · `sayilan-belgeler.itest.ts` |
@@ -65,7 +65,7 @@
 | A-5-5 | Konsinye çıkış, stok transferi ve stok düzeltmesinden doğan stok hareketi sayılan stok hareketi değildir (A-4, B-7). | 1B-1 · `sayilan-belgeler.itest.ts` |
 | A-5-6 | Ciro raporları sevk satırlarını yalnız bu filtreyle okur (K-4 §(2), X-1 §(5)); `TEKLIF`, iptal ve bedelsiz satır ciroya yansımaz. | 1B-1 · `reports-service.itest.ts` |
 | A-6-1 | | 1B-7 |
-| A-7-1 | | 1B-7 |
+| A-7-1 | Borç doğuran cari harekette vade tarihi vardır ve sevk gününden işler: vade = sevk günü (İstanbul takvim günü) + siparişin `odeme_vadesi_gun`'ü. Vade farkı otomatik hesaplanmaz. *(`VADE_FARKI` elle giriş akışı 1B-7 tek cari ekranıyla.)* | 1B-7 · `sevkiyat.itest.ts` |
 | A-8-1 | `acikBlokVarMi(belgeTipi, belgeId)` her kural kodu için belgenin **son** bloğuna bakar: kararı verilmemiş ya da `RED` ise `true` döner; blok yoksa ya da her kuralın son bloğu `ONAY`'lıysa `false`. Kurallar ayrı değerlendirilir; başka belgenin bloğu sonucu etkilemez. | 1B-1 · `onay-blogu.itest.ts` |
 | A-8-2 | `blokKontrolleriniCalistir()` ihlal yoksa `BASARILI` döner ve blok yazmaz. | 1B-1 · `onay-blogu.itest.ts` |
 | A-8-3 | İhlal varsa ve gerekçe boşsa (yalnız boşluk dahil) `ONAY_GEREKLI` · `YUMUSAK` döner, **bütün** ihlaller sonuçtadır (X-4 §(7)); blok yazılmaz. | 1B-1 · `onay-blogu.itest.ts` |
@@ -164,7 +164,8 @@
 | X-11-1 | | 1B-1 · 1B-2 · 1B-7 |
 | X-12-1 | | 1B-7 |
 | X-13-1 | `kapsamliDoktorlariGetir(kullanici)` doktor okumasının kapsamını **sorgu süzgeci** olarak döner. `SATICI`'ya yalnız sahibi olduğu `DOKTOR` carileri döner — başka satıcının carisi, sahipsiz cari ve `BAYI` dönmez (X-8 §(3)). `YONETICI` ve `OPERASYON` bütün carileri görür. Satıcı ekranlarının doktor okumaları — doktor listesi, düzenleme sayfası, sipariş formu, hesabım, doktor güncelleme ve sipariş kaydı — bu süzgeçten geçer. Kapsam dışındaki cari bulunmamış gibi davranır, varlığı ima edilmez (X-3 §(8)). Satıcı rota grubunda sahip süzgeci elle yazılmaz (D-2 §(3)). | 1B-3 · `kapsam.itest.ts` · `tek-cagri.test.ts` |
-| X-14-1 | Hakediş = sevkiyat satırının matrahı × satıra donmuş oran (`hesaplaSatirTutarlari()`, X-5 §(4)); tutar saklanmaz, raporda hesaplanır. Satıcının oranı sonradan değişirse geçmiş satırların hakedişi değişmez. `BAYI` ve bedelsiz satır hakediş doğurmaz. *Oranın sevkiyat anında satıra yazılması 1B-7'dedir (sevkiyat satırını yazan akış).* | 1B-3 · 1B-7 · `satir-tutarlari.test.ts` · `reports-service.itest.ts` |
+| X-14-1 | Hakediş = sevkiyat satırının matrahı × satıra donmuş oran (`hesaplaSatirTutarlari()`, X-5 §(4)); tutar saklanmaz, raporda hesaplanır. Satıcının oranı sonradan değişirse geçmiş satırların hakedişi değişmez. `BAYI` ve bedelsiz satır hakediş doğurmaz. Oranın satıra yazılması X-14-2'dedir. | 1B-3 · 1B-7 · `satir-tutarlari.test.ts` · `reports-service.itest.ts` |
+| X-14-2 | Uygulanan prim oranı sevkiyat anında sevkiyat satırına donar: satıcının özel oranı, yoksa `finance.primOraniVarsayilan`; `BAYI` carinin sevkiyatında ve bedelsiz satırda boştur. Oran sonradan değişse de donmuş değer değişmez. | 1B-7 · `sevkiyat.itest.ts` |
 | X-15-1 | | 1B-7 |
 | X-15-5-1 | | 1B-7 *(X-15 §(5) — telefon varsayımı)* |
 | X-16-1 | | 1B-7 *(taslaklar: `docs/arsiv/KARAR_ONERISI_2026-09-19.md` §10)* |

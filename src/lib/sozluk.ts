@@ -53,7 +53,10 @@ export const KURAL_METNI: Record<KuralKodu, (p: Parametreler) => string> = {
   FIYAT_COZUMLENEMEDI: (p) => `${p.urun} için fiyat çözümlenemedi.`,
   SIPARIS_KALEMI_GECERSIZ: () => "En az bir ürün ve geçerli miktar giriniz.",
   SIPARIS_DURUMU_UYGUN_DEGIL: () => "Siparişin durumu bu işleme uygun değil; sayfayı yenileyin.",
-  SIPARIS_IPTAL_EDILEMEZ: () => "Teslim edilmiş veya zaten iptal edilmiş sipariş iptal edilemez.",
+  SIPARIS_IPTAL_EDILEMEZ: () =>
+    "Sevk edilmiş, teslim edilmiş ya da zaten iptal edilmiş sipariş iptal edilemez; sevk edilen mal iade ile geri alınır.",
+  SEVK_KALEMI_YOK: () => "Sevk edilecek en az bir kalem ve geçerli miktar giriniz.",
+  SEVK_MIKTARI_ASILDI: (p) => `${p.urun} için sevk edilebilecek kalan miktar ${p.kalan}.`,
 
   ODEME_YONTEMI_BULUNAMADI: () => "Ödeme yöntemi bulunamadı.",
   TAHSILAT_BULUNAMADI: () => "Tahsilat bulunamadı.",

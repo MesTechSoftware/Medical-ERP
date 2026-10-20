@@ -438,7 +438,7 @@ model StockMovement {
 
   // Kaynak belge bağı — her hareket bir belgeden doğar (B-7). En fazla biri dolu;
   // açılış stoğu yalnız partiye bağlıdır.
-  // order: bugünkü akış stoğu sipariş anında düşürür. Sevkiyata taşınması 1B madde 7'dir (A-3).
+  // order: 1B-7a öncesi akış stoğu sipariş anında düşürüyordu (eski kayıtlar). Çıkış artık sevkiyattadır (A-3).
   order              Order?            @relation(fields: [orderId], references: [id])
   orderId            String?
   shipment           Shipment?         @relation(fields: [shipmentId], references: [id])

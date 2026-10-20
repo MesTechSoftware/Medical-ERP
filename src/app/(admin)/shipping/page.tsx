@@ -16,7 +16,15 @@ export default async function ShippingPage() {
       include: {
         seller: { select: { name: true } },
         doctor: { select: { fullName: true, clinic: true } },
-        items: { select: SIPARIS_SATIRI },
+        items: {
+          orderBy: { id: "asc" },
+          select: {
+            ...SIPARIS_SATIRI,
+            id: true,
+            product: { select: { name: true, code: true } },
+            shipmentItems: { select: { quantity: true } },
+          },
+        },
       },
     }),
     prisma.order.findMany({
@@ -85,6 +93,31 @@ export default async function ShippingPage() {
                     action={shipOrder.bind(null, o.id)}
                     className="flex flex-wrap items-end gap-2"
                   >
+                    {/* A-3: kısmi sevkiyat — her kalemin kalan miktarı varsayılandır; 0 bu sevkiyatta gönderilmez. */}
+                    <div className="w-full space-y-1">
+                      {o.items.map((i) => {
+                        const kalan = i.quantity - i.shipmentItems.reduce((t, s) => t + s.quantity, 0);
+                        return (
+                          <div key={i.id} className="flex items-center justify-between gap-3 text-sm">
+                            <label htmlFor={`miktar_${i.id}`} className="text-slate-700">
+                              {i.product.name}
+                              <span className="ml-1 text-xs text-slate-400">
+                                {i.product.code} · kalan {kalan}/{i.quantity}
+                              </span>
+                            </label>
+                            <input
+                              id={`miktar_${i.id}`}
+                              name={`miktar_${i.id}`}
+                              type="number"
+                              min={0}
+                              max={kalan}
+                              defaultValue={kalan}
+                              className="w-20 rounded-lg border border-slate-300 px-2 py-1 text-right text-sm tabular-nums outline-none focus:border-slate-500"
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
                     <div className="flex-1 min-w-[160px]">
                       <label className="mb-1 block text-xs text-slate-500">
                         Kargo Firması
@@ -109,6 +142,17 @@ export default async function ShippingPage() {
                       <input
                         name="trackingNumber"
                         placeholder="Örn: TR123456789"
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-[160px]">
+                      <label htmlFor={`irsaliye_${o.id}`} className="mb-1 block text-xs text-slate-500">
+                        İrsaliye No (isteğe bağlı)
+                      </label>
+                      <input
+                        id={`irsaliye_${o.id}`}
+                        name="externalDispatchNo"
+                        maxLength={32}
                         className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
                       />
                     </div>
