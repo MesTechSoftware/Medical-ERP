@@ -24,6 +24,8 @@ export default function AppShell({
         <div className="flex h-[61px] shrink-0 items-center gap-2 border-b border-slate-200 px-7">
           <Image
             src="/logo-mark.png"
+            // Küçük statik PNG; optimizasyon sunucusundan geçmez (CI'da /_next/image asılı kalıp sayfanın load olayını tutuyordu).
+            unoptimized
             alt=""
             width={278}
             height={480}
