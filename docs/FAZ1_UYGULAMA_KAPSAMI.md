@@ -661,9 +661,9 @@ parametrelerini taşır. Koşullu `updateMany` kolonla birlikte gider; bu yüzde
 2. ✅ *(16.10.2026 — A-14-1…5, X-2-1)* **A-14 `uretBelgeNo()` + `BelgeSayac`** → ardından **X-2 blocker** *(sırası zorunlu. X-2 artık kod düzeltmesi değil **bütün tahsilat yollarının** — `BAYI` dahil — kabul testidir: ödeme kaydı ve `uretBelgeNo()` aynı transaction'da; KARARLAR X-8 §(7))*
 3. **X-1 + D-2 tek commit** *(D-2 §(4): ayrı yapılırsa ikincisi birincisini bozar)* — *(17.10.2026: üç PR'a bölündü — **3a** #11 kapsam ✅ · **3b** #12 `degistirDoktorSahibi` tamamı (X-17) ✅ · **3c** X-1 + D-2 `getSellerReports` ve `OPERASYON` ekran matrisi, tek commit ✅ *(17.10.2026 — dönem zorunlu, hakediş `hesaplaSatirTutarlari()`'nda (X-5 §(4)), tahsilat tahsilat anındaki sahibe (X-1 eki); `OPERASYON` girişi açıldı, ana sayfası Dashboard; satıcı ekranı `/my-report`; yönetici cari/`BAYI` açma ekranı 1B-7)*. KARARLAR'ın tek commit hükmü yalnız `getSellerReports`'u bağlar; matrisin açık dört noktası KARARLAR D-2 eki 17.10)* —
    **`OPERASYON` ekran matrisi burada doğar** (§C-n) · **`BAYI` açma yetkisi de bu matriste yazılır** (X-8 §(5)); `SATICI` `BAYI` göremez ve açamaz (X-8 §(3))
-4. **E-2 kimlik katmanı — Yol (b)** *(`docs/adr/ADR-003`)* → **X-3/X-4 hata yüzeyi** → **Ü-3 taban etiketi** →
+4. ✅ *(20.10.2026 — PR #29–#35; 4a–4g)* **E-2 kimlik katmanı — Yol (b)** *(`docs/adr/ADR-003`)* → **X-3/X-4 hata yüzeyi** → **Ü-3 taban etiketi** →
    **A-15** → **X-6 §(6) vade uyarısı**
-5. **C-6 `hesaplaSatirTutarlari()`** + **B-5/B-6 `cozumleBirimFiyat()`** *(X-5 ham aritmetiğin iki adresi · `CM`'deki ilk sürüm burada tamamlanır: barem, tarih, X-4 `SERT` — X-10 §(3))*
+5. ✅ *(20.10.2026 — B-5-1, B-6-1, C-6-1, X-5-1, X-10-1)* **C-6 `hesaplaSatirTutarlari()`** + **B-5/B-6 `cozumleBirimFiyat()`** *(X-5 ham aritmetiğin iki adresi · `CM`'deki ilk sürüm burada tamamlanır: barem, tarih, X-4 `SERT` — X-10 §(3))*
 6. **D-5 dışa aktarım + kütük**, **K-4 §(6) fatura hazırlık veri seti**
 7. **B-7 stok düzeltme**, **A-1…A-13 belge akışları** *(bayi dahil — X-8 §(4))*, **tek cari ekranı** *(`hesap_sinifi` süzgeci — X-8 §(5); **fiyat listesi ataması** — X-10 §(2)/(6), yalnız `YONETICI`)*, **fiyat listesi ekranı** *(başlık + satır; tarih ekranı Faz 2 — X-10 §(7))*, **D-6 import** *(`hesap_sinifi` zorunlu kolon; **ön koşul:** `import.azamiDosyaBoyutMb` değeri)* — **X-16 / ADR-006 sırası** *(13.10)*: cari girdi şeması (tek cari ekranı) → `CARI` tanımı → şablon üretici ve geliştirici komutu → önizleme özeti · küme kuralı bildirimleri ve üç koruma testi (`information_schema`, C8 deseni) · kabul kriteri taslakları `docs/arsiv/KARAR_ONERISI_2026-09-19.md` §10'dadır, testten önce `KABUL_KRITERLERI.md`'ye yazılır
 8. **F-02 (küçültülmüş)**, **F-03**, **F-05 + K-6 temizliği**, **F-06**, **F-07**, **F-10**, **F-12**
@@ -778,6 +778,19 @@ Bunlar **karar değil**, Yol (b)'nin doğurduğu uygulama kalemleridir; 1B madde
   birlikte döner). FR-28'in "yeni siparişte uyarı" kısmı bağlanmadı: sipariş girişi başarıda yönlendirir ve
   `BILGI` taşıyamaz (4d notu) — sipariş belge akışı 1B-7'de yeniden kurulurken bakılır.
 - Cari hareketin borç tarafını yazan akış (sevkiyat borcu) 1B madde 7'dedir; o güne kadar uyarı pratikte görünmez.
+
+**Madde 5 — fiyat ve satır hesabı tamamı (20.10.2026, kriterler B-5-1, B-6-1, C-6-1, X-5-1, X-10-1).** Notlar (karar değil):
+
+- `cozumleBirimFiyat(urun, doktor, { miktar, gun })`: liste seçimi → o günde geçerli (`[başlangıç, bitiş)`) ve
+  `min_adet <= miktar` satırların en yüksek `min_adet`'lisi. Sipariş satırın miktarını ve siparişin İstanbul gününü
+  (`bugun()`) verir; ürün ekranları 1 adet + bugün. Bedelsiz satır bugün sipariş formunda yok (A-2 1B-7); geldiğinde
+  barem miktarına sayılmaz (B-6) — fiyat çağrısına girmez.
+- `hesaplaSatirTutarlari()` CM sürümü bedelsiz satırı ve kısmi sevkiyatı zaten karşılıyordu (kısmi sevkiyat = sevk
+  edilen miktarla çağrı); bu turda yalnız kısmi sevkiyat yuvarlama testi eklendi. Taban etiketi 4e'de
+  (`SATIR_TABANI`). `hesaplaKomisyonTutari()`'nın yeri hâlâ 1B-7 (A-11) açık noktasıdır.
+- **Bilinen sınır:** sipariş formunun önizlemesi varsayılan listenin 1 adetlik fiyatını gösterir; carinin atanmış
+  listesi ve barem sunucuda uygulanır, kayıtta donan değer doğrudur. Önizlemenin cari/bareme göre çözülmesi liste
+  ekranı ve cari ataması ile (1B-7) gelir — bugün barem ve atanmış liste verisi yalnız import/ekranla girebilir.
 
 ---
 

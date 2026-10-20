@@ -98,8 +98,8 @@
 | B-4-2 | Stok hareketi yalnız `stokHareketiYaz()` ile yazılır. Fonksiyon önce hareketin ürün satırlarını **id sırasıyla** kilitler, sonra stoğu okur ve yazar (ADR-005 §3, ADR-008 §(1)/(3)). Belge numarası alan akışta ürün kilidi `uretBelgeNo()`'dan önce alınır (ADR-008 §(1)). `FOR UPDATE` ve stok hareketi yazımı başka dosyada yoktur (ADR-008 §(6)). | 1B-1 · `tek-cagri.test.ts` · `stok.itest.ts` |
 | B-4-3 | Negatife düşüş engellenmez: hareket yazılır. Yazımdan sonra stoğu sıfırın altında kalan ve o yazımda **çıkış alan** her ürün × konum `NEGATIF_STOK` kalemi olarak döner (önceki ve sonraki miktarla). Giriş alan ya da sıfırda kalan konum kalem değildir. | 1B-1 · `stok.itest.ts` |
 | B-4-4 | Aynı ürüne eşzamanlı iki çıkış aynı ön stoğu göremez: ikinci yazım birincinin commit'ini bekler ve onun sonucunu okur (ADR-008 §(6), F-06). | 1B-1 · `stok.itest.ts` |
-| B-5-1 | | 1B-5 *(1A-CM: tarih çakışması `EXCLUDE` testli)* |
-| B-6-1 | | 1B-5 |
+| B-5-1 | Fiyat satırı belge gününde geçerliyse seçilir: aralık yarı açıktır (`gecerli_baslangic` dahil, `gecerli_bitis` hariç), boş uç süresizdir. Aynı liste + ürün + `min_adet` için tarih aralıkları çakışamaz (DB `EXCLUDE`). Günde geçerli satır yoksa fiyat çözümlenemez; son fiyata düşülmez. | 1B-5 · `fiyat.itest.ts` · `kisitlar.itest.ts` |
+| B-6-1 | Barem `min_adet` alt sınır satırlarıyla kurulur, üst sınır yoktur: satır miktarını karşılayan **en yüksek** `min_adet`'li satır seçilir; miktarı karşılayan satır yoksa fiyat çözümlenemez. Barem sipariş satırının miktarına bakar (kümülatif değil); çözülen fiyat satıra `liste_fiyat` olarak donar. | 1B-5 · `fiyat.itest.ts` · `orders.itest.ts` |
 | B-7-1 | | 1B-7 |
 
 ## C · Mali ve yasal
@@ -111,7 +111,7 @@
 | C-3-1 | | 1B-7 *(belgesiz doktor silme istisnası)* · 1A-CM *(audit VKN gizleme)* |
 | C-4-1 | — | konusuz (K-6) |
 | C-5-1 | | 1A-C8 *(para birimi alanı yok)* |
-| C-6-1 | | 1B-5 *(1A-CM: `hesaplaSatirTutarlari` ilk sürümü testli)* |
+| C-6-1 | Satır hesabı ve yuvarlama tek fonksiyondadır (`hesaplaSatirTutarlari()`): matrah = birim fiyat × miktar ve KDV = matrah × oran, her ikisi 2 hane yarım sıfırdan uzağa; toplam = matrah + KDV. Belge toplamı satır toplamlarının toplamıdır, yeniden yuvarlanmaz. Bedelsiz satırın matrahı ve KDV'si 0'dır, iskonto ortalamasına girmez. Kısmi sevkiyatta her sevkiyat kendi matrah ve KDV'sini yuvarlar. Oran satıra değer olarak donar. | 1B-5 · `satir-tutarlari.test.ts` · `orders.itest.ts` |
 | C-7-1 | | Faz 2–3 *(K-9)* |
 
 ## D · Operasyon
@@ -154,12 +154,12 @@
 | X-4-2 | Sunucu metin üretmez: kural kodu kodda kapalı bir katalogdur (`KURAL_KODLARI`) ve metni tek sözlüktendir (`sozluk.ts`); katalogdaki her kodun metni vardır, sözlükte katalog dışı kod yoktur. Action'lar sözlüğü okumaz; başka dosya kendi mesaj tablosunu tutmaz. | 1B-4 · `sonuc.test.ts` |
 | X-4-3 | Bildirim yutulmaz: bir işlemin bütün bildirimleri kademeye göre sıralı döner ve gösterilir. Sipariş girişinde kalem hataları (fiyat çözümlenemedi, pasif ürün) ilkinde durmadan birlikte döner; sipariş ve belge numarası yazılmaz. | 1B-4 · `sonuc.test.ts` · `orders.itest.ts` |
 | X-4-4 | Gösterim kademe başına tek desendir ve tek bileşendedir (`Sonuc.tsx`): `SERT` bildirim alanı olan formda alanın altında, alan işaretli (`aria-invalid`) ve form kutusunda tekrar edilmez; alanı olmayan ya da formda gösterilmeyen alanın bildirimi form kutusundadır. `YUMUSAK` onay diyaloğudur, gerekçe zorunludur. `BILGI` sonuç ekranında kapatılabilir şerittir. | 1B-4 · `is-sonucu.spec.ts` · `sonuc.test.ts` *(bileşen: `BILGI` şeridi başarı metniyle, `YUMUSAK` diyaloğu; `YUMUSAK` sipariş akışına 1B-7'de bağlanır)* |
-| X-5-1 | | 1B-5 *(1A-CM: `Decimal`, `formatla`, lint kuralı)* |
+| X-5-1 | Parasal alanlar `Decimal`'dir (birim fiyat 18,4 · tutar 18,2 · oran 5,2); `Decimal` üzerinde ham aritmetik yalnız `satir-tutarlari.ts` ve `fiyat.ts`'tedir (lint kuralı, CI). İstemciye parasal değer `formatla()` ile `string` gider. Miktar tam sayıdır; 4 haneden fazla ondalıklı fiyat reddedilir. İskonto oranı saklanmaz, türetilir; liste üstü satışta negatiftir. | 1B-5 · `eslint.config.mjs` · `money.test.ts` · `satir-tutarlari.test.ts` · `orders.itest.ts` |
 | X-6-1 | Vade görünürlüğü tutar değil varlıktır: cari borçluyken (`hesaplaDoktorBakiye()` yönü `BORC`) vadesi bugünden (İstanbul günü) önce olan, ters kayıtla çevrilmemiş bir `BORC` hareketi varsa doktor kartında ve tahsilat sonucunda `BILGI` · `VADESI_GECMIS_HAREKET` en eski vadeyle gösterilir; vadesi bugün olan hareket geçmiş sayılmaz. Bakiye kapalı ya da alacaklıyken uyarı yoktur. Vadesi geçmiş tutar hiçbir yerde gösterilmez; metin tarihin o borcun açık olduğunu göstermediğini yazar (X-6 20.10 eki). | 1B-4 · `bakiye.itest.ts` · `collections.itest.ts` |
 | X-7-1 | | 1B-10 *(matris yeniden kurulur)* |
 | X-8-1 | `SATICI` `BAYI` carisini görmez (X-13-1) ve açamaz: satıcı ekranından açılan cari daima `DOKTOR`'dur. `BAYI`'yi yalnız `YONETICI` açar; `OPERASYON` cari açmaz. *Yönetici cari açma ekranı ve `hesap_sinifi` süzgeci 1B-7'dedir.* | 1B-3 · 1B-7 · `kapsam.itest.ts` · `yetki.test.ts` |
 | X-9-1 | | 1A-C7b *(bellek içi sayaç testli)* |
-| X-10-1 | | 1B-5 · 1B-7 *(1A-CM: liste seçimi testli)* |
+| X-10-1 | Fiyat listesi carinin atanmış listesidir, atanmamışsa `pricing.varsayilanFiyatListesiKodu` listesidir. Atanmış listede ürünün uygun satırı yoksa varsayılana düşülmez → `SERT` `FIYAT_COZUMLENEMEDI`, satır kaydedilmez. *(Liste ekranı ve cari kartında atama 1B-7.)* | 1B-5 · `fiyat.itest.ts` · `orders.itest.ts` |
 | X-11-1 | | 1B-1 · 1B-2 · 1B-7 |
 | X-12-1 | | 1B-7 |
 | X-13-1 | `kapsamliDoktorlariGetir(kullanici)` doktor okumasının kapsamını **sorgu süzgeci** olarak döner. `SATICI`'ya yalnız sahibi olduğu `DOKTOR` carileri döner — başka satıcının carisi, sahipsiz cari ve `BAYI` dönmez (X-8 §(3)). `YONETICI` ve `OPERASYON` bütün carileri görür. Satıcı ekranlarının doktor okumaları — doktor listesi, düzenleme sayfası, sipariş formu, hesabım, doktor güncelleme ve sipariş kaydı — bu süzgeçten geçer. Kapsam dışındaki cari bulunmamış gibi davranır, varlığı ima edilmez (X-3 §(8)). Satıcı rota grubunda sahip süzgeci elle yazılmaz (D-2 §(3)). | 1B-3 · `kapsam.itest.ts` · `tek-cagri.test.ts` |

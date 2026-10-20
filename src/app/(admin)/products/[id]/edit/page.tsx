@@ -6,6 +6,7 @@ import { cozumleBirimFiyat } from "@/lib/fiyat";
 import { PageHeader, Card } from "@/components/ui";
 import ProductForm from "../../ProductForm";
 import { updateProduct } from "../../actions";
+import { bugun } from "@/lib/zaman";
 
 export default async function EditProductPage({
   params,
@@ -18,7 +19,7 @@ export default async function EditProductPage({
   if (!product) notFound();
 
   const [fiyat, taxRates] = await Promise.all([
-    cozumleBirimFiyat(id, null),
+    cozumleBirimFiyat(id, null, { miktar: 1, gun: bugun() }),
     prisma.taxRate.findMany({
       where: { isActive: true },
       orderBy: { sortOrder: "asc" },

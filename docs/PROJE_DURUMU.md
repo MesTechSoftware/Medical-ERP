@@ -128,7 +128,7 @@ sonucunda `BILGI` (en eski vade; tutar yok). Borç hareketini yazan sevkiyat ak�
 ## Kodda uygulanmış iş kuralları (seçme)
 
 - **Stok** saklanmaz, hareketlerden türer: tek `hesaplaStok(urun, konum?, tarih?)` (B-4, ADR-005). Negatife düşüş engellenmez (yumuşak kısıt). *Onay bloğu izi 1B'de (R-10).*
-- **Fiyat** tek yoldan çözülür: `cozumleBirimFiyat()` ilk sürümü — cariye atanmış liste, yoksa varsayılan liste (X-10). *Barem ve tarih 1B madde 5.*
+- **Fiyat** tek yoldan çözülür: `cozumleBirimFiyat(urun, cari, { miktar, gun })` — cariye atanmış liste, yoksa varsayılan liste (X-10); o günde geçerli satırlardan miktarı karşılayan en yüksek barem (B-5, B-6). Uygun satır yoksa `SERT` *fiyat çözümlenemedi*; düşüş yok.
 - **Satır tutarı** tek fonksiyonda: `hesaplaSatirTutarlari()` — satır bazında yuvarlama, belge toplamı = Σ satır (C-6). KDV saklanmaz.
 - **Sahiplik** tek yazma noktasından: `degistirDoktorSahibi()` (X-17); BAYI satırında sahip boş — DB `CHECK`.
 - **Belge numarası** `uretBelgeNo()` ile, global tekil; eşzamanlılık testli. *X-2 kabul testi 1B madde 2.*
