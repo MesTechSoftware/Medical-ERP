@@ -29,8 +29,9 @@ test("doktoru olan satıcı portföy seçimi olmadan pasifleştirilemez; sahipsi
   expect(doktorlar.length).toBeGreaterThan(0);
 
   try {
-    await page.goto(`/sellers/${satici.id}/edit`);
+    await page.goto(`/users/${satici.id}/edit`);
     await page.locator("#status").selectOption("PASIF");
+    await page.locator("#gerekce").fill("E2E pasifleştirme");
 
     // Seçim yok → form kaydedilmez, satıcı aktif kalır.
     await page.getByRole("button", { name: "Kaydet" }).click();
@@ -45,7 +46,7 @@ test("doktoru olan satıcı portföy seçimi olmadan pasifleştirilemez; sahipsi
     await page.locator("#portfoy").selectOption("SAHIPSIZ");
     await page.locator("#portfoyGerekce").fill("E2E ayrılış");
     await page.getByRole("button", { name: "Kaydet" }).click();
-    await expect(page).toHaveURL(/\/sellers$/);
+    await expect(page).toHaveURL(/\/users$/);
 
     const [sonra] = await query<{ isActive: boolean }>(`SELECT "isActive" FROM "User" WHERE id = $1`, [satici.id]);
     expect(sonra.isActive).toBe(false);

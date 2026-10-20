@@ -3,18 +3,20 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { Field, SelectField, SubmitButton, FormError } from "@/components/form";
-import type { SellerFormState } from "./actions";
+import type { UserFormState } from "./actions";
 
 type Action = (
-  prev: SellerFormState,
+  prev: UserFormState,
   formData: FormData
-) => Promise<SellerFormState>;
+) => Promise<UserFormState>;
 
-export default function SellerForm({
+export default function UserForm({
   action,
   defaults,
   submitLabel,
   isEdit,
+  rolEtiketi,
+  asgariParola,
   portfoy,
 }: {
   action: Action;
@@ -26,12 +28,15 @@ export default function SellerForm({
   };
   submitLabel: string;
   isEdit?: boolean;
+  /** Düzenlemede rol yalnız gösterilir; açılıştan sonra değişmez (E-2 20.10 eki). */
+  rolEtiketi?: string;
+  asgariParola: number;
   /** Doktoru olan aktif satıcıda pasifleştirme için portföy seçimi (X-17 §(5)). */
   portfoy?: { doktorSayisi: number; saticilar: { id: string; name: string }[] };
 }) {
   // Her yanıt formu yeniden kurar (`key`): React action sonrası formu sıfırlar, `<select>`
   // eski varsayılana (AKTIF) döner. Yeni form `state.degerler` ile açılır (X-17 §(5)).
-  const [state, formAction] = useActionState<SellerFormState & { n?: number }, FormData>(
+  const [state, formAction] = useActionState<UserFormState & { n?: number }, FormData>(
     async (prev, formData) => ({ ...(await action(prev, formData)), n: (prev.n ?? 0) + 1 }),
     {}
   );
@@ -47,20 +52,48 @@ export default function SellerForm({
         defaultValue={defaults?.email}
       />
       <Field label="Telefon" name="phone" defaultValue={defaults?.phone} />
+      {isEdit ? (
+        <p className="text-sm text-slate-600">
+          Rol: <span className="font-medium text-slate-900">{rolEtiketi}</span>
+        </p>
+      ) : (
+        <SelectField
+          label="Rol"
+          name="role"
+          defaultValue={state.degerler?.role ?? "SATICI"}
+          options={[
+            { value: "SATICI", label: "Satıcı" },
+            { value: "OPERASYON", label: "Operasyon" },
+            { value: "YONETICI", label: "Yönetici" },
+          ]}
+        />
+      )}
       <Field
-        label={isEdit ? "Yeni Şifre (boş bırakılırsa değişmez)" : "Şifre"}
+        label={isEdit ? "Geçici Parola Ata (boş bırakılırsa değişmez)" : "Geçici Parola"}
         name="password"
         type="password"
         required={!isEdit}
       />
-      <SelectField
-        label="Durum"
-        name="status"
-        defaultValue={state.degerler?.status ?? defaults?.status ?? "AKTIF"}
-        options={[
-          { value: "AKTIF", label: "Aktif" },
-          { value: "PASIF", label: "Pasif" },
-        ]}
+      <p className="-mt-2 text-xs text-slate-500">
+        En az {asgariParola} karakter. Kullanıcı ilk girişte kendi parolasını belirler
+        {isEdit ? "; açık oturumları kapanır" : ""}.
+      </p>
+      {isEdit && (
+        <SelectField
+          label="Durum"
+          name="status"
+          defaultValue={state.degerler?.status ?? defaults?.status ?? "AKTIF"}
+          options={[
+            { value: "AKTIF", label: "Aktif" },
+            { value: "PASIF", label: "Pasif" },
+          ]}
+        />
+      )}
+      <Field
+        label={isEdit ? "Gerekçe (pasifleştirme ve parola atamada zorunlu)" : "Gerekçe"}
+        name="gerekce"
+        required={!isEdit}
+        defaultValue={state.degerler?.gerekce}
       />
 
       {portfoy && (
@@ -90,7 +123,7 @@ export default function SellerForm({
       <div className="flex items-center gap-3 pt-2">
         <SubmitButton>{submitLabel}</SubmitButton>
         <Link
-          href="/sellers"
+          href="/users"
           className="text-sm font-medium text-slate-600 hover:text-slate-900"
         >
           İptal

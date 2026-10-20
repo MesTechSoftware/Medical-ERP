@@ -1,6 +1,6 @@
 import { test, expect, type Browser, type Page } from "@playwright/test";
 import { Client } from "pg";
-import { login, unique } from "../helpers";
+import { ilkGiris, yeniKullanici } from "../helpers";
 
 /**
  * E-2-1 / E-2-3 — oturum veritabanındadır (ADR-003).
@@ -22,40 +22,35 @@ async function query<T = unknown>(sql: string, params: unknown[] = []) {
   }
 }
 
-/** Yönetici ekranından doktorsuz yeni satıcı açar; id'sini döner. */
-async function yeniSatici(admin: Page, email: string, password: string): Promise<string> {
-  await admin.goto("/sellers/new");
-  await admin.getByLabel("Ad Soyad").fill(unique("Oturum Satıcı"));
-  await admin.getByLabel("E-posta").fill(email);
-  await admin.getByLabel("Şifre", { exact: true }).fill(password);
-  await admin.getByRole("button", { name: "Satıcı Ekle" }).click();
-  await expect(admin).toHaveURL(/\/sellers$/);
+/** Yönetici ekranından doktorsuz yeni satıcı açar; id ve e-postasını döner. */
+async function yeniSatici(admin: Page): Promise<{ id: string; email: string }> {
+  const email = await yeniKullanici(admin, { prefix: "oturum" });
   const [u] = await query<{ id: string }>(`SELECT id FROM "User" WHERE email = $1`, [email]);
-  return u.id;
+  return { id: u.id, email };
 }
 
-async function saticiOturumu(browser: Browser, email: string, password: string) {
+async function saticiOturumu(browser: Browser, email: string) {
   const ctx = await browser.newContext({ storageState: { cookies: [], origins: [] } });
   const page = await ctx.newPage();
-  await login(page, { email, password });
+  await ilkGiris(page, email);
   await expect(page).toHaveURL(/\/my-orders/);
   return { ctx, page };
 }
 
 async function durumKaydet(admin: Page, id: string, durum: "AKTIF" | "PASIF") {
-  await admin.goto(`/sellers/${id}/edit`);
+  await admin.goto(`/users/${id}/edit`);
   await admin.locator("#status").selectOption(durum);
+  await admin.locator("#gerekce").fill("E2E durum değişikliği");
   await admin.getByRole("button", { name: "Kaydet" }).click();
-  await expect(admin).toHaveURL(/\/sellers$/);
+  await expect(admin).toHaveURL(/\/users$/);
 }
 
 test("çerez opaktır: DB'de yalnız token'ın hash'i durur, çerez HttpOnly + SameSite=Lax (E-2-1)", async ({
   page,
   browser,
 }) => {
-  const email = `${unique("oturum")}@test.local`;
-  const id = await yeniSatici(page, email, "test123");
-  const { ctx } = await saticiOturumu(browser, email, "test123");
+  const { id, email } = await yeniSatici(page);
+  const { ctx } = await saticiOturumu(browser, email);
 
   const cerezler = await ctx.cookies();
   expect(cerezler.map((c) => c.name)).toEqual(["oturum"]);
@@ -74,9 +69,8 @@ test("pasifleştirme açık oturumu anında keser; yeniden aktifleştirme geri g
   page,
   browser,
 }) => {
-  const email = `${unique("oturum")}@test.local`;
-  const id = await yeniSatici(page, email, "test123");
-  const satici = await saticiOturumu(browser, email, "test123");
+  const { id, email } = await yeniSatici(page);
+  const satici = await saticiOturumu(browser, email);
 
   await durumKaydet(page, id, "PASIF");
   const iptal = await query(`SELECT id FROM "Session" WHERE "userId" = $1 AND "revokedAt" IS NULL`, [id]);
@@ -93,9 +87,8 @@ test("pasifleştirme açık oturumu anında keser; yeniden aktifleştirme geri g
 });
 
 test("rol her istekte DB'den okunur (E-2-1)", async ({ page, browser }) => {
-  const email = `${unique("oturum")}@test.local`;
-  const id = await yeniSatici(page, email, "test123");
-  const satici = await saticiOturumu(browser, email, "test123");
+  const { id, email } = await yeniSatici(page);
+  const satici = await saticiOturumu(browser, email);
 
   // Rol değişikliği ekranı Faz 1'de yoktur (X-17-4); değişiklik DB'den yapılır.
   await query(`UPDATE "User" SET role = 'OPERASYON' WHERE id = $1`, [id]);
@@ -105,9 +98,8 @@ test("rol her istekte DB'den okunur (E-2-1)", async ({ page, browser }) => {
 });
 
 test("çıkış oturumu iptal eder; aynı çerez bir daha geçmez (E-2-3)", async ({ page, browser }) => {
-  const email = `${unique("oturum")}@test.local`;
-  const id = await yeniSatici(page, email, "test123");
-  const satici = await saticiOturumu(browser, email, "test123");
+  const { id, email } = await yeniSatici(page);
+  const satici = await saticiOturumu(browser, email);
   const [cerez] = await satici.ctx.cookies();
 
   await satici.page.getByRole("button", { name: "Çıkış" }).click();

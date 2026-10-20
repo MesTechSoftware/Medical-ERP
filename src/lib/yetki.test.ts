@@ -26,9 +26,8 @@ const ACTION_YETKISI: Record<string, "requireAdmin" | "requireStaff" | "requireS
   "(admin)/products/actions.ts#createProduct": "requireAdmin",
   "(admin)/products/actions.ts#updateProduct": "requireAdmin",
   "(admin)/products/actions.ts#deleteProduct": "requireAdmin",
-  "(admin)/sellers/actions.ts#createSeller": "requireAdmin",
-  "(admin)/sellers/actions.ts#updateSeller": "requireAdmin",
-  "(admin)/sellers/actions.ts#deleteSeller": "requireAdmin",
+  "(admin)/users/actions.ts#createUser": "requireAdmin",
+  "(admin)/users/actions.ts#updateUser": "requireAdmin",
   // SATICI ekranları.
   "(seller)/my-orders/actions.ts#createOrder": "requireSeller",
   "(seller)/my-doctors/actions.ts#createDoctor": "requireSeller",
@@ -43,8 +42,8 @@ const YALNIZ_YONETICI_SAYFALARI = [
   "(admin)/audit-logs/page.tsx",
   "(admin)/products/new/page.tsx",
   "(admin)/products/[id]/edit/page.tsx",
-  "(admin)/sellers/new/page.tsx",
-  "(admin)/sellers/[id]/edit/page.tsx",
+  "(admin)/users/new/page.tsx",
+  "(admin)/users/[id]/edit/page.tsx",
 ];
 
 function dosyalar(dizin: string, ad: RegExp): string[] {

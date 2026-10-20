@@ -4,7 +4,7 @@ const pages: [path: string, heading: string][] = [
   ["/dashboard", "Dashboard"],
   ["/products", "Ürünler"],
   ["/stock", "Stok"],
-  ["/sellers", "Satıcılar"],
+  ["/users", "Kullanıcılar"],
   ["/orders", "Siparişler"],
   ["/shipping", "Kargo"],
   ["/collections", "Tahsilatlar"],

@@ -60,7 +60,7 @@ Yalnızca geliştirme içindir; üretime taşınmamalıdır.
 
 ## Roller ve Ekranlar
 
-**Admin** — Dashboard (KDV dahil/hariç toggle), Ürünler, Stok, Satıcılar, Doktorlar (cari + satıcı
+**Admin** — Dashboard (KDV dahil/hariç toggle), Ürünler, Stok, Kullanıcılar, Doktorlar (cari + satıcı
 devri), Siparişler, Kargo, Tahsilatlar, Primler, Kongreler, Bayiler, Bayi Sevkiyat, Raporlar,
 Audit Log
 

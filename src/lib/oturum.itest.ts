@@ -48,6 +48,7 @@ describe("oturum (E-2)", () => {
       name: "Ali",
       email: "ali@m.local",
       role: "SATICI",
+      mustChangePassword: false,
     });
     expect(await oturumDogrula("uydurma", sonra(1000))).toBeNull();
   });
@@ -127,5 +128,18 @@ describe("oturum (E-2)", () => {
       })
     ).rejects.toThrow("geri al");
     expect(await oturumDogrula(token, sonra(2000))).not.toBeNull();
+  });
+});
+
+describe("oturum — geçici parola bayrağı (E-2-7)", () => {
+  it("bayrak her istekte kullanıcı satırından okunur", async () => {
+    const u = await prisma.user.create({
+      data: { name: "Yeni", email: "yeni@m.local", passwordHash: "x", role: "OPERASYON", mustChangePassword: true },
+    });
+    const token = await oturumOlustur(u.id, t0);
+    expect((await oturumDogrula(token, sonra(1000)))?.mustChangePassword).toBe(true);
+
+    await prisma.user.update({ where: { id: u.id }, data: { mustChangePassword: false } });
+    expect((await oturumDogrula(token, sonra(2000)))?.mustChangePassword).toBe(false);
   });
 });

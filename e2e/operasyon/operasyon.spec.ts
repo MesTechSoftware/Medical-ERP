@@ -25,13 +25,13 @@ test("menü raporları ve denetim kaydını göstermez; rol etiketi Operasyon", 
   await page.goto("/dashboard");
   const menu = page.locator("aside");
   await expect(menu.getByRole("link", { name: "Siparişler" })).toBeVisible();
-  await expect(menu.getByRole("link", { name: "Satıcılar" })).toBeVisible();
+  await expect(menu.getByRole("link", { name: "Kullanıcılar" })).toBeVisible();
   await expect(menu.getByRole("link", { name: "Raporlar" })).toHaveCount(0);
   await expect(menu.getByRole("link", { name: "Audit Log" })).toHaveCount(0);
   await expect(page.locator("header").getByText("Operasyon", { exact: true })).toBeVisible();
 });
 
-for (const yol of ["/reports", "/audit-logs", "/products/new", "/sellers/new"]) {
+for (const yol of ["/reports", "/audit-logs", "/products/new", "/users/new"]) {
   test(`${yol} OPERASYON'u Dashboard'a yönlendirir`, async ({ page }) => {
     await page.goto(yol);
     await expect(page).toHaveURL(/\/dashboard$/);
@@ -46,16 +46,18 @@ test("ürünleri ve satıcıları salt okur — ekleme/düzenleme/silme yok", as
   await expect(page.getByRole("link", { name: "Düzenle" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Sil" })).toHaveCount(0);
 
-  await page.goto("/sellers");
+  // Kullanıcılar ekranında yalnız satıcıları görür (E-2-5).
+  await page.goto("/users");
   await expect(page.getByText("Ahmet Yılmaz")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Yeni Satıcı" })).toHaveCount(0);
+  await expect(page.getByText("admin@medikal.local")).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Yeni Kullanıcı" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Düzenle" })).toHaveCount(0);
 
   const [satici] = await query<{ id: string }>(`SELECT id FROM "User" WHERE email = 'ahmet@medikal.local'`);
-  await page.goto(`/sellers/${satici.id}`);
+  await page.goto(`/users/${satici.id}`);
   await expect(page.getByRole("heading", { name: "Ahmet Yılmaz" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Düzenle" })).toHaveCount(0);
-  await page.goto(`/sellers/${satici.id}/edit`);
+  await page.goto(`/users/${satici.id}/edit`);
   await expect(page).toHaveURL(/\/dashboard$/);
 });
 

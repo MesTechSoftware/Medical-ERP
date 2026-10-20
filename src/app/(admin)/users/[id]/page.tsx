@@ -46,7 +46,7 @@ export default async function SellerDetailPage({
           // OPERASYON salt okur (D-2 17.10 eki).
           session.user.role === "YONETICI" && (
             <Link
-              href={`/sellers/${id}/edit`}
+              href={`/users/${id}/edit`}
               className="text-sm font-medium text-slate-600 hover:text-slate-900"
             >
               Düzenle

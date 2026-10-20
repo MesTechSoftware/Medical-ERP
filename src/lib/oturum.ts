@@ -21,7 +21,14 @@ const SAAT_MS = 3_600_000;
 /** `lastSeenAt` her istekte değil, kayıt bundan eskiyse yazılır (FAZ1 §D.4 madde 1). */
 export const SON_GORULME_ESIGI_MS = 5 * 60_000;
 
-export type OturumKullanicisi = { id: string; name: string; email: string; role: Role };
+export type OturumKullanicisi = {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  /** E-2 §(2)/(3): geçici parolalı kullanıcı önce parolasını değiştirir (E-2-7). */
+  mustChangePassword: boolean;
+};
 
 export type SureAyari = { hareketsizlikMs: number; mutlakMs: number };
 
@@ -74,7 +81,9 @@ export async function oturumDogrula(
       createdAt: true,
       lastSeenAt: true,
       revokedAt: true,
-      user: { select: { id: true, name: true, email: true, role: true, isActive: true } },
+      user: {
+        select: { id: true, name: true, email: true, role: true, isActive: true, mustChangePassword: true },
+      },
     },
   });
   if (!oturum || oturum.revokedAt || !oturum.user.isActive) return null;
@@ -84,8 +93,8 @@ export async function oturumDogrula(
     await prisma.session.update({ where: { id: oturum.id }, data: { lastSeenAt: now } });
   }
 
-  const { id, name, email, role } = oturum.user;
-  return { id, name, email, role };
+  const { id, name, email, role, mustChangePassword } = oturum.user;
+  return { id, name, email, role, mustChangePassword };
 }
 
 /** Çıkış: yalnız bu token'ın oturumunu iptal eder. */

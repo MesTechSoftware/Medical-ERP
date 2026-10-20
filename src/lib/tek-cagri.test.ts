@@ -106,3 +106,13 @@ describe("tek çağrı noktası — oturum (E-2-1, E-2-3)", () => {
     expect(routeHandler).toEqual([]);
   });
 });
+
+describe("tek çağrı noktası — parola ve hesap (E-2-5, E-2-6)", () => {
+  it("bcrypt yalnız parola.ts'de çağrılır", () => {
+    expect(ihlaller(/from\s+["']bcryptjs["']/, join("lib", "parola.ts"))).toEqual([]);
+  });
+
+  it("kullanıcı silinmez: silme yolu yoktur (E-2 §(6))", () => {
+    expect(ihlaller(/\.user\.(delete|deleteMany)\s*\(|DELETE\s+FROM\s+"User"/, "")).toEqual([]);
+  });
+});

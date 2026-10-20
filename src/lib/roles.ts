@@ -16,3 +16,10 @@ export const ROLE_HOME: Record<Role, string> = {
 export function homeFor(role: Role): string {
   return ROLE_HOME[role] ?? "/login";
 }
+
+/** Rolün ekranda görünen adı. */
+export const ROLE_LABEL: Record<Role, string> = {
+  YONETICI: "Yönetici",
+  OPERASYON: "Operasyon",
+  SATICI: "Satıcı",
+};

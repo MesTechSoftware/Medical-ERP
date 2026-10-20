@@ -61,10 +61,18 @@ export async function endSession(): Promise<void> {
   jar.delete(CEREZ);
 }
 
-/** Oturum yoksa veya kullanıcı artık geçerli değilse /login'e yönlendirir. */
+/** Geçici parolalı kullanıcının gideceği tek sayfa (E-2-7). */
+export const PAROLA_DEGISTIR = "/parola-degistir";
+
+/**
+ * Oturum yoksa veya kullanıcı artık geçerli değilse /login'e yönlendirir. Geçici parolalı
+ * kullanıcıyı parola değiştirme sayfasına gönderir — bütün guard'lar buradan geçtiği için
+ * korumalı sayfalar ve server action'lar birlikte kapanır (E-2-7).
+ */
 export async function requireSession(): Promise<Session> {
   const session = await loadSession();
   if (!session) redirect("/login");
+  if (session.user.mustChangePassword) redirect(PAROLA_DEGISTIR);
   return session;
 }
 
