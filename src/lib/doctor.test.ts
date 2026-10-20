@@ -18,8 +18,7 @@ describe("canSellerOrderForDoctor — RULE-02 / FR-04", () => {
       ownerSellerId: SELLER_A,
       status: "AKTIF",
     });
-    expect(r.allowed).toBe(false);
-    expect(r).toHaveProperty("reason");
+    expect(r).toEqual({ allowed: false, kuralKodu: "DOKTOR_KAPSAM_DISI" });
   });
 
   it("başka satıcının kimliğini sızdırmaz", () => {
@@ -27,8 +26,7 @@ describe("canSellerOrderForDoctor — RULE-02 / FR-04", () => {
       ownerSellerId: SELLER_A,
       status: "AKTIF",
     });
-    if (r.allowed) throw new Error("beklenmedik izin");
-    expect(r.reason).not.toContain(SELLER_A);
+    expect(JSON.stringify(r)).not.toContain(SELLER_A);
   });
 
   it("FR-08: sahipsiz doktora sipariş girilemez", () => {
@@ -36,9 +34,7 @@ describe("canSellerOrderForDoctor — RULE-02 / FR-04", () => {
       ownerSellerId: null,
       status: "AKTIF",
     });
-    expect(r.allowed).toBe(false);
-    if (r.allowed) return;
-    expect(r.reason).toMatch(/sorumlu satıcısı yok/i);
+    expect(r).toEqual({ allowed: false, kuralKodu: "DOKTOR_SAHIPSIZ" });
   });
 
   it("pasif doktora sipariş girilemez", () => {
@@ -50,12 +46,11 @@ describe("canSellerOrderForDoctor — RULE-02 / FR-04", () => {
   });
 
   it("pasiflik, sahiplikten ÖNCE değerlendirilir", () => {
-    // Sahibi olmayan + pasif doktorda mesaj pasiflik olmalı (bilgi sızıntısı yok).
+    // Sahibi olmayan + pasif doktorda bildirim pasiflik olmalı (bilgi sızıntısı yok).
     const r = canSellerOrderForDoctor(SELLER_B, {
       ownerSellerId: SELLER_A,
       status: "PASIF",
     });
-    if (r.allowed) throw new Error("beklenmedik izin");
-    expect(r.reason).toMatch(/pasif/i);
+    expect(r).toEqual({ allowed: false, kuralKodu: "DOKTOR_PASIF" });
   });
 });

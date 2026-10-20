@@ -1,6 +1,25 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
+import { alanHatasi, type SonucDurumu } from "@/components/Sonuc";
+
+const KUTU = "w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-1";
+const NORMAL = "border-slate-300 focus:border-slate-500 focus:ring-slate-500";
+const HATALI = "border-red-500 focus:border-red-600 focus:ring-red-600";
+
+/** `SERT` bildirimi alanın altında, alan işaretli (X-4 §(4)). */
+function AlanHatasi({ name, hata }: { name: string; hata?: string }) {
+  if (!hata) return null;
+  return (
+    <p id={`${name}-hata`} className="mt-1 text-xs text-red-600">
+      {hata}
+    </p>
+  );
+}
+
+function hataNitelikleri(name: string, hata?: string) {
+  return hata ? { "aria-invalid": true, "aria-describedby": `${name}-hata` } : {};
+}
 
 export function Field({
   label,
@@ -11,6 +30,7 @@ export function Field({
   placeholder,
   step,
   min,
+  sonuc,
 }: {
   label: string;
   name: string;
@@ -20,7 +40,9 @@ export function Field({
   placeholder?: string;
   step?: string;
   min?: string;
+  sonuc?: SonucDurumu;
 }) {
+  const hata = alanHatasi(sonuc, name);
   return (
     <div>
       <label
@@ -38,8 +60,10 @@ export function Field({
         placeholder={placeholder}
         step={step}
         min={min}
-        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
+        {...hataNitelikleri(name, hata)}
+        className={`${KUTU} ${hata ? HATALI : NORMAL}`}
       />
+      <AlanHatasi name={name} hata={hata} />
     </div>
   );
 }
@@ -50,13 +74,16 @@ export function SelectField({
   defaultValue,
   required,
   options,
+  sonuc,
 }: {
   label: string;
   name: string;
   defaultValue?: string;
   required?: boolean;
   options: { value: string; label: string }[];
+  sonuc?: SonucDurumu;
 }) {
+  const hata = alanHatasi(sonuc, name);
   return (
     <div>
       <label
@@ -70,7 +97,8 @@ export function SelectField({
         name={name}
         defaultValue={defaultValue}
         required={required}
-        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
+        {...hataNitelikleri(name, hata)}
+        className={`${KUTU} bg-white ${hata ? HATALI : NORMAL}`}
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>
@@ -78,6 +106,7 @@ export function SelectField({
           </option>
         ))}
       </select>
+      <AlanHatasi name={name} hata={hata} />
     </div>
   );
 }
@@ -87,12 +116,15 @@ export function TextArea({
   name,
   defaultValue,
   placeholder,
+  sonuc,
 }: {
   label: string;
   name: string;
   defaultValue?: string;
   placeholder?: string;
+  sonuc?: SonucDurumu;
 }) {
+  const hata = alanHatasi(sonuc, name);
   return (
     <div>
       <label
@@ -107,8 +139,10 @@ export function TextArea({
         defaultValue={defaultValue}
         placeholder={placeholder}
         rows={2}
-        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
+        {...hataNitelikleri(name, hata)}
+        className={`${KUTU} ${hata ? HATALI : NORMAL}`}
       />
+      <AlanHatasi name={name} hata={hata} />
     </div>
   );
 }
@@ -129,15 +163,5 @@ export function SubmitButton({
     >
       {pending ? "Kaydediliyor..." : children}
     </button>
-  );
-}
-
-/** Genel amaçlı form hata kutusu. */
-export function FormError({ message }: { message?: string }) {
-  if (!message) return null;
-  return (
-    <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-      {message}
-    </p>
   );
 }

@@ -62,8 +62,8 @@ describe("sipariş oluşturma (CM)", () => {
   });
 
   it("listenin altındaki fiyatla sipariş kabul edilir; liste ve birim fiyat ayrı donar (X-5 §(9))", async () => {
-    const sonuc = await createOrder({}, siparisFormu(s.doctor.id, s.product.id, "500"));
-    expect(sonuc?.error).toBeUndefined();
+    const sonuc = await createOrder(null, siparisFormu(s.doctor.id, s.product.id, "500"));
+    expect(sonuc).toBeUndefined(); // başarıda redirect
 
     const [item] = await prisma.orderItem.findMany();
     expect(item.unitPrice.toFixed(4)).toBe("500.0000");
@@ -72,27 +72,27 @@ describe("sipariş oluşturma (CM)", () => {
   });
 
   it("liste üstü fiyat da serbesttir (A-10)", async () => {
-    await createOrder({}, siparisFormu(s.doctor.id, s.product.id, "1250.5"));
+    await createOrder(null, siparisFormu(s.doctor.id, s.product.id, "1250.5"));
     const [item] = await prisma.orderItem.findMany();
     expect(item.unitPrice.toFixed(2)).toBe("1250.50");
   });
 
   it("fiyat girilmezse liste fiyatı kullanılır", async () => {
-    await createOrder({}, siparisFormu(s.doctor.id, s.product.id));
+    await createOrder(null, siparisFormu(s.doctor.id, s.product.id));
     const [item] = await prisma.orderItem.findMany();
     expect(item.unitPrice.toFixed(2)).toBe("1000.00");
   });
 
   it("sipariş SIP numarası alır; numaralar sıralıdır (A-14)", async () => {
-    await createOrder({}, siparisFormu(s.doctor.id, s.product.id));
-    await createOrder({}, siparisFormu(s.doctor.id, s.product.id));
+    await createOrder(null, siparisFormu(s.doctor.id, s.product.id));
+    await createOrder(null, siparisFormu(s.doctor.id, s.product.id));
     const nolar = (await prisma.order.findMany({ orderBy: { createdAt: "asc" } })).map((o) => o.documentNo);
     const yil = takvimYili();
     expect(nolar).toEqual([`SIP-${yil}-000001`, `SIP-${yil}-000002`]);
   });
 
   it("sipariş ONAYLI açılır ve vade gün sayısını taşır (A-5, A-7)", async () => {
-    await createOrder({}, siparisFormu(s.doctor.id, s.product.id));
+    await createOrder(null, siparisFormu(s.doctor.id, s.product.id));
     const order = await prisma.order.findFirstOrThrow();
     expect(order.stage).toBe("ONAYLI");
     expect(order.paymentTermDays).toBe(30);
@@ -100,7 +100,7 @@ describe("sipariş oluşturma (CM)", () => {
   });
 
   it("stok hareketten türer; çıkışın kaynağı siparişin kendisidir (ADR-005, B-7)", async () => {
-    await createOrder({}, siparisFormu(s.doctor.id, s.product.id));
+    await createOrder(null, siparisFormu(s.doctor.id, s.product.id));
     expect(await hesaplaStok(s.product.id)).toBe(8);
     const cikis = await prisma.stockMovement.findFirstOrThrow({ where: { type: "CIKIS" } });
     expect(cikis.orderId).not.toBeNull();
@@ -108,8 +108,8 @@ describe("sipariş oluşturma (CM)", () => {
   });
 
   it("stok yetersiz olsa da sipariş engellenmez — negatif stok yumuşak kısıttır (B-4, GÇ-17)", async () => {
-    const sonuc = await createOrder({}, siparisFormu(s.doctor.id, s.product.id, undefined, 15));
-    expect(sonuc?.error).toBeUndefined();
+    const sonuc = await createOrder(null, siparisFormu(s.doctor.id, s.product.id, undefined, 15));
+    expect(sonuc).toBeUndefined(); // başarıda redirect
     expect(await hesaplaStok(s.product.id)).toBe(-5);
   });
 
@@ -117,16 +117,46 @@ describe("sipariş oluşturma (CM)", () => {
     const yeni = await prisma.product.create({
       data: { name: "Listesiz", code: "MED-002", taxRateId: s.ref.kdv20.id },
     });
-    const sonuc = await createOrder({}, siparisFormu(s.doctor.id, yeni.id));
-    expect(sonuc?.error).toMatch(/fiyat çözümlenemedi/);
+    const sonuc = await createOrder(null, siparisFormu(s.doctor.id, yeni.id));
+    expect(sonuc?.bildirimler.map((b) => b.kural_kodu)).toEqual(["FIYAT_COZUMLENEMEDI"]);
     expect(await prisma.order.count()).toBe(0);
+  });
+
+  it("kalem hatalarının hepsi birlikte döner, ilkinde durulmaz; sipariş ve numara yazılmaz (X-4-3)", async () => {
+    const listesiz = await prisma.product.create({
+      data: { name: "Listesiz", code: "MED-002", taxRateId: s.ref.kdv20.id },
+    });
+    const pasif = await prisma.product.create({
+      data: { name: "Eski Kateter", code: "MED-003", taxRateId: s.ref.kdv20.id, status: "PASIF" },
+    });
+    const fd = new FormData();
+    fd.set("doctorId", s.doctor.id);
+    fd.set(
+      "items",
+      JSON.stringify([
+        { productId: listesiz.id, quantity: 1 },
+        { productId: s.product.id, quantity: 1 },
+        { productId: pasif.id, quantity: 1 },
+      ])
+    );
+
+    expect(await createOrder(null, fd)).toEqual({
+      durum: "ENGELLENDI",
+      kademe: "SERT",
+      bildirimler: [
+        { kademe: "SERT", kural_kodu: "FIYAT_COZUMLENEMEDI", parametreler: { urun: "Listesiz" } },
+        { kademe: "SERT", kural_kodu: "URUN_PASIF", parametreler: { urun: "Eski Kateter" } },
+      ],
+    });
+    expect(await prisma.order.count()).toBe(0);
+    expect(await prisma.documentCounter.count()).toBe(0);
   });
 
   it("atanmış listede satır yoksa varsayılana düşülmez (X-10 §(3))", async () => {
     const ozel = await prisma.priceList.create({ data: { code: "OZEL", name: "Özel" } });
     await prisma.doctor.update({ where: { id: s.doctor.id }, data: { priceListId: ozel.id } });
-    const sonuc = await createOrder({}, siparisFormu(s.doctor.id, s.product.id));
-    expect(sonuc?.error).toMatch(/fiyat çözümlenemedi/);
+    const sonuc = await createOrder(null, siparisFormu(s.doctor.id, s.product.id));
+    expect(sonuc?.bildirimler.map((b) => b.kural_kodu)).toEqual(["FIYAT_COZUMLENEMEDI"]);
   });
 
   it("atanmış listenin fiyatı varsayılanın önüne geçer (X-10 §(2))", async () => {
@@ -135,14 +165,14 @@ describe("sipariş oluşturma (CM)", () => {
       data: { priceListId: ozel.id, productId: s.product.id, listPrice: "900" },
     });
     await prisma.doctor.update({ where: { id: s.doctor.id }, data: { priceListId: ozel.id } });
-    await createOrder({}, siparisFormu(s.doctor.id, s.product.id));
+    await createOrder(null, siparisFormu(s.doctor.id, s.product.id));
     const [item] = await prisma.orderItem.findMany();
     expect(item.listPrice.toFixed(2)).toBe("900.00");
   });
 
   it("4 haneden fazla ondalıklı fiyat reddedilir — float'a düşmez (X-5)", async () => {
-    const sonuc = await createOrder({}, siparisFormu(s.doctor.id, s.product.id, "10.12345"));
-    expect(sonuc?.error).toBeDefined();
+    const sonuc = await createOrder(null, siparisFormu(s.doctor.id, s.product.id, "10.12345"));
+    expect(sonuc?.durum).toBe("ENGELLENDI");
     expect(await prisma.order.count()).toBe(0);
   });
 });

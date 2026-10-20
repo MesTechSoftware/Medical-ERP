@@ -9,8 +9,7 @@ import { uretBelgeNo } from "@/lib/belge-no";
 import { hesaplaKomisyonTutari } from "@/lib/satir-tutarlari";
 import { simdi } from "@/lib/zaman";
 import { IsHatasi } from "@/lib/hata";
-
-export type CollectionState = { error?: string; ok?: string };
+import { basarili, engel, sert, type IslemSonucu } from "@/lib/sonuc";
 
 /**
  * 🔴 Tahsilat kaydı — sistemin MERKEZÎ olayı (RULE-12).
@@ -25,25 +24,23 @@ export type CollectionState = { error?: string; ok?: string };
  * transaction'dadır (X-2, 1B madde 2).
  */
 export async function recordCollection(
-  _prev: CollectionState,
+  _prev: unknown,
   formData: FormData
-): Promise<CollectionState> {
+): Promise<IslemSonucu> {
   const session = await requireStaff();
 
   const doctorId = (formData.get("doctorId") as string)?.trim();
   const paymentMethodId = (formData.get("paymentMethodId") as string)?.trim();
   const tutar = amountSchema.safeParse(formData.get("amount") ?? "");
-  if (!doctorId) return { error: "Doktor seçiniz." };
-  if (!tutar.success) {
-    return { error: "Geçerli bir tahsilat tutarı giriniz." };
-  }
-  if (!paymentMethodId) return { error: "Ödeme yöntemi seçiniz." };
+  if (!doctorId) return engel("ALAN_ZORUNLU", {}, "doctorId");
+  if (!tutar.success) return engel("GECERSIZ_TUTAR", {}, "amount");
+  if (!paymentMethodId) return engel("ALAN_ZORUNLU", {}, "paymentMethodId");
   const amount = tutar.data;
 
   try {
     await prisma.$transaction(async (tx) => {
       const yontem = await tx.paymentMethod.findUnique({ where: { id: paymentMethodId } });
-      if (!yontem || !yontem.isActive) throw new IsHatasi("Ödeme yöntemi bulunamadı.");
+      if (!yontem || !yontem.isActive) throw new IsHatasi([sert("ODEME_YONTEMI_BULUNAMADI", {}, "paymentMethodId")]);
       const documentNo = await uretBelgeNo("THS", tx);
       const payment = await tx.doctorPayment.create({
         data: {
@@ -74,15 +71,15 @@ export async function recordCollection(
       );
     });
   } catch (e) {
-    // Yalnız iş hatası mesaja döner; teknik hata hata sınırına düşer (X-3 §(4)).
-    if (e instanceof IsHatasi) return { error: e.message };
+    // Yalnız iş hatası sonuca döner; teknik hata hata sınırına düşer (X-3 §(4), X-4 §(2)).
+    if (e instanceof IsHatasi) return e.sonuc;
     throw e;
   }
 
   revalidatePath("/collections");
   revalidatePath("/doctors");
 
-  return { ok: "Tahsilat kaydedildi." };
+  return basarili();
 }
 
 /**
@@ -90,19 +87,19 @@ export async function recordCollection(
  * bakiye hareketlerden hesaplandığı için kendiliğinden geri döner (RULE-08).
  */
 export async function cancelCollection(
-  _prev: CollectionState,
+  _prev: unknown,
   formData: FormData
-): Promise<CollectionState> {
+): Promise<IslemSonucu> {
   const session = await requireStaff();
   const paymentId = (formData.get("paymentId") as string)?.trim();
   const reason = ((formData.get("reason") as string) || "").trim() || null;
-  if (!paymentId) return { error: "Tahsilat seçilmedi." };
+  if (!paymentId) return engel("TAHSILAT_BULUNAMADI");
 
   const before = await prisma.doctorPayment.findUnique({
     where: { id: paymentId },
   });
-  if (!before) return { error: "Tahsilat bulunamadı." };
-  if (before.status === "IPTAL") return { error: "Bu tahsilat zaten iptal." };
+  if (!before) return engel("TAHSILAT_BULUNAMADI");
+  if (before.status === "IPTAL") return engel("TAHSILAT_ZATEN_IPTAL");
 
   // Prim düzeltmesi (FR-35) C4'te söküldü — dönem kilidi yok (X-1 §(6)).
   await prisma.$transaction(async (tx) => {
@@ -130,7 +127,7 @@ export async function cancelCollection(
 
   revalidatePath("/collections");
   revalidatePath("/doctors");
-  return { ok: "Tahsilat iptal edildi." };
+  return basarili();
 }
 
 /**
@@ -139,27 +136,26 @@ export async function cancelCollection(
  * Vadede sistem sınırı YOKTUR (KARARLAR §2 madde 16).
  */
 export async function changeDueDate(
-  _prev: CollectionState,
+  _prev: unknown,
   formData: FormData
-): Promise<CollectionState> {
+): Promise<IslemSonucu> {
   const session = await requireAdmin();
 
   const ledgerEntryId = (formData.get("ledgerEntryId") as string)?.trim();
   const raw = (formData.get("newDueDate") as string)?.trim();
   const reason = ((formData.get("reason") as string) || "").trim();
-  if (!ledgerEntryId || !raw) return { error: "Cari hareket ve yeni vade zorunludur." };
-  if (!reason) return { error: "Gerekçe zorunludur." };
+  if (!ledgerEntryId) return engel("CARI_HAREKET_BULUNAMADI");
+  if (!raw) return engel("ALAN_ZORUNLU", {}, "newDueDate");
+  if (!reason) return engel("GEREKCE_ZORUNLU", {}, "reason");
 
   // `date` kolonu: "YYYY-MM-DD" UTC gece yarısı olarak okunur, dilim taşımaz (E-1 §(1)).
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return { error: "Geçerli bir tarih giriniz." };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return engel("GECERSIZ_TARIH", {}, "newDueDate");
   const newDueDate = new Date(`${raw}T00:00:00Z`);
-  if (Number.isNaN(newDueDate.getTime())) {
-    return { error: "Geçerli bir tarih giriniz." };
-  }
+  if (Number.isNaN(newDueDate.getTime())) return engel("GECERSIZ_TARIH", {}, "newDueDate");
 
   const entry = await prisma.ledgerEntry.findUnique({ where: { id: ledgerEntryId } });
-  if (!entry) return { error: "Cari hareket bulunamadı." };
-  if (entry.direction !== "BORC") return { error: "Vade yalnız borç hareketinde değişir." };
+  if (!entry) return engel("CARI_HAREKET_BULUNAMADI");
+  if (entry.direction !== "BORC") return engel("VADE_YALNIZ_BORC");
 
   const oldDueDate = entry.dueDate;
   await prisma.$transaction(async (tx) => {
@@ -188,5 +184,5 @@ export async function changeDueDate(
   });
 
   revalidatePath("/doctors");
-  return { ok: "Vade güncellendi." };
+  return basarili();
 }

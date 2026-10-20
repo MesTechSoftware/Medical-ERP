@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { Field, SelectField, SubmitButton, FormError } from "@/components/form";
-import type { ProductFormState } from "./actions";
+import { Field, SelectField, SubmitButton } from "@/components/form";
+import { SonucGosterimi, type SonucDurumu } from "@/components/Sonuc";
+import type { IslemSonucu } from "@/lib/sonuc";
 
-type Action = (
-  prev: ProductFormState,
-  formData: FormData
-) => Promise<ProductFormState>;
+type Action = (prev: SonucDurumu, formData: FormData) => Promise<IslemSonucu>;
+
+const ALANLAR = ["name", "code", "listPrice", "taxRateId"] as const;
 
 export default function ProductForm({
   action,
@@ -31,15 +31,12 @@ export default function ProductForm({
   submitLabel: string;
   showInitialStock?: boolean;
 }) {
-  const [state, formAction] = useActionState<ProductFormState, FormData>(
-    action,
-    {}
-  );
+  const [state, formAction] = useActionState<SonucDurumu, FormData>(action, null);
 
   return (
     <form action={formAction} className="max-w-lg space-y-4">
-      <Field label="Ürün Adı" name="name" required defaultValue={defaults?.name} />
-      <Field label="Ürün Kodu" name="code" required defaultValue={defaults?.code} />
+      <Field label="Ürün Adı" name="name" required defaultValue={defaults?.name} sonuc={state} />
+      <Field label="Ürün Kodu" name="code" required defaultValue={defaults?.code} sonuc={state} />
       {/* Fiyatlar NET (KDV hariç) girilir — kanonik değer nettir (FR-19). */}
       {/* Liste fiyatı varsayılan fiyat listesinin satırına yazılır (X-10 §(5)). */}
       <Field
@@ -47,11 +44,13 @@ export default function ProductForm({
         name="listPrice"
         required
         defaultValue={defaults?.listPrice}
+        sonuc={state}
       />
       <SelectField
         label="KDV Oranı"
         name="taxRateId"
         defaultValue={defaults?.taxRateId ?? taxRates[0]?.id}
+        sonuc={state}
         options={taxRates.map((t) => ({ value: t.id, label: t.name }))}
       />
       {showInitialStock && (
@@ -73,7 +72,7 @@ export default function ProductForm({
         ]}
       />
 
-      <FormError message={state.error} />
+      <SonucGosterimi sonuc={state} alanlar={ALANLAR} />
 
       <div className="flex items-center gap-3 pt-2">
         <SubmitButton>{submitLabel}</SubmitButton>

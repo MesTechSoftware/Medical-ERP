@@ -8,13 +8,14 @@ import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { OrderStatus } from "@/generated/prisma/enums";
 import { uretBelgeNo } from "@/lib/belge-no";
 import { bugun, simdi } from "@/lib/zaman";
+import { engel, type IslemSonucu } from "@/lib/sonuc";
 
 /**
  * HAZIRLANIYOR durumundaki siparişe kargo bilgisi girer ve KARGOLANDI yapar.
  * Sevkiyat satırı, kısmi sevkiyat ve sevkiyatta doğan borç 1B madde 7'dedir (A-3, GÇ-12);
  * `CM`'de sevkiyat bugünkü gibi siparişin tamamıdır ve yalnız başlık yazar.
  */
-export async function shipOrder(orderId: string, formData: FormData) {
+export async function shipOrder(orderId: string, _prev: unknown, formData: FormData): Promise<IslemSonucu> {
   const session = await requireStaff();
 
   const carrierId = ((formData.get("carrierId") as string) || "").trim() || null;
@@ -22,9 +23,7 @@ export async function shipOrder(orderId: string, formData: FormData) {
     ((formData.get("trackingNumber") as string) || "").trim() || null;
 
   const order = await prisma.order.findUnique({ where: { id: orderId } });
-  if (!order || order.status !== "HAZIRLANIYOR") {
-    redirect("/shipping");
-  }
+  if (!order || order.status !== "HAZIRLANIYOR") return engel("SIPARIS_DURUMU_UYGUN_DEGIL");
 
   await prisma.$transaction(async (tx) => {
     await tx.order.update({

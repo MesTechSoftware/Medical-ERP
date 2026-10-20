@@ -10,10 +10,9 @@ import { policy } from "@/lib/policy";
 import { stokHareketiYaz, varsayilanDepoId } from "@/lib/stok";
 import { EntityStatus } from "@/generated/prisma/enums";
 import { benzersizIhlali } from "@/lib/hata";
+import { engel, sonucOlustur, sert, type IslemSonucu } from "@/lib/sonuc";
 import type { Prisma } from "@/generated/prisma/client";
 import type Decimal from "decimal.js";
-
-export type ProductFormState = { error?: string };
 
 function parseProductForm(formData: FormData) {
   const name = (formData.get("name") as string)?.trim();
@@ -26,10 +25,14 @@ function parseProductForm(formData: FormData) {
       ? EntityStatus.PASIF
       : EntityStatus.AKTIF;
 
-  if (!name || !code) return { error: "Ürün adı ve kodu zorunludur." as const };
-  if (!listPrice.success)
-    return { error: "Geçerli bir liste fiyatı giriniz." as const };
-  if (!taxRateId) return { error: "KDV oranı seçiniz." as const };
+  // Bütün alan hataları birlikte döner (X-4 §(7)).
+  const hatalar = [
+    ...(name ? [] : [sert("ALAN_ZORUNLU", {}, "name")]),
+    ...(code ? [] : [sert("ALAN_ZORUNLU", {}, "code")]),
+    ...(listPrice.success ? [] : [sert("GECERSIZ_TUTAR", {}, "listPrice")]),
+    ...(taxRateId ? [] : [sert("ALAN_ZORUNLU", {}, "taxRateId")]),
+  ];
+  if (hatalar.length > 0 || !listPrice.success) return { hata: sonucOlustur(hatalar) };
 
   return { data: { name, code, taxRateId, status }, listPrice: listPrice.data };
 }
@@ -61,12 +64,12 @@ async function varsayilanListeFiyatiYaz(
 }
 
 export async function createProduct(
-  _prev: ProductFormState,
+  _prev: unknown,
   formData: FormData
-): Promise<ProductFormState> {
+): Promise<IslemSonucu> {
   const session = await requireAdmin();
   const parsed = parseProductForm(formData);
-  if (parsed.error) return { error: parsed.error };
+  if (parsed.hata) return parsed.hata;
 
   const initialStock = Math.max(0, parseInt(String(formData.get("initialStock") ?? ""), 10) || 0);
 
@@ -99,7 +102,7 @@ export async function createProduct(
     });
   } catch (e) {
     // Ürün kodu benzersizdir; teknik hata hata sınırına düşer (X-3 §(4)).
-    if (benzersizIhlali(e)) return { error: "Bu ürün kodu zaten kullanılıyor." };
+    if (benzersizIhlali(e)) return engel("URUN_KODU_KAYITLI", {}, "code");
     throw e;
   }
 
@@ -110,12 +113,12 @@ export async function createProduct(
 
 export async function updateProduct(
   id: string,
-  _prev: ProductFormState,
+  _prev: unknown,
   formData: FormData
-): Promise<ProductFormState> {
+): Promise<IslemSonucu> {
   const session = await requireAdmin();
   const parsed = parseProductForm(formData);
-  if (parsed.error) return { error: parsed.error };
+  if (parsed.hata) return parsed.hata;
 
   const before = await prisma.product.findUnique({ where: { id } });
 
@@ -136,7 +139,7 @@ export async function updateProduct(
       );
     });
   } catch (e) {
-    if (benzersizIhlali(e)) return { error: "Bu ürün kodu zaten kullanılıyor." };
+    if (benzersizIhlali(e)) return engel("URUN_KODU_KAYITLI", {}, "code");
     throw e;
   }
 
@@ -144,12 +147,10 @@ export async function updateProduct(
   redirect("/products");
 }
 
-export async function deleteProduct(id: string) {
+export async function deleteProduct(id: string): Promise<IslemSonucu> {
   await requireAdmin();
   const usedInOrders = await prisma.orderItem.count({ where: { productId: id } });
-  if (usedInOrders > 0) {
-    redirect("/products?error=used");
-  }
+  if (usedInOrders > 0) return engel("URUN_SIPARISTE_KULLANILDI");
   await prisma.stockMovement.deleteMany({ where: { productId: id } });
   await prisma.priceListItem.deleteMany({ where: { productId: id } });
   await prisma.product.delete({ where: { id } });

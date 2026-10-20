@@ -53,19 +53,21 @@ describe("tahsilat — numara ve kayıt aynı transaction'da (X-2-1)", () => {
   it("tahsilat yazılamazsa THS numarası harcanmaz; teknik hata mesaja çevrilmez (X-3-3)", async () => {
     // Numara alındıktan sonra kayıt yabancı anahtarda düşer: olmayan cari. Teknik hatadır —
     // iş mesajına dönmez, hata sınırına fırlar (X-3 §(4)).
-    await expect(recordCollection({}, tahsilatFormu("olmayan-cari", s.havale.id))).rejects.toThrow();
+    await expect(recordCollection(null, tahsilatFormu("olmayan-cari", s.havale.id))).rejects.toThrow();
     expect(await prisma.doctorPayment.count()).toBe(0);
     expect(await prisma.auditLog.count()).toBe(0);
 
-    expect((await recordCollection({}, tahsilatFormu(s.doctor.id, s.havale.id))).error).toBeUndefined();
+    expect((await recordCollection(null, tahsilatFormu(s.doctor.id, s.havale.id))).durum).toBe("BASARILI");
     const [p] = await prisma.doctorPayment.findMany();
     expect(p.documentNo).toBe(`THS-${takvimYili()}-000001`);
   });
 
-  it("pasif ödeme yöntemi iş hatasıdır: mesaj döner, numara ve kayıt yazılmaz (X-3-3)", async () => {
+  it("pasif ödeme yöntemi iş hatasıdır: SERT bildirim döner, numara ve kayıt yazılmaz (X-3-3)", async () => {
     await prisma.paymentMethod.update({ where: { id: s.havale.id }, data: { isActive: false } });
-    expect(await recordCollection({}, tahsilatFormu(s.doctor.id, s.havale.id))).toEqual({
-      error: "Ödeme yöntemi bulunamadı.",
+    expect(await recordCollection(null, tahsilatFormu(s.doctor.id, s.havale.id))).toEqual({
+      durum: "ENGELLENDI",
+      kademe: "SERT",
+      bildirimler: [{ kademe: "SERT", kural_kodu: "ODEME_YONTEMI_BULUNAMADI", parametreler: {}, alan: "paymentMethodId" }],
     });
     expect(await prisma.doctorPayment.count()).toBe(0);
     expect(await prisma.documentCounter.count()).toBe(0);
@@ -73,8 +75,8 @@ describe("tahsilat — numara ve kayıt aynı transaction'da (X-2-1)", () => {
 
   it("BAYI carisinin tahsilatı aynı yoldan numaralanır (X-8 §(7))", async () => {
     const bayi = await prisma.doctor.create({ data: { ...yeniDoktorVerisi("Bayi A.Ş."), accountClass: "BAYI" } });
-    await recordCollection({}, tahsilatFormu(s.doctor.id, s.havale.id));
-    expect((await recordCollection({}, tahsilatFormu(bayi.id, s.havale.id))).error).toBeUndefined();
+    await recordCollection(null, tahsilatFormu(s.doctor.id, s.havale.id));
+    expect((await recordCollection(null, tahsilatFormu(bayi.id, s.havale.id))).durum).toBe("BASARILI");
 
     const p = await prisma.doctorPayment.findFirstOrThrow({ where: { doctorId: bayi.id } });
     expect(p.documentNo).toBe(`THS-${takvimYili()}-000002`);
@@ -89,8 +91,8 @@ describe("tahsilat — dayanıklı davranış", () => {
   });
 
   it("tahsilatı Decimal tutar ve THS numarasıyla yazar (X-5, A-14)", async () => {
-    const sonuc = await recordCollection({}, tahsilatFormu(s.doctor.id, s.havale.id, "5000,50"));
-    expect(sonuc.error).toBeUndefined();
+    const sonuc = await recordCollection(null, tahsilatFormu(s.doctor.id, s.havale.id, "5000,50"));
+    expect(sonuc.durum).toBe("BASARILI");
 
     const [p] = await prisma.doctorPayment.findMany({ where: { doctorId: s.doctor.id } });
     expect(p.amount.toFixed(2)).toBe("5000.50");
@@ -102,7 +104,7 @@ describe("tahsilat — dayanıklı davranış", () => {
   });
 
   it("komisyon oranı yöntemden kopyalanır ve tutarı donar (A-11)", async () => {
-    await recordCollection({}, tahsilatFormu(s.doctor.id, s.pos.id, "1000"));
+    await recordCollection(null, tahsilatFormu(s.doctor.id, s.pos.id, "1000"));
     const p = await prisma.doctorPayment.findFirstOrThrow();
     expect(p.commissionRate.toFixed(2)).toBe("2.50");
     expect(p.commissionAmount.toFixed(2)).toBe("25.00");
@@ -114,7 +116,7 @@ describe("tahsilat — dayanıklı davranış", () => {
   });
 
   it("denetim kaydı yazar (RULE-13)", async () => {
-    await recordCollection({}, tahsilatFormu(s.doctor.id, s.havale.id));
+    await recordCollection(null, tahsilatFormu(s.doctor.id, s.havale.id));
     const payment = await prisma.doctorPayment.findFirstOrThrow();
     const logs = await prisma.auditLog.findMany({ where: { action: AUDIT_ACTIONS.COLLECTION_CREATE } });
 
@@ -126,14 +128,14 @@ describe("tahsilat — dayanıklı davranış", () => {
   });
 
   it("iptal, tahsilatı IPTAL işaretler (FR-29 — kayıt silinmez)", async () => {
-    await recordCollection({}, tahsilatFormu(s.doctor.id, s.havale.id));
+    await recordCollection(null, tahsilatFormu(s.doctor.id, s.havale.id));
     const payment = await prisma.doctorPayment.findFirstOrThrow();
 
     const fd = new FormData();
     fd.set("paymentId", payment.id);
     fd.set("reason", "Dekont hatalı");
-    const sonuc = await cancelCollection({}, fd);
-    expect(sonuc.error).toBeUndefined();
+    const sonuc = await cancelCollection(null, fd);
+    expect(sonuc.durum).toBe("BASARILI");
 
     const iptal = await prisma.doctorPayment.findUniqueOrThrow({ where: { id: payment.id } });
     expect(iptal.status).toBe("IPTAL");
@@ -146,8 +148,8 @@ describe("tahsilat — dayanıklı davranış", () => {
 
   it("geçersiz tutarı reddeder ve hiçbir şey yazmaz", async () => {
     for (const amount of ["0", "-5", "1.234", "abc"]) {
-      const sonuc = await recordCollection({}, tahsilatFormu(s.doctor.id, s.havale.id, amount));
-      expect(sonuc.error).toBeDefined();
+      const sonuc = await recordCollection(null, tahsilatFormu(s.doctor.id, s.havale.id, amount));
+      expect(sonuc.durum).toBe("ENGELLENDI");
     }
     expect(await prisma.doctorPayment.count()).toBe(0);
     expect(await prisma.auditLog.count()).toBe(0);
@@ -155,7 +157,7 @@ describe("tahsilat — dayanıklı davranış", () => {
 
   it("ödeme yöntemi seçilmeden tahsilat yazılmaz (A-11: zorunlu)", async () => {
     const fd = tahsilatFormu(s.doctor.id, "");
-    expect((await recordCollection({}, fd)).error).toBeDefined();
+    expect((await recordCollection(null, fd)).durum).toBe("ENGELLENDI");
     expect(await prisma.doctorPayment.count()).toBe(0);
   });
 });
@@ -229,8 +231,8 @@ describe("vade değişikliği — cari harekette, sistem sınırı yok (X-15 §(
   }
 
   it("eski 180 günlük sınırın çok ötesine uzatılabilir; iz ve audit yazılır", async () => {
-    const sonuc = await changeDueDate({}, vadeFormu("2029-12-31"));
-    expect(sonuc.error).toBeUndefined();
+    const sonuc = await changeDueDate(null, vadeFormu("2029-12-31"));
+    expect(sonuc.durum).toBe("BASARILI");
 
     const e = await prisma.ledgerEntry.findUniqueOrThrow({ where: { id: ledgerEntryId } });
     expect(e.dueDate?.toISOString().slice(0, 10)).toBe("2029-12-31");
@@ -245,7 +247,7 @@ describe("vade değişikliği — cari harekette, sistem sınırı yok (X-15 §(
   });
 
   it("gerekçesiz değişiklik reddedilir (X-15 §(1))", async () => {
-    expect((await changeDueDate({}, vadeFormu("2027-01-01", ""))).error).toBeDefined();
+    expect((await changeDueDate(null, vadeFormu("2027-01-01", ""))).durum).toBe("ENGELLENDI");
     expect(await prisma.dueDateChange.count()).toBe(0);
   });
 
@@ -254,6 +256,6 @@ describe("vade değişikliği — cari harekette, sistem sınırı yok (X-15 §(
       data: { doctorId: s.doctor.id, type: "TAHSILAT", direction: "ALACAK", amount: "1", documentNo: "THS", createdById: s.admin.id },
     });
     ledgerEntryId = alacak.id;
-    expect((await changeDueDate({}, vadeFormu("2027-01-01"))).error).toBeDefined();
+    expect((await changeDueDate(null, vadeFormu("2027-01-01"))).durum).toBe("ENGELLENDI");
   });
 });

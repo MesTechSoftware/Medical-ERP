@@ -4,6 +4,7 @@ import { formatla } from "@/lib/money";
 import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { PageHeader, Card, StatusBadge, EmptyRow } from "@/components/ui";
+import { IslemFormu } from "@/components/Sonuc";
 import { shipOrder } from "./actions";
 
 export default async function ShippingPage() {
@@ -79,7 +80,7 @@ export default async function ShippingPage() {
                       {formatla(siparisToplami(o.items).toplam)}
                     </span>
                   </div>
-                  <form
+                  <IslemFormu
                     action={shipOrder.bind(null, o.id)}
                     className="flex flex-wrap items-end gap-2"
                   >
@@ -116,7 +117,7 @@ export default async function ShippingPage() {
                     >
                       Kargola
                     </button>
-                  </form>
+                  </IslemFormu>
                 </div>
               ))}
             </div>

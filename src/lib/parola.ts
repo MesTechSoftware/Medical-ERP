@@ -1,5 +1,7 @@
 import bcrypt from "bcryptjs";
 
+import { sert, type Bildirim } from "@/lib/sonuc";
+
 /**
  * Parola politikası — E-2 §(5), 20.10.2026 eki. TEK YER: kural ve hash'leme yalnız buradadır
  * (`tek-cagri.test.ts`).
@@ -37,10 +39,11 @@ const YAYGIN = new Set([
 ]);
 
 /** Parola politikaya uyuyorsa `null`, uymuyorsa kullanıcıya gösterilecek mesaj. */
-export function parolaHatasi(parola: string): string | null {
-  if (parola.length < ASGARI_UZUNLUK) return `Parola en az ${ASGARI_UZUNLUK} karakter olmalıdır.`;
+/** Politika ihlali bildirimi (X-4); geçerliyse `null`. */
+export function parolaHatasi(parola: string, alan: string): Bildirim | null {
+  if (parola.length < ASGARI_UZUNLUK) return sert("PAROLA_KISA", { asgari: ASGARI_UZUNLUK }, alan);
   // İki küçültme: "IZMIR035" → "izmir035" (genel) · "ŞİFRE123" → "şifre123" (Türkçe).
-  if (YAYGIN.has(parola.toLowerCase()) || YAYGIN.has(parola.toLocaleLowerCase("tr"))) return "Bu parola çok yaygın; başka bir parola seçin.";
+  if (YAYGIN.has(parola.toLowerCase()) || YAYGIN.has(parola.toLocaleLowerCase("tr"))) return sert("PAROLA_YAYGIN", {}, alan);
   return null;
 }
 

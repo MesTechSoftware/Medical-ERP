@@ -1,0 +1,142 @@
+"use client";
+
+import { useActionState, useState } from "react";
+import type { IslemSonucu, Parametreler } from "@/lib/sonuc";
+import { bildirimMetni } from "@/lib/sozluk";
+
+/**
+ * İş sonucunun TEK gösterimi — X-4 §(4) kapalı liste, kademe başına bir desen:
+ *
+ * - `SERT`: alanı olan bildirim alanın altında, alan işaretli (`Field`'ler `alanHatasi` ile);
+ *   alanı olmayan ya da formda gösterilmeyen alanın bildirimi form kutusunda.
+ * - `YUMUSAK`: onay diyaloğu; gerekçe zorunlu, aynı formla yeniden gönderilir (`gerekce`).
+ * - `BILGI`: işlem tamamlanır; sonuç ekranında kapatılabilir şerit.
+ *
+ * Hiçbir bildirim atılmaz (X-4 §(7)): formun göstermediği alanın hatası kutuya düşer.
+ */
+
+export type SonucDurumu = IslemSonucu | null;
+
+/** Alanın `SERT` bildirimlerinin metni; yoksa `undefined`. */
+export function alanHatasi(sonuc: SonucDurumu | undefined, alan: string): string | undefined {
+  const metinler = (sonuc?.bildirimler ?? [])
+    .filter((b) => b.kademe === "SERT" && b.alan === alan)
+    .map(bildirimMetni);
+  return metinler.length > 0 ? metinler.join(" ") : undefined;
+}
+
+export function SonucGosterimi({
+  sonuc,
+  alanlar = [],
+  basari,
+}: {
+  sonuc: SonucDurumu;
+  /** Formun kendi altında hata gösterdiği alan adları. */
+  alanlar?: readonly string[];
+  /** `BASARILI` sonuçta gösterilecek metin; sayfada kalan formlar içindir. */
+  basari?: (p: Parametreler) => string;
+}) {
+  const [kapatilan, setKapatilan] = useState<SonucDurumu>(null);
+  if (!sonuc) return null;
+
+  const sert = sonuc.bildirimler.filter((b) => b.kademe === "SERT" && !(b.alan && alanlar.includes(b.alan)));
+  const yumusak = sonuc.bildirimler.filter((b) => b.kademe === "YUMUSAK");
+  const bilgi = sonuc.bildirimler.filter((b) => b.kademe === "BILGI");
+
+  return (
+    <>
+      {sert.length > 0 && (
+        <ul role="alert" data-kademe="SERT" className="space-y-1 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          {sert.map((b, i) => (
+            <li key={i}>{bildirimMetni(b)}</li>
+          ))}
+        </ul>
+      )}
+
+      {sonuc.durum === "ONAY_GEREKLI" && yumusak.length > 0 && (
+        <div
+          role="dialog"
+          aria-labelledby="onay-baslik"
+          data-kademe="YUMUSAK"
+          className="space-y-3 rounded-lg border border-amber-300 bg-amber-50 p-4"
+        >
+          <h3 id="onay-baslik" className="text-sm font-semibold text-amber-900">
+            Onay gerekiyor
+          </h3>
+          <ul className="space-y-1 text-sm text-amber-900">
+            {yumusak.map((b, i) => (
+              <li key={i}>{bildirimMetni(b)}</li>
+            ))}
+          </ul>
+          <div>
+            <label htmlFor="gerekce" className="mb-1 block text-sm font-medium text-amber-900">
+              Gerekçe
+            </label>
+            <textarea
+              id="gerekce"
+              name="gerekce"
+              required
+              rows={2}
+              className="w-full rounded-lg border border-amber-300 px-3 py-2 text-sm outline-none focus:border-amber-500"
+            />
+          </div>
+          <button
+            type="submit"
+            className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700"
+          >
+            Gerekçeyle devam et
+          </button>
+        </div>
+      )}
+
+      {sonuc.durum === "BASARILI_UYARILI" && kapatilan !== sonuc && (
+        <div
+          role="status"
+          data-kademe={sonuc.kademe ?? undefined}
+          className="flex items-start justify-between gap-3 rounded-lg bg-sky-50 px-3 py-2 text-sm text-sky-800"
+        >
+          <ul className="space-y-1">
+            {[...yumusak, ...bilgi].map((b, i) => (
+              <li key={i}>{bildirimMetni(b)}</li>
+            ))}
+          </ul>
+          <button
+            type="button"
+            onClick={() => setKapatilan(sonuc)}
+            className="shrink-0 text-xs font-medium text-sky-700 hover:text-sky-900"
+          >
+            Kapat
+          </button>
+        </div>
+      )}
+
+      {sonuc.durum === "BASARILI" && basari && (
+        <p role="status" className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
+          {basari(sonuc.parametreler ?? {})}
+        </p>
+      )}
+    </>
+  );
+}
+
+/**
+ * Alansız tek düğmeli işlem formu (durum geçişi, silme, sevk): action'ın sonucu formun
+ * içinde aynı desenle gösterilir.
+ */
+export function IslemFormu({
+  action,
+  children,
+  className,
+}: {
+  action: (prev: SonucDurumu, formData: FormData) => Promise<IslemSonucu>;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const [sonuc, formAction] = useActionState<SonucDurumu, FormData>(action, null);
+  return (
+    <form action={formAction} className={className}>
+      {children}
+      <SonucGosterimi sonuc={sonuc} />
+    </form>
+  );
+}

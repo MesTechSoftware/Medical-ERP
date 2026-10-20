@@ -1,23 +1,23 @@
 "use client";
 
 import { useActionState, useEffect, useRef } from "react";
-import { SelectField, Field, TextArea, SubmitButton, FormError } from "@/components/form";
-import { addStockEntry, type StockFormState } from "./actions";
+import { SelectField, Field, TextArea, SubmitButton } from "@/components/form";
+import { SonucGosterimi, type SonucDurumu } from "@/components/Sonuc";
+import { addStockEntry } from "./actions";
+
+const ALANLAR = ["productId", "quantity"] as const;
 
 export default function StockEntryForm({
   products,
 }: {
   products: { id: string; name: string; code: string }[];
 }) {
-  const [state, formAction] = useActionState<StockFormState, FormData>(
-    addStockEntry,
-    {}
-  );
+  const [state, formAction] = useActionState<SonucDurumu, FormData>(addStockEntry, null);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    if (state.ok) formRef.current?.reset();
-  }, [state.ok]);
+    if (state?.durum === "BASARILI") formRef.current?.reset();
+  }, [state]);
 
   return (
     <form ref={formRef} action={formAction} className="space-y-4">
@@ -25,20 +25,16 @@ export default function StockEntryForm({
         label="Ürün"
         name="productId"
         required
+        sonuc={state}
         options={products.map((p) => ({
           value: p.id,
           label: `${p.name} (${p.code})`,
         }))}
       />
-      <Field label="Miktar (adet)" name="quantity" type="number" min="1" required />
+      <Field label="Miktar (adet)" name="quantity" type="number" min="1" required sonuc={state} />
       <TextArea label="Açıklama (opsiyonel)" name="note" placeholder="Örn: Tedarikçi girişi" />
 
-      <FormError message={state.error} />
-      {state.ok && (
-        <p className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
-          Stok girişi kaydedildi.
-        </p>
-      )}
+      <SonucGosterimi sonuc={state} alanlar={ALANLAR} basari={() => "Stok girişi kaydedildi."} />
 
       <SubmitButton>Stok Girişi Ekle</SubmitButton>
     </form>

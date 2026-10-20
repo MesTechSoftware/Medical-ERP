@@ -6,17 +6,17 @@ import { ASGARI_UZUNLUK, parolaDogru, parolaHashle, parolaHatasi } from "@/lib/p
 describe("parolaHatasi (E-2-6)", () => {
   it("asgari uzunluk 8: 7 karakter reddedilir, 8 karakter geçer", () => {
     expect(ASGARI_UZUNLUK).toBe(8);
-    expect(parolaHatasi("Kx7#mq2")).toMatch(/en az 8/);
-    expect(parolaHatasi("Kx7#mq2a")).toBeNull();
+    expect(parolaHatasi("Kx7#mq2", "p")).toEqual({ kademe: "SERT", kural_kodu: "PAROLA_KISA", parametreler: { asgari: 8 }, alan: "p" });
+    expect(parolaHatasi("Kx7#mq2a", "p")).toBeNull();
   });
 
   it("karmaşıklık kuralı yoktur: yalnız küçük harfli uzun parola geçer", () => {
-    expect(parolaHatasi("kırmızıelmaağacı")).toBeNull();
+    expect(parolaHatasi("kırmızıelmaağacı", "p")).toBeNull();
   });
 
   it("yaygın parola büyük/küçük harf farkı gözetilmeden reddedilir", () => {
     for (const p of ["12345678", "password", "PassWord", "QWERTYUIOP", "Galatasaray", "IZMIR035", "ŞİFRE123", "Medikal123"]) {
-      expect(parolaHatasi(p), p).toMatch(/yaygın/);
+      expect(parolaHatasi(p, "p")?.kural_kodu, p).toBe("PAROLA_YAYGIN");
     }
   });
 });

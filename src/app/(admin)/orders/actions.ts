@@ -7,6 +7,7 @@ import { requireStaff } from "@/lib/session";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { OrderStatus } from "@/generated/prisma/enums";
 import { stokHareketiYaz, varsayilanDepoId } from "@/lib/stok";
+import { engel, type IslemSonucu } from "@/lib/sonuc";
 
 function revalidateOrders() {
   revalidatePath("/orders");
@@ -14,10 +15,13 @@ function revalidateOrders() {
   revalidatePath("/shipping");
 }
 
+// Durum geçişi koşullu yazılır; arada durum değiştiyse (başka kullanıcı ilerletti) işlem
+// sessizce geçmez, `SIPARIS_DURUMU_UYGUN_DEGIL` döner (X-4 §(7)).
+
 /** BEKLIYOR -> HAZIRLANIYOR */
-export async function prepareOrder(id: string) {
+export async function prepareOrder(id: string): Promise<IslemSonucu> {
   const session = await requireStaff();
-  await prisma.$transaction(async (tx) => {
+  const res = await prisma.$transaction(async (tx) => {
     const res = await tx.order.updateMany({
       where: { id, status: "BEKLIYOR" },
       data: { status: OrderStatus.HAZIRLANIYOR },
@@ -35,15 +39,17 @@ export async function prepareOrder(id: string) {
         tx
       );
     }
+    return res;
   });
+  if (res.count === 0) return engel("SIPARIS_DURUMU_UYGUN_DEGIL");
   revalidateOrders();
   redirect(`/orders/${id}`);
 }
 
 /** KARGOLANDI -> TESLIM_EDILDI */
-export async function markDelivered(id: string) {
+export async function markDelivered(id: string): Promise<IslemSonucu> {
   const session = await requireStaff();
-  await prisma.$transaction(async (tx) => {
+  const updated = await prisma.$transaction(async (tx) => {
     const updated = await tx.order.updateMany({
       where: { id, status: "KARGOLANDI" },
       data: { status: OrderStatus.TESLIM_EDILDI },
@@ -65,13 +71,15 @@ export async function markDelivered(id: string) {
         tx
       );
     }
+    return updated;
   });
+  if (updated.count === 0) return engel("SIPARIS_DURUMU_UYGUN_DEGIL");
   revalidateOrders();
   redirect(`/orders/${id}`);
 }
 
 /** Siparişi iptal eder ve stoğu geri yükler. */
-export async function cancelOrder(id: string) {
+export async function cancelOrder(id: string): Promise<IslemSonucu> {
   const session = await requireStaff();
 
   const order = await prisma.order.findUnique({
@@ -79,9 +87,7 @@ export async function cancelOrder(id: string) {
     include: { items: true },
   });
   if (!order) redirect("/orders");
-  if (order.status === "IPTAL" || order.status === "TESLIM_EDILDI") {
-    redirect(`/orders/${id}?error=cannotCancel`);
-  }
+  if (order.status === "IPTAL" || order.status === "TESLIM_EDILDI") return engel("SIPARIS_IPTAL_EDILEMEZ");
 
   await prisma.$transaction(async (tx) => {
     // Stok iadesi = GIRIS hareketleri (stok miktarı saklanmaz — ADR-005).

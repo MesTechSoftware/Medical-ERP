@@ -1,5 +1,6 @@
 import { Prisma } from "@/generated/prisma/client";
 import type { Role } from "@/generated/prisma/enums";
+import type { KuralKodu } from "@/lib/sonuc";
 
 /**
  * Hesap yaşam döngüsünün sert kısıtları — E-2 §(7), KABUL E-2-9.
@@ -14,12 +15,7 @@ import type { Role } from "@/generated/prisma/enums";
  * "tekrar deneyin" denir.
  */
 
-export type HesapKurali = "KENDINI_PASIFLESTIREMEZ" | "SON_YONETICI";
-
-export const HESAP_KURALI_MESAJI: Record<HesapKurali, string> = {
-  KENDINI_PASIFLESTIREMEZ: "Kendi hesabınızı pasifleştiremezsiniz.",
-  SON_YONETICI: "Son aktif yönetici pasifleştirilemez.",
-};
+export type HesapKurali = Extract<KuralKodu, "KENDINI_PASIFLESTIREMEZ" | "SON_YONETICI">;
 
 /** `YONETICI` pasifleştiren transaction'ın seçenekleri. */
 export function pasiflestirmeTxSecenekleri(hedefRol: Role): { isolationLevel?: Prisma.TransactionIsolationLevel } {

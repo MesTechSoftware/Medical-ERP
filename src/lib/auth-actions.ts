@@ -6,30 +6,27 @@ import { parolaDogru, parolaHashle, parolaHatasi } from "@/lib/parola";
 import { checkLock, logAttempt, recordFailure, reset } from "@/lib/rate-limit";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { endSession, getSession, startSession } from "@/lib/session";
+import { engel, sonucOlustur, type IslemSonucu } from "@/lib/sonuc";
 
-export type LoginState = { error?: string };
-
-function lockedMessage(minutes: number): string {
-  return `Çok fazla başarısız deneme. Lütfen ${minutes} dakika sonra tekrar deneyin.`;
-}
+const kilitli = (dakika: number) => engel("GIRIS_KILITLI", { dakika });
 
 /**
  * Giriş (E-2, ADR-003). Deneme sınırı bu tek noktadadır (X-9, ADR-004): uygulamada
  * route handler yoktur, kimlik doğrulamaya başka giriş yolu kalmadı.
  */
 export async function loginAction(
-  _prev: LoginState,
+  _prev: unknown,
   formData: FormData
-): Promise<LoginState> {
+): Promise<IslemSonucu> {
   const email = ((formData.get("email") as string) ?? "").trim().toLowerCase();
   const password = (formData.get("password") as string) ?? "";
-  if (!email || !password) return { error: "E-posta veya şifre hatalı." };
+  if (!email || !password) return engel("GIRIS_HATALI");
 
   // Zaten kilitliyse denemeyi hiç başlatma.
   const pre = checkLock(email);
   if (pre.locked) {
     logAttempt(null, "kilitli");
-    return { error: lockedMessage(pre.retryAfterMinutes) };
+    return kilitli(pre.retryAfterMinutes);
   }
 
   const user = await prisma.user.findUnique({ where: { email } });
@@ -41,9 +38,7 @@ export async function loginAction(
       { action: AUDIT_ACTIONS.AUTH_LOGIN_FAILURE, entityType: "Auth", entityId: email },
       prisma
     );
-    return post.locked
-      ? { error: lockedMessage(post.retryAfterMinutes) }
-      : { error: "E-posta veya şifre hatalı." };
+    return post.locked ? kilitli(post.retryAfterMinutes) : engel("GIRIS_HATALI");
   }
 
   reset(email);
@@ -69,16 +64,14 @@ export async function logoutAction() {
   redirect("/login");
 }
 
-export type ParolaDegistirState = { error?: string };
-
 /**
  * Geçici parolanın değiştirilmesi (E-2 §(2)/(3), E-2-7). Yalnız `mustChangePassword` taşıyan
  * kullanıcı içindir; profil/tercih ekranı kapsam dışıdır (E-2 kapsam dışı listesi).
  */
 export async function parolaDegistirAction(
-  _prev: ParolaDegistirState,
+  _prev: unknown,
   formData: FormData
-): Promise<ParolaDegistirState> {
+): Promise<IslemSonucu> {
   const session = await getSession();
   if (!session) redirect("/login");
   if (!session.user.mustChangePassword) redirect("/");
@@ -88,11 +81,11 @@ export async function parolaDegistirAction(
   const tekrar = (formData.get("tekrar") as string) ?? "";
 
   const user = await prisma.user.findUniqueOrThrow({ where: { id: session.user.id } });
-  if (!(await parolaDogru(mevcut, user.passwordHash))) return { error: "Mevcut parola hatalı." };
-  const hata = parolaHatasi(yeni);
-  if (hata) return { error: hata };
-  if (yeni !== tekrar) return { error: "Yeni parola ile tekrarı aynı değil." };
-  if (yeni === mevcut) return { error: "Yeni parola geçici paroladan farklı olmalıdır." };
+  if (!(await parolaDogru(mevcut, user.passwordHash))) return engel("PAROLA_MEVCUT_HATALI", {}, "mevcut");
+  const hata = parolaHatasi(yeni, "yeni");
+  if (hata) return sonucOlustur([hata]);
+  if (yeni !== tekrar) return engel("PAROLA_TEKRAR_UYUSMUYOR", {}, "tekrar");
+  if (yeni === mevcut) return engel("PAROLA_DEGISMEDI", {}, "yeni");
 
   const passwordHash = await parolaHashle(yeni);
   await prisma.$transaction(async (tx) => {

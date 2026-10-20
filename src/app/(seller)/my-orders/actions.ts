@@ -14,8 +14,7 @@ import { canSellerOrderForDoctor, kapsamliDoktorlariGetir } from "@/lib/doctor";
 import { policy } from "@/lib/policy";
 import { siparisSahibiniKilitle } from "@/lib/sahiplik";
 import { IsHatasi } from "@/lib/hata";
-
-export type OrderFormState = { error?: string };
+import { engel, sert, type Bildirim, type IslemSonucu } from "@/lib/sonuc";
 
 const orderLinesSchema = z
   .array(
@@ -31,14 +30,14 @@ const orderLinesSchema = z
   .min(1);
 
 export async function createOrder(
-  _prev: OrderFormState,
+  _prev: unknown,
   formData: FormData
-): Promise<OrderFormState> {
+): Promise<IslemSonucu> {
   const session = await requireSeller();
   const sellerId = session.user.id;
 
   const doctorId = (formData.get("doctorId") as string)?.trim();
-  if (!doctorId) return { error: "Doktor seçiniz." };
+  if (!doctorId) return engel("ALAN_ZORUNLU", {}, "doctorId");
 
   // 🔴 FR-04 / RULE-02: sahiplik SUNUCU TARAFINDA doğrulanır. Arayüzde yalnızca
   // kendi doktorları listelenir ama ham istek de aynı kapıdan geçmek zorunda.
@@ -47,23 +46,22 @@ export async function createOrder(
     where: { AND: [kapsamliDoktorlariGetir(session.user), { id: doctorId }] },
     select: { id: true, fullName: true, ownerSellerId: true, status: true, paymentTermDays: true },
   });
-  if (!doctor) return { error: "Bu doktor sizin portföyünüzde değil." };
+  if (!doctor) return engel("DOKTOR_KAPSAM_DISI", {}, "doctorId");
 
   const ownership = canSellerOrderForDoctor(sellerId, doctor);
-  if (!ownership.allowed) return { error: ownership.reason };
+  if (!ownership.allowed) return engel(ownership.kuralKodu, {}, "doctorId");
 
   let raw: unknown;
   try {
     raw = JSON.parse((formData.get("items") as string) || "[]");
   } catch (e) {
     // Bozuk form girdisi iş hatasıdır; başka hata teknik hatadır (X-3 §(4)).
-    if (e instanceof SyntaxError) return { error: "Sipariş kalemleri okunamadı." };
+    if (e instanceof SyntaxError) return engel("SIPARIS_KALEMI_GECERSIZ");
     throw e;
   }
 
   const parsedLines = orderLinesSchema.safeParse(raw);
-  if (!parsedLines.success)
-    return { error: "En az bir ürün ve geçerli miktar giriniz." };
+  if (!parsedLines.success) return engel("SIPARIS_KALEMI_GECERSIZ");
   const lines = parsedLines.data;
 
   try {
@@ -72,24 +70,33 @@ export async function createOrder(
       // Sahip kilit altında yeniden okunur: arada devir tamamlandıysa sipariş
       // reddedilir; satıcı alanı sipariş anındaki sahiptir (X-17 §(8), X-13 §(3)).
       const sahip = await siparisSahibiniKilitle(tx, doctorId, sellerId);
-      if (sahip.durum === "HATA")
-        throw new IsHatasi("Bu doktorun sorumlu satıcısı değişti; sipariş kaydedilmedi.");
+      if (sahip.durum === "HATA") throw new IsHatasi([sert(sahip.kuralKodu)]);
       await stokKilitle(tx, lines.map((l) => l.productId));
       const items = [];
+      // Kalem hataları toplanır, hepsi birlikte döner (X-4 §(7)).
+      const hatalar: Bildirim[] = [];
       for (const line of lines) {
         const product = await tx.product.findUnique({
           where: { id: line.productId },
           select: { id: true, name: true, status: true, taxRate: { select: { rate: true } } },
         });
-        if (!product) throw new IsHatasi("Ürün bulunamadı.");
-        if (product.status !== "AKTIF")
-          throw new IsHatasi(`${product.name} pasif durumda.`);
+        if (!product) {
+          hatalar.push(sert("URUN_BULUNAMADI"));
+          continue;
+        }
+        if (product.status !== "AKTIF") {
+          hatalar.push(sert("URUN_PASIF", { urun: product.name }));
+          continue;
+        }
 
         // Liste fiyatı tek yoldan çözülür; atanmış listede satır yoksa varsayılana
-        // düşülmez (X-10 §(3)). Satıcının girdiği fiyat ayrıca saklanır (X-5 §(9)).
+        // düşülmez (X-10 §(3)) — `SERT`, satır kaydedilemez (X-4 §(4)). Satıcının
+        // girdiği fiyat ayrıca saklanır (X-5 §(9)).
         const fiyat = await cozumleBirimFiyat(product.id, doctor.id, tx);
-        if (fiyat.durum === "HATA")
-          throw new IsHatasi(`${product.name} için fiyat çözümlenemedi.`);
+        if (fiyat.durum === "HATA") {
+          hatalar.push(sert("FIYAT_COZUMLENEMEDI", { urun: product.name }));
+          continue;
+        }
 
         // RULE-03 taban fiyat reddi C6'da söküldü: iskonto tavanı yok, liste üstü
         // satış serbest (GÇ-8, A-10 · Ü-3 §(10)). Taban etiketi 1B'de gelir.
@@ -103,6 +110,7 @@ export async function createOrder(
           vatRate: product.taxRate.rate,
         });
       }
+      if (hatalar.length > 0) throw new IsHatasi(hatalar);
 
       const documentNo = await uretBelgeNo("SIP", tx);
       const order = await tx.order.create({
@@ -148,8 +156,8 @@ export async function createOrder(
       );
     });
   } catch (e) {
-    // Yalnız iş hatası mesaja döner; teknik hatanın mesajı ekrana taşınmaz (X-3 §(2)/(4)).
-    if (e instanceof IsHatasi) return { error: e.message };
+    // Yalnız iş hatası sonuca döner; teknik hata hata sınırına düşer (X-3 §(2)/(4), X-4 §(2)).
+    if (e instanceof IsHatasi) return e.sonuc;
     throw e;
   }
 

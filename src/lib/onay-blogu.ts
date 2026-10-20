@@ -1,6 +1,7 @@
 import type { Prisma } from "@/generated/prisma/client";
 import type { BelgeOneki } from "@/lib/belge-no";
 import { prisma } from "@/lib/db";
+import type { KuralKodu } from "@/lib/sonuc";
 import { simdi } from "@/lib/zaman";
 
 type Db = Prisma.TransactionClient | typeof prisma;
@@ -14,8 +15,8 @@ type Db = Prisma.TransactionClient | typeof prisma;
  * açan da yazar, karar veren de (X-4 §(4) `YUMUSAK`).
  */
 
-/** Blok doğuran kural kodları — kodda kapalı katalog (X-4 §(3)); veritabanında `varchar`. */
-export type BlokKuralKodu = "NEGATIF_STOK";
+/** Blok doğuran kural kodları — X-4 kataloğunun alt kümesi (§(3)); veritabanında `varchar`. */
+export type BlokKuralKodu = Extract<KuralKodu, "NEGATIF_STOK">;
 
 export type BlokIhlali = {
   kuralKodu: BlokKuralKodu;

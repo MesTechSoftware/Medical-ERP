@@ -1,8 +1,9 @@
 "use client";
 
 import { useActionState } from "react";
-import { SubmitButton, FormError } from "@/components/form";
-import { transferDoctor, type TransferState } from "./actions";
+import { SubmitButton } from "@/components/form";
+import { SonucGosterimi, type SonucDurumu } from "@/components/Sonuc";
+import { transferDoctor } from "./actions";
 
 /**
  * Toplu devir formu (X-17 §(4)). Doktor seçimi listedeki kutulardan gelir; kutular
@@ -15,10 +16,7 @@ export default function TransferForm({
   formId: string;
   sellers: { id: string; name: string }[];
 }) {
-  const [state, formAction] = useActionState<TransferState, FormData>(
-    transferDoctor,
-    {}
-  );
+  const [state, formAction] = useActionState<SonucDurumu, FormData>(transferDoctor, null);
 
   return (
     <form id={formId} action={formAction} className="flex flex-wrap items-end gap-2">
@@ -55,11 +53,8 @@ export default function TransferForm({
 
       <SubmitButton>Devret</SubmitButton>
 
-      {state.ok && (
-        <p className="w-full text-xs font-medium text-green-700">{state.ok}</p>
-      )}
       <div className="w-full">
-        <FormError message={state.error} />
+        <SonucGosterimi sonuc={state} basari={(p) => `Devir tamamlandı: ${p.degisen} doktor.`} />
       </div>
     </form>
   );

@@ -97,6 +97,6 @@ test("geçersiz tutar sunucuda reddedilir", async ({ page }) => {
   await page.getByLabel("Yöntem").selectOption(await havaleId());
   await page.getByRole("button", { name: "Tahsilat Kaydet" }).click();
 
-  await expect(page.getByText(/Geçerli bir tahsilat tutarı/)).toBeVisible();
+  await expect(page.getByText("Geçerli bir tutar giriniz.")).toBeVisible();
   expect(await paymentCount(doctor.id)).toBe(before); // hiçbir şey yazılmadı
 });
