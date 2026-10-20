@@ -1,7 +1,12 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+
 import { describe, expect, it } from "vitest";
+
+import { SonucGosterimi } from "@/components/Sonuc";
 
 import { KURAL_KODLARI, basarili, bilgi, engel, sert, sonucOlustur, yumusak } from "@/lib/sonuc";
 import { KURAL_METNI, bildirimMetni } from "@/lib/sozluk";
@@ -74,7 +79,7 @@ describe("tek sözlük (X-4-2)", () => {
   });
 
   it("her metin parametresiyle dolar, boş ya da 'undefined' kalmaz", () => {
-    const parametre = new Proxy({}, { get: () => "X" });
+    const parametre = new Proxy({}, { get: () => "1" }); // hem metin hem tutar parametresi olarak geçerli
     for (const kod of KURAL_KODLARI) {
       const metin = bildirimMetni({ kural_kodu: kod, parametreler: parametre });
       expect(metin, kod).not.toBe("");
@@ -109,5 +114,37 @@ describe("bildirimler yutulmaz (X-4-3)", () => {
       kademe: "SERT",
       bildirimler: [{ kademe: "SERT", kural_kodu: "ALAN_ZORUNLU", parametreler: {}, alan: "amount" }],
     });
+  });
+});
+
+describe("kademe başına tek gösterim deseni (X-4-4)", () => {
+  const html = (sonuc: Parameters<typeof SonucGosterimi>[0]["sonuc"], basari?: () => string) =>
+    renderToStaticMarkup(createElement(SonucGosterimi, { sonuc, basari }));
+
+  it("BILGI: işlem tamamlanır — başarı metni ve kapatılabilir şerit birlikte", () => {
+    const h = html(sonucOlustur([bilgi("NAKIT_TEVSIK_LIMITI", { toplam: "35000", limit: "30000" })]), () => "Kaydedildi.");
+    expect(h).toMatch(/role="status" data-kademe="BILGI"/);
+    expect(h).toMatch(/tevsik sınırını aşıyor/);
+    expect(h).toMatch(/>Kapat</);
+    expect(h).toMatch(/Kaydedildi\./);
+    expect(h).not.toMatch(/role="alert"|role="dialog"/);
+  });
+
+  it("YUMUSAK: onay diyaloğu, gerekçe alanı zorunlu ve aynı formla gönderilir", () => {
+    const h = html(sonucOlustur([yumusak("NEGATIF_STOK", { sonra: -2 })]), () => "Kaydedildi.");
+    expect(h).toMatch(/role="dialog"/);
+    expect(h).toMatch(/<textarea[^>]*name="gerekce"[^>]*required/);
+    expect(h).toMatch(/işlem sonrası stok -2 adet/);
+    expect(h).not.toMatch(/Kaydedildi/);
+  });
+
+  it("SERT: alansız bildirim form kutusunda; alanı formda gösterilen bildirim kutuda tekrar edilmez", () => {
+    const sonuc = sonucOlustur([sert("URUN_SIPARISTE_KULLANILDI"), sert("ALAN_ZORUNLU", {}, "name")]);
+    const kutu = renderToStaticMarkup(createElement(SonucGosterimi, { sonuc, alanlar: ["name"] }));
+    expect(kutu).toMatch(/role="alert"/);
+    expect(kutu).toMatch(/silinemez/);
+    expect(kutu).not.toMatch(/Bu alan zorunludur/);
+    // Alan formda yoksa bildirim atılmaz, kutuya düşer (X-4 §(7)).
+    expect(html(sonuc)).toMatch(/Bu alan zorunludur/);
   });
 });

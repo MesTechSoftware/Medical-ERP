@@ -21,8 +21,8 @@ export const policy = {
     kredilimitiBloklar: false,
     /** #5 — Fatura bilgisi zorunlu değil (A-13). */
     faturaBilgisiZorunlu: false,
-    /** #6 — `null` = kapalı; devreye almada dolar (A-15). */
-    nakitTevsikLimiti: null,
+    /** #6 — TL, brüt (ör. "30000"); `null` = kapalı. Devreye almada müşavir teyidiyle dolar (A-15 §(3)). */
+    nakitTevsikLimiti: null as string | null,
     /** #23 — Varsayılan prim oranı (%). Bugünkü değer; devreye almada yazılı teyit (X-14 §(1)). */
     primOraniVarsayilan: 5,
   },

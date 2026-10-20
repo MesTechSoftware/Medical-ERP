@@ -1,4 +1,6 @@
+import { formatla } from "@/lib/money";
 import type { Bildirim, KuralKodu, Parametreler } from "@/lib/sonuc";
+import { BRUT, TABAN_ETIKETI } from "@/lib/taban";
 
 /**
  * Kural kodu → kullanıcı metni. Tek sözlük (X-4 §(3)): aynı kural her ekranda aynı cümledir.
@@ -57,6 +59,11 @@ export const KURAL_METNI: Record<KuralKodu, (p: Parametreler) => string> = {
   TAHSILAT_ZATEN_IPTAL: () => "Bu tahsilat zaten iptal.",
   CARI_HAREKET_BULUNAMADI: () => "Cari hareket bulunamadı.",
   VADE_YALNIZ_BORC: () => "Vade yalnız borç hareketinde değişir.",
+  // A-15 §(5): sistem "uygundur" demez; uyarı neyi kontrol etmediğini yazar.
+  NAKIT_TEVSIK_LIMITI: (p) =>
+    `Bu carinin aynı gün nakit tahsilat toplamı ${formatla(p.toplam)} (${TABAN_ETIKETI[BRUT]}); ${formatla(p.limit)} tevsik sınırını aşıyor. ` +
+    "Bu uyarı yalnız aynı gün ve aynı cari için yapılan nakit tahsilatları toplar; bir faturanın parça parça " +
+    "tahsil edilmesi hâlindeki yükümlülüğü değerlendirmez.",
 
   NEGATIF_STOK: (p) => `Stok yetersiz: işlem sonrası stok ${p.sonra} adet olur.`,
 };

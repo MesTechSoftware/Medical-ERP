@@ -10,35 +10,53 @@ import { referansVeri, yeniDoktorVerisi } from "../../../../test/integration/ref
 // Kongre defteri (GÇ-4), mahsup (GÇ-3) ve prim dönemi (GÇ-16) tabloları CM'de şemadan
 // çıktı — "onlara yazmaz" testleri yerini şemaya ve C8 anti-şema testine bıraktı.
 // Tahsilatın cari hareketi 1B madde 7'de yazılır (X-11 §(5), A-11); o zamana kadar yazılmaz (R-11).
-const h = vi.hoisted(() => ({ adminId: "" }));
+const h = vi.hoisted(() => ({ adminId: "", tevsikLimiti: null as string | null }));
 
 vi.mock("@/lib/session", () => ({
   requireAdmin: async () => ({ user: { id: h.adminId, role: "YONETICI" } }),
   requireStaff: async () => ({ user: { id: h.adminId, role: "YONETICI" } }),
 }));
 vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
+// A-15 limiti kurulumda `null`'dır (kapalı); testte çalışma anında okunan değer verilir.
+vi.mock("@/lib/policy", async (asil) => {
+  const m = await asil<typeof import("@/lib/policy")>();
+  return {
+    policy: {
+      ...m.policy,
+      finance: {
+        ...m.policy.finance,
+        get nakitTevsikLimiti() {
+          return h.tevsikLimiti;
+        },
+      },
+    },
+  };
+});
 
 const { recordCollection, cancelCollection, changeDueDate } = await import("./actions");
+const { nakitTevsikUyarisi } = await import("@/lib/tevsik");
 
 async function seed() {
   const ref = await referansVeri();
   const pos = await prisma.paymentMethod.create({
     data: { name: "POS", type: "POS", commissionRate: "2.5" },
   });
+  const nakit = await prisma.paymentMethod.findUniqueOrThrow({ where: { name: "Nakit" } });
+  h.tevsikLimiti = null;
   const admin = await prisma.user.create({
     data: { name: "Yönetici", email: "yonetici@medikal.local", passwordHash: "test", role: "YONETICI" },
   });
   h.adminId = admin.id;
   const doctor = await prisma.doctor.create({ data: yeniDoktorVerisi("Dr. Ayşe Kaya") });
-  return { ...ref, pos, admin, doctor };
+  return { ...ref, pos, nakit, admin, doctor };
 }
 
-function tahsilatFormu(doctorId: string, paymentMethodId: string, amount = "5000") {
+function tahsilatFormu(doctorId: string, paymentMethodId: string, amount = "5000", paidAt = "2026-09-26") {
   const fd = new FormData();
   fd.set("doctorId", doctorId);
   fd.set("amount", amount);
   fd.set("paymentMethodId", paymentMethodId);
-  fd.set("paidAt", "2026-09-26");
+  fd.set("paidAt", paidAt);
   fd.set("referenceNo", "DEKONT-001");
   return fd;
 }
@@ -257,5 +275,88 @@ describe("vade değişikliği — cari harekette, sistem sınırı yok (X-15 §(
     });
     ledgerEntryId = alacak.id;
     expect((await changeDueDate(null, vadeFormu("2027-01-01"))).durum).toBe("ENGELLENDI");
+  });
+});
+
+describe("nakit tevsik uyarısı — BILGI, kayıt engellenmez (A-15-1)", () => {
+  let s: Awaited<ReturnType<typeof seed>>;
+  const kodlar = (r: { bildirimler: { kural_kodu: string }[] }) => r.bildirimler.map((b) => b.kural_kodu);
+
+  beforeEach(async () => {
+    s = await seed();
+  });
+
+  it("limit kapalıysa (null) uyarı yoktur", async () => {
+    expect(await recordCollection(null, tahsilatFormu(s.doctor.id, s.nakit.id, "50000"))).toEqual({
+      durum: "BASARILI",
+      kademe: null,
+      bildirimler: [],
+    });
+  });
+
+  it("aynı cari + aynı gün nakit toplamı limiti aşınca aşan işlem dâhil uyarır; kayıt yazılır", async () => {
+    h.tevsikLimiti = "30000";
+    expect(await recordCollection(null, tahsilatFormu(s.doctor.id, s.nakit.id, "20000"))).toMatchObject({
+      durum: "BASARILI",
+    });
+    expect(await recordCollection(null, tahsilatFormu(s.doctor.id, s.nakit.id, "15000"))).toEqual({
+      durum: "BASARILI_UYARILI",
+      kademe: "BILGI",
+      bildirimler: [
+        { kademe: "BILGI", kural_kodu: "NAKIT_TEVSIK_LIMITI", parametreler: { toplam: "35000.00", limit: "30000.00" } },
+      ],
+    });
+    expect(await prisma.doctorPayment.count()).toBe(2);
+    expect(await prisma.approvalBlock.count()).toBe(0); // OnayBlogu üretilmez
+  });
+
+  it("limite eşit toplam aşım değildir", async () => {
+    h.tevsikLimiti = "30000";
+    await recordCollection(null, tahsilatFormu(s.doctor.id, s.nakit.id, "10000"));
+    expect(kodlar(await recordCollection(null, tahsilatFormu(s.doctor.id, s.nakit.id, "20000")))).toEqual([]);
+  });
+
+  it("yalnız nakit, aynı cari, aynı gün ve iptal edilmemiş tahsilat sayılır", async () => {
+    h.tevsikLimiti = "30000";
+    const baska = await prisma.doctor.create({ data: yeniDoktorVerisi("Dr. Başka") });
+    await recordCollection(null, tahsilatFormu(s.doctor.id, s.havale.id, "25000")); // havale
+    await recordCollection(null, tahsilatFormu(baska.id, s.nakit.id, "25000")); // başka cari
+    await recordCollection(null, tahsilatFormu(s.doctor.id, s.nakit.id, "25000", "2026-09-25")); // başka gün
+    await recordCollection(null, tahsilatFormu(s.doctor.id, s.nakit.id, "25000"));
+    const iptal = await prisma.doctorPayment.findFirstOrThrow({
+      where: { doctorId: s.doctor.id, paymentMethodId: s.nakit.id, paidAt: { gte: new Date("2026-09-26") } },
+    });
+    const fd = new FormData();
+    fd.set("paymentId", iptal.id);
+    await cancelCollection(null, fd);
+
+    expect(kodlar(await recordCollection(null, tahsilatFormu(s.doctor.id, s.nakit.id, "25000")))).toEqual([]);
+    expect(kodlar(await recordCollection(null, tahsilatFormu(s.doctor.id, s.nakit.id, "5001")))).toEqual([
+      "NAKIT_TEVSIK_LIMITI",
+    ]);
+  });
+
+  it("gün İstanbul takvim günüdür: 23:30 ile 00:30 ayrı günlerdir (E-1 §(3))", async () => {
+    const yaz = (paidAt: string) =>
+      prisma.doctorPayment.create({
+        data: {
+          documentNo: `THS-T-${paidAt}`,
+          doctorId: s.doctor.id,
+          amount: "20000",
+          paymentMethodId: s.nakit.id,
+          commissionRate: "0",
+          commissionAmount: "0",
+          paidAt: new Date(paidAt),
+          recordedBy: h.adminId,
+        },
+      });
+    await yaz("2026-09-26T20:30:00Z"); // İstanbul 26.09 23:30
+    await yaz("2026-09-26T21:30:00Z"); // İstanbul 27.09 00:30 — UTC'de hâlâ 26.09
+    const uyari = (an: string) =>
+      prisma.$transaction((tx) =>
+        nakitTevsikUyarisi(tx, { doctorId: s.doctor.id, an: new Date(an), yon: "ALACAK" }, "30000")
+      );
+    expect(await uyari("2026-09-26T20:30:00Z")).toBeNull();
+    expect(await uyari("2026-09-26T21:30:00Z")).toBeNull();
   });
 });
