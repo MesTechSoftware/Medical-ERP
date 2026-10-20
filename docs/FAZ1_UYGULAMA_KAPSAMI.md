@@ -664,7 +664,7 @@ parametrelerini taşır. Koşullu `updateMany` kolonla birlikte gider; bu yüzde
 4. ✅ *(20.10.2026 — PR #29–#35; 4a–4g)* **E-2 kimlik katmanı — Yol (b)** *(`docs/adr/ADR-003`)* → **X-3/X-4 hata yüzeyi** → **Ü-3 taban etiketi** →
    **A-15** → **X-6 §(6) vade uyarısı**
 5. ✅ *(20.10.2026 — B-5-1, B-6-1, C-6-1, X-5-1, X-10-1)* **C-6 `hesaplaSatirTutarlari()`** + **B-5/B-6 `cozumleBirimFiyat()`** *(X-5 ham aritmetiğin iki adresi · `CM`'deki ilk sürüm burada tamamlanır: barem, tarih, X-4 `SERT` — X-10 §(3))*
-6. **D-5 dışa aktarım + kütük**, **K-4 §(6) fatura hazırlık veri seti**
+6. ✅ *(20.10.2026 — D-5-1, D-5-2, K-4-1)* **D-5 dışa aktarım + kütük**, **K-4 §(6) fatura hazırlık veri seti**
 7. **B-7 stok düzeltme**, **A-1…A-13 belge akışları** *(bayi dahil — X-8 §(4))*, **tek cari ekranı** *(`hesap_sinifi` süzgeci — X-8 §(5); **fiyat listesi ataması** — X-10 §(2)/(6), yalnız `YONETICI`)*, **fiyat listesi ekranı** *(başlık + satır; tarih ekranı Faz 2 — X-10 §(7))*, **D-6 import** *(`hesap_sinifi` zorunlu kolon; **ön koşul:** `import.azamiDosyaBoyutMb` değeri)* — **X-16 / ADR-006 sırası** *(13.10)*: cari girdi şeması (tek cari ekranı) → `CARI` tanımı → şablon üretici ve geliştirici komutu → önizleme özeti · küme kuralı bildirimleri ve üç koruma testi (`information_schema`, C8 deseni) · kabul kriteri taslakları `docs/arsiv/KARAR_ONERISI_2026-09-19.md` §10'dadır, testten önce `KABUL_KRITERLERI.md`'ye yazılır
 8. **F-02 (küçültülmüş)**, **F-03**, **F-05 + K-6 temizliği**, **F-06**, **F-07**, **F-10**, **F-12**
 9. **F-11 kabul senaryosu** — `KABUL_KRITERLERI.md`'ye göre **yeniden yazılmış** hâliyle *(§C-e)*
@@ -806,6 +806,16 @@ Bunlar **karar değil**, Yol (b)'nin doğurduğu uygulama kalemleridir; 1B madde
 - Tahsilat veri seti iptal edilen tahsilatı `Durum` kolonuyla verir. Stok veri setinde B-7 düzeltme işareti
   `StokDuzeltme` akışıyla (1B-7) eklenir. Sevkiyat `harici_irsaliye_no` kolonu sevkiyat veri setine aittir; Faz 1
   kataloğunda ayrı sevkiyat veri seti yoktur — fatura hazırlık (6b) sevkiyattan okur.
+
+**Madde 6b — K-4 §(6) fatura hazırlık (20.10.2026, kriter K-4-1).** Notlar (karar değil):
+
+- `FATURA_KOLONLARI` kodda kapalı kolon kataloğudur; `export.sablonTanimi` biçimi `{ sutunlar: { baslik, kaynak }[] }`
+  — entegratör şablonunun başlıkları ve sırası, kaynak bu katalogdan. Değer devreye almada girilir (🟦 K-4 entegratör
+  tespiti); `null` iken fatura hazırlık dosyası `FATURA_SABLONU_TANIMSIZ` ile reddedilir. Bu yüzden e2e'de dosya
+  inmez; davranış entegrasyon testinde şablon verilerek sınanır.
+- Sevkiyat satırını yazan akış 1B-7'dedir (A-3); o güne kadar veri seti boş döner.
+- A-13 eksik fatura kimliği uyarısı (`BILGI`) bu veri setine bağlanmadı — A-13 akışıyla (1B-7) gelir.
+- K-7 §(4) yazılı teyidi ilk çıktıdan önce alınır — süreçtir, kod kontrol etmez (D-5 §(8)).
 
 ---
 

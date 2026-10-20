@@ -122,7 +122,8 @@ kodu kataloğu `sonuc.ts`, metni tek sözlük `sozluk.ts`; gösterim tek bileşe
 ya da kolon başlığında gösterilir; cari/tahsilat brüt, ciro/hakediş matrah, sipariş satırı matrah + toplam brüt.
 **Nakit tevsik uyarısı (A-15, 1B-4f):** tahsilat kaydında aynı cari + aynı gün nakit toplamı limiti aşarsa `BILGI`
 şeridi; kayıt engellenmez. Limit (`finance.nakitTevsikLimiti`) devreye almada dolar — bugün `null`, uyarı kapalı.
-**Dışa aktarım (D-5, 1B-6a):** `/exports` (yalnız `YONETICI`) — cari hareket, tahsilat, sipariş, stok, doktor listesi; Excel/CSV;
+**Dışa aktarım (D-5 + K-4 §(6), 1B-6):** `/exports` (yalnız `YONETICI`) — cari hareket, tahsilat, sipariş, stok, doktor listesi,
+fatura hazırlık (şablon `export.sablonTanimi` devreye almada girilir; o güne kadar reddedilir); Excel/CSV;
 her indirme `ExportLog` kütüğüne yazılır, dosya sunucuda saklanmaz.
 **Vade uyarısı (X-6 §(6), 1B-4g):** cari borçluyken vadesi geçmiş borç hareketi varsa doktor kartında ve tahsilat
 sonucunda `BILGI` (en eski vade; tutar yok). Borç hareketini yazan sevkiyat akışı 1B-7'de.
