@@ -116,3 +116,14 @@ describe("tek çağrı noktası — parola ve hesap (E-2-5, E-2-6)", () => {
     expect(ihlaller(/\.user\.(delete|deleteMany)\s*\(|DELETE\s+FROM\s+"User"/, "")).toEqual([]);
   });
 });
+
+describe("tek çağrı noktası — dışa aktarım (D-5-1, D-5-2)", () => {
+  it("veri seti yalnız calistirDisaAktarim() ile, yalnız dışa aktarım action'ından çalışır", () => {
+    const cagiranlar = ihlaller(/calistirDisaAktarim\s*\(/, join("app", "(admin)", "exports", "actions.ts"));
+    expect(cagiranlar.filter((y) => y !== join("lib", "disa-aktarim.ts"))).toEqual([]);
+  });
+
+  it("kütük yalnız dışa aktarım action'ında yazılır; kütüğü okuyan ekran yoktur (D-5 §(5))", () => {
+    expect(ihlaller(/exportLog\./, join("app", "(admin)", "exports", "actions.ts"))).toEqual([]);
+  });
+});

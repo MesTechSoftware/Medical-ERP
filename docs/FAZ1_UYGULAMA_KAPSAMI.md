@@ -792,6 +792,21 @@ Bunlar **karar değil**, Yol (b)'nin doğurduğu uygulama kalemleridir; 1B madde
   listesi ve barem sunucuda uygulanır, kayıtta donan değer doğrudur. Önizlemenin cari/bareme göre çözülmesi liste
   ekranı ve cari ataması ile (1B-7) gelir — bugün barem ve atanmış liste verisi yalnız import/ekranla girebilir.
 
+**Madde 6a — D-5 dışa aktarım + kütük (20.10.2026, kriterler D-5-1, D-5-2).** Notlar (karar değil):
+
+- `src/lib/disa-aktarim.ts` `calistirDisaAktarim(parametre)` (tek çağrı #7) · `disa-aktarim-yazici.ts` (XLSX/CSV) ·
+  `/exports` ekranı + `disaAktar` action (yalnız `YONETICI`). **Route handler açılmadı** (E-2 4a notu): dosya server
+  action yanıtında base64 gelir, tarayıcıda indirilir — Origin denetimi korunur, dosya sunucuda kalmaz.
+- **XLSX yazıcı bağımlılıksızdır:** sıkıştırmasız ZIP + satır içi metin hücreleri (`node:zlib` `crc32`). Stil yok;
+  sayı kolonları sayı hücresidir. CSV: UTF-8 BOM, `;` ayraç, ondalık `.`. Formülle başlayan metin CSV'de `'` önekli,
+  XLSX'te zaten metindir (formül enjeksiyonu).
+- **Cari hareket veri seti bütün hareket tiplerini verir** (açılış, vade farkı dahil — tip kolonuyla). K-4 §(2)'nin
+  "sayılan belgeler filtresi zorunlu" hükmü satış sayılan kümeler içindir; C-2 §(2) cari mutabakatı açılışı ister
+  ve bakiye de filtresizdir (K-2, X-11 §(6)). Sipariş veri seti filtreden geçer.
+- Tahsilat veri seti iptal edilen tahsilatı `Durum` kolonuyla verir. Stok veri setinde B-7 düzeltme işareti
+  `StokDuzeltme` akışıyla (1B-7) eklenir. Sevkiyat `harici_irsaliye_no` kolonu sevkiyat veri setine aittir; Faz 1
+  kataloğunda ayrı sevkiyat veri seti yoktur — fatura hazırlık (6b) sevkiyattan okur.
+
 ---
 
 ### §D.5 · 1A'nın **yapmadıkları** — sınırı yazılı tutmak için

@@ -28,10 +28,11 @@ test("menü raporları ve denetim kaydını göstermez; rol etiketi Operasyon", 
   await expect(menu.getByRole("link", { name: "Kullanıcılar" })).toBeVisible();
   await expect(menu.getByRole("link", { name: "Raporlar" })).toHaveCount(0);
   await expect(menu.getByRole("link", { name: "Audit Log" })).toHaveCount(0);
+  await expect(menu.getByRole("link", { name: "Dışa Aktarım" })).toHaveCount(0); // D-5 §(4)
   await expect(page.locator("header").getByText("Operasyon", { exact: true })).toBeVisible();
 });
 
-for (const yol of ["/reports", "/audit-logs", "/products/new", "/users/new"]) {
+for (const yol of ["/reports", "/audit-logs", "/exports", "/products/new", "/users/new"]) {
   test(`${yol} OPERASYON'u Dashboard'a yönlendirir`, async ({ page }) => {
     await page.goto(yol);
     await expect(page).toHaveURL(/\/dashboard$/);

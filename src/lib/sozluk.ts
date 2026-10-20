@@ -12,6 +12,7 @@ export const KURAL_METNI: Record<KuralKodu, (p: Parametreler) => string> = {
   GECERSIZ_TUTAR: () => "Geçerli bir tutar giriniz.",
   GECERSIZ_MIKTAR: () => "Geçerli bir miktar giriniz.",
   GECERSIZ_TARIH: () => "Geçerli bir tarih giriniz.",
+  TARIH_ARALIGI_TERS: () => "Bitiş günü başlangıç gününden önce olamaz.",
   GECERSIZ_TELEFON: () => "Geçerli bir telefon numarası giriniz (örn. 0532 123 45 67).",
 
   GIRIS_HATALI: () => "E-posta veya şifre hatalı.",

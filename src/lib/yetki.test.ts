@@ -28,6 +28,7 @@ const ACTION_YETKISI: Record<string, "requireAdmin" | "requireStaff" | "requireS
   "(admin)/products/actions.ts#deleteProduct": "requireAdmin",
   "(admin)/users/actions.ts#createUser": "requireAdmin",
   "(admin)/users/actions.ts#updateUser": "requireAdmin",
+  "(admin)/exports/actions.ts#disaAktar": "requireAdmin", // D-5 §(4)
   // SATICI ekranları.
   "(seller)/my-orders/actions.ts#createOrder": "requireSeller",
   "(seller)/my-doctors/actions.ts#createDoctor": "requireSeller",
@@ -40,6 +41,7 @@ const ACTION_YETKISI: Record<string, "requireAdmin" | "requireStaff" | "requireS
 const YALNIZ_YONETICI_SAYFALARI = [
   "(admin)/reports/page.tsx",
   "(admin)/audit-logs/page.tsx",
+  "(admin)/exports/page.tsx",
   "(admin)/products/new/page.tsx",
   "(admin)/products/[id]/edit/page.tsx",
   "(admin)/users/new/page.tsx",

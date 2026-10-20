@@ -20,6 +20,7 @@ export const KURAL_KODLARI = [
   "GECERSIZ_MIKTAR",
   "GECERSIZ_TARIH",
   "GECERSIZ_TELEFON",
+  "TARIH_ARALIGI_TERS",
   // Giriş ve parola (E-2)
   "GIRIS_HATALI",
   "GIRIS_KILITLI",

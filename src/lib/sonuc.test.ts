@@ -46,11 +46,14 @@ describe("tek dönüş sözleşmesi (X-4-1)", () => {
         const ad = parca.match(/^(\w+)/)![1];
         if (ad === "logoutAction") continue; // iş kuralı yok; daima /login'e yönlendirir
         const donus = parca.match(/\)\s*:\s*Promise<(\w+)>\s*\{/)?.[1];
-        expect(["IslemSonucu", "UserFormState"], `${relative(SRC, yol)}#${ad}`).toContain(donus);
+        expect(["IslemSonucu", "UserFormState", "DisaAktarimSonucu"], `${relative(SRC, yol)}#${ad}`).toContain(donus);
       }
     }
     expect(readFileSync(join(SRC, "app", "(admin)", "users", "actions.ts"), "utf8")).toMatch(
       /export type UserFormState = IslemSonucu & \{/
+    );
+    expect(readFileSync(join(SRC, "app", "(admin)", "exports", "actions.ts"), "utf8")).toMatch(
+      /export type DisaAktarimSonucu = IslemSonucu & \{/
     );
   });
 
