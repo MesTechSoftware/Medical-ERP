@@ -1,5 +1,6 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { uretBelgeNo } from "@/lib/belge-no";
+import { sevkiyatHareketiYaz } from "@/lib/cari-hareket";
 import { IsHatasi } from "@/lib/hata";
 import { policy } from "@/lib/policy";
 import { hesaplaSatirTutarlari } from "@/lib/satir-tutarlari";
@@ -134,17 +135,13 @@ export async function sevkiyatYaz(
   );
   // Tutar daima pozitiftir (X-5 §(7)); yalnız bedelsiz satırlı sevkiyat borç doğurmaz (A-2).
   if (toplam.toplam.gt(0)) {
-    await tx.ledgerEntry.create({
-      data: {
-        doctorId: siparis.doctorId,
-        type: "SEVKIYAT",
-        direction: "BORC",
-        amount: toplam.toplam,
-        dueDate: gunEkle(gun, siparis.paymentTermDays),
-        documentNo,
-        shipmentId: sevkiyat.id,
-        createdById: girdi.yapanId,
-      },
+    await sevkiyatHareketiYaz(tx, {
+      doctorId: siparis.doctorId,
+      tutar: toplam.toplam,
+      vade: gunEkle(gun, siparis.paymentTermDays),
+      documentNo,
+      shipmentId: sevkiyat.id,
+      yapanId: girdi.yapanId,
     });
   }
 

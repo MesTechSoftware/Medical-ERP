@@ -115,9 +115,8 @@ export function hesaplaSatirTutarlari(satirlar: readonly SatirGirdisi[]): {
 
 /**
  * Tahsilat komisyon tutarı (A-11): `tutar × oran / 100`, 2 hane, aynı yuvarlama modu.
- * ⚠️ Açık nokta: X-5 §(4) parasal aritmetiği iki fonksiyonla sınırlar ve A-11'in
- * komisyon tutarı bu ikisinin dışında kalır. Yuvarlamanın tek noktası korunsun diye
- * `CM`'de buraya kondu; yeri 1B madde 7'de (A-11) karara bağlanır.
+ * Yeri burasıdır (1B-7b): X-5 §(4)'ün iki dosyalık aritmetik sınırı içinde kalır ve
+ * yuvarlama modu satır hesabıyla tek noktada tanımlıdır. Komisyon cariye dokunmaz (A-11).
  */
 export function hesaplaKomisyonTutari(tutar: ParaDegeri, oran: ParaDegeri): Decimal {
   return new D(tutar as Decimal.Value)

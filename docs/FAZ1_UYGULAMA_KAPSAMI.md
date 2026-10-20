@@ -836,6 +836,17 @@ liste ataması) + fiyat listesi ekranı · **7f** D-6 import (X-16 / ADR-006 sı
   içindir; iptal, eski akışta sipariş anında yazılmış çıkışı iade girişiyle geri alır.
 - Negatif stok sevkiyatta da engellenmez; `NEGATIF_STOK` kalemleri `OnayBlogu`'na 7c'de bağlanır.
 
+**Madde 7b — tahsilat cari hareketi ve ters kayıt (20.10.2026, kriterler A-11-1, X-11-1).** Notlar (karar değil):
+
+- `src/lib/cari-hareket.ts`: `sevkiyatHareketiYaz` · `tahsilatHareketiYaz` · `tersKayitYaz` — cari hareketin tek yazım
+  yolu (`tek-cagri.test.ts`). Tahsilat iptali koşullu işaretlenir (`AKTIF` → `IPTAL`) ve hareketi ters kayıtla çevirir.
+- 1B-7b öncesi kaydedilmiş tahsilatların cari hareketi yoktur; iptalde çevrilecek satır yoksa ters kayıt yazılmaz.
+  Canlıda böyle kayıt olmayacak (geçiş import'la, 7f); demo seed artık hareket yazar.
+- **`hesaplaKomisyonTutari()` `satir-tutarlari.ts`'te kalır** (CM'den açık nokta): X-5 §(4)'ün iki dosyalık aritmetik
+  sınırı içindedir ve yuvarlama modu tek noktada tanımlıdır.
+- K-1 sipariş iptalinin ters kaydı: sevk edilmiş sipariş iptal edilemediği (7a) ve borç yalnız sevkiyatta doğduğu
+  için sipariş iptalinde çevrilecek cari hareket yoktur; sevk edilen borcun düzeltmesi iadedir (A-1, 7d).
+
 ---
 
 ### §D.5 · 1A'nın **yapmadıkları** — sınırı yazılı tutmak için
