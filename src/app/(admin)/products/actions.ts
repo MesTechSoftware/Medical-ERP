@@ -9,6 +9,7 @@ import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { policy } from "@/lib/policy";
 import { stokHareketiYaz, varsayilanDepoId } from "@/lib/stok";
 import { EntityStatus } from "@/generated/prisma/enums";
+import { benzersizIhlali } from "@/lib/hata";
 import type { Prisma } from "@/generated/prisma/client";
 import type Decimal from "decimal.js";
 
@@ -69,9 +70,8 @@ export async function createProduct(
 
   const initialStock = Math.max(0, parseInt(String(formData.get("initialStock") ?? ""), 10) || 0);
 
-  let product;
   try {
-    product = await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx) => {
       const p = await tx.product.create({ data: parsed.data });
       await varsayilanListeFiyatiYaz(tx, p.id, parsed.listPrice);
       // Başlangıç stoğu varsa hareket kaydı oluştur (stok miktarı saklanmaz — ADR-005).
@@ -86,19 +86,22 @@ export async function createProduct(
           },
         ]);
       }
-      return p;
+      await createAuditLog(
+        {
+          actorId: session.user.id,
+          action: AUDIT_ACTIONS.PRODUCT_CREATE,
+          entityType: "Product",
+          entityId: p.id,
+          after: { ...p, listPrice: parsed.listPrice },
+        },
+        tx
+      );
     });
-  } catch {
-    return { error: "Bu ürün kodu zaten kullanılıyor." };
+  } catch (e) {
+    // Ürün kodu benzersizdir; teknik hata hata sınırına düşer (X-3 §(4)).
+    if (benzersizIhlali(e)) return { error: "Bu ürün kodu zaten kullanılıyor." };
+    throw e;
   }
-
-  await createAuditLog({
-    actorId: session.user.id,
-    action: AUDIT_ACTIONS.PRODUCT_CREATE,
-    entityType: "Product",
-    entityId: product.id,
-    after: { ...product, listPrice: parsed.listPrice },
-  });
 
   revalidatePath("/products");
   revalidatePath("/stock");
@@ -116,25 +119,26 @@ export async function updateProduct(
 
   const before = await prisma.product.findUnique({ where: { id } });
 
-  let updated;
   try {
-    updated = await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx) => {
       const p = await tx.product.update({ where: { id }, data: parsed.data });
       await varsayilanListeFiyatiYaz(tx, id, parsed.listPrice);
-      return p;
+      await createAuditLog(
+        {
+          actorId: session.user.id,
+          action: AUDIT_ACTIONS.PRODUCT_UPDATE,
+          entityType: "Product",
+          entityId: id,
+          before,
+          after: { ...p, listPrice: parsed.listPrice },
+        },
+        tx
+      );
     });
-  } catch {
-    return { error: "Bu ürün kodu zaten kullanılıyor." };
+  } catch (e) {
+    if (benzersizIhlali(e)) return { error: "Bu ürün kodu zaten kullanılıyor." };
+    throw e;
   }
-
-  await createAuditLog({
-    actorId: session.user.id,
-    action: AUDIT_ACTIONS.PRODUCT_UPDATE,
-    entityType: "Product",
-    entityId: id,
-    before,
-    after: { ...updated, listPrice: parsed.listPrice },
-  });
 
   revalidatePath("/products");
   redirect("/products");

@@ -21,7 +21,9 @@ function createPrismaClient() {
   const adapter = new PrismaPg({ connectionString: url });
   return new PrismaClient({
     adapter,
-    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+    // Canlıda `error` loglanmaz: Prisma'nın hata mesajı sorgu, kısıt adı ve `meta` taşır
+    // (X-3 §(6)). Teknik hata tek satır olarak `instrumentation.ts`'ten yazılır.
+    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["warn"],
   });
 }
 

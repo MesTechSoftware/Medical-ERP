@@ -8,6 +8,7 @@ import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { uretBelgeNo } from "@/lib/belge-no";
 import { hesaplaKomisyonTutari } from "@/lib/satir-tutarlari";
 import { simdi } from "@/lib/zaman";
+import { IsHatasi } from "@/lib/hata";
 
 export type CollectionState = { error?: string; ok?: string };
 
@@ -39,13 +40,11 @@ export async function recordCollection(
   if (!paymentMethodId) return { error: "Ödeme yöntemi seçiniz." };
   const amount = tutar.data;
 
-  let paymentId = "";
-  let documentNo = "";
   try {
     await prisma.$transaction(async (tx) => {
       const yontem = await tx.paymentMethod.findUnique({ where: { id: paymentMethodId } });
-      if (!yontem || !yontem.isActive) throw new Error("Ödeme yöntemi bulunamadı.");
-      documentNo = await uretBelgeNo("THS", tx);
+      if (!yontem || !yontem.isActive) throw new IsHatasi("Ödeme yöntemi bulunamadı.");
+      const documentNo = await uretBelgeNo("THS", tx);
       const payment = await tx.doctorPayment.create({
         data: {
           documentNo,
@@ -63,19 +62,22 @@ export async function recordCollection(
           recordedBy: session.user.id,
         },
       });
-      paymentId = payment.id;
+      await createAuditLog(
+        {
+          actorId: session.user.id,
+          action: AUDIT_ACTIONS.COLLECTION_CREATE,
+          entityType: "DoctorPayment",
+          entityId: payment.id,
+          after: { documentNo, doctorId, amount },
+        },
+        tx
+      );
     });
-  } catch {
-    return { error: "Tahsilat kaydedilemedi." };
+  } catch (e) {
+    // Yalnız iş hatası mesaja döner; teknik hata hata sınırına düşer (X-3 §(4)).
+    if (e instanceof IsHatasi) return { error: e.message };
+    throw e;
   }
-
-  await createAuditLog({
-    actorId: session.user.id,
-    action: AUDIT_ACTIONS.COLLECTION_CREATE,
-    entityType: "DoctorPayment",
-    entityId: paymentId,
-    after: { documentNo, doctorId, amount },
-  });
 
   revalidatePath("/collections");
   revalidatePath("/doctors");
@@ -103,23 +105,27 @@ export async function cancelCollection(
   if (before.status === "IPTAL") return { error: "Bu tahsilat zaten iptal." };
 
   // Prim düzeltmesi (FR-35) C4'te söküldü — dönem kilidi yok (X-1 §(6)).
-  await prisma.doctorPayment.update({
-    where: { id: paymentId },
-    data: {
-      status: "IPTAL",
-      cancelledAt: simdi(),
-      cancelledBy: session.user.id,
-      cancelReason: reason,
-    },
-  });
-
-  await createAuditLog({
-    actorId: session.user.id,
-    action: AUDIT_ACTIONS.COLLECTION_CANCEL,
-    entityType: "DoctorPayment",
-    entityId: paymentId,
-    before,
-    after: { status: "IPTAL", reason },
+  await prisma.$transaction(async (tx) => {
+    await tx.doctorPayment.update({
+      where: { id: paymentId },
+      data: {
+        status: "IPTAL",
+        cancelledAt: simdi(),
+        cancelledBy: session.user.id,
+        cancelReason: reason,
+      },
+    });
+    await createAuditLog(
+      {
+        actorId: session.user.id,
+        action: AUDIT_ACTIONS.COLLECTION_CANCEL,
+        entityType: "DoctorPayment",
+        entityId: paymentId,
+        before,
+        after: { status: "IPTAL", reason },
+      },
+      tx
+    );
   });
 
   revalidatePath("/collections");
@@ -167,16 +173,18 @@ export async function changeDueDate(
         reason,
       },
     });
-  });
-
-  // RULE-13: vade değişikliği istisnasız audit'e yazılır.
-  await createAuditLog({
-    actorId: session.user.id,
-    action: AUDIT_ACTIONS.DUE_DATE_CHANGE,
-    entityType: "LedgerEntry",
-    entityId: ledgerEntryId,
-    before: { dueDate: oldDueDate },
-    after: { dueDate: newDueDate, reason },
+    // RULE-13: vade değişikliği istisnasız audit'e yazılır.
+    await createAuditLog(
+      {
+        actorId: session.user.id,
+        action: AUDIT_ACTIONS.DUE_DATE_CHANGE,
+        entityType: "LedgerEntry",
+        entityId: ledgerEntryId,
+        before: { dueDate: oldDueDate },
+        after: { dueDate: newDueDate, reason },
+      },
+      tx
+    );
   });
 
   revalidatePath("/doctors");

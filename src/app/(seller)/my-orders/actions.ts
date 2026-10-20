@@ -13,6 +13,7 @@ import { stokHareketiYaz, stokKilitle, varsayilanDepoId } from "@/lib/stok";
 import { canSellerOrderForDoctor, kapsamliDoktorlariGetir } from "@/lib/doctor";
 import { policy } from "@/lib/policy";
 import { siparisSahibiniKilitle } from "@/lib/sahiplik";
+import { IsHatasi } from "@/lib/hata";
 
 export type OrderFormState = { error?: string };
 
@@ -54,8 +55,10 @@ export async function createOrder(
   let raw: unknown;
   try {
     raw = JSON.parse((formData.get("items") as string) || "[]");
-  } catch {
-    return { error: "Sipariş kalemleri okunamadı." };
+  } catch (e) {
+    // Bozuk form girdisi iş hatasıdır; başka hata teknik hatadır (X-3 §(4)).
+    if (e instanceof SyntaxError) return { error: "Sipariş kalemleri okunamadı." };
+    throw e;
   }
 
   const parsedLines = orderLinesSchema.safeParse(raw);
@@ -63,15 +66,14 @@ export async function createOrder(
     return { error: "En az bir ürün ve geçerli miktar giriniz." };
   const lines = parsedLines.data;
 
-  let created: { id: string; documentNo: string };
   try {
-    created = await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx) => {
       // Kilit sırası: doktor satırı → ürün satırları → belge sayacı (ADR-008 §(1)).
       // Sahip kilit altında yeniden okunur: arada devir tamamlandıysa sipariş
       // reddedilir; satıcı alanı sipariş anındaki sahiptir (X-17 §(8), X-13 §(3)).
       const sahip = await siparisSahibiniKilitle(tx, doctorId, sellerId);
       if (sahip.durum === "HATA")
-        throw new Error("Bu doktorun sorumlu satıcısı değişti; sipariş kaydedilmedi.");
+        throw new IsHatasi("Bu doktorun sorumlu satıcısı değişti; sipariş kaydedilmedi.");
       await stokKilitle(tx, lines.map((l) => l.productId));
       const items = [];
       for (const line of lines) {
@@ -79,15 +81,15 @@ export async function createOrder(
           where: { id: line.productId },
           select: { id: true, name: true, status: true, taxRate: { select: { rate: true } } },
         });
-        if (!product) throw new Error(`Ürün bulunamadı.`);
+        if (!product) throw new IsHatasi("Ürün bulunamadı.");
         if (product.status !== "AKTIF")
-          throw new Error(`${product.name} pasif durumda.`);
+          throw new IsHatasi(`${product.name} pasif durumda.`);
 
         // Liste fiyatı tek yoldan çözülür; atanmış listede satır yoksa varsayılana
         // düşülmez (X-10 §(3)). Satıcının girdiği fiyat ayrıca saklanır (X-5 §(9)).
         const fiyat = await cozumleBirimFiyat(product.id, doctor.id, tx);
         if (fiyat.durum === "HATA")
-          throw new Error(`${product.name} için fiyat çözümlenemedi.`);
+          throw new IsHatasi(`${product.name} için fiyat çözümlenemedi.`);
 
         // RULE-03 taban fiyat reddi C6'da söküldü: iskonto tavanı yok, liste üstü
         // satış serbest (GÇ-8, A-10 · Ü-3 §(10)). Taban etiketi 1B'de gelir.
@@ -134,26 +136,22 @@ export async function createOrder(
         }))
       );
 
-      return { id: order.id, documentNo };
+      await createAuditLog(
+        {
+          actorId: sellerId,
+          action: AUDIT_ACTIONS.ORDER_CREATE,
+          entityType: "Order",
+          entityId: order.id,
+          after: { documentNo, doctorId, doctorName: doctor.fullName, itemCount: lines.length },
+        },
+        tx
+      );
     });
   } catch (e) {
-    return {
-      error: e instanceof Error ? e.message : "Sipariş oluşturulamadı.",
-    };
+    // Yalnız iş hatası mesaja döner; teknik hatanın mesajı ekrana taşınmaz (X-3 §(2)/(4)).
+    if (e instanceof IsHatasi) return { error: e.message };
+    throw e;
   }
-
-  await createAuditLog({
-    actorId: sellerId,
-    action: AUDIT_ACTIONS.ORDER_CREATE,
-    entityType: "Order",
-    entityId: created.id,
-    after: {
-      documentNo: created.documentNo,
-      doctorId,
-      doctorName: doctor.fullName,
-      itemCount: lines.length,
-    },
-  });
 
   revalidatePath("/my-orders");
   revalidatePath("/products");

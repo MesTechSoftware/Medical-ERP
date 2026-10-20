@@ -1,12 +1,15 @@
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import type { Prisma } from "@/generated/prisma/client";
+import { prisma } from "@/lib/db";
 import { homeFor } from "@/lib/roles";
 import {
   oturumDogrula,
   oturumIptal,
   oturumOlustur,
   sureAyari,
+  OTURUM_CEREZI,
   type OturumKullanicisi,
 } from "@/lib/oturum";
 
@@ -21,7 +24,7 @@ import {
  * defalarca çağırsa da tek sorgu atılır.
  */
 
-const CEREZ = "oturum";
+const CEREZ = OTURUM_CEREZI;
 
 export type Session = { user: OturumKullanicisi };
 
@@ -37,12 +40,20 @@ export async function getSession(): Promise<Session | null> {
   return loadSession();
 }
 
+/** Oturum yazımıyla aynı transaction'da koşan adım — denetim kaydı (X-3 §(4)). */
+type EkAdim = (tx: Prisma.TransactionClient) => Promise<void>;
+
 /**
  * Oturum açar ve çerezi yazar. Yalnız server action'dan çağrılır (render'da çerez yazılamaz).
+ * Çerez, oturum ve `ek` adımı commit olduktan sonra yazılır.
  * Çerez bayrakları FAZ1 §D.4 madde 7: `Secure` canlıda TLS'e bağlıdır (G-3).
  */
-export async function startSession(userId: string): Promise<void> {
-  const token = await oturumOlustur(userId);
+export async function startSession(userId: string, ek: EkAdim): Promise<void> {
+  const token = await prisma.$transaction(async (tx) => {
+    const t = await oturumOlustur(userId, new Date(), tx);
+    await ek(tx);
+    return t;
+  });
   (await cookies()).set(CEREZ, token, {
     httpOnly: true,
     sameSite: "lax",
@@ -53,11 +64,14 @@ export async function startSession(userId: string): Promise<void> {
   });
 }
 
-/** Çıkış: bu oturumu iptal eder ve çerezi siler. */
-export async function endSession(): Promise<void> {
+/** Çıkış: bu oturumu iptal eder (`ek` ile aynı transaction'da) ve çerezi siler. */
+export async function endSession(ek: EkAdim): Promise<void> {
   const jar = await cookies();
   const token = jar.get(CEREZ)?.value;
-  if (token) await oturumIptal(token);
+  await prisma.$transaction(async (tx) => {
+    if (token) await oturumIptal(token, new Date(), tx);
+    await ek(tx);
+  });
   jar.delete(CEREZ);
 }
 

@@ -111,8 +111,10 @@ kongre tabloları · e-belge ve kargo modül tabloları (KARARLAR §1.3 §(10): 
 
 **Operasyon** (`OPERASYON`, yönetim rota grubu — D-2 §(1) + 17.10 eki, 1B madde 3c): Dashboard (ana sayfa) · siparişler (hazırla/teslim/iptal) · kargo · tahsilat (kayıt/iptal) · stok girişi · doktorlar, ürünler, satıcılar **salt okuma**. Raporlar ve denetim kaydı kapalı; devir, vade, ürün tanımı ve kullanıcı yönetimi `YONETICI`'de. *Sipariş girişi ve cari açma ekranı 1B madde 7.*
 
-**Ortak:** rol bazlı kök yönlendirme · giriş · KVKK/gizlilik · `error.tsx` / `loading.tsx` /
-`not-found.tsx` · `scripts/backup.ts` (`pg_dump`).
+**Ortak:** rol bazlı kök yönlendirme · giriş · KVKK/gizlilik · `loading.tsx` / `not-found.tsx` ·
+`scripts/backup.ts` (`pg_dump`). **Hata yüzeyi (X-3, 1B-4c):** `global-error.tsx` + kök `error.tsx` + sipariş/sevkiyat,
+tahsilat, stok segmentlerinde `error.tsx` — tek ekran (`HataEkrani`: sabit metin, referans, ana sayfa); teknik hata
+`instrumentation.ts`'ten tek JSON satırı (mesaj ve `meta` yok); denetim kaydı işle aynı transaction'da.
 
 ## Kodda uygulanmış iş kuralları (seçme)
 

@@ -711,6 +711,20 @@ Bunlar **karar değil**, Yol (b)'nin doğurduğu uygulama kalemleridir; 1B madde
 7. **Çerez bayrakları yazılı değil** *(15.09 eklendi)*. `HttpOnly` · `Secure` · `SameSite`
    değerleri 1B'de belirlenir; `Secure` bayrağı canlıda TLS'e (`YOL_HARITASI.md` G-3) bağlıdır.
 
+**Madde 4c — X-3 hata yüzeyi (20.10.2026, kriterler X-3-1…3).** Uygulama notları (karar değil):
+
+- **Referans = Next `digest`.** Sunucu hatasında ekrana giden tek tanımlayıcıdır; `instrumentation.ts`
+  `onRequestError` aynı değeri log satırına yazar. Hata başına bir hash'tir — aynı hata tekrarlanırsa aynı
+  referans döner; tekrarlar log satırının zamanıyla ayrışır. Tarayıcıda doğan hatanın referansı yoktur (`—`).
+- **Canlıda iki ham döküm kapatıldı:** Next sunucu hatasını mesajı ve Prisma `meta`'sıyla `console.error`'a basar
+  (kapatan ayar yok) → `register()` canlıda `Error` argümanlarını sınıf + stack çerçevesine indirir; Prisma
+  istemcisinin `error` logu canlıda kapalı (`db.ts`). `next start` ile elle doğrulandı. Geliştirmede iki döküm açıktır.
+- **Denetim kaydı işle aynı transaction'da** (X-3 §(4)): `createAuditLog(input, db)` — `db` zorunlu, hata yutulmaz.
+  Giriş/çıkışta oturum satırı ve denetim kaydı tek transaction'dır; tek yazımlık giriş denemesi `prisma` alır.
+- **Action `catch`'leri daraltıldı:** yalnız `IsHatasi` / benzersizlik ihlali (P2002) / `SyntaxError` (bozuk form
+  girdisi) mesaja döner; gerisi yeniden fırlar. Statik koruma: `hata-yuzeyi.test.ts`.
+- X-4 dönüş sözleşmesi (`{ durum, kademe, kural_kodu, parametreler }`) **madde 4d**'dedir.
+
 ---
 
 ### §D.5 · 1A'nın **yapmadıkları** — sınırı yazılı tutmak için

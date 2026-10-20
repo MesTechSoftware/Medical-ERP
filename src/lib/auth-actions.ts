@@ -37,11 +37,10 @@ export async function loginAction(
   if (!user || !ok) {
     const post = recordFailure(email);
     logAttempt(user?.id ?? null, "hatali_kimlik");
-    await createAuditLog({
-      action: AUDIT_ACTIONS.AUTH_LOGIN_FAILURE,
-      entityType: "Auth",
-      entityId: email,
-    });
+    await createAuditLog(
+      { action: AUDIT_ACTIONS.AUTH_LOGIN_FAILURE, entityType: "Auth", entityId: email },
+      prisma
+    );
     return post.locked
       ? { error: lockedMessage(post.retryAfterMinutes) }
       : { error: "E-posta veya şifre hatalı." };
@@ -49,27 +48,24 @@ export async function loginAction(
 
   reset(email);
   logAttempt(user.id, "basarili");
-  await startSession(user.id);
-  await createAuditLog({
-    actorId: user.id,
-    action: AUDIT_ACTIONS.AUTH_LOGIN_SUCCESS,
-    entityType: "Auth",
-    entityId: user.id,
-  });
+  await startSession(user.id, (tx) =>
+    createAuditLog(
+      { actorId: user.id, action: AUDIT_ACTIONS.AUTH_LOGIN_SUCCESS, entityType: "Auth", entityId: user.id },
+      tx
+    )
+  );
   redirect("/");
 }
 
 export async function logoutAction() {
   const session = await getSession();
-  if (session) {
-    await createAuditLog({
-      actorId: session.user.id,
-      action: AUDIT_ACTIONS.AUTH_LOGOUT,
-      entityType: "Auth",
-      entityId: session.user.id,
-    });
-  }
-  await endSession();
+  await endSession(async (tx) => {
+    if (!session) return;
+    await createAuditLog(
+      { actorId: session.user.id, action: AUDIT_ACTIONS.AUTH_LOGOUT, entityType: "Auth", entityId: session.user.id },
+      tx
+    );
+  });
   redirect("/login");
 }
 
@@ -98,15 +94,13 @@ export async function parolaDegistirAction(
   if (yeni !== tekrar) return { error: "Yeni parola ile tekrarı aynı değil." };
   if (yeni === mevcut) return { error: "Yeni parola geçici paroladan farklı olmalıdır." };
 
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { passwordHash: await parolaHashle(yeni), mustChangePassword: false },
-  });
-  await createAuditLog({
-    actorId: user.id,
-    action: AUDIT_ACTIONS.PASSWORD_CHANGE,
-    entityType: "User",
-    entityId: user.id,
+  const passwordHash = await parolaHashle(yeni);
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({ where: { id: user.id }, data: { passwordHash, mustChangePassword: false } });
+    await createAuditLog(
+      { actorId: user.id, action: AUDIT_ACTIONS.PASSWORD_CHANGE, entityType: "User", entityId: user.id },
+      tx
+    );
   });
   redirect("/");
 }

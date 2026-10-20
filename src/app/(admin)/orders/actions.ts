@@ -17,20 +17,25 @@ function revalidateOrders() {
 /** BEKLIYOR -> HAZIRLANIYOR */
 export async function prepareOrder(id: string) {
   const session = await requireStaff();
-  const res = await prisma.order.updateMany({
-    where: { id, status: "BEKLIYOR" },
-    data: { status: OrderStatus.HAZIRLANIYOR },
-  });
-  if (res.count > 0) {
-    await createAuditLog({
-      actorId: session.user.id,
-      action: AUDIT_ACTIONS.ORDER_STATUS_CHANGE,
-      entityType: "Order",
-      entityId: id,
-      before: { status: "BEKLIYOR" },
-      after: { status: "HAZIRLANIYOR" },
+  await prisma.$transaction(async (tx) => {
+    const res = await tx.order.updateMany({
+      where: { id, status: "BEKLIYOR" },
+      data: { status: OrderStatus.HAZIRLANIYOR },
     });
-  }
+    if (res.count > 0) {
+      await createAuditLog(
+        {
+          actorId: session.user.id,
+          action: AUDIT_ACTIONS.ORDER_STATUS_CHANGE,
+          entityType: "Order",
+          entityId: id,
+          before: { status: "BEKLIYOR" },
+          after: { status: "HAZIRLANIYOR" },
+        },
+        tx
+      );
+    }
+  });
   revalidateOrders();
   redirect(`/orders/${id}`);
 }
@@ -38,30 +43,29 @@ export async function prepareOrder(id: string) {
 /** KARGOLANDI -> TESLIM_EDILDI */
 export async function markDelivered(id: string) {
   const session = await requireStaff();
-  let changed = 0;
   await prisma.$transaction(async (tx) => {
     const updated = await tx.order.updateMany({
       where: { id, status: "KARGOLANDI" },
       data: { status: OrderStatus.TESLIM_EDILDI },
     });
-    changed = updated.count;
     if (updated.count > 0) {
       await tx.shipment.updateMany({
         where: { orderId: id },
         data: { status: OrderStatus.TESLIM_EDILDI },
       });
+      await createAuditLog(
+        {
+          actorId: session.user.id,
+          action: AUDIT_ACTIONS.ORDER_STATUS_CHANGE,
+          entityType: "Order",
+          entityId: id,
+          before: { status: "KARGOLANDI" },
+          after: { status: "TESLIM_EDILDI" },
+        },
+        tx
+      );
     }
   });
-  if (changed > 0) {
-    await createAuditLog({
-      actorId: session.user.id,
-      action: AUDIT_ACTIONS.ORDER_STATUS_CHANGE,
-      entityType: "Order",
-      entityId: id,
-      before: { status: "KARGOLANDI" },
-      after: { status: "TESLIM_EDILDI" },
-    });
-  }
   revalidateOrders();
   redirect(`/orders/${id}`);
 }
@@ -97,15 +101,17 @@ export async function cancelOrder(id: string) {
       where: { id },
       data: { status: OrderStatus.IPTAL },
     });
-  });
-
-  await createAuditLog({
-    actorId: session.user.id,
-    action: AUDIT_ACTIONS.ORDER_CANCEL,
-    entityType: "Order",
-    entityId: id,
-    before: { status: order.status },
-    after: { status: "IPTAL" },
+    await createAuditLog(
+      {
+        actorId: session.user.id,
+        action: AUDIT_ACTIONS.ORDER_CANCEL,
+        entityType: "Order",
+        entityId: id,
+        before: { status: order.status },
+        after: { status: "IPTAL" },
+      },
+      tx
+    );
   });
 
   revalidateOrders();

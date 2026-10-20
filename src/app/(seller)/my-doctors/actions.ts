@@ -8,6 +8,7 @@ import { tryNormalizePhone, formatPhone } from "@/lib/phone";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { degistirDoktorSahibi } from "@/lib/sahiplik";
 import { kapsamliDoktorlariGetir } from "@/lib/doctor";
+import { benzersizIhlali } from "@/lib/hata";
 
 export type DoctorFormState = { error?: string };
 
@@ -74,9 +75,8 @@ export async function createDoctor(
     };
   }
 
-  let doctor;
   try {
-    doctor = await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx) => {
       const created = await tx.doctor.create({
         data: { ...parsed.data, accountClass: "DOKTOR" },
       });
@@ -87,22 +87,25 @@ export async function createDoctor(
         { metin: "İlk kayıt", yapanId: sellerId },
         tx
       );
+      // Oturumdaki satıcı aktiftir; HATA burada beklenmez — teknik hatadır.
       if (sonuc.durum === "HATA") throw new Error(sonuc.kuralKodu);
-      return tx.doctor.findUniqueOrThrow({ where: { id: created.id } });
+      await createAuditLog(
+        {
+          actorId: sellerId,
+          action: AUDIT_ACTIONS.DOCTOR_CREATE,
+          entityType: "Doctor",
+          entityId: created.id,
+          after: await tx.doctor.findUniqueOrThrow({ where: { id: created.id } }),
+        },
+        tx
+      );
     });
-  } catch {
+  } catch (e) {
     // Yarış durumu: aynı anda iki istek aynı telefonu yazmaya çalıştıysa
-    // UNIQUE kısıtı devreye girer — sessizce mükerrer oluşmaz.
-    return { error: "Bu telefon numarası sistemde zaten kayıtlı." };
+    // UNIQUE kısıtı devreye girer — sessizce mükerrer oluşmaz. Gerisi teknik hatadır (X-3 §(4)).
+    if (benzersizIhlali(e)) return { error: "Bu telefon numarası sistemde zaten kayıtlı." };
+    throw e;
   }
-
-  await createAuditLog({
-    actorId: sellerId,
-    action: AUDIT_ACTIONS.DOCTOR_CREATE,
-    entityType: "Doctor",
-    entityId: doctor.id,
-    after: doctor,
-  });
 
   revalidatePath("/my-doctors");
   redirect("/my-doctors");
@@ -128,21 +131,25 @@ export async function updateDoctor(
     return { error: "Bu doktor sizin portföyünüzde değil." };
   }
 
-  let updated;
   try {
-    updated = await prisma.doctor.update({ where: { id }, data: parsed.data });
-  } catch {
-    return { error: "Bu telefon numarası başka bir doktorda kayıtlı." };
+    await prisma.$transaction(async (tx) => {
+      const updated = await tx.doctor.update({ where: { id }, data: parsed.data });
+      await createAuditLog(
+        {
+          actorId: sellerId,
+          action: AUDIT_ACTIONS.DOCTOR_UPDATE,
+          entityType: "Doctor",
+          entityId: id,
+          before,
+          after: updated,
+        },
+        tx
+      );
+    });
+  } catch (e) {
+    if (benzersizIhlali(e)) return { error: "Bu telefon numarası başka bir doktorda kayıtlı." };
+    throw e;
   }
-
-  await createAuditLog({
-    actorId: sellerId,
-    action: AUDIT_ACTIONS.DOCTOR_UPDATE,
-    entityType: "Doctor",
-    entityId: id,
-    before,
-    after: updated,
-  });
 
   revalidatePath("/my-doctors");
   redirect("/my-doctors");

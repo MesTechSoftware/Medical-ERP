@@ -18,6 +18,9 @@ import { policy } from "@/lib/policy";
 
 const SAAT_MS = 3_600_000;
 
+/** Oturum çerezinin adı (çerez `session.ts`'te yazılır, hata logu da okur). */
+export const OTURUM_CEREZI = "oturum";
+
 /** `lastSeenAt` her istekte değil, kayıt bundan eskiyse yazılır (FAZ1 §D.4 madde 1). */
 export const SON_GORULME_ESIGI_MS = 5 * 60_000;
 
@@ -56,10 +59,12 @@ export function suresiDolduMu(
   return t - oturum.lastSeenAt.getTime() >= ayar.hareketsizlikMs || t - oturum.createdAt.getTime() >= ayar.mutlakMs;
 }
 
+type Db = Prisma.TransactionClient | typeof prisma;
+
 /** Yeni oturum açar; çereze yazılacak ham token'ı döner. */
-export async function oturumOlustur(userId: string, now = new Date()): Promise<string> {
+export async function oturumOlustur(userId: string, now = new Date(), db: Db = prisma): Promise<string> {
   const token = randomBytes(32).toString("base64url");
-  await prisma.session.create({
+  await db.session.create({
     data: { userId, tokenHash: tokenHash(token), createdAt: now, lastSeenAt: now },
   });
   return token;
@@ -98,8 +103,8 @@ export async function oturumDogrula(
 }
 
 /** Çıkış: yalnız bu token'ın oturumunu iptal eder. */
-export async function oturumIptal(token: string, now = new Date()): Promise<void> {
-  await prisma.session.updateMany({
+export async function oturumIptal(token: string, now = new Date(), db: Db = prisma): Promise<void> {
+  await db.session.updateMany({
     where: { tokenHash: tokenHash(token), revokedAt: null },
     data: { revokedAt: now },
   });
@@ -119,4 +124,16 @@ export async function kullaniciOturumlariniSonlandir(
     data: { revokedAt: now },
   });
   return count;
+}
+
+/**
+ * Token'ın kullanıcı kimliği — yalnız teknik hata logu için (X-3 §(6)). Okumadır: süre,
+ * iptal ve aktiflik kontrolü yapmaz, `lastSeenAt` yazmaz.
+ */
+export async function oturumKullaniciId(token: string): Promise<string | null> {
+  const oturum = await prisma.session.findUnique({
+    where: { tokenHash: tokenHash(token) },
+    select: { userId: true },
+  });
+  return oturum?.userId ?? null;
 }
