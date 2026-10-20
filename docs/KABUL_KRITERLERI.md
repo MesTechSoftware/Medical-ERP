@@ -177,4 +177,4 @@
 
 | Kod | Kriter | Yazılacağı yer |
 |---|---|---|
-| Ü-3-1 | | 1B-4 |
+| Ü-3-1 | Ekranda gösterilen her para tutarının yanında vergi tabanı yazılıdır (*KDV hariç* / *KDV dahil*); tabloda etiket kolon başlığındadır ve bir kolon tek tabanlıdır. Taban ekranın sınıfından türer: cari bakiye, tahsilat ve risk daima *KDV dahil* (B) · ciro ve hakediş daima *KDV hariç* (C) · sipariş/fiyat satırında birim fiyat ve matrah *KDV hariç*, satır ve belge toplamı *KDV dahil* (A; belge toplamı Matrah · KDV · Genel Toplam üç satırdır). Etiket metni tek kaynaktandır; tutar yalnız ortak bileşenle gösterilir. Tabanı çözülemeyen tutar boş kalır (sıfır gösterilmez). KDV dahil/hariç seçimi hiçbir ekranda görünmez. | 1B-4 · `taban.test.ts` · `reports.spec.ts` |

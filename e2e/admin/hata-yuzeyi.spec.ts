@@ -16,7 +16,7 @@ test("teknik hata sabit metin + referans gösterir, ayrıntı sızdırmaz, menü
     el.appendChild(o);
     el.value = "olmayan-cari";
   });
-  await page.getByLabel("Tutar (₺)").fill("100");
+  await page.getByLabel("Tutar — KDV dahil (₺)").fill("100");
   await page.getByLabel("Yöntem").selectOption({ index: 1 });
   await expect(doktor).toHaveValue("olmayan-cari");
   await page.getByRole("button", { name: "Tahsilat Kaydet" }).click();

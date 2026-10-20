@@ -13,7 +13,7 @@ test("Raporum yalnız kendi satırını gösterir", async ({ page }) => {
   await expect(satirlar).toHaveCount(1);
   await expect(satirlar.first()).toContainText(SEED_SELLER_NAME);
   await expect(page.getByText("Ayşe Demir")).toHaveCount(0);
-  await expect(page.getByRole("columnheader", { name: "Hakediş", exact: true })).toBeVisible();
+  await expect(page.getByRole("columnheader", { name: "Hakediş (KDV hariç)", exact: true })).toBeVisible();
 });
 
 test("yönetim raporu satıcıya kapalıdır", async ({ page }) => {

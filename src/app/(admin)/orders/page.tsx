@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { formatla } from "@/lib/money";
 import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
 import { formatDate } from "@/lib/format";
 import { PageHeader, Card, StatusBadge, EmptyRow } from "@/components/ui";
 import Pagination from "@/components/Pagination";
 import { getPagination, pageCount } from "@/lib/pagination";
 import { OrderStatus } from "@/generated/prisma/enums";
+import { Tutar } from "@/components/Tutar";
+import { SATIR_TABANI, tabanli } from "@/lib/taban";
 
 const STATUS_FILTERS: { value: string; label: string }[] = [
   { value: "", label: "Tümü" },
@@ -83,7 +84,7 @@ export default async function OrdersPage({
                 <th className="px-4 py-2 font-medium">Satıcı</th>
                 <th className="px-4 py-2 font-medium">Doktor</th>
                 <th className="px-4 py-2 font-medium">Hastane</th>
-                <th className="px-4 py-2 text-right font-medium">Tutar</th>
+                <th className="px-4 py-2 text-right font-medium">{tabanli("Tutar", SATIR_TABANI.toplam)}</th>
                 <th className="px-4 py-2 font-medium">Durum</th>
                 <th className="px-4 py-2"></th>
               </tr>
@@ -108,7 +109,7 @@ export default async function OrdersPage({
                     {o.doctor.clinic}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums">
-                    {formatla(siparisToplami(o.items).toplam)}
+                    <Tutar deger={siparisToplami(o.items).toplam} taban={SATIR_TABANI.toplam} baslikta />
                   </td>
                   <td className="px-4 py-3">
                     <StatusBadge status={o.status} />

@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireStaff } from "@/lib/session";
-import { formatla } from "@/lib/money";
+import { Tutar } from "@/components/Tutar";
+import { SATIR_TABANI, tabanli } from "@/lib/taban";
 import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
 import { formatDate } from "@/lib/format";
 import {
@@ -71,7 +72,7 @@ export default async function SellerDetailPage({
                 <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
                   <th className="px-3 py-2 font-medium">Tarih</th>
                   <th className="px-3 py-2 font-medium">Doktor</th>
-                  <th className="px-3 py-2 text-right font-medium">Tutar</th>
+                  <th className="px-3 py-2 text-right font-medium">{tabanli("Tutar", SATIR_TABANI.toplam)}</th>
                   <th className="px-3 py-2 font-medium">Durum</th>
                 </tr>
               </thead>
@@ -89,7 +90,7 @@ export default async function SellerDetailPage({
                     </td>
                     <td className="px-3 py-2 text-slate-900">{o.doctor.fullName}</td>
                     <td className="px-3 py-2 text-right tabular-nums">
-                      {formatla(siparisToplami(o.items).toplam)}
+                      <Tutar deger={siparisToplami(o.items).toplam} taban={SATIR_TABANI.toplam} baslikta />
                     </td>
                     <td className="px-3 py-2">
                       <StatusBadge status={o.status} />

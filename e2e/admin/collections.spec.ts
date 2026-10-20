@@ -53,7 +53,7 @@ test("🔴 tahsilat kaydedilir ve iptal edilir — kayıt silinmez (FR-29)", asy
 
   await page.goto("/collections");
   await page.getByLabel("Doktor").selectOption(doctor.id);
-  await page.getByLabel("Tutar (₺)").fill("50,25");
+  await page.getByLabel("Tutar — KDV dahil (₺)").fill("50,25");
   await page.getByLabel("Yöntem").selectOption(await havaleId());
   await page.getByRole("button", { name: "Tahsilat Kaydet" }).click();
   await expect(page.getByText(/Tahsilat kaydedildi/)).toBeVisible();
@@ -93,7 +93,7 @@ test("geçersiz tutar sunucuda reddedilir", async ({ page }) => {
 
   await page.goto("/collections");
   await page.getByLabel("Doktor").selectOption(doctor.id);
-  await page.getByLabel("Tutar (₺)").fill("0");
+  await page.getByLabel("Tutar — KDV dahil (₺)").fill("0");
   await page.getByLabel("Yöntem").selectOption(await havaleId());
   await page.getByRole("button", { name: "Tahsilat Kaydet" }).click();
 

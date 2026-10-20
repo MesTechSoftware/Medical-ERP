@@ -748,6 +748,17 @@ Bunlar **karar değil**, Yol (b)'nin doğurduğu uygulama kalemleridir; 1B madde
   **1B madde 7**'de (sevkiyatta `acikBlokVarMi` ve onay bekleyenler ekranıyla birlikte) e2e'ye girer. Bugün
   yönlendiren action'lar (`redirect`) `BILGI` taşıyamaz; `BILGI` üreten action sayfada kalmalıdır.
 
+**Madde 4e — Ü-3 taban etiketi (20.10.2026, kriter Ü-3-1).** Uygulama notları (karar değil):
+
+- **Tek gösterim:** `src/components/Tutar.tsx` — `taban` zorunlu prop; tabloda etiket başlıktadır (`baslikta`,
+  başlık `tabanli()` ile). Etiket metni tek kaynak `src/lib/taban.ts` (`TABAN_ETIKETI`, `BRUT`, `MATRAH`,
+  `SATIR_TABANI`). Ekranda `formatla()` artık yalnız `"ham"`/`"oran"` içindir; para gösterimi `Tutar`'dan geçer.
+- **Kapanan eksikler:** cari detay (borç, alacak, bakiye, sipariş ve tahsilat tabloları), tahsilat listesi,
+  sipariş listeleri ve sevk ekranı toplamları, dashboard tahsilat kartı, hakediş kolonu etiketsizdi. Sipariş
+  belgesinde "Birim Fiyat (net)"/"Net Tutar" etiketleri tabana çevrildi; "Genel Toplam" artık *KDV dahil* yazar.
+- **KDV tutarı** taban değildir; kolon/satır adı "KDV"dir (`SATIR_TABANI.kdvTutar`).
+- `StatCard.value` `ReactNode` oldu (kartta tutar + etiket).
+
 ---
 
 ### §D.5 · 1A'nın **yapmadıkları** — sınırı yazılı tutmak için

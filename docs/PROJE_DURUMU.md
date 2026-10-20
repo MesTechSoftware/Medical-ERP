@@ -118,6 +118,8 @@ tahsilat, stok segmentlerinde `error.tsx` — tek ekran (`HataEkrani`: sabit met
 **İş sonucu (X-4, 1B-4d):** bütün server action'lar `IslemSonucu` döner (`durum` · `kademe` · bildirimler); kural
 kodu kataloğu `sonuc.ts`, metni tek sözlük `sozluk.ts`; gösterim tek bileşen `Sonuc.tsx` — `SERT` alanın altında,
 `YUMUSAK` gerekçe diyaloğu, `BILGI` kapatılabilir şerit *(son ikisinin üreticisi A-15 ve 1B-7)*.
+**Taban etiketi (Ü-3, 1B-4e):** ekrandaki her para tutarı `Tutar` bileşeniyle, tabanı (*KDV hariç/dahil*) yanında
+ya da kolon başlığında gösterilir; cari/tahsilat brüt, ciro/hakediş matrah, sipariş satırı matrah + toplam brüt.
 
 ## Kodda uygulanmış iş kuralları (seçme)
 

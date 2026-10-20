@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireStaff } from "@/lib/session";
-import { formatla } from "@/lib/money";
+import { Tutar } from "@/components/Tutar";
+import { BRUT, tabanli } from "@/lib/taban";
 import { formatDate } from "@/lib/format";
 import { PageHeader, Card, EmptyRow } from "@/components/ui";
 import Pagination from "@/components/Pagination";
@@ -72,7 +73,7 @@ export default async function CollectionsPage({
                   <th className="px-4 py-2 font-medium">Doktor</th>
                   <th className="px-4 py-2 font-medium">Yöntem</th>
                   <th className="px-4 py-2 font-medium">Referans</th>
-                  <th className="px-4 py-2 text-right font-medium">Tutar</th>
+                  <th className="px-4 py-2 text-right font-medium">{tabanli("Tutar", BRUT)}</th>
                   <th className="px-4 py-2 font-medium">Durum</th>
                   <th className="px-4 py-2"></th>
                 </tr>
@@ -104,7 +105,7 @@ export default async function CollectionsPage({
                         {p.referenceNo ?? "—"}
                       </td>
                       <td className="px-4 py-3 text-right tabular-nums">
-                        {formatla(p.amount)}
+                        <Tutar deger={p.amount} taban={BRUT} baslikta />
                       </td>
                       <td className="px-4 py-3">
                         {cancelled ? "İptal" : "Aktif"}

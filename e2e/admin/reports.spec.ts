@@ -43,8 +43,8 @@ test("dönem zorunludur: varsayılan içinde bulunulan ay, tüm zamanlar ayrı s
   await expect(page.getByText(`${buAy} ayı gösteriliyor.`)).toBeVisible();
   // Üç mutlak sayı, oran yok (X-1 §(1)).
   // "Ciro (KDV hariç)" doktor tablosunda da var; satıcı tablosuna daraltılır.
-  const saticiTablosu = page.getByRole("table").filter({ has: page.getByRole("columnheader", { name: "Hakediş" }) });
-  for (const baslik of ["Ciro (KDV hariç)", "Hakediş", "Tahsilat (KDV dahil)"]) {
+  const saticiTablosu = page.getByRole("table").filter({ has: page.getByRole("columnheader", { name: "Hakediş (KDV hariç)" }) });
+  for (const baslik of ["Ciro (KDV hariç)", "Hakediş (KDV hariç)", "Tahsilat (KDV dahil)"]) {
     await expect(saticiTablosu.getByRole("columnheader", { name: baslik, exact: true })).toBeVisible();
   }
   await expect(page.getByText(/tahsilat oranı/i)).toHaveCount(0);

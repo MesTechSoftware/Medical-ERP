@@ -93,7 +93,7 @@ export function StatCard({
   tone = "default",
 }: {
   label: string;
-  value: string;
+  value: React.ReactNode;
   hint?: string;
   tone?: "default" | "danger" | "success";
 }) {

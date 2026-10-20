@@ -1,4 +1,6 @@
 import { formatla } from "@/lib/money";
+import { Tutar } from "@/components/Tutar";
+import { BRUT, MATRAH, tabanli } from "@/lib/taban";
 import type { SellerReport } from "@/lib/reports-service";
 import { EmptyRow } from "@/components/ui";
 
@@ -13,9 +15,9 @@ export default function SaticiRaporTablosu({ satirlar }: { satirlar: SellerRepor
         <thead>
           <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
             <th className="px-3 py-2 font-medium">Satıcı</th>
-            <th className="px-3 py-2 text-right font-medium">Ciro (KDV hariç)</th>
-            <th className="px-3 py-2 text-right font-medium">Hakediş</th>
-            <th className="px-3 py-2 text-right font-medium">Tahsilat (KDV dahil)</th>
+            <th className="px-3 py-2 text-right font-medium">{tabanli("Ciro", MATRAH)}</th>
+            <th className="px-3 py-2 text-right font-medium">{tabanli("Hakediş", MATRAH)}</th>
+            <th className="px-3 py-2 text-right font-medium">{tabanli("Tahsilat", BRUT)}</th>
             <th className="px-3 py-2 text-right font-medium">Ort. İskonto</th>
             <th className="px-3 py-2 text-right font-medium">Doktor</th>
           </tr>
@@ -25,9 +27,9 @@ export default function SaticiRaporTablosu({ satirlar }: { satirlar: SellerRepor
           {satirlar.map((s) => (
             <tr key={s.sellerId} className="border-b border-slate-100 last:border-0">
               <td className="px-3 py-2 font-medium text-slate-900">{s.name}</td>
-              <td className="px-3 py-2 text-right tabular-nums">{formatla(s.ciro)}</td>
-              <td className="px-3 py-2 text-right tabular-nums">{formatla(s.hakedis)}</td>
-              <td className="px-3 py-2 text-right tabular-nums">{formatla(s.tahsilat)}</td>
+              <td className="px-3 py-2 text-right tabular-nums"><Tutar deger={s.ciro} taban={MATRAH} baslikta /></td>
+              <td className="px-3 py-2 text-right tabular-nums"><Tutar deger={s.hakedis} taban={MATRAH} baslikta /></td>
+              <td className="px-3 py-2 text-right tabular-nums"><Tutar deger={s.tahsilat} taban={BRUT} baslikta /></td>
               <td className="px-3 py-2 text-right tabular-nums text-slate-500">
                 {formatla(s.ortalamaIskonto, "oran")}
               </td>
