@@ -3,7 +3,8 @@ import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { sayilanBelgeler } from "@/lib/sayilan-belgeler";
 import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
-import { gunAraligi } from "@/lib/zaman";
+import { bilgi, type Bildirim } from "@/lib/sonuc";
+import { bugun, gunAraligi } from "@/lib/zaman";
 
 type Db = Prisma.TransactionClient | typeof prisma;
 
@@ -49,6 +50,24 @@ export async function hesaplaDoktorBakiye(doktorId: string, tarih?: Date, db: Db
     bakiye,
     yon: bakiye.gt(0) ? "BORC" : bakiye.lt(0) ? "ALACAK" : "KAPALI",
   };
+}
+
+/**
+ * `VADESI_GECMIS_HAREKET` — X-6 §(6) ve 20.10.2026 eki. `BILGI` kademesidir; tutar değil varlık:
+ * cari borçluyken (bakiye yönü `BORC`) vadesi `gun`den önce olan, ters kayıtla çevrilmemiş bir
+ * `BORC` hareketi varsa en eski vadesiyle döner. Tutar gösterilmez (§(7)); tahsilat borçlarla
+ * eşleştirilmez (§(1)/(2)) — tarih o borcun açık olduğunu söylemez.
+ */
+export async function vadesiGecmisUyarisi(doktorId: string, gun: Date = bugun(), db: Db = prisma): Promise<Bildirim | null> {
+  const { yon } = await hesaplaDoktorBakiye(doktorId, undefined, db);
+  if (yon !== "BORC") return null;
+  const enEski = await db.ledgerEntry.findFirst({
+    where: { doctorId: doktorId, direction: "BORC", dueDate: { lt: gun }, reversal: { is: null } },
+    orderBy: { dueDate: "asc" },
+    select: { dueDate: true },
+  });
+  if (!enEski?.dueDate) return null;
+  return bilgi("VADESI_GECMIS_HAREKET", { enEskiVade: enEski.dueDate.toISOString().slice(0, 10) });
 }
 
 /**

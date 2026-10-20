@@ -11,6 +11,7 @@ import { simdi } from "@/lib/zaman";
 import { IsHatasi } from "@/lib/hata";
 import { basarili, engel, sert, sonucOlustur, type Bildirim, type IslemSonucu } from "@/lib/sonuc";
 import { nakitTevsikUyarisi } from "@/lib/tevsik";
+import { vadesiGecmisUyarisi } from "@/lib/doctor-cari";
 
 /**
  * 🔴 Tahsilat kaydı — sistemin MERKEZÎ olayı (RULE-12).
@@ -73,7 +74,9 @@ export async function recordCollection(
       );
       // A-15: nakit tevsik uyarısı BILGI'dir — kayıt tamamlanır, uyarı sonuçla döner.
       const tevsik = await nakitTevsikUyarisi(tx, { doctorId, an: payment.paidAt, yon: payment.direction });
-      return tevsik ? [tevsik] : [];
+      // X-6 §(6): tahsilat ekranında vadesi geçmiş hareketin varlığı (BILGI). Bütün uyarılar döner (X-4 §(7)).
+      const vade = await vadesiGecmisUyarisi(doctorId, undefined, tx);
+      return [tevsik, vade].filter((b): b is Bildirim => b !== null);
     });
   } catch (e) {
     // Yalnız iş hatası sonuca döner; teknik hata hata sınırına düşer (X-3 §(4), X-4 §(2)).

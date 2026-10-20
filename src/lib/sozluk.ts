@@ -59,6 +59,10 @@ export const KURAL_METNI: Record<KuralKodu, (p: Parametreler) => string> = {
   TAHSILAT_ZATEN_IPTAL: () => "Bu tahsilat zaten iptal.",
   CARI_HAREKET_BULUNAMADI: () => "Cari hareket bulunamadı.",
   VADE_YALNIZ_BORC: () => "Vade yalnız borç hareketinde değişir.",
+  // X-6 §(6)/(7): tutar değil varlık; tahsilat borçlarla eşleştirilmez (20.10 eki).
+  VADESI_GECMIS_HAREKET: (p) =>
+    `Vadesi geçmiş hareket var; en eski vade ${String(p.enEskiVade).split("-").reverse().join(".")}. ` +
+    "Tahsilatlar borçlarla eşleştirilmez; bu tarih o borcun hâlâ açık olduğunu göstermez.",
   // A-15 §(5): sistem "uygundur" demez; uyarı neyi kontrol etmediğini yazar.
   NAKIT_TEVSIK_LIMITI: (p) =>
     `Bu carinin aynı gün nakit tahsilat toplamı ${formatla(p.toplam)} (${TABAN_ETIKETI[BRUT]}); ${formatla(p.limit)} tevsik sınırını aşıyor. ` +

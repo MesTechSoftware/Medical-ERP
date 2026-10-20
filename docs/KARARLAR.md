@@ -4224,6 +4224,15 @@ hangi sevkiyatı kapattığı sistemde yoktur"*. Kod ise bu tablonun üstüne ku
 >
 > **Kilitlenme anı:** **Faz 1A söküm turu.** Tablo kaldırıldıktan sonra geri getirmek
 > yeni bir karardır.
+>
+> **✅ Ek (20.10.2026 · ürün sahibi kararı) — §(6) uyarısının koşulu.** Eşleştirme olmadığı için
+> (§(1)/(2)) hangi borç hareketinin açık kaldığı bilinemez; uyarının koşulu şöyle kapandı:
+> · `VADESI_GECMIS_HAREKET` **yalnız cari borçluyken** gösterilir: `hesaplaDoktorBakiye()` yönü
+>   `BORC` **ve** vadesi bugünden (İstanbul günü, E-1) önce olan en az bir `BORC` hareketi var.
+>   Bakiye sıfır ya da alacaklıyken uyarı yoktur.
+> · Gösterilen tarih **vadesi geçmiş `BORC` hareketlerinin en eski vadesidir.** Bu tarih o borcun
+>   hâlâ açık olduğunu söylemez; uyarı metni bunu yazar (§0.4: yokluğu/varlığı yanlış okunmasın).
+> · Tutar gösterilmez — §(7) aynen geçerlidir.
 
 ---
 

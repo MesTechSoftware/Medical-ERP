@@ -770,6 +770,15 @@ Bunlar **karar değil**, Yol (b)'nin doğurduğu uygulama kalemleridir; 1B madde
   teyidiyle dolar. Bu yüzden canlı/e2e ortamında uyarı kapalıdır; davranış entegrasyon testinde limit verilerek,
   şerit deseni bileşen testinde (`sonuc.test.ts`) sınanır.
 
+**Madde 4g — X-6 §(6) vade uyarısı (20.10.2026, kriter X-6-1; koşul KARARLAR X-6 20.10 eki).** Uygulama notları:
+
+- `src/lib/doctor-cari.ts` `vadesiGecmisUyarisi(doktor, gun?, db?)` — bakiye yönü `BORC` değilse `null`; değilse
+  vadesi `gun`den önce, ters kayıtla çevrilmemiş en eski `BORC` hareketinin vadesi. Toplam almaz (K-2-4 korunur).
+- Gösterildiği yer: doktor detayı (sayfa açılışında şerit) ve tahsilat sonucu (`recordCollection` A-15 uyarısıyla
+  birlikte döner). FR-28'in "yeni siparişte uyarı" kısmı bağlanmadı: sipariş girişi başarıda yönlendirir ve
+  `BILGI` taşıyamaz (4d notu) — sipariş belge akışı 1B-7'de yeniden kurulurken bakılır.
+- Cari hareketin borç tarafını yazan akış (sevkiyat borcu) 1B madde 7'dedir; o güne kadar uyarı pratikte görünmez.
+
 ---
 
 ### §D.5 · 1A'nın **yapmadıkları** — sınırı yazılı tutmak için
