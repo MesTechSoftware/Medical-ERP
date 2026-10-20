@@ -5,58 +5,58 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireStaff } from "@/lib/session";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
-import { OrderStatus } from "@/generated/prisma/enums";
-import { uretBelgeNo } from "@/lib/belge-no";
-import { bugun, simdi } from "@/lib/zaman";
-import { engel, type IslemSonucu } from "@/lib/sonuc";
+import { IsHatasi } from "@/lib/hata";
+import { sevkiyatYaz } from "@/lib/sevkiyat";
+import type { IslemSonucu } from "@/lib/sonuc";
+
+const KALEM = "miktar_";
 
 /**
- * HAZIRLANIYOR durumundaki siparişe kargo bilgisi girer ve KARGOLANDI yapar.
- * Sevkiyat satırı, kısmi sevkiyat ve sevkiyatta doğan borç 1B madde 7'dedir (A-3, GÇ-12);
- * `CM`'de sevkiyat bugünkü gibi siparişin tamamıdır ve yalnız başlık yazar.
+ * HAZIRLANIYOR siparişin sevkiyatı (A-3): kalem başına sevk miktarı, kargo bilgisi ve
+ * isteğe bağlı müşteri irsaliye numarası (C-1 §(2), salt kayıt). Borç, prim ve stok çıkışı
+ * `sevkiyatYaz()`'da aynı transaction'da doğar. Bütün kalemler sevk edilince sipariş KARGOLANDI olur.
  */
 export async function shipOrder(orderId: string, _prev: unknown, formData: FormData): Promise<IslemSonucu> {
   const session = await requireStaff();
 
-  const carrierId = ((formData.get("carrierId") as string) || "").trim() || null;
-  const trackingNumber =
-    ((formData.get("trackingNumber") as string) || "").trim() || null;
-
-  const order = await prisma.order.findUnique({ where: { id: orderId } });
-  if (!order || order.status !== "HAZIRLANIYOR") return engel("SIPARIS_DURUMU_UYGUN_DEGIL");
-
-  await prisma.$transaction(async (tx) => {
-    await tx.order.update({
-      where: { id: orderId },
-      data: { status: OrderStatus.KARGOLANDI },
+  const metin = (ad: string) => ((formData.get(ad) as string) || "").trim() || null;
+  const kalemler = [...formData.keys()]
+    .filter((k) => k.startsWith(KALEM))
+    .map((k) => {
+      const v = String(formData.get(k) ?? "").trim() || "0";
+      // Tam sayı değilse NaN kalır ve servis reddeder; kesilip sessizce yuvarlanmaz.
+      return { siparisKalemiId: k.slice(KALEM.length), miktar: /^\d+$/.test(v) ? parseInt(v, 10) : NaN };
     });
-    const documentNo = await uretBelgeNo("SVK", tx);
-    await tx.shipment.create({
-      data: {
-        documentNo,
-        orderId,
-        carrierId,
-        trackingNumber,
-        shippedOn: bugun(),
-        shippedAt: simdi(),
-        status: OrderStatus.KARGOLANDI,
-      },
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const sevk = await sevkiyatYaz(tx, {
+        siparisId: orderId,
+        kalemler,
+        carrierId: metin("carrierId"),
+        trackingNumber: metin("trackingNumber"),
+        externalDispatchNo: metin("externalDispatchNo"),
+        yapanId: session.user.id,
+      });
+      await createAuditLog(
+        {
+          actorId: session.user.id,
+          action: AUDIT_ACTIONS.ORDER_STATUS_CHANGE,
+          entityType: "Order",
+          entityId: orderId,
+          after: { sevkiyat: sevk.documentNo, kalemler, tamamlandi: sevk.tamamlandi },
+        },
+        tx
+      );
     });
-    await createAuditLog(
-      {
-        actorId: session.user.id,
-        action: AUDIT_ACTIONS.ORDER_STATUS_CHANGE,
-        entityType: "Order",
-        entityId: orderId,
-        before: { status: "HAZIRLANIYOR" },
-        after: { status: "KARGOLANDI", documentNo, carrierId, trackingNumber },
-      },
-      tx
-    );
-  });
+  } catch (e) {
+    if (e instanceof IsHatasi) return e.sonuc;
+    throw e;
+  }
 
   revalidatePath("/shipping");
   revalidatePath("/orders");
   revalidatePath("/dashboard");
+  revalidatePath("/stock");
   redirect("/shipping");
 }

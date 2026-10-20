@@ -95,12 +95,12 @@ kongre tabloları · e-belge ve kargo modül tabloları (KARARLAR §1.3 §(10): 
 - ✅ Kullanıcılar (`/users`, eski Satıcılar — 1B-4b, 20.10.2026) — liste (rol kolonu) / yeni (rol seçimi, geçici parola, gerekçe) / düzenle (geçici parola atama, pasifleştirme; rol değişmez) / satıcı detayı. Silme yok (E-2 §(6)). Son aktif yönetici ve kendini pasifleştirme sert kısıt (`kullanici.ts`, SERIALIZABLE)
 - ✅ Parola değiştirme (`/parola-degistir`) — geçici parolalı kullanıcı her guard'da buraya yönlenir (E-2-7); politika `parola.ts` (8 karakter + yaygın parola listesi)
 - ✅ Doktorlar — liste / detay (cari, sipariş/tahsilat geçmişi) + satıcı devri *(fatura bilgileri formu, tek cari ekranı ve bayi süzgeci 1B madde 7)*
-- ✅ Siparişler — liste / detay + durum yönetimi *(tek parça sevkiyat — kısmi sevkiyat 1B)*
-- ✅ Kargo — sevkiyat: kargo firması + takip no **elle**; gönderi tarihi otomatik. *İrsaliye no alanı şemada var, formda yok (1B). Takip linki şablonu ekranda kullanılmıyor.*
+- ✅ Siparişler — liste / detay + durum yönetimi; sevk edilmiş sipariş iptal edilemez (iade süreci, 1B-7)
+- ✅ Kargo — **kısmi sevkiyat** (A-3, 1B-7a): kalem başına sevk miktarı, kargo firması + takip no **elle**, isteğe bağlı müşteri irsaliye no; gönderi tarihi otomatik. Borç (`SEVKIYAT` cari hareket, vade sevk gününden), stok çıkışı ve prim oranı sevkiyatta doğar; sipariş stok düşürmez. *Takip linki şablonu ekranda kullanılmıyor.*
 - ✅ Tahsilatlar — tutar, tarih, **ödeme yöntemi** (tanım tablosu), referans no; siparişe eşlenmez
 - ✅ Raporlar — **dönem seçimli** (varsayılan içinde bulunulan ay, "tüm zamanlar" ayrı seçim — X-1): satıcı başına ciro, **hakediş**, tahsilat; doktor ciro sıralaması; dönem cirosu. Ciro **KDV hariç**, tahsilat **KDV dahil**, taban kolon başlığında *(tahsilat oranı, kanal ve yaşlandırma raporları söküldü)*. Yalnız `YONETICI`
 - ✅ Denetim kaydı — salt okunur, filtreli
-- ❌ Primler · Kongreler · Bayiler · Bayi sevkiyat — **söküldü** (C2, C4, C5). Yeni hakediş (sevkiyat satırına donmuş oran) raporda — 1B madde 3c; *oranı satıra yazan sevkiyat akışı 1B madde 7*; kongre Faz 3+ modül; bayi = `Doctor` satırı (1B madde 7)
+- ❌ Primler · Kongreler · Bayiler · Bayi sevkiyat — **söküldü** (C2, C4, C5). Yeni hakediş (sevkiyat satırına donmuş oran) raporda — 1B madde 3c; oran sevkiyat satırına donar (1B-7a); kongre Faz 3+ modül; bayi = `Doctor` satırı (1B madde 7)
 
 **Satıcı** (`src/app/(seller)/`)
 - ✅ Siparişlerim — liste / yeni / detay; fiyat girişi KDV hariç, tek fiyat yolu `cozumleBirimFiyat()`
@@ -126,7 +126,7 @@ ya da kolon başlığında gösterilir; cari/tahsilat brüt, ciro/hakediş matra
 fatura hazırlık (şablon `export.sablonTanimi` devreye almada girilir; o güne kadar reddedilir); Excel/CSV;
 her indirme `ExportLog` kütüğüne yazılır, dosya sunucuda saklanmaz.
 **Vade uyarısı (X-6 §(6), 1B-4g):** cari borçluyken vadesi geçmiş borç hareketi varsa doktor kartında ve tahsilat
-sonucunda `BILGI` (en eski vade; tutar yok). Borç hareketini yazan sevkiyat akışı 1B-7'de.
+sonucunda `BILGI` (en eski vade; tutar yok).
 
 ## Kodda uygulanmış iş kuralları (seçme)
 

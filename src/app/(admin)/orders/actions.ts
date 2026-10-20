@@ -6,7 +6,7 @@ import { prisma } from "@/lib/db";
 import { requireStaff } from "@/lib/session";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { OrderStatus } from "@/generated/prisma/enums";
-import { stokHareketiYaz, varsayilanDepoId } from "@/lib/stok";
+import { stokHareketiYaz, stokKilitle } from "@/lib/stok";
 import { engel, type IslemSonucu } from "@/lib/sonuc";
 
 function revalidateOrders() {
@@ -78,35 +78,39 @@ export async function markDelivered(id: string): Promise<IslemSonucu> {
   redirect(`/orders/${id}`);
 }
 
-/** Siparişi iptal eder ve stoğu geri yükler. */
+/**
+ * Siparişi iptal eder. Sevk edilmiş sipariş bu yoldan iptal edilemez — o iade sürecidir (K-1, A-1).
+ * Stok sevkiyatta düşer (A-3); sevk edilmemiş siparişin stok hareketi yoktur. Eski akışta sipariş
+ * anında yazılmış çıkış varsa (1B-7 öncesi kayıtlar) iade girişiyle geri alınır.
+ */
 export async function cancelOrder(id: string): Promise<IslemSonucu> {
   const session = await requireStaff();
 
   const order = await prisma.order.findUnique({
     where: { id },
-    include: { items: true },
+    select: { id: true, status: true, items: { select: { productId: true } } },
   });
   if (!order) redirect("/orders");
-  if (order.status === "IPTAL" || order.status === "TESLIM_EDILDI") return engel("SIPARIS_IPTAL_EDILEMEZ");
 
-  await prisma.$transaction(async (tx) => {
-    // Stok iadesi = GIRIS hareketleri (stok miktarı saklanmaz — ADR-005).
-    const locationId = await varsayilanDepoId(tx);
-    await stokHareketiYaz(
-      tx,
-      order.items.map((item) => ({
-        productId: item.productId,
-        locationId,
-        type: "GIRIS" as const,
-        quantity: item.quantity,
-        note: "Sipariş iptali - stok iadesi",
-        orderId: order.id,
-      }))
-    );
-    await tx.order.update({
-      where: { id },
+  const iptalEdildi = await prisma.$transaction(async (tx) => {
+    // Sevkiyatın kilitlediği ürün satırları kilitlenir (ADR-008 sırası): eşzamanlı sevkiyat varsa
+    // iptal onun commit'ini bekler ve koşullu yazım sevkiyatı görür.
+    await stokKilitle(tx, order.items.map((i) => i.productId));
+    const res = await tx.order.updateMany({
+      where: { id, status: { in: ["BEKLIYOR", "HAZIRLANIYOR"] }, shipments: { none: {} } },
       data: { status: OrderStatus.IPTAL },
     });
+    if (res.count === 0) return false;
+    const eskiCikislar = await tx.stockMovement.findMany({
+      where: { orderId: id, type: "CIKIS" },
+      select: { productId: true, locationId: true, quantity: true },
+    });
+    if (eskiCikislar.length > 0) {
+      await stokHareketiYaz(
+        tx,
+        eskiCikislar.map((h) => ({ ...h, type: "GIRIS" as const, note: "Sipariş iptali - stok iadesi", orderId: id }))
+      );
+    }
     await createAuditLog(
       {
         actorId: session.user.id,
@@ -118,7 +122,9 @@ export async function cancelOrder(id: string): Promise<IslemSonucu> {
       },
       tx
     );
+    return true;
   });
+  if (!iptalEdildi) return engel("SIPARIS_IPTAL_EDILEMEZ");
 
   revalidateOrders();
   revalidatePath("/products");

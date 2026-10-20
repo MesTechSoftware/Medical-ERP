@@ -6,6 +6,7 @@ import { normalizePhone } from "../src/lib/phone";
 import { policy } from "../src/lib/policy";
 import { uretBelgeNo } from "../src/lib/belge-no";
 import { degistirDoktorSahibi } from "../src/lib/sahiplik";
+import { sevkiyatYaz } from "../src/lib/sevkiyat";
 import { referansVeriYukle } from "./referans";
 
 // `db:seed:demo` — YALNIZ GELİŞTİRME VE TEST (C9). Bütün tabloları boşaltır, referans
@@ -155,7 +156,7 @@ async function main() {
   const byDoctor = (fullName: string) =>
     doctors.find((d) => d.fullName === fullName)!;
 
-  // --- Örnek siparişler (bugünkü akış: stok sipariş anında düşer) ---
+  // --- Örnek siparişler: stok, borç ve prim sevkiyatta doğar (A-3) ---
   async function createOrder(opts: {
     sellerId: string;
     doctorName: string;
@@ -163,13 +164,14 @@ async function main() {
     lines: { code: string; qty: number }[];
   }) {
     return prisma.$transaction(async (tx) => {
+      const sevkEdilir = opts.status === "KARGOLANDI" || opts.status === "TESLIM_EDILDI";
       const order = await tx.order.create({
         data: {
           documentNo: await uretBelgeNo("SIP", tx),
           sellerId: opts.sellerId,
           doctorId: byDoctor(opts.doctorName).id,
           stage: "ONAYLI",
-          status: opts.status,
+          status: sevkEdilir ? "HAZIRLANIYOR" : opts.status,
           paymentTermDays: policy.finance.odemeVadesiGunVarsayilan,
           items: {
             create: opts.lines.map((l) => {
@@ -184,36 +186,23 @@ async function main() {
             }),
           },
         },
+        include: { items: true },
       });
 
-      // İptal edilmemiş siparişlerde CIKIS hareketi (kaynağı sipariş — B-7).
-      if (opts.status !== "IPTAL") {
-        for (const l of opts.lines) {
-          await tx.stockMovement.create({
-            data: {
-              productId: byCode(l.code).id,
-              locationId: depo.id,
-              type: "CIKIS",
-              quantity: l.qty,
-              note: "Sipariş çıkışı",
-              orderId: order.id,
-            },
-          });
-        }
-      }
-
-      // Kargolanmış/teslim edilmiş siparişlere sevkiyat başlığı (satırı 1B madde 7'de).
-      if (opts.status === "KARGOLANDI" || opts.status === "TESLIM_EDILDI") {
-        await tx.shipment.create({
-          data: {
-            documentNo: await uretBelgeNo("SVK", tx),
-            orderId: order.id,
-            carrierId: kargolar[0].id,
-            trackingNumber: "TR" + Math.floor(Math.random() * 1_000_000_000),
-            shippedAt: new Date(),
-            status: opts.status,
-          },
+      // Sevk edilmiş siparişler uygulamanın kendi sevkiyat yolundan geçer.
+      if (sevkEdilir) {
+        await sevkiyatYaz(tx, {
+          siparisId: order.id,
+          kalemler: order.items.map((i) => ({ siparisKalemiId: i.id, miktar: i.quantity })),
+          carrierId: kargolar[0].id,
+          trackingNumber: "TR" + Math.floor(Math.random() * 1_000_000_000),
+          externalDispatchNo: null,
+          yapanId: admin.id,
         });
+        if (opts.status === "TESLIM_EDILDI") {
+          await tx.order.update({ where: { id: order.id }, data: { status: "TESLIM_EDILDI" } });
+          await tx.shipment.updateMany({ where: { orderId: order.id }, data: { status: "TESLIM_EDILDI" } });
+        }
       }
       return order;
     });

@@ -9,7 +9,6 @@ import { priceSchema, quantitySchema } from "@/lib/validation";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { cozumleBirimFiyat } from "@/lib/fiyat";
 import { uretBelgeNo } from "@/lib/belge-no";
-import { stokHareketiYaz, stokKilitle, varsayilanDepoId } from "@/lib/stok";
 import { canSellerOrderForDoctor, kapsamliDoktorlariGetir } from "@/lib/doctor";
 import { policy } from "@/lib/policy";
 import { siparisSahibiniKilitle } from "@/lib/sahiplik";
@@ -68,12 +67,11 @@ export async function createOrder(
 
   try {
     await prisma.$transaction(async (tx) => {
-      // Kilit sırası: doktor satırı → ürün satırları → belge sayacı (ADR-008 §(1)).
+      // Kilit sırası: doktor satırı → belge sayacı (ADR-008 §(1)); stok yazılmadığı için ürün kilidi yok.
       // Sahip kilit altında yeniden okunur: arada devir tamamlandıysa sipariş
       // reddedilir; satıcı alanı sipariş anındaki sahiptir (X-17 §(8), X-13 §(3)).
       const sahip = await siparisSahibiniKilitle(tx, doctorId, sellerId);
       if (sahip.durum === "HATA") throw new IsHatasi([sert(sahip.kuralKodu)]);
-      await stokKilitle(tx, lines.map((l) => l.productId));
       const items = [];
       // Kalem hataları toplanır, hepsi birlikte döner (X-4 §(7)).
       const hatalar: Bildirim[] = [];
@@ -130,22 +128,7 @@ export async function createOrder(
         },
       });
 
-      // Stok bugün sipariş anında düşer; sevkiyata taşınması 1B madde 7'dir (A-3).
-      // Hareketin kaynağı sipariştir (B-7: her hareket bir belgeden doğar).
-      // Negatif stok engellenmez (B-4); NEGATIF_STOK kalemleri OnayBlogu'na
-      // `blokKontrolleriniCalistir()` ile bağlanır (A-8, 1B madde 1 #6).
-      const locationId = await varsayilanDepoId(tx);
-      await stokHareketiYaz(
-        tx,
-        items.map((item) => ({
-          productId: item.productId,
-          locationId,
-          type: "CIKIS" as const,
-          quantity: item.quantity,
-          note: "Sipariş çıkışı",
-          orderId: order.id,
-        }))
-      );
+      // Stok sipariş anında düşmez; çıkış sevkiyatta doğar (A-3, `sevkiyatYaz()`).
 
       await createAuditLog(
         {

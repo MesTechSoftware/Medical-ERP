@@ -1,0 +1,60 @@
+import { test, expect } from "@playwright/test";
+import { Client } from "pg";
+
+/**
+ * A-3-1 — kısmi sevkiyat ekrandan: kalem miktarı girilir, borç ve stok çıkışı sevkiyatta doğar,
+ * sipariş kalan miktar sevk edilene kadar "Kargo Bekleyenler"de kalır.
+ */
+const connectionString =
+  process.env.TEST_DATABASE_URL ??
+  "postgresql://medikal:medikal_dev@localhost:5432/medikal_test?schema=public";
+
+async function sorgu<T = Record<string, unknown>>(sql: string, params: unknown[] = []): Promise<T[]> {
+  const client = new Client({ connectionString });
+  await client.connect();
+  try {
+    return (await client.query(sql, params)).rows as T[];
+  } finally {
+    await client.end();
+  }
+}
+
+test("kısmi sevkiyat: 3'ün 1'i sevk edilir, borç yazılır, sipariş beklemede kalır (A-3-1)", async ({ page }) => {
+  const ek = Date.now().toString().slice(-7);
+  const doktorAdi = `Dr. Sevk ${ek}`;
+  const [{ id: doktorId }] = await sorgu<{ id: string }>(
+    `INSERT INTO "Doctor" (id, "accountClass", "fullName", clinic, region, "phoneNormalized", "partyType", status)
+     VALUES ($1, 'DOKTOR', $2, 'Klinik', 'Bölge', $3, 'TUZEL_KISI', 'AKTIF') RETURNING id`,
+    [`e2e-dr-${ek}`, doktorAdi, `+90539${ek}`]
+  );
+  const [urun] = await sorgu<{ id: string }>(`SELECT id FROM "Product" ORDER BY code LIMIT 1`);
+  const [satici] = await sorgu<{ id: string }>(`SELECT id FROM "User" WHERE role = 'SATICI' ORDER BY email LIMIT 1`);
+  const siparisId = `e2e-sip-${ek}`;
+  const kalemId = `e2e-kal-${ek}`;
+  await sorgu(
+    `INSERT INTO "Order" (id, "documentNo", "doctorId", "sellerId", stage, status, "paymentTermDays", "updatedAt")
+     VALUES ($1, $2, $3, $4, 'ONAYLI', 'HAZIRLANIYOR', 30, now())`,
+    [siparisId, `E2E-SIP-${ek}`, doktorId, satici.id]
+  );
+  await sorgu(
+    `INSERT INTO "OrderItem" (id, "orderId", "productId", quantity, "listPrice", "unitPrice", "vatRate")
+     VALUES ($1, $2, $3, 3, 100, 100, 20)`,
+    [kalemId, siparisId, urun.id]
+  );
+
+  await page.goto("/shipping");
+  const kart = page.locator("div.rounded-lg.border").filter({ hasText: doktorAdi });
+  await expect(kart.getByText("kalan 3/3")).toBeVisible();
+  await kart.locator(`#miktar_${kalemId}`).fill("1");
+  await kart.getByRole("button", { name: "Kargola" }).click();
+
+  await expect(page).toHaveURL(/\/shipping$/);
+  await expect(page.locator("div.rounded-lg.border").filter({ hasText: doktorAdi }).getByText("kalan 2/3")).toBeVisible();
+  const [borc] = await sorgu<{ amount: string; type: string }>(
+    `SELECT amount::text, type FROM "LedgerEntry" WHERE "doctorId" = $1`,
+    [doktorId]
+  );
+  expect(borc).toEqual({ amount: "120.00", type: "SEVKIYAT" });
+  const [{ status }] = await sorgu<{ status: string }>(`SELECT status FROM "Order" WHERE id = $1`, [siparisId]);
+  expect(status).toBe("HAZIRLANIYOR");
+});

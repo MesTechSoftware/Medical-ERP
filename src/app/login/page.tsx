@@ -15,6 +15,8 @@ export default function LoginPage() {
         <div className="mb-6 text-center">
           <Image
             src="/logo.png"
+            // Küçük statik PNG; optimizasyon sunucusundan geçmez (CI'da /_next/image asılı kalıp sayfanın load olayını tutuyordu).
+            unoptimized
             alt="Anka West"
             width={421}
             height={399}
