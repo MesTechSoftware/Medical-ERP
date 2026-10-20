@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { requireStaff } from "@/lib/session";
+import { requireAdmin, requireStaff } from "@/lib/session";
 import { quantitySchema } from "@/lib/validation";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { hesaplaStok, stokHareketiYaz, varsayilanDepoId } from "@/lib/stok";
@@ -10,6 +10,7 @@ import { basarili, engel, type IslemSonucu } from "@/lib/sonuc";
 import type { Prisma } from "@/generated/prisma/client";
 import { IsHatasi } from "@/lib/hata";
 import { konsinyeCikisYaz, stokTransferYaz } from "@/lib/stok-transfer";
+import { stokDuzeltmeYaz, type DuzeltmeKalemi } from "@/lib/stok-duzeltme";
 
 export async function addStockEntry(
   _prev: unknown,
@@ -96,4 +97,56 @@ export async function addTransfer(_prev: unknown, formData: FormData): Promise<I
       gerekce: (formData.get("gerekce") as string) || null,
     })
   );
+}
+
+/**
+ * Stok düzeltme (B-7): yalnız YONETICI; satırlar JSON (`kalemler`), tutanak no salt kayıt. Yönetimsel
+ * eylemin logu denetim kaydıdır (§(6)); belge tarihi kayıt anıdır (§(4)).
+ */
+export async function addStockAdjustment(_prev: unknown, formData: FormData): Promise<IslemSonucu> {
+  const session = await requireAdmin();
+
+  let kalemler: DuzeltmeKalemi[];
+  try {
+    const ham: unknown = JSON.parse(String(formData.get("kalemler") ?? "[]"));
+    if (!Array.isArray(ham)) return engel("DUZELTME_KALEMI_GECERSIZ");
+    kalemler = ham.map((k: Record<string, unknown>) => ({
+      urunId: String(k.urunId ?? ""),
+      konumId: String(k.konumId ?? ""),
+      fark: typeof k.fark === "number" ? k.fark : NaN,
+      sebepId: String(k.sebepId ?? ""),
+      aciklama: String(k.aciklama ?? ""),
+    }));
+  } catch (e) {
+    if (e instanceof SyntaxError) return engel("DUZELTME_KALEMI_GECERSIZ");
+    throw e;
+  }
+
+  try {
+    const r = await prisma.$transaction(async (tx) => {
+      const belge = await stokDuzeltmeYaz(tx, {
+        kalemler,
+        hariciBelgeNo: (formData.get("externalDocNo") as string) || null,
+        yapan: { id: session.user.id, rol: session.user.role },
+        gerekce: (formData.get("gerekce") as string) || null,
+      });
+      await createAuditLog(
+        {
+          actorId: session.user.id,
+          action: AUDIT_ACTIONS.STOCK_ADJUSTMENT,
+          entityType: "StockAdjustment",
+          entityId: belge.belgeId,
+          after: { documentNo: belge.documentNo, kalemler },
+        },
+        tx
+      );
+      return belge;
+    });
+    revalidatePath("/stock");
+    revalidatePath("/products");
+    return basarili({ documentNo: r.documentNo });
+  } catch (e) {
+    if (e instanceof IsHatasi) return e.sonuc;
+    throw e;
+  }
 }

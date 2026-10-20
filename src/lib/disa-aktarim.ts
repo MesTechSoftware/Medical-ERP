@@ -5,7 +5,7 @@ import { hesaplaSatirTutarlari } from "@/lib/satir-tutarlari";
 import { hesaplaStok } from "@/lib/stok";
 import { bilgi, type Bildirim } from "@/lib/sonuc";
 import { BRUT, MATRAH, SATIR_TABANI, tabanli } from "@/lib/taban";
-import { bugun, gunEkle, yerelGunMetni } from "@/lib/zaman";
+import { ayAraligi, bugun, gunAraligi, gunEkle, takvimYili, yerelGunMetni } from "@/lib/zaman";
 import { policy } from "@/lib/policy";
 
 /**
@@ -214,11 +214,54 @@ async function stok(gun: Date, db: Db): Promise<VeriSetiCiktisi> {
   for (const u of urunler) {
     for (const k of konumlar) {
       const miktar = await hesaplaStok(u.id, k.id, gun, db);
-      if (miktar !== 0) satirlar.push([u.code, u.name, k.name, String(miktar), gunMetni]);
+      if (miktar !== 0) satirlar.push([u.code, u.name, k.name, String(miktar), gunMetni, "Bakiye", null, null, null, null]);
     }
   }
+
+  // B-7 §(10), C-2 eki: DZL hareketleri ayrı işaretli, sebep kolonuyla. Kapsam: seçilen günün takvim
+  // yılı başından gün sonuna kadar her düzeltme satırı (B-7 eki 20.10.2026 — yıl sonu envanteri).
+  const duzeltmeler = await db.stockAdjustmentItem.findMany({
+    where: {
+      stockAdjustment: { createdAt: { gte: ayAraligi(takvimYili(gun), 1).baslangic, lt: gunAraligi(gun).bitis } },
+    },
+    orderBy: [{ stockAdjustment: { createdAt: "asc" } }, { stockAdjustment: { documentNo: "asc" } }, { id: "asc" }],
+    select: {
+      quantityDelta: true,
+      note: true,
+      product: { select: { code: true, name: true } },
+      location: { select: { name: true } },
+      reason: { select: { name: true } },
+      stockAdjustment: { select: { documentNo: true, externalDocNo: true, createdAt: true } },
+    },
+  });
+  for (const d of duzeltmeler) {
+    satirlar.push([
+      d.product.code,
+      d.product.name,
+      d.location.name,
+      String(d.quantityDelta),
+      yerelGunMetni(d.stockAdjustment.createdAt),
+      "Düzeltme",
+      d.reason.name,
+      d.stockAdjustment.documentNo,
+      d.stockAdjustment.externalDocNo,
+      d.note,
+    ]);
+  }
+
   return {
-    kolonlar: [metin("Ürün Kodu"), metin("Ürün Adı"), metin("Konum"), sayi("Miktar"), tarih("Tarih")],
+    kolonlar: [
+      metin("Ürün Kodu"),
+      metin("Ürün Adı"),
+      metin("Konum"),
+      sayi("Miktar"),
+      tarih("Tarih"),
+      metin("Satır Tipi"),
+      metin("Düzeltme Sebebi"),
+      metin("Belge No"),
+      metin("Tutanak No"),
+      metin("Açıklama"),
+    ],
     satirlar,
   };
 }

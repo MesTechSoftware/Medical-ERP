@@ -804,7 +804,7 @@ Bunlar **karar değil**, Yol (b)'nin doğurduğu uygulama kalemleridir; 1B madde
   "sayılan belgeler filtresi zorunlu" hükmü satış sayılan kümeler içindir; C-2 §(2) cari mutabakatı açılışı ister
   ve bakiye de filtresizdir (K-2, X-11 §(6)). Sipariş veri seti filtreden geçer.
 - Tahsilat veri seti iptal edilen tahsilatı `Durum` kolonuyla verir. Stok veri setinde B-7 düzeltme işareti
-  `StokDuzeltme` akışıyla (1B-7) eklenir. Sevkiyat `harici_irsaliye_no` kolonu sevkiyat veri setine aittir; Faz 1
+  `StokDuzeltme` akışıyla (1B-7) eklenir — *1B-7d4'te eklendi (B-7-2).* Sevkiyat `harici_irsaliye_no` kolonu sevkiyat veri setine aittir; Faz 1
   kataloğunda ayrı sevkiyat veri seti yoktur — fatura hazırlık (6b) sevkiyattan okur.
 
 **Madde 6b — K-4 §(6) fatura hazırlık (20.10.2026, kriter K-4-1).** Notlar (karar değil):
@@ -900,6 +900,16 @@ liste ataması) + fiyat listesi ekranı · **7f** D-6 import (X-16 / ADR-006 sı
   `hesaplaStok`); hareket geçmişinde birden çok konum varsa konum adı. Satıcı formu depo stoğunu gösterir; ürün
   listesi ve Dashboard toplam stoğu (konsinye dahil — mal bizimdir) göstermeye devam eder.
 - Kapsam dışı (KARARLAR §6): konsinye mutabakatı, saha bildirimi, kit/set.
+
+**Madde 7d4 — B-7 stok düzeltme (20.10.2026, kriterler B-7-1, B-7-2; KARARLAR B-7 eki 20.10).** Notlar (karar değil):
+
+- `src/lib/stok-duzeltme.ts` `stokDuzeltmeYaz()`; action `addStockAdjustment` (`requireAdmin`, `STOCK_ADJUSTMENT`
+  denetim kaydı). Stok ekranında yalnız yöneticiye "Stok Düzeltme" kartı (çok satır; konum seçimi birden çok konum
+  varsa).
+- Stok veri seti kolonları sona eklendi: Satır Tipi · Düzeltme Sebebi · Belge No · Tutanak No · Açıklama.
+- **Açık:** sebep tanım tablosunun yönetim ekranı yok — bugün referans seed'inden gelir (B-7 §(2) "satır eklenir");
+  tanım tabloları ekranıyla gelir.
+- **Madde 7d tamam** (7d1 iade · 7d2 bedelsiz · 7d3 konsinye + transfer · 7d4 düzeltme).
 
 ---
 

@@ -80,6 +80,8 @@ test("stok girişi yapar (stok hareketi — D-2 §(1))", async ({ page }) => {
   await form.getByLabel("Açıklama (opsiyonel)").fill(not);
   await form.getByRole("button", { name: "Stok Girişi Ekle" }).click();
   await expect(page.getByText("Stok girişi kaydedildi.")).toBeVisible();
+  // B-7 · D-2 §(2): stok düzeltme yalnız yöneticinin.
+  await expect(page.getByRole("heading", { name: "Stok Düzeltme" })).toHaveCount(0);
   const hareket = await query(`SELECT id FROM "StockMovement" WHERE note = $1 AND type = 'GIRIS' AND quantity = 3`, [not]);
   expect(hareket).toHaveLength(1);
 });
