@@ -5,7 +5,9 @@ import { PageHeader, Card } from "@/components/ui";
 import OrderDetail from "@/components/OrderDetail";
 import ConfirmSubmit from "@/components/ConfirmSubmit";
 import { IslemFormu } from "@/components/Sonuc";
-import { prepareOrder, markDelivered, cancelOrder } from "../actions";
+import { prepareOrder, markDelivered, cancelOrder, createReturn } from "../actions";
+import IadeFormu from "./IadeFormu";
+import { formatDateTime } from "@/lib/format";
 
 export default async function AdminOrderDetailPage({
   params,
@@ -19,7 +21,13 @@ export default async function AdminOrderDetailPage({
     include: {
       seller: { select: { name: true } },
       doctor: true,
-      items: { include: { product: { select: { name: true, code: true } } } },
+      items: {
+        include: {
+          product: { select: { name: true, code: true } },
+          shipmentItems: { select: { quantity: true } },
+          returnItems: { select: { quantity: true } },
+        },
+      },
       shipments: {
         orderBy: { createdAt: "desc" },
         take: 1,
@@ -28,6 +36,22 @@ export default async function AdminOrderDetailPage({
     },
   });
   if (!order) notFound();
+
+  // A-1: iade edilebilir = sevk edilen − önceki iadeler.
+  const iadeKalemleri = order.items
+    .map((i) => ({
+      id: i.id,
+      urun: i.product.name,
+      kod: i.product.code,
+      iadeEdilebilir:
+        i.shipmentItems.reduce((t, s) => t + s.quantity, 0) - i.returnItems.reduce((t, r) => t + r.quantity, 0),
+    }))
+    .filter((k) => k.iadeEdilebilir > 0);
+  const iadeler = await prisma.returnNote.findMany({
+    where: { items: { some: { orderItem: { orderId: id } } } },
+    orderBy: { createdAt: "asc" },
+    include: { items: { include: { orderItem: { select: { product: { select: { name: true } } } } } } },
+  });
 
   const canCancel =
     order.status !== "IPTAL" && order.status !== "TESLIM_EDILDI";
@@ -100,6 +124,28 @@ export default async function AdminOrderDetailPage({
           )}
         </div>
       </Card>
+
+      {(iadeKalemleri.length > 0 || iadeler.length > 0) && (
+        <div className="mt-6">
+          <Card>
+            <h2 className="mb-3 text-sm font-semibold text-slate-900">İade</h2>
+            {iadeler.length > 0 && (
+              <ul className="mb-4 space-y-1 text-sm text-slate-700">
+                {iadeler.map((r) => (
+                  <li key={r.id}>
+                    <span className="font-medium">{r.documentNo}</span>
+                    <span className="ml-2 text-slate-500">{formatDateTime(r.createdAt)}</span>
+                    {" · "}
+                    {r.items.map((i) => `${i.orderItem.product.name} × ${i.quantity}`).join(", ")}
+                    <span className="ml-2 text-slate-500">— {r.reason}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {iadeKalemleri.length > 0 && <IadeFormu action={createReturn.bind(null, id)} kalemler={iadeKalemleri} />}
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

@@ -862,6 +862,22 @@ liste ataması) + fiyat listesi ekranı · **7f** D-6 import (X-16 / ADR-006 sı
   yazılmaz — kalıcı iz bloğun kendisidir (X-4 §(6)).
 - B-7 stok düzeltmesinin negatif stoğu (§(7) "aynı mekanizma") 7d'de düzeltme akışıyla bağlanır.
 
+**Madde 7d — bölünme (20.10.2026):** **7d1** A-1 iade · **7d2** A-2 bedelsiz satır (bayrak + sebep, sipariş formu) ·
+**7d3** A-4 konsinye çıkış + B-4 stok transferi · **7d4** B-7 stok düzeltme.
+
+**Madde 7d1 — A-1 iade (20.10.2026, kriterler A-1-1, A-1-2; KARARLAR A-1 eki 20.10).** Notlar (karar değil):
+
+- `src/lib/iade.ts` `iadeYaz(tx, girdi)`: ürün kilidi → iade edilebilir kilit altında → `IAD` → belge + satırlar →
+  `stokHareketiYaz` giriş (`returnNoteId`, varsayılan depo) → `iadeHareketiYaz` (`cari-hareket.ts`). Ekran: sipariş
+  detayında "İade" kartı (`IadeFormu`, `createReturn`), iade listesi aynı kartta.
+- **Şema:** `ReturnNoteItem.commissionRate` (nullable, migration `iade_prim_orani`). "En son sevkiyat" sevkiyatın
+  oluşturulma anına göredir.
+- Raporlar: `sayilanBelgeler.iadeSatiri` (sevk satırıyla aynı sipariş ve bedelsiz dışlaması); netleme
+  `hesaplaSatirTutarlari()`'nın `ters` satırıyla — ham Decimal aritmetiği raporda yoktur (X-5 §(4)). Dönem cirosu
+  iade ağır basarsa eksi olabilir.
+- Kapsam dışı: iade faturası/fatura hazırlık veri setinde iade satırı (K-4, e-belge modülü) · iade kargosu (D-3) ·
+  hasarlı iadenin zayiatı (B-7, 7d4).
+
 ---
 
 ### §D.5 · 1A'nın **yapmadıkları** — sınırı yazılı tutmak için

@@ -12,6 +12,8 @@ import type { ParaDegeri } from "@/lib/money";
  * - Belge toplamı satır toplamlarının toplamıdır; yeniden yuvarlanmaz (C-6 §(5)).
  * - Bedelsiz satırın tutarı 0, KDV'si 0'dır (A-2, C-6 §(8)); iskonto ortalamasına girmez.
  * - İskonto oranı saklanmaz, burada türetilir (X-5 §(10)). Liste üstü satışta negatiftir.
+ * - Ters satır (`ters`, A-1 iade) aynı hesapla yuvarlanır ve toplamdan düşülür; tutarları
+ *   eksidir, iskonto ortalamasına girmez. Ciro/hakediş netlemesi böyle yapılır.
  *
  * Saf fonksiyondur: sunucu ve istemci (sipariş formu önizlemesi) aynı hesabı kullanır.
  * X-5 §(4): parasal aritmetiğe izin verilen iki dosyadan biridir.
@@ -30,6 +32,8 @@ export type SatirGirdisi = {
   bedelsiz?: boolean;
   /** Sevkiyat satırına donmuş prim oranı, yüzde (X-14 §(3)); boşsa hakediş doğmaz. */
   primOrani?: ParaDegeri | null;
+  /** Toplamdan düşülen satır (A-1 iade): tutarları eksi döner, iskonto ortalamasına girmez. */
+  ters?: boolean;
 };
 
 export type SatirTutari = {
@@ -87,18 +91,22 @@ export function hesaplaSatirTutarlari(satirlar: readonly SatirGirdisi[]): {
 
     const birim = new D(s.birimFiyat as Decimal.Value);
     const liste = new D(s.listeFiyat as Decimal.Value);
-    const matrah = birim.times(s.miktar).toDecimalPlaces(2);
-    const kdvTutar = matrah.times(oran).div(100).toDecimalPlaces(2);
+    // Yuvarlama işaretten önce: ters satır, aynı satırın tutarının tam eksisidir.
+    const isaret = s.ters ? -1 : 1;
+    const matrah = birim.times(s.miktar).toDecimalPlaces(2).times(isaret);
+    const kdvTutar = matrah.abs().times(oran).div(100).toDecimalPlaces(2).times(isaret);
     const toplam = matrah.plus(kdvTutar);
-    const hakedis = primOrani ? matrah.times(primOrani).div(100).toDecimalPlaces(2) : SIFIR;
+    const hakedis = primOrani ? matrah.abs().times(primOrani).div(100).toDecimalPlaces(2).times(isaret) : SIFIR;
 
     matrahT = matrahT.plus(matrah);
     kdvT = kdvT.plus(kdvTutar);
-    listeT = listeT.plus(liste.times(s.miktar));
-    birimT = birimT.plus(birim.times(s.miktar));
+    if (!s.ters) {
+      listeT = listeT.plus(liste.times(s.miktar));
+      birimT = birimT.plus(birim.times(s.miktar));
+    }
     hakedisT = hakedisT.plus(hakedis);
 
-    return { matrah, kdvTutar, toplam, iskontoOran: iskonto(liste, birim), hakedis };
+    return { matrah, kdvTutar, toplam, iskontoOran: s.ters ? null : iskonto(liste, birim), hakedis };
   });
 
   return {

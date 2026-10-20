@@ -54,7 +54,8 @@
 
 | Kod | Kriter | Yazılacağı yer |
 |---|---|---|
-| A-1-1 | | 1B-7 |
+| A-1-1 | İade ayrı belgedir (`IAD`); sipariş ve sevkiyat değişmez. Satır sipariş satırına referansla miktar taşır; iade edilebilir = sevk edilen − önceki iadeler (aşan → `SERT` `IADE_MIKTARI_ASILDI`, kilit altında; eşzamanlı iki iade aşamaz). Sebep zorunludur. Satır KDV oranını ve satırın en son sevkiyatının prim oranını dondurur. Aynı transaction'da depoya stok girişi ve aynı numarayla `IADE` · `ALACAK` cari hareketi (`hesaplaSatirTutarlari()`, vadesiz) yazılır; bedelsiz satırın iadesi alacak doğurmaz. `YONETICI` ve `OPERASYON` girer. | 1B-7d · `iade.itest.ts` · `e2e/admin/iade.spec.ts` · `yetki.test.ts` |
+| A-1-2 | İade ciro ve hakedişi iade belgesinin tarihinde düşürür: iade satırı aynı hesapla, donmuş oranla ters satır olarak yazılır (`ters`, yuvarlama işaretten önce); sevkiyatın dönemi değişmez. Ortalama iskonto yalnız sevk satırlarından türer. | 1B-7d · `iade.itest.ts` · `satir-tutarlari.test.ts` |
 | A-2-1 | | 1B-7 *(tutar hesabı 1B-5)* |
 | A-3-1 | Bir sipariş satırına birden çok sevkiyat bağlanabilir; sevkiyat yalnız `ONAYLI` · `HAZIRLANIYOR` siparişte, kalem başına kalan miktarı aşmayan tam sayıyla yazılır (aşım ve geçersiz miktar `SERT`, hiçbir kayıt ve numara yazılmaz). Doktor borcu, stok çıkışı ve prim oranı sevkiyat anında aynı transaction'da doğar: `SVK` numarası · sevkiyat satırları · kaynağı sevkiyat olan stok çıkışı · `SEVKIYAT` · `BORC` cari hareket (tutar sevk edilen satırların `hesaplaSatirTutarlari()` toplamı, her sevkiyat kendi yuvarlaması; yalnız bedelsiz satırlı sevkiyat borç doğurmaz). Sipariş stok düşürmez. Bütün kalemler sevk edilince sipariş `KARGOLANDI` olur. Aynı siparişin eşzamanlı iki sevkiyatı kalanı aşamaz; sevkiyatı olan sipariş iptal edilemez (eşzamanlı iptal dahil) — iade sürecidir. | 1B-7 · `sevkiyat.itest.ts` · `orders.itest.ts` · `sevkiyat.spec.ts` |
 | A-4-1 | | 1B-7 |

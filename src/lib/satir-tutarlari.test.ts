@@ -169,3 +169,28 @@ describe("hesaplaSatirTutarlari — hakediş (X-14-1 · D-4-1)", () => {
     expect(() => tek(primli("100", 1, "100.01"))).toThrow();
   });
 });
+
+describe("ters satır — iade netlemesi (A-1-1)", () => {
+  it("ters satır aynı satırın tam eksisidir; yuvarlama işaretten önce", () => {
+    const sevk = { ...satir("0.125", 1, "20"), primOrani: "5" };
+    const { toplam } = hesaplaSatirTutarlari([sevk, { ...sevk, ters: true }]);
+    expect([toplam.matrah, toplam.kdvTutar, toplam.toplam, toplam.hakedis].map((d) => d.toFixed(2))).toEqual([
+      "0.00",
+      "0.00",
+      "0.00",
+      "0.00",
+    ]);
+    const t = hesaplaSatirTutarlari([{ ...sevk, ters: true }]).satirlar[0];
+    expect([t.matrah.toFixed(2), t.kdvTutar.toFixed(2), t.hakedis.toFixed(2), t.iskontoOran]).toEqual(["-0.13", "-0.03", "-0.01", null]);
+  });
+
+  it("ters satır iskonto ortalamasına girmez; bedelsiz ters satır sıfırdır", () => {
+    const { toplam } = hesaplaSatirTutarlari([
+      satir("90", 1, "20", "100"),
+      { ...satir("50", 1, "20", "100"), ters: true },
+      { ...satir("90", 1, "20"), bedelsiz: true, ters: true },
+    ]);
+    expect(toplam.iskontoOran?.toFixed(2)).toBe("10.00");
+    expect(toplam.matrah.toFixed(2)).toBe("40.00");
+  });
+});

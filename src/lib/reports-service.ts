@@ -14,6 +14,10 @@ import { sayilanBelgeler } from "@/lib/sayilan-belgeler";
  * Sevk satırları yalnız sayılan belgeler filtresiyle okunur (A-5, X-1 §(5)).
  * Dönem zorunlu, yarı açık aralıktır (X-1 §(2)/(3)); ekseni belge tarihidir (§(4)):
  * ciro → sevkiyat anı, tahsilat → tahsilat anı.
+ *
+ * İade (A-1 eki 20.10.2026) ciro ve hakedişi **iade tarihinde** düşürür: iade satırı aynı
+ * hesapla, iade anında donmuş prim oranıyla eksiye yazılır. Geçmiş dönemin sonucu değişmez
+ * (X-1 §(6)). Ortalama iskonto yalnız sevk satırlarından türer.
  */
 
 export type Donem = { baslangic: Date; bitis: Date };
@@ -46,6 +50,22 @@ function donemSevkSatiri(donem: Donem): Prisma.ShipmentItemWhereInput {
   return { AND: [sayilanBelgeler.sevkSatiri, { shipment: { shippedAt: { gte: donem.baslangic, lt: donem.bitis } } }] };
 }
 
+/** Dönemdeki sayılan iade satırları — ekseni iade belgesinin tarihidir (X-1 §(4)/(6)). */
+function donemIadeSatiri(donem: Donem): Prisma.ReturnNoteItemWhereInput {
+  return { AND: [sayilanBelgeler.iadeSatiri, { returnNote: { createdAt: { gte: donem.baslangic, lt: donem.bitis } } }] };
+}
+
+/** Sevk eksi iade: iade satırı ters satırdır (matrah ve hakediş düşer, iskontoya girmez). */
+function net(sevk: SevkSatiri[], iade: SevkSatiri[]) {
+  return hesaplaSatirTutarlari([...sevk.map(girdi), ...iade.map((s) => ({ ...girdi(s), ters: true }))]).toplam;
+}
+
+function grupla<T>(satirlar: T[], anahtar: (s: T) => string): Map<string, T[]> {
+  const m = new Map<string, T[]>();
+  for (const s of satirlar) m.set(anahtar(s), [...(m.get(anahtar(s)) ?? []), s]);
+  return m;
+}
+
 export type SellerReport = {
   sellerId: string;
   name: string;
@@ -75,24 +95,29 @@ export async function getSellerReports(
   });
   const idler = sellers.map((s) => s.id);
 
-  const [sevk, tahsilatlar, doktorlar] = await Promise.all([
-    // Ciro ve hakediş siparişin satıcısına yazılır; devir taşımaz (X-13 §(4)).
+  const [sevk, iade, tahsilatlar, doktorlar] = await Promise.all([
+    // Ciro ve hakediş siparişin satıcısına yazılır; devir taşımaz (X-13 §(4)). İade de öyle.
     prisma.shipmentItem.findMany({
       where: { AND: [donemSevkSatiri(donem), { shipment: { order: { sellerId: { in: idler } } } }] },
       select: { ...SEVK_SATIRI, shipment: { select: { order: { select: { sellerId: true } } } } },
+    }),
+    prisma.returnNoteItem.findMany({
+      where: { AND: [donemIadeSatiri(donem), { orderItem: { order: { sellerId: { in: idler } } } }] },
+      select: {
+        quantity: true,
+        commissionRate: true,
+        orderItem: { select: { ...SEVK_SATIRI.orderItem.select, order: { select: { sellerId: true } } } },
+      },
     }),
     donemTahsilatlari(donem, idler),
     prisma.doctor.groupBy({ by: ["ownerSellerId"], where: { ownerSellerId: { in: idler } }, _count: true }),
   ]);
 
-  const saticiSatirlari = new Map<string, SevkSatiri[]>();
-  for (const s of sevk) {
-    const id = s.shipment.order.sellerId!;
-    saticiSatirlari.set(id, [...(saticiSatirlari.get(id) ?? []), s]);
-  }
+  const saticiSevk = grupla(sevk, (s) => s.shipment.order.sellerId!);
+  const saticiIade = grupla(iade, (s) => s.orderItem.order.sellerId!);
 
   return sellers.map((s) => {
-    const { toplam } = hesaplaSatirTutarlari((saticiSatirlari.get(s.id) ?? []).map(girdi));
+    const toplam = net(saticiSevk.get(s.id) ?? [], saticiIade.get(s.id) ?? []);
     return {
       sellerId: s.id,
       name: s.name,
@@ -147,7 +172,7 @@ export type DoctorReport = {
 };
 
 export async function getDoctorReports(donem: Donem, limit = 50): Promise<DoctorReport[]> {
-  const [doctors, sevk] = await Promise.all([
+  const [doctors, sevk, iade] = await Promise.all([
     prisma.doctor.findMany({
       select: { id: true, fullName: true, ownerSeller: { select: { name: true } } },
     }),
@@ -155,30 +180,31 @@ export async function getDoctorReports(donem: Donem, limit = 50): Promise<Doctor
       where: donemSevkSatiri(donem),
       select: { ...SEVK_SATIRI, shipment: { select: { order: { select: { doctorId: true } } } } },
     }),
+    prisma.returnNoteItem.findMany({
+      where: donemIadeSatiri(donem),
+      select: { ...SEVK_SATIRI, returnNote: { select: { doctorId: true } } },
+    }),
   ]);
 
-  const doktorSatirlari = new Map<string, SevkSatiri[]>();
-  for (const s of sevk) {
-    const id = s.shipment.order.doctorId;
-    doktorSatirlari.set(id, [...(doktorSatirlari.get(id) ?? []), s]);
-  }
+  const doktorSevk = grupla(sevk, (s) => s.shipment.order.doctorId);
+  const doktorIade = grupla(iade, (s) => s.returnNote.doctorId);
 
-  const rows = doctors.map((d) => {
-    const satirlar = doktorSatirlari.get(d.id) ?? [];
-    return {
-      doctorId: d.id,
-      fullName: d.fullName,
-      sellerName: d.ownerSeller?.name ?? null,
-      ciro: hesaplaSatirTutarlari(satirlar.map(girdi)).toplam.matrah,
-    };
-  });
+  const rows = doctors.map((d) => ({
+    doctorId: d.id,
+    fullName: d.fullName,
+    sellerName: d.ownerSeller?.name ?? null,
+    ciro: net(doktorSevk.get(d.id) ?? [], doktorIade.get(d.id) ?? []).matrah,
+  }));
 
   rows.sort((a, b) => b.ciro.comparedTo(a.ciro));
   return rows.slice(0, limit);
 }
 
-/** Dönem cirosu — matrah, sevk edilen mal (A-3, Ü-3 C sınıfı); dönem zorunlu (X-1 §(3)). */
+/** Dönem cirosu — matrah, sevk edilen eksi iade edilen mal (A-3, A-1, Ü-3 C sınıfı); dönem zorunlu (X-1 §(3)). */
 export async function getCiroTotal(donem: Donem): Promise<Decimal> {
-  const sevk = await prisma.shipmentItem.findMany({ where: donemSevkSatiri(donem), select: SEVK_SATIRI });
-  return hesaplaSatirTutarlari(sevk.map(girdi)).toplam.matrah;
+  const [sevk, iade] = await Promise.all([
+    prisma.shipmentItem.findMany({ where: donemSevkSatiri(donem), select: SEVK_SATIRI }),
+    prisma.returnNoteItem.findMany({ where: donemIadeSatiri(donem), select: SEVK_SATIRI }),
+  ]);
+  return net(sevk, iade).matrah;
 }
