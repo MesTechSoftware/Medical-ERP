@@ -9,7 +9,7 @@ import { referansVeri, yeniDoktorVerisi } from "../../../../test/integration/ref
 // Tahsilatın DAYANIKLI davranışı (RULE-12'den Faz 1'de kalan: tahsilat kaydı + cari hareket).
 // Kongre defteri (GÇ-4), mahsup (GÇ-3) ve prim dönemi (GÇ-16) tabloları CM'de şemadan
 // çıktı — "onlara yazmaz" testleri yerini şemaya ve C8 anti-şema testine bıraktı.
-// Tahsilatın cari hareketi 1B madde 7'de yazılır (X-11 §(5), A-11); o zamana kadar yazılmaz (R-11).
+// Tahsilat cari hareketi belgeyle aynı transaction'da yazılır; iptal ters kayıttır (X-11 §(5), A-11 — 1B-7b).
 const h = vi.hoisted(() => ({ adminId: "", tevsikLimiti: null as string | null }));
 
 vi.mock("@/lib/session", () => ({
@@ -380,5 +380,57 @@ describe("tahsilat ekranında vade uyarısı (X-6-1)", () => {
       kademe: "BILGI",
       bildirimler: [{ kademe: "BILGI", kural_kodu: "VADESI_GECMIS_HAREKET", parametreler: { enEskiVade: "2020-01-31" } }],
     });
+  });
+});
+
+describe("tahsilat cari hareketi ve iptal ters kaydı (A-11-1, X-11-1)", () => {
+  let s: Awaited<ReturnType<typeof seed>>;
+  beforeEach(async () => {
+    s = await seed();
+  });
+  const iptalFormu = (paymentId: string) => {
+    const fd = new FormData();
+    fd.set("paymentId", paymentId);
+    fd.set("reason", "Dekont hatalı");
+    return fd;
+  };
+
+  it("tahsilat aynı numarayla ALACAK cari hareketi yazar; komisyon cariye dokunmaz, bakiye düşer", async () => {
+    await recordCollection(null, tahsilatFormu(s.doctor.id, s.pos.id, "1000"));
+    const p = await prisma.doctorPayment.findFirstOrThrow();
+    expect(p.commissionAmount.toFixed(2)).toBe("25.00");
+    const [h] = await prisma.ledgerEntry.findMany();
+    expect([h.type, h.direction, h.amount.toFixed(2), h.documentNo, h.paymentId, h.dueDate]).toEqual([
+      "TAHSILAT",
+      "ALACAK",
+      "1000.00",
+      p.documentNo,
+      p.id,
+      null,
+    ]);
+    expect((await hesaplaDoktorBakiye(s.doctor.id)).bakiye.toFixed(2)).toBe("-1000.00");
+  });
+
+  it("iptal hareketi silmez, TERS_KAYIT ile çevirir; bakiye geri döner; ikinci iptal reddedilir", async () => {
+    await recordCollection(null, tahsilatFormu(s.doctor.id, s.havale.id, "1000"));
+    const p = await prisma.doctorPayment.findFirstOrThrow();
+    await cancelCollection(null, iptalFormu(p.id));
+
+    const hareketler = await prisma.ledgerEntry.findMany({ orderBy: { createdAt: "asc" } });
+    expect(hareketler.map((h) => [h.type, h.direction, h.amount.toFixed(2), h.documentNo])).toEqual([
+      ["TAHSILAT", "ALACAK", "1000.00", p.documentNo],
+      ["TERS_KAYIT", "BORC", "1000.00", p.documentNo],
+    ]);
+    expect(hareketler[1].reversedEntryId).toBe(hareketler[0].id);
+    expect((await hesaplaDoktorBakiye(s.doctor.id)).bakiye.toFixed(2)).toBe("0.00");
+    expect((await cancelCollection(null, iptalFormu(p.id))).bildirimler[0].kural_kodu).toBe("TAHSILAT_ZATEN_IPTAL");
+  });
+
+  it("eşzamanlı iki iptalden yalnız biri ters kayıt yazar", async () => {
+    await recordCollection(null, tahsilatFormu(s.doctor.id, s.havale.id, "1000"));
+    const p = await prisma.doctorPayment.findFirstOrThrow();
+    const sonuclar = await Promise.all([cancelCollection(null, iptalFormu(p.id)), cancelCollection(null, iptalFormu(p.id))]);
+    expect(sonuclar.map((r) => r.durum).sort()).toEqual(["BASARILI", "ENGELLENDI"]);
+    expect(await prisma.ledgerEntry.count({ where: { type: "TERS_KAYIT" } })).toBe(1);
   });
 });

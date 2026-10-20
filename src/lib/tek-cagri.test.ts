@@ -127,3 +127,11 @@ describe("tek çağrı noktası — dışa aktarım (D-5-1, D-5-2)", () => {
     expect(ihlaller(/exportLog\./, join("app", "(admin)", "exports", "actions.ts"))).toEqual([]);
   });
 });
+
+describe("tek çağrı noktası — cari hareket yazımı (X-11-1)", () => {
+  it("cari hareket yalnız cari-hareket.ts'de yazılır; satır silinmez", () => {
+    const yazim = /ledgerEntry\.(create|createMany|upsert)\s*\(|INSERT\s+INTO\s+"LedgerEntry"/;
+    expect(ihlaller(yazim, join("lib", "cari-hareket.ts"))).toEqual([]);
+    expect(ihlaller(/ledgerEntry\.(delete|deleteMany)\s*\(|DELETE\s+FROM\s+"LedgerEntry"/, "")).toEqual([]);
+  });
+});

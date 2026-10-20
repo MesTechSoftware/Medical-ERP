@@ -12,6 +12,7 @@ import { IsHatasi } from "@/lib/hata";
 import { basarili, engel, sert, sonucOlustur, type Bildirim, type IslemSonucu } from "@/lib/sonuc";
 import { nakitTevsikUyarisi } from "@/lib/tevsik";
 import { vadesiGecmisUyarisi } from "@/lib/doctor-cari";
+import { tahsilatHareketiYaz, tersKayitYaz } from "@/lib/cari-hareket";
 
 /**
  * 🔴 Tahsilat kaydı — sistemin MERKEZÎ olayı (RULE-12).
@@ -62,6 +63,15 @@ export async function recordCollection(
           recordedBy: session.user.id,
         },
       });
+      // A-11, X-11 §(5): tahsilat cari hareketi belgeyle aynı transaction'da.
+      await tahsilatHareketiYaz(tx, {
+        doctorId,
+        tutar: payment.amount,
+        yon: payment.direction,
+        documentNo,
+        paymentId: payment.id,
+        yapanId: session.user.id,
+      });
       await createAuditLog(
         {
           actorId: session.user.id,
@@ -91,8 +101,10 @@ export async function recordCollection(
 }
 
 /**
- * FR-29: Tahsilat iptali. Ters kayıt mantığı: tahsilat `IPTAL` işaretlenir;
- * bakiye hareketlerden hesaplandığı için kendiliğinden geri döner (RULE-08).
+ * FR-29: Tahsilat iptali. Tahsilat `IPTAL` işaretlenir ve cari hareketi `TERS_KAYIT` ile çevrilir
+ * (X-11 §(5), §0.2): hareket silinmez, bakiye ters hareketle geri döner. İşaret koşullu yazılır —
+ * eşzamanlı iki iptalden yalnız biri ters kayıt yazar. 1B-7b öncesi kaydedilmiş, cari hareketi
+ * olmayan tahsilatta çevrilecek satır yoktur.
  */
 export async function cancelCollection(
   _prev: unknown,
@@ -110,9 +122,9 @@ export async function cancelCollection(
   if (before.status === "IPTAL") return engel("TAHSILAT_ZATEN_IPTAL");
 
   // Prim düzeltmesi (FR-35) C4'te söküldü — dönem kilidi yok (X-1 §(6)).
-  await prisma.$transaction(async (tx) => {
-    await tx.doctorPayment.update({
-      where: { id: paymentId },
+  const iptalEdildi = await prisma.$transaction(async (tx) => {
+    const res = await tx.doctorPayment.updateMany({
+      where: { id: paymentId, status: "AKTIF" },
       data: {
         status: "IPTAL",
         cancelledAt: simdi(),
@@ -120,6 +132,12 @@ export async function cancelCollection(
         cancelReason: reason,
       },
     });
+    if (res.count === 0) return false;
+    const hareket = await tx.ledgerEntry.findFirst({
+      where: { paymentId, type: "TAHSILAT" },
+      select: { id: true },
+    });
+    if (hareket) await tersKayitYaz(tx, hareket.id, session.user.id);
     await createAuditLog(
       {
         actorId: session.user.id,
@@ -131,7 +149,9 @@ export async function cancelCollection(
       },
       tx
     );
+    return true;
   });
+  if (!iptalEdildi) return engel("TAHSILAT_ZATEN_IPTAL");
 
   revalidatePath("/collections");
   revalidatePath("/doctors");

@@ -7,6 +7,7 @@ import { policy } from "../src/lib/policy";
 import { uretBelgeNo } from "../src/lib/belge-no";
 import { degistirDoktorSahibi } from "../src/lib/sahiplik";
 import { sevkiyatYaz } from "../src/lib/sevkiyat";
+import { tahsilatHareketiYaz } from "../src/lib/cari-hareket";
 import { referansVeriYukle } from "./referans";
 
 // `db:seed:demo` — YALNIZ GELİŞTİRME VE TEST (C9). Bütün tabloları boşaltır, referans
@@ -253,9 +254,10 @@ async function main() {
   // Kısmi tahsilat (FR-25). Tahsilat siparişe eşlenmez — mahsup yok (X-6).
   const havale = await prisma.paymentMethod.findFirstOrThrow({ where: { type: "BANKA" } });
   await prisma.$transaction(async (tx) => {
-    await tx.doctorPayment.create({
+    const documentNo = await uretBelgeNo("THS", tx);
+    const odeme = await tx.doctorPayment.create({
       data: {
-        documentNo: await uretBelgeNo("THS", tx),
+        documentNo,
         doctorId: byDoctor("Selin Aksoy").id,
         amount: "500.00",
         paymentMethodId: havale.id,
@@ -265,6 +267,14 @@ async function main() {
         note: "Kısmi tahsilat (seed)",
         recordedBy: admin.id,
       },
+    });
+    await tahsilatHareketiYaz(tx, {
+      doctorId: odeme.doctorId,
+      tutar: odeme.amount,
+      yon: odeme.direction,
+      documentNo,
+      paymentId: odeme.id,
+      yapanId: admin.id,
     });
   });
 
