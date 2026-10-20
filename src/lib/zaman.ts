@@ -77,6 +77,24 @@ export function ayAraligi(yil: number, ay: number): { baslangic: Date; bitis: Da
   return { baslangic: geceYarisi(yil, ay, 1), bitis: geceYarisi(yil, ay + 1, 1) };
 }
 
+/**
+ * `YYYY-AA-GG` yerel günün yarı açık aralığı (formdan gelen gün; E-1 §(3)/(4)). Geçersizse `null`.
+ */
+export function yerelGunAraligi(metin: string): { baslangic: Date; bitis: Date } | null {
+  const m = metin.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  const [yil, ay, gun] = [parseInt(m[1], 10), parseInt(m[2], 10), parseInt(m[3], 10)];
+  const d = new Date(Date.UTC(yil, ay - 1, gun));
+  if (d.getUTCFullYear() !== yil || d.getUTCMonth() !== ay - 1 || d.getUTCDate() !== gun) return null;
+  return { baslangic: geceYarisi(yil, ay, gun), bitis: geceYarisi(yil, ay, gun + 1) };
+}
+
+/** Anın yerel takvim günü `YYYY-AA-GG` — dışa aktarımın tarih kolonları (E-1 §(8)). */
+export function yerelGunMetni(an: Date): string {
+  const { yil, ay, gun } = takvimGunu(an);
+  return `${yil}-${String(ay).padStart(2, "0")}-${String(gun).padStart(2, "0")}`;
+}
+
 /** "Tüm zamanlar" — aralık parametresinin bilinçli seçimi (X-1 §(2)); varsayılan değildir. */
 export const TUM_ZAMANLAR: Readonly<{ baslangic: Date; bitis: Date }> = Object.freeze({
   baslangic: new Date("1970-01-01T00:00:00Z"),

@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Stethoscope,
   BarChart3,
+  Download,
 } from "lucide-react";
 
 const navItems: NavItem[] = [
@@ -24,11 +25,12 @@ const navItems: NavItem[] = [
   { href: "/collections", label: "Tahsilatlar", icon: CreditCard },
   { href: "/reports", label: "Raporlar", icon: BarChart3 },
   { href: "/audit-logs", label: "Audit Log", icon: ShieldCheck },
+  { href: "/exports", label: "Dışa Aktarım", icon: Download },
 ];
 
-// D-2 17.10 eki: OPERASYON raporları ve denetim kaydını görmez. Menü yalnız görünümdür;
-// yetki sayfanın kendi `requireAdmin()`'indedir.
-const YALNIZ_YONETICI = new Set(["/reports", "/audit-logs"]);
+// D-2 17.10 eki: OPERASYON raporları ve denetim kaydını görmez; dışa aktarım yalnız YONETICI (D-5 §(4)).
+// Menü yalnız görünümdür; yetki sayfanın kendi `requireAdmin()`'indedir.
+const YALNIZ_YONETICI = new Set(["/reports", "/audit-logs", "/exports"]);
 
 export default async function AdminLayout({
   children,
