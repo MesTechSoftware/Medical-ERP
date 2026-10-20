@@ -26,6 +26,9 @@ import { bugun, gunEkle, simdi } from "@/lib/zaman";
  * gerekçe yazarsa sevkiyat yazılmaz, yalnız blok yazılır (`ONAYA_GONDERILDI`). Siparişin son
  * `NEGATIF_STOK` bloğu kararsızsa sevkiyat durur; `ONAY`'lıysa siparişin sevkiyatları sorulmadan
  * geçer; `RED`'den sonra yeni gerekçe yeni blok açar.
+ *
+ * Bedelsiz satır onayı (`BEDELSIZ_ONAYI`, A-2 eki 20.10.2026) sipariş girişinde açılır;
+ * son bloğu kararsızsa ya da `RED`'se sevkiyat durur.
  */
 export type SevkiyatGirdisi = {
   siparisId: string;
@@ -110,7 +113,11 @@ export async function sevkiyatYaz(tx: Prisma.TransactionClient, girdi: SevkiyatG
     note: "Sevkiyat çıkışı",
   }));
 
-  // A-8: blok kilit altında okunur; numara ve hiçbir kayıt bundan önce yazılmaz.
+  // A-8: bloklar kilit altında okunur; numara ve hiçbir kayıt bundan önce yazılmaz.
+  // Bedelsiz satır onayı (A-2 eki) siparişte açılır; ihlal kalıcıdır — son blok ONAY değilse durur.
+  const bedelsiz = await sonBlokDurumu("SIP", siparis.id, "BEDELSIZ_ONAYI", tx);
+  if (bedelsiz === "BEKLIYOR") throw new IsHatasi([sert("ONAY_BEKLIYOR")]);
+  if (bedelsiz === "RED") throw new IsHatasi([sert("ONAY_REDDEDILDI")]);
   const onay = await sonBlokDurumu("SIP", siparis.id, "NEGATIF_STOK", tx);
   if (onay === "BEKLIYOR") throw new IsHatasi([sert("ONAY_BEKLIYOR")]);
   if (onay !== "ONAY") {

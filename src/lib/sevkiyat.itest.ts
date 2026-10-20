@@ -56,6 +56,7 @@ async function siparis(opts: { status?: "BEKLIYOR" | "HAZIRLANIYOR"; satici?: st
           unitPrice: k.birim,
           vatRate: "20",
           isFree: k.bedelsiz ?? false,
+          freeReason: k.bedelsiz ? "NUMUNE" : null,
         })),
       },
     },
@@ -362,5 +363,24 @@ describe("negatif stok onayı sevkiyatta (A-8-7 … A-8-10)", () => {
       prisma.$transaction((tx) => blokKarariVer(tx, { blokId: blok.id, karar: k, not: "n", yapanId: s.yonetici.id }));
     expect((await Promise.all([karar("ONAY"), karar("RED")])).sort()).toEqual([false, true]);
     expect(await prisma.approvalBlock.count({ where: { decision: { not: null } } })).toBe(1);
+  });
+});
+
+describe("bedelsiz satır onayı sevkiyatı durdurur (A-2-2)", () => {
+  it("kararsız blok ONAY_BEKLIYOR, RED ONAY_REDDEDILDI; ONAY'dan sonra sevk edilir", async () => {
+    const o = await siparis({ kalemler: [{ miktar: 1, birim: "0", bedelsiz: true }] });
+    await prisma.orderItem.updateMany({ data: { freeReason: "PROMOSYON" } });
+    const blok = await prisma.approvalBlock.create({
+      data: { documentType: "SIP", documentId: o.id, ruleCode: "BEDELSIZ_ONAYI", openedById: s.satici.id, openReason: "Kongre" },
+    });
+    const dene = () => kodlar(sevk(o.id, [{ siparisKalemiId: o.items[0].id, miktar: 1 }]));
+    expect(await dene()).toEqual(["ONAY_BEKLIYOR"]);
+    await prisma.$transaction((tx) => blokKarariVer(tx, { blokId: blok.id, karar: "RED", not: "Hayır", yapanId: s.yonetici.id }));
+    expect(await dene()).toEqual(["ONAY_REDDEDILDI"]);
+    await prisma.approvalBlock.create({
+      data: { documentType: "SIP", documentId: o.id, ruleCode: "BEDELSIZ_ONAYI", openedById: s.satici.id, openReason: "Yeniden", decision: "ONAY", decidedById: s.yonetici.id, decidedAt: new Date(), decisionNote: "Tamam" },
+    });
+    expect(await dene()).toEqual([]);
+    expect(await prisma.shipment.count()).toBe(1);
   });
 });

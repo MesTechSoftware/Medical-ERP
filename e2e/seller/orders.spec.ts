@@ -26,3 +26,21 @@ test("satıcı admin sayfasına erişince /my-orders'a yönlenir", async ({ page
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/\/my-orders/);
 });
+
+test("promosyon bedelsiz satır gerekçe ister; sipariş kaydolur ve onay bekler (A-2-2)", async ({ page }) => {
+  await page.goto("/my-orders/new");
+  await page.getByLabel("Doktor").selectOption({ index: 1 });
+  await page.getByLabel("Ürün").selectOption({ index: 1 });
+  await page.getByLabel("Bedelsiz", { exact: true }).check();
+  await page.getByLabel("Bedelsiz sebebi").selectOption("PROMOSYON");
+  await page.getByRole("button", { name: "Siparişi Oluştur" }).click();
+
+  const diyalog = page.getByRole("dialog");
+  await expect(diyalog).toContainText("Bedelsiz satır");
+  await expect(diyalog).toContainText("Promosyon");
+  await diyalog.getByLabel("Gerekçe").fill("Kongre standı için");
+  await diyalog.getByRole("button", { name: "Gerekçeyle devam et" }).click();
+
+  await expect(page).toHaveURL(/\/my-orders$/);
+  await expect(page.getByText("Onay bekliyor").first()).toBeVisible();
+});

@@ -34,7 +34,7 @@ async function siparis(
       items: {
         create: [
           { productId: h.urun.id, quantity: 5, listPrice: "100", unitPrice: "100", vatRate: "20" },
-          { productId: h.urun.id, quantity: 1, listPrice: "100", unitPrice: "100", vatRate: "20", isFree: true, freeReason: "Numune" },
+          { productId: h.urun.id, quantity: 1, listPrice: "100", unitPrice: "100", vatRate: "20", isFree: true, freeReason: "NUMUNE" },
         ],
       },
     },

@@ -111,6 +111,15 @@ enum ImportDataType {
   ACILIS_STOGU
 }
 
+// A-2 eki (20.10.2026): bedelsiz satır sebebi — kodda kapalı katalog. NUMUNE onaysızdır;
+// diğerleri yönetici onayı ister (A-8 `BEDELSIZ_ONAYI`). DIGER'de açıklama zorunlu.
+enum FreeReason {
+  NUMUNE
+  PROMOSYON
+  MAL_FAZLASI
+  DIGER
+}
+
 // A-8 🟦 — blok kararı (kilitlenme anı: CM).
 enum ApprovalDecision {
   ONAY
@@ -507,8 +516,9 @@ model OrderItem {
   vatRate   Decimal @db.Decimal(5, 2) // C-6 §(2-a): değer olarak donar
 
   // A-2: bedelsiz satır — stoktan düşer, cariye borç yazmaz, prim üretmez.
-  isFree     Boolean @default(false)
-  freeReason String?
+  isFree     Boolean     @default(false)
+  freeReason FreeReason? // isFree ise zorunlu (CHECK)
+  freeNote   String?     @db.VarChar(200) // DIGER'de zorunlu (CHECK)
 
   shipmentItems ShipmentItem[]
   returnItems   ReturnNoteItem[]

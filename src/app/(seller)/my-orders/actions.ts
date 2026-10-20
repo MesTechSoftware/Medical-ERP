@@ -13,7 +13,8 @@ import { canSellerOrderForDoctor, kapsamliDoktorlariGetir } from "@/lib/doctor";
 import { policy } from "@/lib/policy";
 import { siparisSahibiniKilitle } from "@/lib/sahiplik";
 import { IsHatasi } from "@/lib/hata";
-import { engel, sert, type Bildirim, type IslemSonucu } from "@/lib/sonuc";
+import { BEDELSIZ_ONAY_GEREKIR, blokKontrolleriniCalistir, type BlokIhlali } from "@/lib/onay-blogu";
+import { engel, sert, yumusak, type Bildirim, type IslemSonucu } from "@/lib/sonuc";
 import { bugun } from "@/lib/zaman";
 
 const orderLinesSchema = z
@@ -25,6 +26,13 @@ const orderLinesSchema = z
       // Daima NET (KDV hariç), ham ondalık metin olarak gelir (X-5 §(6)).
       // Girilmezse liste fiyatı kullanılır (X-5 §(9)).
       birimFiyat: priceSchema.optional(),
+      // A-2: bedelsiz satır — sebep kapalı katalogdan; DIGER'de açıklama zorunlu (A-2 eki 20.10.2026).
+      bedelsiz: z
+        .object({
+          sebep: z.enum(["NUMUNE", "PROMOSYON", "MAL_FAZLASI", "DIGER"]),
+          aciklama: z.string().trim().max(200).optional(),
+        })
+        .optional(),
     })
   )
   .min(1);
@@ -63,7 +71,12 @@ export async function createOrder(
   const parsedLines = orderLinesSchema.safeParse(raw);
   if (!parsedLines.success) return engel("SIPARIS_KALEMI_GECERSIZ");
   const lines = parsedLines.data;
+  if (lines.some((l) => l.bedelsiz?.sebep === "DIGER" && !l.bedelsiz.aciklama)) {
+    return engel("BEDELSIZ_ACIKLAMA_ZORUNLU");
+  }
+  const gerekce = ((formData.get("gerekce") as string) || "").trim() || null;
   const gun = bugun();
+  let onayaGonderildi = false;
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -73,6 +86,7 @@ export async function createOrder(
       const sahip = await siparisSahibiniKilitle(tx, doctorId, sellerId);
       if (sahip.durum === "HATA") throw new IsHatasi([sert(sahip.kuralKodu)]);
       const items = [];
+      const ihlaller: BlokIhlali[] = [];
       // Kalem hataları toplanır, hepsi birlikte döner (X-4 §(7)).
       const hatalar: Bildirim[] = [];
       for (const line of lines) {
@@ -102,14 +116,21 @@ export async function createOrder(
         // RULE-03 taban fiyat reddi C6'da söküldü: iskonto tavanı yok, liste üstü
         // satış serbest (GÇ-8, A-10 · Ü-3 §(10)). Taban etiketi 1B'de gelir.
 
-        // Fiyat ve oran sipariş anında DONDURULUR (RULE-04, C-6 §(2-a)).
+        // Fiyat ve oran sipariş anında DONDURULUR (RULE-04, C-6 §(2-a)). Bedelsiz satırın
+        // liste fiyatı görünür kalır, tutarı 0'dır (A-2, C-6 §(8)).
         items.push({
           productId: product.id,
           quantity: line.quantity,
           listPrice: fiyat.listeFiyat,
-          unitPrice: line.birimFiyat ?? fiyat.listeFiyat,
+          unitPrice: line.bedelsiz ? "0" : (line.birimFiyat ?? fiyat.listeFiyat),
           vatRate: product.taxRate.rate,
+          isFree: !!line.bedelsiz,
+          freeReason: line.bedelsiz?.sebep ?? null,
+          freeNote: line.bedelsiz?.aciklama || null,
         });
+        if (line.bedelsiz && BEDELSIZ_ONAY_GEREKIR[line.bedelsiz.sebep]) {
+          ihlaller.push({ kuralKodu: "BEDELSIZ_ONAYI", parametreler: { urun: product.name, sebep: line.bedelsiz.sebep } });
+        }
       }
       if (hatalar.length > 0) throw new IsHatasi(hatalar);
 
@@ -128,6 +149,20 @@ export async function createOrder(
         },
       });
 
+      // A-8 · A-2 eki: onay isteyen bedelsiz satır siparişe blok açar; sipariş kaydolur, onaylanmadan
+      // sevk edilemez. Gerekçesiz gönderimde hiçbir şey yazılmaz (diyalog).
+      const blok = await blokKontrolleriniCalistir(tx, {
+        belgeTipi: "SIP",
+        belgeId: order.id,
+        ihlaller,
+        yapan: { id: sellerId, rol: session.user.role },
+        gerekce,
+      });
+      if (blok.durum === "ONAY_GEREKLI") {
+        throw new IsHatasi(blok.ihlaller.map((i) => yumusak(i.kuralKodu, i.parametreler)));
+      }
+      onayaGonderildi = blok.durum === "BASARILI_UYARILI" && blok.onayaGonderildi;
+
       // Stok sipariş anında düşmez; çıkış sevkiyatta doğar (A-3, `sevkiyatYaz()`).
 
       await createAuditLog(
@@ -136,7 +171,7 @@ export async function createOrder(
           action: AUDIT_ACTIONS.ORDER_CREATE,
           entityType: "Order",
           entityId: order.id,
-          after: { documentNo, doctorId, doctorName: doctor.fullName, itemCount: lines.length },
+          after: { documentNo, doctorId, doctorName: doctor.fullName, itemCount: lines.length, onayaGonderildi },
         },
         tx
       );
