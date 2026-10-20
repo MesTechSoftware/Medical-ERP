@@ -198,7 +198,8 @@ async function main() {
           carrierId: kargolar[0].id,
           trackingNumber: "TR" + Math.floor(Math.random() * 1_000_000_000),
           externalDispatchNo: null,
-          yapanId: admin.id,
+          yapan: { id: admin.id, rol: "YONETICI" },
+          gerekce: null,
         });
         if (opts.status === "TESLIM_EDILDI") {
           await tx.order.update({ where: { id: order.id }, data: { status: "TESLIM_EDILDI" } });

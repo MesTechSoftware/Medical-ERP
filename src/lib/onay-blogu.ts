@@ -46,6 +46,25 @@ export async function acikBlokVarMi(belgeTipi: BelgeOneki, belgeId: string, db: 
 }
 
 /**
+ * Bir kuralın belgedeki son bloğu (A-8 ek, 16.10.2026 — her kural için son blok geçerli):
+ * `YOK` · `BEKLIYOR` (karar verilmemiş) · `ONAY` · `RED`. `acikBlokVarMi()` bütün kurallara
+ * bakar; bunu, ihlalin şu an sürüp sürmediğine göre davranan akış (sevkiyat — A-8 eki 20.10) kullanır.
+ */
+export async function sonBlokDurumu(
+  belgeTipi: BelgeOneki,
+  belgeId: string,
+  kuralKodu: BlokKuralKodu,
+  db: Db = prisma
+): Promise<"YOK" | "BEKLIYOR" | "ONAY" | "RED"> {
+  const b = await db.approvalBlock.findFirst({
+    where: { documentType: belgeTipi, documentId: belgeId, ruleCode: kuralKodu },
+    orderBy: [{ openedAt: "desc" }, { id: "desc" }],
+    select: { decision: true },
+  });
+  return b ? (b.decision ?? "BEKLIYOR") : "YOK";
+}
+
+/**
  * Blok kontrollerinin tek giriş noktası. Çağıran ihlalleri (ör. `stokHareketiYaz()`'ın
  * `NEGATIF_STOK` kalemleri) verir; fonksiyon X-4 sonucunu döner.
  *
@@ -100,4 +119,20 @@ export async function blokKontrolleriniCalistir(
     acikKaldi ||= !yetkili;
   }
   return { durum: "BASARILI_UYARILI", kademe: "YUMUSAK", ihlaller, onayaGonderildi: acikKaldi };
+}
+
+/**
+ * Açık bloğa karar — onay bekleyenler ekranı (A-8). Karar `YONETICI`'nindir (çağıran denetler);
+ * not zorunludur (gerekçe her durumda). Koşullu yazılır: karar verilmiş bloğa ikinci karar
+ * yazılmaz, eşzamanlı iki karardan yalnız biri geçer. `false` → blok zaten kararlı.
+ */
+export async function blokKarariVer(
+  tx: Prisma.TransactionClient,
+  girdi: { blokId: string; karar: "ONAY" | "RED"; not: string; yapanId: string }
+): Promise<boolean> {
+  const r = await tx.approvalBlock.updateMany({
+    where: { id: girdi.blokId, decision: null },
+    data: { decision: girdi.karar, decidedById: girdi.yapanId, decidedAt: simdi(), decisionNote: girdi.not },
+  });
+  return r.count === 1;
 }

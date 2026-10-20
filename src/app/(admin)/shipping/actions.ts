@@ -7,7 +7,7 @@ import { requireStaff } from "@/lib/session";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { IsHatasi } from "@/lib/hata";
 import { sevkiyatYaz } from "@/lib/sevkiyat";
-import type { IslemSonucu } from "@/lib/sonuc";
+import { onayaGonderildi, yumusak, type IslemSonucu } from "@/lib/sonuc";
 
 const KALEM = "miktar_";
 
@@ -15,6 +15,7 @@ const KALEM = "miktar_";
  * HAZIRLANIYOR siparişin sevkiyatı (A-3): kalem başına sevk miktarı, kargo bilgisi ve
  * isteğe bağlı müşteri irsaliye numarası (C-1 §(2), salt kayıt). Borç, prim ve stok çıkışı
  * `sevkiyatYaz()`'da aynı transaction'da doğar. Bütün kalemler sevk edilince sipariş KARGOLANDI olur.
+ * Negatif stokta gerekçe diyaloğu döner; yönetici dışındaki rolün gerekçesi siparişi onaya gönderir (A-8).
  */
 export async function shipOrder(orderId: string, _prev: unknown, formData: FormData): Promise<IslemSonucu> {
   const session = await requireStaff();
@@ -28,16 +29,19 @@ export async function shipOrder(orderId: string, _prev: unknown, formData: FormD
       return { siparisKalemiId: k.slice(KALEM.length), miktar: /^\d+$/.test(v) ? parseInt(v, 10) : NaN };
     });
 
+  let sonuc: Awaited<ReturnType<typeof sevkiyatYaz>>;
   try {
-    await prisma.$transaction(async (tx) => {
+    sonuc = await prisma.$transaction(async (tx) => {
       const sevk = await sevkiyatYaz(tx, {
         siparisId: orderId,
         kalemler,
         carrierId: metin("carrierId"),
         trackingNumber: metin("trackingNumber"),
         externalDispatchNo: metin("externalDispatchNo"),
-        yapanId: session.user.id,
+        yapan: { id: session.user.id, rol: session.user.role },
+        gerekce: metin("gerekce"),
       });
+      if (sevk.durum === "ONAYA_GONDERILDI") return sevk;
       await createAuditLog(
         {
           actorId: session.user.id,
@@ -48,10 +52,17 @@ export async function shipOrder(orderId: string, _prev: unknown, formData: FormD
         },
         tx
       );
+      return sevk;
     });
   } catch (e) {
     if (e instanceof IsHatasi) return e.sonuc;
     throw e;
+  }
+
+  if (sonuc.durum === "ONAYA_GONDERILDI") {
+    revalidatePath("/shipping");
+    revalidatePath("/approvals");
+    return onayaGonderildi(sonuc.ihlaller.map((i) => yumusak(i.kuralKodu, i.parametreler)));
   }
 
   revalidatePath("/shipping");

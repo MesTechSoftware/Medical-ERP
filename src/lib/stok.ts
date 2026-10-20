@@ -56,13 +56,12 @@ export type NegatifStok = {
 };
 
 /**
- * Stok hareketinin TEK yazım yolu (B-4, ADR-005 §3): kilitle → `hesaplaStok()` oku → yaz.
- *
- * Negatife düşüş engellenmez (B-4 yumuşak kısıt). Yazımdan sonra sıfırın altında kalan ve
- * bu yazımda çıkış alan her ürün × konum `NEGATIF_STOK` kalemi olarak döner; kalemin
- * `OnayBlogu`'na dönüşmesi `blokKontrolleriniCalistir()`'ın işidir (A-8).
+ * Yazımdan önce: bu hareketler yazılırsa sıfırın altında kalacak ve çıkış alan her ürün × konum
+ * (B-4). Ürünleri kilitler; kilit transaction sonuna kadar tutulduğu için sonuç yazıma kadar
+ * geçerlidir. Sonuç doğuran adımı yazmadan önce durdurması gereken akış (A-8 — sevkiyat) bunu
+ * çağırır; `stokHareketiYaz()` aynı hesabı kendisi yapar.
  */
-export async function stokHareketiYaz(
+export async function negatifStokOnizle(
   tx: Prisma.TransactionClient,
   hareketler: readonly StokHareketi[]
 ): Promise<NegatifStok[]> {
@@ -84,7 +83,21 @@ export async function stokHareketiYaz(
     const sonra = once + k.fark;
     if (sonra < 0) negatif.push({ kuralKodu: "NEGATIF_STOK", urunId: k.urunId, konumId: k.konumId, once, sonra });
   }
+  return negatif;
+}
 
+/**
+ * Stok hareketinin TEK yazım yolu (B-4, ADR-005 §3): kilitle → `hesaplaStok()` oku → yaz.
+ *
+ * Negatife düşüş engellenmez (B-4 yumuşak kısıt). Yazımdan sonra sıfırın altında kalan ve
+ * bu yazımda çıkış alan her ürün × konum `NEGATIF_STOK` kalemi olarak döner; kalemin
+ * `OnayBlogu`'na dönüşmesi `blokKontrolleriniCalistir()`'ın işidir (A-8).
+ */
+export async function stokHareketiYaz(
+  tx: Prisma.TransactionClient,
+  hareketler: readonly StokHareketi[]
+): Promise<NegatifStok[]> {
+  const negatif = await negatifStokOnizle(tx, hareketler);
   await tx.stockMovement.createMany({ data: [...hareketler] });
   return negatif;
 }

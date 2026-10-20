@@ -1,4 +1,5 @@
 import { formatla } from "@/lib/money";
+import type { BlokKuralKodu } from "@/lib/onay-blogu";
 import type { Bildirim, KuralKodu, Parametreler } from "@/lib/sonuc";
 import { BRUT, TABAN_ETIKETI } from "@/lib/taban";
 
@@ -78,7 +79,14 @@ export const KURAL_METNI: Record<KuralKodu, (p: Parametreler) => string> = {
     "Bu uyarı yalnız aynı gün ve aynı cari için yapılan nakit tahsilatları toplar; bir faturanın parça parça " +
     "tahsil edilmesi hâlindeki yükümlülüğü değerlendirmez.",
 
-  NEGATIF_STOK: (p) => `Stok yetersiz: işlem sonrası stok ${p.sonra} adet olur.`,
+  NEGATIF_STOK: (p) => `Stok yetersiz${p.urun ? ` (${p.urun})` : ""}: işlem sonrası stok ${p.sonra} adet olur.`,
+  ONAY_BEKLIYOR: () => "Bu sipariş yönetici onayı bekliyor; karar verilmeden sevk edilemez.",
+  ONAY_KARARI_VERILMIS: () => "Bu onay talebine zaten karar verilmiş.",
+};
+
+/** Onay bekleyenler ekranında bloğun kural adı (A-8); blok parametre saklamaz. */
+export const BLOK_KURAL_ADI: Record<BlokKuralKodu, string> = {
+  NEGATIF_STOK: "Negatif stok",
 };
 
 export function bildirimMetni(b: Pick<Bildirim, "kural_kodu" | "parametreler">): string {

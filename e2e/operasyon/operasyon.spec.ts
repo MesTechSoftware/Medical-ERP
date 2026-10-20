@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { Client } from "pg";
+import { sorgu, stoksuzSiparis } from "../helpers";
 
 /**
  * D-2-1 — OPERASYON ekran matrisi (D-2 §(1) ve 17.10 eki). Oturum `auth.setup.ts`'te
@@ -32,7 +33,7 @@ test("menü raporları ve denetim kaydını göstermez; rol etiketi Operasyon", 
   await expect(page.locator("header").getByText("Operasyon", { exact: true })).toBeVisible();
 });
 
-for (const yol of ["/reports", "/audit-logs", "/exports", "/products/new", "/users/new"]) {
+for (const yol of ["/reports", "/audit-logs", "/exports", "/approvals", "/products/new", "/users/new"]) {
   test(`${yol} OPERASYON'u Dashboard'a yönlendirir`, async ({ page }) => {
     await page.goto(yol);
     await expect(page).toHaveURL(/\/dashboard$/);
@@ -80,4 +81,25 @@ test("stok girişi yapar (stok hareketi — D-2 §(1))", async ({ page }) => {
   await expect(page.getByText("Stok girişi kaydedildi.")).toBeVisible();
   const hareket = await query(`SELECT id FROM "StockMovement" WHERE note = $1 AND type = 'GIRIS' AND quantity = 3`, [not]);
   expect(hareket).toHaveLength(1);
+});
+
+test("stoksuz sevkiyatta gerekçe siparişi onaya gönderir; sevkiyat yazılmaz (A-8-9)", async ({ page }) => {
+  const s = await stoksuzSiparis();
+  await page.goto("/shipping");
+  const kart = page.locator("div.rounded-lg.border").filter({ hasText: s.doktorAdi });
+  await kart.getByRole("button", { name: "Kargola" }).click();
+  const diyalog = kart.getByRole("dialog");
+  await expect(diyalog).toContainText("işlem sonrası stok -2 adet olur.");
+  await diyalog.getByLabel("Gerekçe").fill("Acil vaka");
+  await diyalog.getByRole("button", { name: "Gerekçeyle devam et" }).click();
+
+  await expect(kart.getByRole("status")).toContainText("Onaya gönderildi");
+  expect(await sorgu(`SELECT 1 FROM "Shipment" WHERE "orderId" = $1`, [s.siparisId])).toHaveLength(0);
+  const [blok] = await sorgu<{ decision: string | null }>(`SELECT decision FROM "ApprovalBlock" WHERE "documentId" = $1`, [
+    s.siparisId,
+  ]);
+  expect(blok.decision).toBeNull();
+
+  await page.reload();
+  await expect(page.locator("div.rounded-lg.border").filter({ hasText: s.doktorAdi }).getByText("Onay bekliyor")).toBeVisible();
 });

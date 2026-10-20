@@ -70,6 +70,8 @@ export const KURAL_KODLARI = [
   "FATURA_GERIYE_DONUK",
   // OnayBlogu (A-8)
   "NEGATIF_STOK",
+  "ONAY_BEKLIYOR",
+  "ONAY_KARARI_VERILMIS",
 ] as const;
 
 export type KuralKodu = (typeof KURAL_KODLARI)[number];
@@ -134,4 +136,12 @@ export function basarili(parametreler?: Parametreler): IslemSonucu {
 /** Tek `SERT` bildirimle engel — action'ların en sık dönüşü. */
 export function engel(kural_kodu: KuralKodu, parametreler: Parametreler = {}, alan?: string): IslemSonucu {
   return sonucOlustur([sert(kural_kodu, parametreler, alan)]);
+}
+
+/**
+ * Yetkisiz kullanıcı gerekçe yazdı, belge onaya gitti (A-8, X-4 §(4) `YUMUSAK` — "onaya gönderildi").
+ * İşlem engellenmedi ama sonuç doğuran adım yapılmadı; bildirimler gösterilir, hiçbiri atılmaz.
+ */
+export function onayaGonderildi(bildirimler: readonly Bildirim[]): IslemSonucu {
+  return { durum: "BASARILI_UYARILI", kademe: "YUMUSAK", bildirimler: [...bildirimler], parametreler: { onayaGonderildi: 1 } };
 }

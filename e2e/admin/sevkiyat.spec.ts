@@ -27,7 +27,11 @@ test("kısmi sevkiyat: 3'ün 1'i sevk edilir, borç yazılır, sipariş beklemed
      VALUES ($1, 'DOKTOR', $2, 'Klinik', 'Bölge', $3, 'TUZEL_KISI', 'AKTIF') RETURNING id`,
     [`e2e-dr-${ek}`, doktorAdi, `+90539${ek}`]
   );
-  const [urun] = await sorgu<{ id: string }>(`SELECT id FROM "Product" ORDER BY code LIMIT 1`);
+  // Stoğu yeten ürün: stoksuz ürünün sevkiyatı onaya düşer (A-8, `onay.spec.ts`).
+  const [urun] = await sorgu<{ id: string }>(
+    `SELECT "productId" AS id FROM "StockMovement" GROUP BY "productId"
+     HAVING SUM(CASE WHEN type = 'GIRIS' THEN quantity ELSE -quantity END) >= 3 ORDER BY "productId" LIMIT 1`
+  );
   const [satici] = await sorgu<{ id: string }>(`SELECT id FROM "User" WHERE role = 'SATICI' ORDER BY email LIMIT 1`);
   const siparisId = `e2e-sip-${ek}`;
   const kalemId = `e2e-kal-${ek}`;
