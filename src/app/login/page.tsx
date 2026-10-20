@@ -3,12 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useActionState } from "react";
-import { loginAction, type LoginState } from "@/lib/auth-actions";
-
-const initialState: LoginState = {};
+import { SonucGosterimi, type SonucDurumu } from "@/components/Sonuc";
+import { loginAction } from "@/lib/auth-actions";
 
 export default function LoginPage() {
-  const [state, formAction, pending] = useActionState(loginAction, initialState);
+  const [state, formAction, pending] = useActionState<SonucDurumu, FormData>(loginAction, null);
 
   return (
     <main className="flex min-h-screen items-center justify-center p-4">
@@ -64,11 +63,7 @@ export default function LoginPage() {
             />
           </div>
 
-          {state.error && (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-              {state.error}
-            </p>
-          )}
+          <SonucGosterimi sonuc={state} />
 
           <button
             type="submit"

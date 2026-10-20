@@ -6,25 +6,23 @@ import { requireStaff } from "@/lib/session";
 import { quantitySchema } from "@/lib/validation";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { hesaplaStok, stokHareketiYaz, varsayilanDepoId } from "@/lib/stok";
-
-export type StockFormState = { error?: string; ok?: boolean };
+import { basarili, engel, type IslemSonucu } from "@/lib/sonuc";
 
 export async function addStockEntry(
-  _prev: StockFormState,
+  _prev: unknown,
   formData: FormData
-): Promise<StockFormState> {
+): Promise<IslemSonucu> {
   const session = await requireStaff();
 
   const productId = formData.get("productId") as string;
   const quantity = parseInt(String(formData.get("quantity") ?? ""), 10);
   const note = ((formData.get("note") as string) || "").trim() || null;
 
-  if (!productId) return { error: "Ürün seçiniz." };
-  if (!quantitySchema.safeParse(quantity).success)
-    return { error: "Geçerli bir miktar giriniz." };
+  if (!productId) return engel("ALAN_ZORUNLU", {}, "productId");
+  if (!quantitySchema.safeParse(quantity).success) return engel("GECERSIZ_MIKTAR", {}, "quantity");
 
   const product = await prisma.product.findUnique({ where: { id: productId } });
-  if (!product) return { error: "Ürün bulunamadı." };
+  if (!product) return engel("URUN_BULUNAMADI", {}, "productId");
 
   // Stok miktarı saklanmaz; giriş yalnız hareket yazar (ADR-005).
   await prisma.$transaction(async (tx) => {
@@ -45,5 +43,5 @@ export async function addStockEntry(
 
   revalidatePath("/stock");
   revalidatePath("/products");
-  return { ok: true };
+  return basarili();
 }

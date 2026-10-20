@@ -52,12 +52,9 @@ describe("sessiz hata yasağı (X-3-3)", () => {
   const actionlar = dosyalar(SRC, /^(actions|auth-actions)\.ts$/);
 
   it("server action'lar yakaladığı hatanın mesajını kullanıcıya döndürmez", () => {
-    // Tek istisna `IsHatasi`'dir: mesajı sabit iş metnidir ve yalnız `instanceof` kontrolünden sonra döner.
+    // İş hatası mesaj değil bildirim taşır (`IsHatasi.sonuc`, X-4 §(3)); hiçbir hatanın mesajı okunmaz.
     for (const yol of actionlar) {
-      const k = readFileSync(yol, "utf8");
-      const tumu = [...k.matchAll(/\b(e|err|error)\.message\b/g)].length;
-      const izinli = [...k.matchAll(/instanceof IsHatasi\) return \{ error: e\.message/g)].length;
-      expect(tumu, relative(SRC, yol)).toBe(izinli);
+      expect(readFileSync(yol, "utf8"), relative(SRC, yol)).not.toMatch(/\.message\b/);
     }
   });
 

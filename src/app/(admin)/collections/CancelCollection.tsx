@@ -1,13 +1,11 @@
 "use client";
 
 import { useActionState } from "react";
-import { cancelCollection, type CollectionState } from "./actions";
+import { SonucGosterimi, type SonucDurumu } from "@/components/Sonuc";
+import { cancelCollection } from "./actions";
 
 export default function CancelCollection({ paymentId }: { paymentId: string }) {
-  const [state, formAction] = useActionState<CollectionState, FormData>(
-    cancelCollection,
-    {}
-  );
+  const [state, formAction] = useActionState<SonucDurumu, FormData>(cancelCollection, null);
 
   return (
     <form
@@ -31,9 +29,7 @@ export default function CancelCollection({ paymentId }: { paymentId: string }) {
       >
         İptal Et
       </button>
-      {state.error && (
-        <p className="mt-1 text-xs text-red-600">{state.error}</p>
-      )}
+      <SonucGosterimi sonuc={state} />
     </form>
   );
 }

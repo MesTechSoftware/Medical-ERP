@@ -13,7 +13,7 @@ import type { Role } from "@/generated/prisma/enums";
 /** Sipariş girilebilirlik sonucu; engelliyse kullanıcıya gösterilecek sebep. */
 export type OwnershipCheck =
   | { allowed: true }
-  | { allowed: false; reason: string };
+  | { allowed: false; kuralKodu: "DOKTOR_PASIF" | "DOKTOR_SAHIPSIZ" | "DOKTOR_KAPSAM_DISI" };
 
 /**
  * Bir satıcının, verilen doktora sipariş açıp açamayacağını belirler.
@@ -24,19 +24,15 @@ export function canSellerOrderForDoctor(
   doctor: { ownerSellerId: string | null; status: "AKTIF" | "PASIF" }
 ): OwnershipCheck {
   if (doctor.status !== "AKTIF") {
-    return { allowed: false, reason: "Doktor kaydı pasif durumda." };
+    return { allowed: false, kuralKodu: "DOKTOR_PASIF" };
   }
   if (doctor.ownerSellerId === null) {
     // FR-08: sahipsiz havuz.
-    return {
-      allowed: false,
-      reason:
-        "Bu doktorun sorumlu satıcısı yok. Yönetici bir satıcıya atayana kadar sipariş girilemez.",
-    };
+    return { allowed: false, kuralKodu: "DOKTOR_SAHIPSIZ" };
   }
   if (doctor.ownerSellerId !== sellerId) {
-    // RULE-02 / FR-04 — mesaj bilerek yalın: başka satıcının portföyü sızdırılmaz.
-    return { allowed: false, reason: "Bu doktor sizin portföyünüzde değil." };
+    // RULE-02 / FR-04 — bildirim bilerek yalın: başka satıcının portföyü sızdırılmaz.
+    return { allowed: false, kuralKodu: "DOKTOR_KAPSAM_DISI" };
   }
   return { allowed: true };
 }

@@ -10,6 +10,7 @@ import {
   stackCerceveleri,
   teknikHataLogSatiri,
 } from "@/lib/hata";
+import { sert } from "@/lib/sonuc";
 
 // X-3-2 — teknik hata logu kişisel veri ve değer taşımaz (X-3 §(6)).
 const prismaHatasi = (code: string) =>
@@ -86,8 +87,10 @@ describe("yardımcılar", () => {
     expect(benzersizIhlali(prismaHatasi("P2002"))).toBe(true);
     expect(benzersizIhlali(prismaHatasi("P2003"))).toBe(false);
     expect(benzersizIhlali(new Error("x"))).toBe(false);
-    expect(new IsHatasi("m")).toBeInstanceOf(Error);
-    expect(new IsHatasi("m").name).toBe("IsHatasi");
+    const h = new IsHatasi([sert("URUN_BULUNAMADI")]);
+    expect(h).toBeInstanceOf(Error);
+    expect(h.name).toBe("IsHatasi");
+    expect(h.sonuc).toMatchObject({ durum: "ENGELLENDI", kademe: "SERT" });
   });
 });
 

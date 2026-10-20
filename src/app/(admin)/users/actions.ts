@@ -9,14 +9,9 @@ import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { portfoyuDevret } from "@/lib/sahiplik";
 import { kullaniciOturumlariniSonlandir } from "@/lib/oturum";
 import { parolaHashle, parolaHatasi } from "@/lib/parola";
-import { benzersizIhlali } from "@/lib/hata";
-import {
-  HESAP_KURALI_MESAJI,
-  eszamanlilikHatasi,
-  pasiflestirmeEngeli,
-  pasiflestirmeTxSecenekleri,
-  type HesapKurali,
-} from "@/lib/kullanici";
+import { IsHatasi, benzersizIhlali } from "@/lib/hata";
+import { eszamanlilikHatasi, pasiflestirmeEngeli, pasiflestirmeTxSecenekleri } from "@/lib/kullanici";
+import { engel, sert, sonucOlustur, type IslemSonucu } from "@/lib/sonuc";
 
 /**
  * Kullanıcı yönetimi — E-2 §(1)/(3)/(6)/(7), 20.10.2026 eki. Yalnız `YONETICI`.
@@ -26,21 +21,13 @@ import {
  * `degerler`: hata dönüşünde kullanıcının seçimleri. React form action'dan sonra formu
  * sıfırlar; durum alanı `AKTIF`'e dönerse ikinci gönderim kullanıcıyı sessizce aktif bırakır.
  */
-export type UserFormState = {
-  error?: string;
+export type UserFormState = IslemSonucu & {
   degerler?: { status: string; portfoy: string; portfoyGerekce: string; gerekce: string; role?: string };
 };
 
-class PortfoyHatasi extends Error {}
-class HesapHatasi extends Error {
-  constructor(readonly kural: HesapKurali) {
-    super(kural);
-  }
-}
-
 const ROLLER: readonly Role[] = ["SATICI", "OPERASYON", "YONETICI"];
 
-export async function createUser(_prev: UserFormState, formData: FormData): Promise<UserFormState> {
+export async function createUser(_prev: unknown, formData: FormData): Promise<UserFormState> {
   const session = await requireAdmin();
 
   const name = (formData.get("name") as string)?.trim();
@@ -51,11 +38,12 @@ export async function createUser(_prev: UserFormState, formData: FormData): Prom
   const gerekce = ((formData.get("gerekce") as string) || "").trim();
   const degerler = { status: "AKTIF", portfoy: "", portfoyGerekce: "", gerekce, role };
 
-  if (!name || !email) return { error: "Ad ve e-posta zorunludur.", degerler };
-  if (!ROLLER.includes(role)) return { error: "Rol seçin.", degerler };
-  const parolaHata = parolaHatasi(password);
-  if (parolaHata) return { error: parolaHata, degerler };
-  if (!gerekce) return { error: "Gerekçe zorunludur.", degerler };
+  if (!name) return { ...engel("ALAN_ZORUNLU", {}, "name"), degerler };
+  if (!email) return { ...engel("ALAN_ZORUNLU", {}, "email"), degerler };
+  if (!ROLLER.includes(role)) return { ...engel("ALAN_ZORUNLU", {}, "role"), degerler };
+  const parolaHata = parolaHatasi(password, "password");
+  if (parolaHata) return { ...sonucOlustur([parolaHata]), degerler };
+  if (!gerekce) return { ...engel("GEREKCE_ZORUNLU", {}, "gerekce"), degerler };
 
   const passwordHash = await parolaHashle(password);
   try {
@@ -83,7 +71,7 @@ export async function createUser(_prev: UserFormState, formData: FormData): Prom
       );
     });
   } catch (e) {
-    if (benzersizIhlali(e)) return { error: "Bu e-posta zaten kayıtlı.", degerler };
+    if (benzersizIhlali(e)) return { ...engel("EPOSTA_KAYITLI", {}, "email"), degerler };
     throw e;
   }
 
@@ -93,7 +81,7 @@ export async function createUser(_prev: UserFormState, formData: FormData): Prom
 
 export async function updateUser(
   id: string,
-  _prev: UserFormState,
+  _prev: unknown,
   formData: FormData
 ): Promise<UserFormState> {
   const session = await requireAdmin();
@@ -111,18 +99,18 @@ export async function updateUser(
     gerekce,
   };
 
-  if (!name || !email) return { error: "Ad ve e-posta zorunludur.", degerler };
+  if (!name) return { ...engel("ALAN_ZORUNLU", {}, "name"), degerler };
+  if (!email) return { ...engel("ALAN_ZORUNLU", {}, "email"), degerler };
 
   const before = await prisma.user.findUnique({ where: { id } });
-  if (!before) return { error: "Kullanıcı bulunamadı.", degerler };
+  if (!before) return { ...engel("KULLANICI_BULUNAMADI"), degerler };
 
   const pasiflestiriliyor = before.isActive && !isActive;
   if (password) {
-    const parolaHata = parolaHatasi(password);
-    if (parolaHata) return { error: parolaHata, degerler };
+    const parolaHata = parolaHatasi(password, "password");
+    if (parolaHata) return { ...sonucOlustur([parolaHata]), degerler };
   }
-  if ((pasiflestiriliyor || password) && !gerekce)
-    return { error: "Pasifleştirme ve parola sıfırlamada gerekçe zorunludur.", degerler };
+  if ((pasiflestiriliyor || password) && !gerekce) return { ...engel("GEREKCE_ZORUNLU", {}, "gerekce"), degerler };
 
   const data: {
     name: string;
@@ -143,12 +131,8 @@ export async function updateUser(
   if (pasiflestiriliyor && before.role === "SATICI") {
     const doktorSayisi = await prisma.doctor.count({ where: { ownerSellerId: id } });
     if (doktorSayisi > 0) {
-      if (!degerler.portfoy)
-        return {
-          error: `Satıcının ${doktorSayisi} doktoru var. Doktorların devredileceği satıcıyı ya da "sahipsiz bırak"ı seçin.`,
-          degerler,
-        };
-      if (!degerler.portfoyGerekce) return { error: "Portföy için gerekçe zorunludur.", degerler };
+      if (!degerler.portfoy) return { ...engel("PORTFOY_HEDEFI_SECILMEDI", { doktorSayisi }, "portfoy"), degerler };
+      if (!degerler.portfoyGerekce) return { ...engel("GEREKCE_ZORUNLU", {}, "portfoyGerekce"), degerler };
       portfoy = {
         hedef: degerler.portfoy === "SAHIPSIZ" ? null : degerler.portfoy,
         gerekce: degerler.portfoyGerekce,
@@ -159,8 +143,8 @@ export async function updateUser(
   try {
     await prisma.$transaction(async (tx) => {
       if (pasiflestiriliyor) {
-        const engel = await pasiflestirmeEngeli(tx, before, session.user.id);
-        if (engel) throw new HesapHatasi(engel);
+        const kural = await pasiflestirmeEngeli(tx, before, session.user.id);
+        if (kural) throw new IsHatasi([sert(kural, {}, "status")]);
       }
       // Önce pasifleştirilir: hedef olarak kendisi seçilemez (aktif SATICI kuralı).
       const u = await tx.user.update({ where: { id }, data });
@@ -171,7 +155,7 @@ export async function updateUser(
           metin: portfoy.gerekce,
           yapanId: session.user.id,
         });
-        if (sonuc.durum === "HATA") throw new PortfoyHatasi();
+        if (sonuc.durum === "HATA") throw new IsHatasi([sert(sonuc.kuralKodu, {}, "portfoy")]);
       }
       await createAuditLog(
         {
@@ -198,12 +182,9 @@ export async function updateUser(
       }
     }, pasiflestiriliyor ? pasiflestirmeTxSecenekleri(before.role) : {});
   } catch (e) {
-    if (e instanceof HesapHatasi) return { error: HESAP_KURALI_MESAJI[e.kural], degerler };
-    if (e instanceof PortfoyHatasi)
-      return { error: "Doktorlar yalnız aktif bir satıcıya devredilebilir.", degerler };
-    if (eszamanlilikHatasi(e))
-      return { error: "Aynı anda başka bir değişiklik yapıldı; tekrar deneyin.", degerler };
-    if (benzersizIhlali(e)) return { error: "Bu e-posta zaten kayıtlı.", degerler };
+    if (e instanceof IsHatasi) return { ...e.sonuc, degerler };
+    if (eszamanlilikHatasi(e)) return { ...engel("ESZAMANLI_DEGISIKLIK"), degerler };
+    if (benzersizIhlali(e)) return { ...engel("EPOSTA_KAYITLI", {}, "email"), degerler };
     throw e;
   }
 

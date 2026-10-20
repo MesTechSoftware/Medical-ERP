@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
-import { FormError, SubmitButton } from "@/components/form";
+import { SubmitButton } from "@/components/form";
+import { SonucGosterimi, type SonucDurumu } from "@/components/Sonuc";
 import { formatla, paraOku } from "@/lib/money";
 import { hesaplaSatirTutarlari } from "@/lib/satir-tutarlari";
-import { createOrder, type OrderFormState } from "./actions";
+import { createOrder } from "./actions";
 
 type Product = {
   id: string;
@@ -34,10 +35,7 @@ export default function OrderForm({
   products: Product[];
   doctors: DoctorOption[];
 }) {
-  const [state, formAction] = useActionState<OrderFormState, FormData>(
-    createOrder,
-    {}
-  );
+  const [state, formAction] = useActionState<SonucDurumu, FormData>(createOrder, null);
   const [rows, setRows] = useState<Row[]>([
     { key: 1, productId: "", quantity: 1, priceText: "" },
   ]);
@@ -279,7 +277,7 @@ export default function OrderForm({
         </dl>
       </div>
 
-      <FormError message={state.error} />
+      <SonucGosterimi sonuc={state} />
 
       <div className="flex items-center gap-3">
         <SubmitButton disabled={items.length === 0}>

@@ -725,6 +725,29 @@ Bunlar **karar değil**, Yol (b)'nin doğurduğu uygulama kalemleridir; 1B madde
   girdisi) mesaja döner; gerisi yeniden fırlar. Statik koruma: `hata-yuzeyi.test.ts`.
 - X-4 dönüş sözleşmesi (`{ durum, kademe, kural_kodu, parametreler }`) **madde 4d**'dedir.
 
+**Madde 4d — X-4 dönüş sözleşmesi (20.10.2026, kriterler §0.3-1, X-4-1…4).** Uygulama notları (karar değil):
+
+- **Biçim:** `IslemSonucu = { durum, kademe, bildirimler[], parametreler? }`; her bildirim `{ kademe, kural_kodu,
+  parametreler, alan? }`. X-4 §(1)'in dört alanı bildirimdedir; liste §(7)'nin (yutma yasağı) gereğidir, üst
+  düzey `kademe` bildirimlerin en yükseğidir. `parametreler?` yalnız başarı metninin sayısı içindir (devir adedi).
+- **Katalog ve sözlük:** `src/lib/sonuc.ts` `KURAL_KODLARI` (kodda kapalı) · `src/lib/sozluk.ts` `KURAL_METNI`
+  (`Record<KuralKodu, …>` — eksik metin typecheck'te düşer). KARARLAR'da adı geçen kodlar aynen kullanıldı
+  (`TELEFON_KAYITLI`, `URUN_KODU_KAYITLI`, `SAHIP_*`, `BAYI_SAHIP_ATANAMAZ`, `NEGATIF_STOK`); diğerleri bu
+  turda form/akış hatalarından türetildi. `BlokKuralKodu` ve `HesapKurali` katalogun alt kümesidir.
+- **Metin üreten yardımcılar koda döndü:** `parolaHatasi()` bildirim, `canSellerOrderForDoctor()` kural kodu
+  döner; `HESAP_KURALI_MESAJI`, doktor devrinin `KURAL_MESAJI` ve giriş kilidi metni sözlüğe taşındı.
+- **Gösterim tek bileşende** (`src/components/Sonuc.tsx`): `SonucGosterimi` + `IslemFormu` (alansız düğme
+  işlemleri: durum geçişi, sevk, ürün silme). `Field`/`SelectField`/`TextArea` `sonuc` alır ve kendi alanının
+  `SERT` bildirimini altında gösterir; form, altında gösterdiği alanları `alanlar` ile bildirir — listede
+  olmayan alanın bildirimi kutuya düşer, atılmaz. `FormError` ve `?error=` sorgu deseni kalktı.
+- **Davranış değişiklikleri:** sipariş kalem hataları birlikte döner (önce ilkinde duruyordu) · sipariş durum
+  geçişinde (hazırlık, teslim, sevk) durum arada değiştiyse işlem sessizce geçmez, `SIPARIS_DURUMU_UYGUN_DEGIL`
+  döner · ürün ve doktor formlarında bütün alan hataları birlikte döner.
+- **Bağlanmayanlar:** `YUMUSAK` diyaloğu ve `BILGI` şeridi bileşende hazırdır, üreticileri henüz yoktur — `BILGI`
+  ilk kez **A-15** (bu maddenin devamı) ile, `YUMUSAK` sipariş akışında `NEGATIF_STOK` gerekçe diyaloğu olarak
+  **1B madde 7**'de (sevkiyatta `acikBlokVarMi` ve onay bekleyenler ekranıyla birlikte) e2e'ye girer. Bugün
+  yönlendiren action'lar (`redirect`) `BILGI` taşıyamaz; `BILGI` üreten action sayfada kalmalıdır.
+
 ---
 
 ### §D.5 · 1A'nın **yapmadıkları** — sınırı yazılı tutmak için

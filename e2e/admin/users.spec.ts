@@ -98,7 +98,7 @@ test("parola sıfırlama açık oturumları kapatır ve değişimi yeniden zorun
   await page.goto(`/users/${id}/edit`);
   await page.getByLabel(/Geçici Parola Ata/).fill("baska-gecici-3");
   await page.getByRole("button", { name: "Kaydet" }).click();
-  await expect(page.getByText(/gerekçe zorunludur/)).toBeVisible();
+  await expect(page.getByText("Gerekçe zorunludur.")).toBeVisible();
 
   await page.getByLabel(/Geçici Parola Ata/).fill("baska-gecici-3");
   await page.locator("#gerekce").fill("Parolasını unuttu");

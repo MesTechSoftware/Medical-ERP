@@ -29,7 +29,7 @@
 | Kod | Kriter | Yazılacağı yer |
 |---|---|---|
 | §0.2-1 | | 1B-7 *(kayıt silinmez, düzeltme ters kayıttır)* |
-| §0.3-1 | | 1B-4 *(sert / yumuşak / bilgi kademesi — X-4 ile)* |
+| §0.3-1 | İş kuralı ihlali üç kademeden biriyle bildirilir ve akışı en yüksek kademe belirler: `SERT` → `ENGELLENDI` (kayıt oluşmaz) · `YUMUSAK` → `ONAY_GEREKLI` (yetki + zorunlu gerekçeyle devam; `OnayBlogu`, A-8) · `BILGI` → `BASARILI_UYARILI` (işlem tamamlanır) · ihlal yoksa `BASARILI`. Salt kayıt alanı bildirim üretmez. | 1B-4 · `sonuc.test.ts` · `onay-blogu.itest.ts` |
 | §1.3-1 | Modülün açık/kapalı durumu yalnız `modulAcikMi(kod)` ile okunur; kod kataloğu `policy.modules` anahtarlarıdır. `policy.modules`'u başka dosya okumaz, modül durumu `process.env`'den okunmaz (§1.3 §(4), K-9). | 1B-1 · `modul.test.ts` · `tek-cagri.test.ts` |
 
 ## K · Kurumsal ve ticari
@@ -150,7 +150,10 @@
 | X-3-1 | Beklenmeyen hatada kullanıcı üç şey görür: sabit açıklama, hata referansı, ana sayfaya dönüş bağlantısı. Hata mesajı, stack, SQL, Prisma mesajı ve alan adı ekrana yazılmaz; metin hangi kaydın söz konusu olduğunu ima etmez. Kök düzeyde `global-error.tsx` ve `error.tsx`, ayrıca sipariş/sevkiyat (`orders`, `shipping`, `my-orders`), tahsilat (`collections`) ve stok (`stock`) segmentlerinde `error.tsx` vardır; segment hatası menüyü kaybettirmez. | 1B-4 · `hata-yuzeyi.test.ts` |
 | X-3-2 | Teknik hata container log'una tek JSON satırı olarak yazılır: zaman, referans, rota (sorgu dizesi olmadan), kullanıcı kimliği (adı değil), hata sınıfı, stack çerçeveleri. Hata mesajı, Prisma `meta`, sorgu/form değerleri yazılmaz. Ekrandaki referans log satırındakiyle aynıdır; veritabanında saklanmaz, belge numarası harcamaz. | 1B-4 · `hata.test.ts` |
 | X-3-3 | Sessiz hata yoktur: server action'daki `catch` yalnız tanımlı iş hatalarını (iş kuralı hatası sınıfı, benzersizlik ihlali) kullanıcı mesajına çevirir, gerisini yeniden fırlatır — teknik hata iş mesajı kılığına girmez ve mesajı ekrana taşınmaz. Denetim kaydı işle **aynı transaction'da** yazılır; yazılamazsa iş geri alınır, hata yutulmaz. Hata sonrası telafi kodu yoktur. | 1B-4 · `hata-yuzeyi.test.ts` · `audit.itest.ts` · `collections.itest.ts` |
-| X-4-1 | | 1B-4 |
+| X-4-1 | Her server action `IslemSonucu` döner: `durum` · `kademe` (bildirimlerin en yükseği) · `bildirimler` (`kademe` + `kural_kodu` + `parametreler`, `SERT`'te isteğe bağlı `alan`). İş hatası `throw` edilmez; transaction'ı geri almak için içeride fırlatılan `IsHatasi` action sınırında sonuca döner. `?error=` yönlendirmesi ve metin taşıyan hata alanı yoktur; iş hatası loglanmaz. Tek istisna yalnız yönlendiren çıkış action'ıdır. | 1B-4 · `sonuc.test.ts` |
+| X-4-2 | Sunucu metin üretmez: kural kodu kodda kapalı bir katalogdur (`KURAL_KODLARI`) ve metni tek sözlüktendir (`sozluk.ts`); katalogdaki her kodun metni vardır, sözlükte katalog dışı kod yoktur. Action'lar sözlüğü okumaz; başka dosya kendi mesaj tablosunu tutmaz. | 1B-4 · `sonuc.test.ts` |
+| X-4-3 | Bildirim yutulmaz: bir işlemin bütün bildirimleri kademeye göre sıralı döner ve gösterilir. Sipariş girişinde kalem hataları (fiyat çözümlenemedi, pasif ürün) ilkinde durmadan birlikte döner; sipariş ve belge numarası yazılmaz. | 1B-4 · `sonuc.test.ts` · `orders.itest.ts` |
+| X-4-4 | Gösterim kademe başına tek desendir ve tek bileşendedir (`Sonuc.tsx`): `SERT` bildirim alanı olan formda alanın altında, alan işaretli (`aria-invalid`) ve form kutusunda tekrar edilmez; alanı olmayan ya da formda gösterilmeyen alanın bildirimi form kutusundadır. `YUMUSAK` onay diyaloğudur, gerekçe zorunludur. `BILGI` sonuç ekranında kapatılabilir şerittir. | 1B-4 · `is-sonucu.spec.ts` *(`BILGI` A-15 ile, `YUMUSAK` sipariş akışına bağlandığında 1B-7'de e2e'ye girer)* |
 | X-5-1 | | 1B-5 *(1A-CM: `Decimal`, `formatla`, lint kuralı)* |
 | X-6-1 | | 1B-1 · 1B-4 *(§(6) vade uyarısı)* |
 | X-7-1 | | 1B-10 *(matris yeniden kurulur)* |

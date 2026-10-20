@@ -12,19 +12,15 @@ import {
   EmptyRow,
 } from "@/components/ui";
 import ConfirmSubmit from "@/components/ConfirmSubmit";
+import { IslemFormu } from "@/components/Sonuc";
 import { deleteProduct } from "./actions";
 
 const CRITICAL_STOCK = 10;
 
-export default async function ProductsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ error?: string }>;
-}) {
+export default async function ProductsPage() {
   const session = await requireStaff();
   // OPERASYON ürünü görür, açmaz ve düzenlemez (D-2 17.10 eki); yetki action'dadır.
   const yonetici = session.user.role === "YONETICI";
-  const { error } = await searchParams;
   const urunler = await prisma.product.findMany({
     orderBy: { createdAt: "desc" },
     include: { taxRate: { select: { rate: true } } },
@@ -48,13 +44,6 @@ export default async function ProductsPage({
         description="Ürün kataloğu ve güncel stok durumu"
         action={yonetici && <LinkButton href="/products/new">Yeni Ürün</LinkButton>}
       />
-
-      {error === "used" && (
-        <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-          Bu ürün siparişlerde kullanıldığı için silinemez. Bunun yerine
-          &quot;Pasif&quot; yapabilirsiniz.
-        </div>
-      )}
 
       <Card>
         <div className="overflow-x-auto">
@@ -114,11 +103,11 @@ export default async function ProductsPage({
                         >
                           Düzenle
                         </Link>
-                        <form action={deleteProduct.bind(null, p.id)}>
+                        <IslemFormu action={deleteProduct.bind(null, p.id)}>
                           <ConfirmSubmit confirmText={`"${p.name}" silinsin mi?`}>
                             Sil
                           </ConfirmSubmit>
-                        </form>
+                        </IslemFormu>
                       </div>
                     )}
                   </td>

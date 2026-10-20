@@ -115,6 +115,9 @@ kongre tabloları · e-belge ve kargo modül tabloları (KARARLAR §1.3 §(10): 
 `scripts/backup.ts` (`pg_dump`). **Hata yüzeyi (X-3, 1B-4c):** `global-error.tsx` + kök `error.tsx` + sipariş/sevkiyat,
 tahsilat, stok segmentlerinde `error.tsx` — tek ekran (`HataEkrani`: sabit metin, referans, ana sayfa); teknik hata
 `instrumentation.ts`'ten tek JSON satırı (mesaj ve `meta` yok); denetim kaydı işle aynı transaction'da.
+**İş sonucu (X-4, 1B-4d):** bütün server action'lar `IslemSonucu` döner (`durum` · `kademe` · bildirimler); kural
+kodu kataloğu `sonuc.ts`, metni tek sözlük `sozluk.ts`; gösterim tek bileşen `Sonuc.tsx` — `SERT` alanın altında,
+`YUMUSAK` gerekçe diyaloğu, `BILGI` kapatılabilir şerit *(son ikisinin üreticisi A-15 ve 1B-7)*.
 
 ## Kodda uygulanmış iş kuralları (seçme)
 

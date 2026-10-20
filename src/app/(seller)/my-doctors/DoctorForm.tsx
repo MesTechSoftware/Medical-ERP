@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { Field, SubmitButton, FormError } from "@/components/form";
-import type { DoctorFormState } from "./actions";
+import { Field, SubmitButton } from "@/components/form";
+import { SonucGosterimi, type SonucDurumu } from "@/components/Sonuc";
+import type { IslemSonucu } from "@/lib/sonuc";
 
-type Action = (
-  prev: DoctorFormState,
-  formData: FormData
-) => Promise<DoctorFormState>;
+type Action = (prev: SonucDurumu, formData: FormData) => Promise<IslemSonucu>;
+
+const ALANLAR = ["fullName", "clinic", "region", "phone"] as const;
 
 export default function DoctorForm({
   action,
@@ -28,10 +28,7 @@ export default function DoctorForm({
   };
   submitLabel: string;
 }) {
-  const [state, formAction] = useActionState<DoctorFormState, FormData>(
-    action,
-    {}
-  );
+  const [state, formAction] = useActionState<SonucDurumu, FormData>(action, null);
 
   return (
     <form action={formAction} className="max-w-2xl space-y-4">
@@ -41,6 +38,7 @@ export default function DoctorForm({
           name="fullName"
           required
           defaultValue={defaults?.fullName}
+          sonuc={state}
         />
         <Field label="Unvan" name="title" defaultValue={defaults?.title} />
         <Field
@@ -53,8 +51,9 @@ export default function DoctorForm({
           name="clinic"
           required
           defaultValue={defaults?.clinic}
+          sonuc={state}
         />
-        <Field label="Bölge" name="region" required defaultValue={defaults?.region} />
+        <Field label="Bölge" name="region" required defaultValue={defaults?.region} sonuc={state} />
         <Field label="Şehir" name="city" defaultValue={defaults?.city} />
         <Field
           label="Telefon"
@@ -62,6 +61,7 @@ export default function DoctorForm({
           required
           placeholder="0532 123 45 67"
           defaultValue={defaults?.phone}
+          sonuc={state}
         />
         <Field
           label="E-posta"
@@ -76,7 +76,7 @@ export default function DoctorForm({
         kaydı açılamaz.
       </p>
 
-      <FormError message={state.error} />
+      <SonucGosterimi sonuc={state} alanlar={ALANLAR} />
 
       <div className="flex items-center gap-3 pt-2">
         <SubmitButton>{submitLabel}</SubmitButton>

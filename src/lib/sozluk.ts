@@ -1,0 +1,66 @@
+import type { Bildirim, KuralKodu, Parametreler } from "@/lib/sonuc";
+
+/**
+ * Kural kodu → kullanıcı metni. Tek sözlük (X-4 §(3)): aynı kural her ekranda aynı cümledir.
+ * Sunucu bu dosyayı okumaz (`hata-yuzeyi.test.ts`). Metin yetki ve varlık sızdırmaz (X-4 §(9)).
+ */
+export const KURAL_METNI: Record<KuralKodu, (p: Parametreler) => string> = {
+  ALAN_ZORUNLU: () => "Bu alan zorunludur.",
+  GEREKCE_ZORUNLU: () => "Gerekçe zorunludur.",
+  GECERSIZ_TUTAR: () => "Geçerli bir tutar giriniz.",
+  GECERSIZ_MIKTAR: () => "Geçerli bir miktar giriniz.",
+  GECERSIZ_TARIH: () => "Geçerli bir tarih giriniz.",
+  GECERSIZ_TELEFON: () => "Geçerli bir telefon numarası giriniz (örn. 0532 123 45 67).",
+
+  GIRIS_HATALI: () => "E-posta veya şifre hatalı.",
+  GIRIS_KILITLI: (p) => `Çok fazla başarısız deneme. Lütfen ${p.dakika} dakika sonra tekrar deneyin.`,
+  PAROLA_KISA: (p) => `Parola en az ${p.asgari} karakter olmalıdır.`,
+  PAROLA_YAYGIN: () => "Bu parola çok yaygın; başka bir parola seçin.",
+  PAROLA_MEVCUT_HATALI: () => "Mevcut parola hatalı.",
+  PAROLA_TEKRAR_UYUSMUYOR: () => "Yeni parola ile tekrarı aynı değil.",
+  PAROLA_DEGISMEDI: () => "Yeni parola geçici paroladan farklı olmalıdır.",
+
+  KULLANICI_BULUNAMADI: () => "Kullanıcı bulunamadı.",
+  EPOSTA_KAYITLI: () => "Bu e-posta zaten kayıtlı.",
+  KENDINI_PASIFLESTIREMEZ: () => "Kendi hesabınızı pasifleştiremezsiniz.",
+  SON_YONETICI: () => "Son aktif yönetici pasifleştirilemez.",
+  PORTFOY_HEDEFI_SECILMEDI: (p) =>
+    `Satıcının ${p.doktorSayisi} doktoru var. Doktorların devredileceği satıcıyı ya da "sahipsiz bırak"ı seçin.`,
+  ESZAMANLI_DEGISIKLIK: () => "Aynı anda başka bir değişiklik yapıldı; tekrar deneyin.",
+
+  TELEFON_KAYITLI: (p) =>
+    p.portfoyunuzde === 1
+      ? `Bu telefon numarası (${p.telefon}) zaten kendi portföyünüzde kayıtlı.`
+      : `Bu telefon numarası (${p.telefon}) sistemde zaten kayıtlı. Yöneticinize başvurun.`,
+  DOKTOR_KAPSAM_DISI: () => "Bu doktor sizin portföyünüzde değil.",
+  DOKTOR_PASIF: () => "Doktor kaydı pasif durumda.",
+  DOKTOR_SAHIPSIZ: () =>
+    "Bu doktorun sorumlu satıcısı yok. Yönetici bir satıcıya atayana kadar sipariş girilemez.",
+  SAHIP_AKTIF_SATICI_DEGIL: () => "Doktorlar yalnız aktif bir satıcıya devredilebilir.",
+  BAYI_SAHIP_ATANAMAZ: () => "Bayinin sorumlu satıcısı olmaz.",
+  SAHIP_DEGISTI: () => "Bu doktorun sorumlu satıcısı değişti; sipariş kaydedilmedi.",
+  DEVIR_DOKTOR_SECILMEDI: () => "Devredilecek doktor seçilmedi.",
+  DEVIR_DEGISIKLIK_YOK: () => "Seçilen doktorlar zaten bu sahiplikte.",
+
+  URUN_BULUNAMADI: () => "Ürün bulunamadı.",
+  URUN_PASIF: (p) => `${p.urun} pasif durumda.`,
+  URUN_KODU_KAYITLI: () => "Bu ürün kodu zaten kullanılıyor.",
+  URUN_SIPARISTE_KULLANILDI: () =>
+    "Bu ürün siparişlerde kullanıldığı için silinemez. Bunun yerine durumunu Pasif yapın.",
+  FIYAT_COZUMLENEMEDI: (p) => `${p.urun} için fiyat çözümlenemedi.`,
+  SIPARIS_KALEMI_GECERSIZ: () => "En az bir ürün ve geçerli miktar giriniz.",
+  SIPARIS_DURUMU_UYGUN_DEGIL: () => "Siparişin durumu bu işleme uygun değil; sayfayı yenileyin.",
+  SIPARIS_IPTAL_EDILEMEZ: () => "Teslim edilmiş veya zaten iptal edilmiş sipariş iptal edilemez.",
+
+  ODEME_YONTEMI_BULUNAMADI: () => "Ödeme yöntemi bulunamadı.",
+  TAHSILAT_BULUNAMADI: () => "Tahsilat bulunamadı.",
+  TAHSILAT_ZATEN_IPTAL: () => "Bu tahsilat zaten iptal.",
+  CARI_HAREKET_BULUNAMADI: () => "Cari hareket bulunamadı.",
+  VADE_YALNIZ_BORC: () => "Vade yalnız borç hareketinde değişir.",
+
+  NEGATIF_STOK: (p) => `Stok yetersiz: işlem sonrası stok ${p.sonra} adet olur.`,
+};
+
+export function bildirimMetni(b: Pick<Bildirim, "kural_kodu" | "parametreler">): string {
+  return KURAL_METNI[b.kural_kodu](b.parametreler);
+}

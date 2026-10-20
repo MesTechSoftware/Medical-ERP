@@ -1,22 +1,27 @@
 import { Prisma } from "@/generated/prisma/client";
+import { sonucOlustur, type Bildirim, type IslemSonucu } from "@/lib/sonuc";
 
 /**
  * Hata yüzeyi — X-3. İki tür hata vardır:
  *
  * - **İş hatası** (beklenen): transaction'ı geri almak için `IsHatasi` fırlatılır, action onu
- *   yakalayıp kullanıcıya mesaj olarak **döner** (X-4 §(2)). Mesaj sabit, kullanıcıya
- *   gösterilebilir metindir.
+ *   yakalayıp `IslemSonucu` olarak **döner** (X-4 §(2)). Hata metin taşımaz, bildirim taşır.
  * - **Teknik hata** (beklenmeyen): yakalanmaz ya da yakalanıp yeniden fırlatılır; hata sınırına
  *   (`error.tsx`) düşer, kullanıcı referans görür, ayrıntı yalnız log'dadır (`instrumentation.ts`).
  *
  * Bir `catch` teknik hatayı iş mesajına çeviremez (X-3 §(4), KABUL X-3-3).
  */
 
-/** Transaction içinden fırlatılan, kullanıcıya gösterilebilir iş hatası. */
+/**
+ * Transaction'ı geri almak için içinden fırlatılan iş hatası. Action sınırında yakalanır ve
+ * `sonuc` döner; action dışına çıkmaz (X-4 §(2)).
+ */
 export class IsHatasi extends Error {
-  constructor(mesaj: string) {
-    super(mesaj);
+  readonly sonuc: IslemSonucu;
+  constructor(bildirimler: readonly Bildirim[]) {
+    super(bildirimler.map((b) => b.kural_kodu).join(","));
     this.name = "IsHatasi";
+    this.sonuc = sonucOlustur(bildirimler);
   }
 }
 

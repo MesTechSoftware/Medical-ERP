@@ -2,13 +2,11 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { Field, SelectField, SubmitButton, FormError } from "@/components/form";
+import { Field, SelectField, SubmitButton } from "@/components/form";
+import { SonucGosterimi } from "@/components/Sonuc";
 import type { UserFormState } from "./actions";
 
-type Action = (
-  prev: UserFormState,
-  formData: FormData
-) => Promise<UserFormState>;
+type Action = (prev: unknown, formData: FormData) => Promise<UserFormState>;
 
 export default function UserForm({
   action,
@@ -36,20 +34,21 @@ export default function UserForm({
 }) {
   // Her yanıt formu yeniden kurar (`key`): React action sonrası formu sıfırlar, `<select>`
   // eski varsayılana (AKTIF) döner. Yeni form `state.degerler` ile açılır (X-17 §(5)).
-  const [state, formAction] = useActionState<UserFormState & { n?: number }, FormData>(
-    async (prev, formData) => ({ ...(await action(prev, formData)), n: (prev.n ?? 0) + 1 }),
-    {}
+  const [state, formAction] = useActionState<(UserFormState & { n: number }) | null, FormData>(
+    async (prev, formData) => ({ ...(await action(prev, formData)), n: (prev?.n ?? 0) + 1 }),
+    null
   );
 
   return (
-    <form key={state.n ?? 0} action={formAction} className="max-w-lg space-y-4">
-      <Field label="Ad Soyad" name="name" required defaultValue={defaults?.name} />
+    <form key={state?.n ?? 0} action={formAction} className="max-w-lg space-y-4">
+      <Field label="Ad Soyad" name="name" required defaultValue={defaults?.name} sonuc={state} />
       <Field
         label="E-posta"
         name="email"
         type="email"
         required
         defaultValue={defaults?.email}
+        sonuc={state}
       />
       <Field label="Telefon" name="phone" defaultValue={defaults?.phone} />
       {isEdit ? (
@@ -60,7 +59,8 @@ export default function UserForm({
         <SelectField
           label="Rol"
           name="role"
-          defaultValue={state.degerler?.role ?? "SATICI"}
+          defaultValue={state?.degerler?.role ?? "SATICI"}
+          sonuc={state}
           options={[
             { value: "SATICI", label: "Satıcı" },
             { value: "OPERASYON", label: "Operasyon" },
@@ -73,6 +73,7 @@ export default function UserForm({
         name="password"
         type="password"
         required={!isEdit}
+        sonuc={state}
       />
       <p className="-mt-2 text-xs text-slate-500">
         En az {asgariParola} karakter. Kullanıcı ilk girişte kendi parolasını belirler
@@ -82,7 +83,8 @@ export default function UserForm({
         <SelectField
           label="Durum"
           name="status"
-          defaultValue={state.degerler?.status ?? defaults?.status ?? "AKTIF"}
+          defaultValue={state?.degerler?.status ?? defaults?.status ?? "AKTIF"}
+          sonuc={state}
           options={[
             { value: "AKTIF", label: "Aktif" },
             { value: "PASIF", label: "Pasif" },
@@ -93,7 +95,8 @@ export default function UserForm({
         label={isEdit ? "Gerekçe (pasifleştirme ve parola atamada zorunlu)" : "Gerekçe"}
         name="gerekce"
         required={!isEdit}
-        defaultValue={state.degerler?.gerekce}
+        defaultValue={state?.degerler?.gerekce}
+        sonuc={state}
       />
 
       {portfoy && (
@@ -107,18 +110,27 @@ export default function UserForm({
           <SelectField
             label="Doktorlar"
             name="portfoy"
-            defaultValue={state.degerler?.portfoy ?? ""}
+            defaultValue={state?.degerler?.portfoy ?? ""}
+            sonuc={state}
             options={[
               { value: "", label: "— Seçiniz —" },
               { value: "SAHIPSIZ", label: "Sahipsiz bırak" },
               ...portfoy.saticilar.map((s) => ({ value: s.id, label: `${s.name} satıcısına devret` })),
             ]}
           />
-          <Field label="Portföy gerekçesi" name="portfoyGerekce" defaultValue={state.degerler?.portfoyGerekce} />
+          <Field
+            label="Portföy gerekçesi"
+            name="portfoyGerekce"
+            defaultValue={state?.degerler?.portfoyGerekce}
+            sonuc={state}
+          />
         </fieldset>
       )}
 
-      <FormError message={state.error} />
+      <SonucGosterimi
+        sonuc={state}
+        alanlar={["name", "email", "password", "gerekce", isEdit ? "status" : "role", ...(portfoy ? ["portfoy", "portfoyGerekce"] : [])]}
+      />
 
       <div className="flex items-center gap-3 pt-2">
         <SubmitButton>{submitLabel}</SubmitButton>
