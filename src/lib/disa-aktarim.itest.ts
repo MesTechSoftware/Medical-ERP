@@ -145,9 +145,32 @@ describe("tahsilat ve stok veri setleri (D-5-1)", () => {
     await hareket(5, "2026-10-10T21:00:00Z"); // İstanbul 11.10 00:00
     const c = await calistirDisaAktarim({ kod: "STOK", tarih: new Date("2026-10-10T00:00:00Z") });
     expect(c.kolonlar.every((k) => !/tutar|fiyat/i.test(k.baslik))).toBe(true);
-    expect(c.satirlar).toEqual([["MED-001", "Stent", expect.any(String), "10", "2026-10-10"]]);
+    expect(c.satirlar).toEqual([["MED-001", "Stent", expect.any(String), "10", "2026-10-10", "Bakiye", null, null, null, null]]);
     const once = await calistirDisaAktarim({ kod: "STOK", tarih: new Date("2026-10-09T00:00:00Z") });
     expect(once.satirlar).toEqual([]);
+  });
+
+  it("stok veri seti DZL satırlarını ayrı işaretli, sebep ve tutanakla verir: yıl başından gün sonuna (B-7-2)", async () => {
+    const hasar = await prisma.stockAdjustmentReason.findFirstOrThrow({ where: { code: "HASAR" } });
+    const dzl = (documentNo: string, createdAt: string, quantityDelta: number) =>
+      prisma.stockAdjustment.create({
+        data: {
+          documentNo,
+          externalDocNo: documentNo === "DZL-2" ? "TUT-7" : null,
+          createdById: s.admin.id,
+          createdAt: new Date(createdAt),
+          items: { create: [{ productId: s.urun.id, locationId: s.depo.id, quantityDelta, reasonId: hasar.id, note: "Kırık kutu" }] },
+        },
+      });
+    await dzl("DZL-0", "2025-12-31T20:00:00Z", -9); // İstanbul 31.12.2025 23:00 — önceki yıl
+    await dzl("DZL-1", "2026-03-01T09:00:00Z", -2);
+    await dzl("DZL-2", "2026-10-10T20:59:00Z", 1); // 10.10 23:59
+    await dzl("DZL-3", "2026-10-10T21:00:00Z", -1); // 11.10 — gün sonrası
+    const c = await calistirDisaAktarim({ kod: "STOK", tarih: new Date("2026-10-10T00:00:00Z") });
+    expect(c.satirlar.filter((r) => r[5] === "Düzeltme")).toEqual([
+      ["MED-001", "Stent", expect.any(String), "-2", "2026-03-01", "Düzeltme", "Hasar", "DZL-1", null, "Kırık kutu"],
+      ["MED-001", "Stent", expect.any(String), "1", "2026-10-10", "Düzeltme", "Hasar", "DZL-2", "TUT-7", "Kırık kutu"],
+    ]);
   });
 
   it("doktor listesi vergi kimliği ve fatura alanlarını taşır", async () => {

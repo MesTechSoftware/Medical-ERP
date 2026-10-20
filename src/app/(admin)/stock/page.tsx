@@ -5,9 +5,13 @@ import StockEntryForm from "./StockEntryForm";
 import KonumBelgesiFormu from "./KonumBelgesiFormu";
 import { addConsignment, addTransfer } from "./actions";
 import { hesaplaStok } from "@/lib/stok";
+import { requireStaff } from "@/lib/session";
+import DuzeltmeFormu from "./DuzeltmeFormu";
 
 export default async function StockPage() {
-  const [products, movements, konumlar, doktorlar] = await Promise.all([
+  const session = await requireStaff();
+  const yonetici = session.user.role === "YONETICI";
+  const [products, movements, konumlar, doktorlar, sebepler] = await Promise.all([
     prisma.product.findMany({
       where: { status: "AKTIF" },
       orderBy: { name: "asc" },
@@ -30,6 +34,12 @@ export default async function StockPage() {
       where: { status: "AKTIF" },
       orderBy: { fullName: "asc" },
       select: { id: true, fullName: true },
+    }),
+    // B-7 §(2): sebep tanım tablosu; pasif sebep seçilemez.
+    prisma.stockAdjustmentReason.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: "asc" },
+      select: { id: true, name: true },
     }),
   ]);
   const depolar = konumlar.filter((k) => k.type === "DEPO");
@@ -59,6 +69,23 @@ export default async function StockPage() {
             </h2>
             <StockEntryForm products={products} />
           </Card>
+
+          {/* B-7 · D-2 §(2): stok düzeltme yalnız yöneticinin; sunucuda da requireAdmin. */}
+          {yonetici && (
+            <div className="mt-6">
+              <Card>
+                <h2 className="mb-1 text-sm font-semibold text-slate-900">Stok Düzeltme</h2>
+                <p className="mb-4 text-xs text-slate-500">
+                  Sayım farkı, hasar, kayıp, miad/imha. Kayıt anında tarihlenir; vergisel sonucu müşavirdedir.
+                </p>
+                <DuzeltmeFormu
+                  urunler={urunSecenekleri}
+                  konumlar={konumlar.map((k) => ({ value: k.id, label: k.name }))}
+                  sebepler={sebepler.map((r) => ({ value: r.id, label: r.name }))}
+                />
+              </Card>
+            </div>
+          )}
 
           <div className="mt-6">
             <Card>

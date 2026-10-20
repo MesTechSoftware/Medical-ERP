@@ -107,7 +107,8 @@
 | B-4-4 | Aynı ürüne eşzamanlı iki çıkış aynı ön stoğu göremez: ikinci yazım birincinin commit'ini bekler ve onun sonucunu okur (ADR-008 §(6), F-06). | 1B-1 · `stok.itest.ts` |
 | B-5-1 | Fiyat satırı belge gününde geçerliyse seçilir: aralık yarı açıktır (`gecerli_baslangic` dahil, `gecerli_bitis` hariç), boş uç süresizdir. Aynı liste + ürün + `min_adet` için tarih aralıkları çakışamaz (DB `EXCLUDE`). Günde geçerli satır yoksa fiyat çözümlenemez; son fiyata düşülmez. | 1B-5 · `fiyat.itest.ts` · `kisitlar.itest.ts` |
 | B-6-1 | Barem `min_adet` alt sınır satırlarıyla kurulur, üst sınır yoktur: satır miktarını karşılayan **en yüksek** `min_adet`'li satır seçilir; miktarı karşılayan satır yoksa fiyat çözümlenemez. Barem sipariş satırının miktarına bakar (kümülatif değil); çözülen fiyat satıra `liste_fiyat` olarak donar. | 1B-5 · `fiyat.itest.ts` · `orders.itest.ts` |
-| B-7-1 | | 1B-7 |
+| B-7-1 | Stok düzeltme (`DZL`) yalnız `YONETICI`'dedir (action `requireAdmin`, servis başka rolde teknik hata). Belge çok satırlıdır: ürün · konum · ± fark (sıfır ve tam sayı olmayan `SERT`) · aktif sebep (tanım tablosu; pasif `SERT`) · açıklama (zorunlu). Tutanak no salt kayıttır. Belge tarihi kayıt anıdır. Mali sonucu yoktur ve düzeltmenin kendisi `OnayBlogu` üretmez; denetim kaydı yazılır. Negatif stokta gerekçesiz `YUMUSAK`, gerekçeyle yazılır ve `NEGATIF_STOK` bloğu aynı işlemde `ONAY` alır. | 1B-7d · `stok-duzeltme.itest.ts` · `e2e/admin/stok-duzeltme.spec.ts` · `yetki.test.ts` · `e2e/operasyon/operasyon.spec.ts` |
+| B-7-2 | Stok veri seti, miktar satırlarına ("Bakiye") ek olarak seçilen günün takvim yılı başından gün sonuna kadarki her `DZL` satırını "Düzeltme" işaretiyle, sebep, belge no, tutanak no ve açıklamayla verir; önceki yılın ve gün sonrasının düzeltmesi çıkmaz (B-7 eki 20.10). | 1B-7d · `disa-aktarim.itest.ts` |
 
 ## C · Mali ve yasal
 

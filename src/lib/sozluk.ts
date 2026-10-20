@@ -62,6 +62,8 @@ export const KURAL_METNI: Record<KuralKodu, (p: Parametreler) => string> = {
   SEVK_MIKTARI_ASILDI: (p) => `${p.urun} için sevk edilebilecek kalan miktar ${p.kalan}.`,
   IADE_KALEMI_YOK: () => "İade edilecek en az bir kalem ve geçerli miktar giriniz.",
   TRANSFER_KALEMI_YOK: () => "En az bir ürün ve geçerli miktar giriniz.",
+  DUZELTME_KALEMI_GECERSIZ: () => "Her satırda ürün, konum ve sıfırdan farklı tam sayı fark giriniz.",
+  DUZELTME_SEBEBI_GECERSIZ: () => "Geçerli bir düzeltme sebebi seçiniz.",
   TRANSFER_KONUMU_GECERSIZ: () => "Kaynak ve hedef konum geçerli ve birbirinden farklı olmalıdır; hedef bir depo olmalıdır.",
   IADE_MIKTARI_ASILDI: (p) => `${p.urun} için iade edilebilecek miktar ${p.kalan}.`,
 
