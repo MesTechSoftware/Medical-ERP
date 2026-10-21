@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/session";
 import {
   VERI_SETLERI,
   calistirDisaAktarim,
+  eksikFaturaBilgisiUyarisi,
   faturaGeriyeDonukUyarisi,
   sablonUygula,
   type DisaAktarimParametresi,
@@ -77,6 +78,14 @@ export async function disaAktar(_prev: unknown, formData: FormData): Promise<Dis
     if (uyari) uyarilar.push(uyari);
     cikti = sablonUygula(veri, sablon);
   }
+  // A-13 §(5): eksik fatura bilgisi — engellemez, sayısı gösterilir.
+  const eksik =
+    parametre.kod === "DOKTOR_LISTESI"
+      ? await eksikFaturaBilgisiUyarisi(parametre)
+      : parametre.kod === "FATURA_HAZIRLIK"
+        ? await eksikFaturaBilgisiUyarisi({ kod: parametre.kod, aralik: parametre.aralik })
+        : null;
+  if (eksik) uyarilar.push(eksik);
   await prisma.exportLog.create({
     data: {
       userId: session.user.id,

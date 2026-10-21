@@ -34,12 +34,12 @@ export default async function DoctorDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireStaff();
+  const session = await requireStaff();
   const { id } = await params;
 
   const doctor = await prisma.doctor.findUnique({
     where: { id },
-    include: { ownerSeller: { select: { name: true } } },
+    include: { ownerSeller: { select: { name: true } }, priceList: { select: { code: true, name: true } } },
   });
   if (!doctor) notFound();
 
@@ -67,10 +67,47 @@ export default async function DoctorDetailPage({
     <div>
       <PageHeader
         title={`${doctor.title ? `${doctor.title} ` : ""}${doctor.fullName}`}
-        description={[doctor.clinic, doctor.region, doctor.city, formatPhone(doctor.phoneNormalized)]
+        description={[
+          doctor.accountClass === "BAYI" ? "Bayi" : null,
+          doctor.clinic,
+          doctor.region,
+          doctor.city,
+          formatPhone(doctor.phoneNormalized),
+        ]
           .filter(Boolean)
           .join(" · ")}
+        action={
+          // Cari düzeltme yalnız yönetici (X-16 §(9)); OPERASYON cariyi görür (D-2 §(1)).
+          session.user.role === "YONETICI" ? (
+            <Link href={`/doctors/${id}/edit`} className="text-sm font-medium text-slate-600 hover:text-slate-900">
+              Düzenle
+            </Link>
+          ) : undefined
+        }
       />
+
+      {/* A-13 §(9): Genel ve Fatura bilgileri — kart bilgisi; fiyat listesi (X-10 §(2)). */}
+      <div className="mb-6">
+        <Card>
+          <dl className="grid gap-4 text-sm sm:grid-cols-4">
+            {[
+              ["Fiyat listesi", doctor.priceList ? `${doctor.priceList.code} — ${doctor.priceList.name}` : "Varsayılan"],
+              ["Ödeme vadesi", doctor.paymentTermDays !== null ? `${doctor.paymentTermDays} gün` : "Varsayılan"],
+              ["Cari tipi", doctor.partyType === "GERCEK_KISI" ? "Gerçek kişi" : "Tüzel kişi"],
+              ["VKN / TCKN", doctor.taxId ?? "—"],
+              ["Fatura ünvanı", doctor.invoiceTitle ?? doctor.fullName],
+              ["Vergi dairesi", doctor.taxOffice ?? "—"],
+              ["Fatura adresi", [doctor.invoiceAddress, doctor.invoiceDistrict, doctor.invoiceCity].filter(Boolean).join(", ") || "—"],
+              ["Muhasebe kodu", doctor.accountingCode ?? "—"],
+            ].map(([etiket, deger]) => (
+              <div key={etiket}>
+                <dt className="text-xs uppercase text-slate-500">{etiket}</dt>
+                <dd className="mt-0.5 text-slate-900">{deger}</dd>
+              </div>
+            ))}
+          </dl>
+        </Card>
+      </div>
 
       {/* X-6 §(6): vadesi geçmiş hareketin varlığı — BILGI şeridi, tutar yok. */}
       {vadeUyarisi && (

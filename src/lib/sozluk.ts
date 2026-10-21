@@ -43,6 +43,10 @@ export const KURAL_METNI: Record<KuralKodu, (p: Parametreler) => string> = {
     "Bu doktorun sorumlu satıcısı yok. Yönetici bir satıcıya atayana kadar sipariş girilemez.",
   SAHIP_AKTIF_SATICI_DEGIL: () => "Doktorlar yalnız aktif bir satıcıya devredilebilir.",
   BAYI_SAHIP_ATANAMAZ: () => "Bayinin sorumlu satıcısı olmaz.",
+  VERGI_KIMLIGI_GECERSIZ: () => "VKN 10, TCKN 11 haneli olmalı ve kontrol hanesi tutmalıdır.",
+  GECERSIZ_EPOSTA: () => "Geçerli bir e-posta adresi giriniz.",
+  EKSIK_FATURA_BILGISI: (p) =>
+    `${p.sayi} carinin fatura bilgisi eksik (VKN/TCKN, fatura adresi ya da ili; tüzel kişide vergi dairesi).`,
   SAHIP_DEGISTI: () => "Bu doktorun sorumlu satıcısı değişti; sipariş kaydedilmedi.",
   DEVIR_DOKTOR_SECILMEDI: () => "Devredilecek doktor seçilmedi.",
   DEVIR_DEGISIKLIK_YOK: () => "Seçilen doktorlar zaten bu sahiplikte.",

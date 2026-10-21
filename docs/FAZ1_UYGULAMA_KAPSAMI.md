@@ -925,6 +925,22 @@ bakiyesi (A-6) ve vade farkı (A-7) elle girişi.
 - Ürün formu varsayılan listenin 1 adetlik süresiz satırını yazmaya devam eder (aynı satır, iki giriş noktası).
 - `IslemFormu` `basariMetni` alır: başarıda metin gösterilir ve form temizlenir.
 
+**Madde 7e2 — tek cari ekranı (21.10.2026, kriterler A-13-1, A-13-2, X-8-2, X-10-3).** Notlar (karar değil):
+
+- `src/lib/cari.ts`: `CARI_ACMA_SEMASI` / `CARI_DUZELTME_SEMASI` + `cariAc` / `cariDuzelt` — X-16 §(1) tek tanım;
+  1B-7f `CARI` import'u aynı şemadan geçecek (çözümleyiciler: satıcı e-postası → id, liste kodu → id).
+  `vergiKimligiGecerliMi` (VKN/TCKN kontrol hanesi). Sahip alanı şemada `sorumluSaticiId`'dir; yazımı
+  `degistirDoktorSahibi()` (X-17-1 testi).
+- Ekranlar: `/doctors/new` ve `/doctors/[id]/edit` (yalnız `YONETICI`), `CariFormu` (Genel + katlanmış Fatura
+  bilgileri; telefon etiketi sınıfa göre — X-15 §(5)). Detayda kart bilgisi ve "Düzenle". Liste süzgeçleri:
+  Doktorlar · Bayiler · Sahipsiz · Eksik fatura bilgisi.
+- **Eksik fatura bilgisi tanımı** (A-13 §(5) alan listesi vermiyor; uygulama tanımı): VKN/TCKN, fatura adresi
+  ya da ili boş; tüzel kişide vergi dairesi boş. Ünvan boşsa ad-soyad kullanıldığından eksik sayılmaz.
+  Tek yer: `EKSIK_FATURA_BILGISI`.
+- A-13 §(7) log: hassas alanların değeri zaten maskeli (`audit.ts`); denetim kaydına `degisenAlanlar` eklendi,
+  değişiklik yoksa log yazılmaz.
+- Satıcının kendi doktor formu değişmedi (Genel alanlar); fatura bilgileri yönetici ekranındadır.
+
 ---
 
 ### §D.5 · 1A'nın **yapmadıkları** — sınırı yazılı tutmak için
