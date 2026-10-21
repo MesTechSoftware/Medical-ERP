@@ -124,6 +124,36 @@ export function SonucGosterimi({
 }
 
 /**
+ * Satır numaralı `SERT` bildirimler (içe aktarım, X-16 §(4)): satır · kolon · metin tablosu. Toplu
+ * girişin tek gösterimi; hiçbiri atılmaz (X-4 §(7)).
+ */
+export function SatirHatalari({ bildirimler }: { bildirimler: IslemSonucu["bildirimler"] }) {
+  if (bildirimler.length === 0) return null;
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm" aria-label="Satır hataları" data-kademe="SERT">
+        <thead>
+          <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
+            <th className="px-3 py-2 font-medium">Satır</th>
+            <th className="px-3 py-2 font-medium">Kolon</th>
+            <th className="px-3 py-2 font-medium">Hata</th>
+          </tr>
+        </thead>
+        <tbody>
+          {bildirimler.map((b, i) => (
+            <tr key={i} className="border-b border-slate-100 text-red-700 last:border-0">
+              <td className="px-3 py-2 tabular-nums">{b.parametreler.satir}</td>
+              <td className="px-3 py-2">{b.parametreler.kolon ?? "—"}</td>
+              <td className="px-3 py-2">{bildirimMetni(b)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/**
  * Alansız tek düğmeli işlem formu (durum geçişi, silme, sevk): action'ın sonucu formun
  * içinde aynı desenle gösterilir. Form, action'dan sonra sıfırlanmaz: `YUMUSAK` diyaloğu
  * aynı formu gerekçeyle yeniden gönderir ve girilen değerler (ör. kısmi sevk miktarı)
