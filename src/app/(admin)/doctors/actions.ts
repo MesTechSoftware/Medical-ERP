@@ -4,10 +4,13 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { cariAc, cariDuzelt } from "@/lib/cari";
+import { tersKayitYaz, vadeFarkiYaz } from "@/lib/cari-hareket";
+import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
+import { amountSchema } from "@/lib/validation";
 import { benzersizIhlali, IsHatasi } from "@/lib/hata";
 import { requireAdmin } from "@/lib/session";
 import { degistirDoktorSahibi } from "@/lib/sahiplik";
-import { basarili, engel, type IslemSonucu } from "@/lib/sonuc";
+import { basarili, engel, sert, sonucOlustur, type IslemSonucu } from "@/lib/sonuc";
 
 /**
  * FR-06 / X-13 §(5): yönetici doktorları başka satıcıya devreder; gerekçe zorunlu, iz tutulur.
@@ -104,4 +107,81 @@ export async function updateCari(id: string, _prev: unknown, formData: FormData)
   revalidatePath("/doctors");
   revalidatePath(`/doctors/${id}`);
   redirect(`/doctors/${id}`);
+}
+
+/** `YYYY-AA-GG` → `date` kolonu (UTC gece yarısı, E-1 §(1)); geçersizse `null`. */
+function gunOku(metin: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(metin)) return null;
+  const d = new Date(`${metin}T00:00:00Z`);
+  return Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== metin ? null : d;
+}
+
+/**
+ * Vade farkı (A-7): yalnız elle, yalnız `YONETICI`; tutar (KDV kırılımsız), vade ve gerekçe zorunlu.
+ * Hareket `VDF` numarasıyla `cari-hareket.ts`'ten yazılır; gerekçe denetim kaydındadır.
+ */
+export async function addVadeFarki(doctorId: string, _prev: unknown, formData: FormData): Promise<IslemSonucu> {
+  const session = await requireAdmin();
+  const tutar = amountSchema.safeParse(String(formData.get("amount") ?? ""));
+  const vade = gunOku(String(formData.get("dueDate") ?? "").trim());
+  const gerekce = String(formData.get("reason") ?? "").trim();
+  const hatalar = [
+    ...(tutar.success ? [] : [sert("GECERSIZ_TUTAR", {}, "amount")]),
+    ...(vade ? [] : [sert("GECERSIZ_TARIH", {}, "dueDate")]),
+    ...(gerekce ? [] : [sert("GEREKCE_ZORUNLU", {}, "reason")]),
+  ];
+  if (!tutar.success || !vade || !gerekce) return sonucOlustur(hatalar);
+  const doktor = await prisma.doctor.findUnique({ where: { id: doctorId }, select: { id: true } });
+  if (!doktor) return engel("DOKTOR_KAPSAM_DISI");
+
+  const h = await prisma.$transaction(async (tx) => {
+    const h = await vadeFarkiYaz(tx, { doctorId, tutar: tutar.data, vade, yapanId: session.user.id });
+    await createAuditLog(
+      {
+        actorId: session.user.id,
+        action: AUDIT_ACTIONS.LATE_FEE_CREATE,
+        entityType: "LedgerEntry",
+        entityId: h.id,
+        after: { documentNo: h.documentNo, doctorId, amount: tutar.data, dueDate: vade, reason: gerekce },
+      },
+      tx
+    );
+    return h;
+  });
+  revalidatePath(`/doctors/${doctorId}`);
+  return basarili({ documentNo: h.documentNo });
+}
+
+/**
+ * Elle ters kayıt (X-11 §(5), X-16 §(10)): yalnız `ACILIS` ve `VADE_FARKI` — kaynaksız hareketlerin tek
+ * düzeltme yolu. Diğer tipler kendi belgesiyle düzeltilir. Bir satır bir kez çevrilir (DB `UNIQUE`).
+ */
+export async function reverseLedgerEntry(entryId: string, _prev: unknown, formData: FormData): Promise<IslemSonucu> {
+  const session = await requireAdmin();
+  const gerekce = String(formData.get("reason") ?? "").trim();
+  if (!gerekce) return engel("GEREKCE_ZORUNLU", {}, "reason");
+  const h = await prisma.ledgerEntry.findUnique({ where: { id: entryId }, include: { reversal: { select: { id: true } } } });
+  if (!h) return engel("CARI_HAREKET_BULUNAMADI");
+  if (h.type !== "ACILIS" && h.type !== "VADE_FARKI") return engel("TERS_KAYIT_UYGUN_DEGIL");
+  if (h.reversal) return engel("TERS_KAYIT_VAR");
+  try {
+    await prisma.$transaction(async (tx) => {
+      const ters = await tersKayitYaz(tx, entryId, session.user.id);
+      await createAuditLog(
+        {
+          actorId: session.user.id,
+          action: AUDIT_ACTIONS.LEDGER_REVERSAL,
+          entityType: "LedgerEntry",
+          entityId: entryId,
+          after: { tersKayitId: ters.id, documentNo: h.documentNo, reason: gerekce },
+        },
+        tx
+      );
+    });
+  } catch (e) {
+    if (benzersizIhlali(e)) return engel("TERS_KAYIT_VAR");
+    throw e;
+  }
+  revalidatePath(`/doctors/${h.doctorId}`);
+  return basarili();
 }

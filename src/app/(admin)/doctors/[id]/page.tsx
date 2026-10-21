@@ -10,6 +10,7 @@ import { formatPhone } from "@/lib/phone";
 import { hesaplaDoktorBakiye, vadesiGecmisUyarisi } from "@/lib/doctor-cari";
 import { SonucGosterimi } from "@/components/Sonuc";
 import { sonucOlustur } from "@/lib/sonuc";
+import CariHareketleri from "./CariHareketleri";
 import {
   PageHeader,
   Card,
@@ -227,6 +228,10 @@ export default async function DoctorDetailPage({
             </table>
           </div>
         </Card>
+      </div>
+
+      <div className="mt-6">
+        <CariHareketleri doktorId={id} yonetici={session.user.role === "YONETICI"} />
       </div>
 
       <div className="mt-6">

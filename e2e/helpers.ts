@@ -116,5 +116,5 @@ export async function stoksuzSiparis({ stoklu = false } = {}) {
      VALUES ($1, $2, $3, 2, 100, 100, 20)`,
     [kalemId, siparisId, `e2e-urun-${ek}`]
   );
-  return { doktorAdi, urunAdi, urunId: `e2e-urun-${ek}`, urunKodu: `E2E-${ek}`, siparisId, kalemId, documentNo };
+  return { doktorId, doktorAdi, urunAdi, urunId: `e2e-urun-${ek}`, urunKodu: `E2E-${ek}`, siparisId, kalemId, documentNo };
 }

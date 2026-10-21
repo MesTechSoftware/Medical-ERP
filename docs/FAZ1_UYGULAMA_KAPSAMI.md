@@ -941,6 +941,17 @@ bakiyesi (A-6) ve vade farkı (A-7) elle girişi.
   değişiklik yoksa log yazılmaz.
 - Satıcının kendi doktor formu değişmedi (Genel alanlar); fatura bilgileri yönetici ekranındadır.
 
+**Madde 7e3 — cari hareketler, vade farkı, vade değişikliği (21.10.2026, kriterler A-7-2, X-11-2, X-15-1).** Notlar (karar değil):
+
+- Cari detayında "Cari Hareketler" (son 50; borç/alacak kolonu, vade). Yöneticiye: borç satırında vade değiştir
+  (`changeDueDate` — 1A'dan beri vardı, ekranı yoktu), açılış/vade farkı satırında ters kayıt, "Vade farkı ekle".
+- `cari-hareket.ts` `vadeFarkiYaz` (`VDF` numarası kendi içinde); action'lar `addVadeFarki`, `reverseLedgerEntry`
+  (requireAdmin, denetim kaydı).
+- **Açılış bakiyesinin elle girişi açılmadı:** X-16 §(1) `ACILIS_BAKIYESI`'ni "elle giriş yolu olmayan tür" sayar;
+  giriş 1B-7f import'uyla, hatası buradaki ters kayıtla düzeltilir (X-16 §(10)).
+- Vade farkını yalnız `YONETICI` girer (A-7 rol söylemiyor; tutar doğuran elle hareket, vade değişikliğiyle aynı yetki).
+- **Madde 7e tamam** (7e1 fiyat listesi · 7e2 tek cari ekranı · 7e3 cari hareketler).
+
 ---
 
 ### §D.5 · 1A'nın **yapmadıkları** — sınırı yazılı tutmak için
