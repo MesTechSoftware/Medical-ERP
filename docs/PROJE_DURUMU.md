@@ -90,7 +90,7 @@ kongre tabloları · e-belge ve kargo modül tabloları (KARARLAR §1.3 §(10): 
 
 **Yönetici** (`src/app/(admin)/`)
 - ✅ Gösterge paneli — özet kartlar, kritik stok *(alacak tablosu, yaşlandırma, bayi kartları söküldü)*
-- ✅ İçe Aktarım (`/imports`, yalnız yönetici — D-6, X-16, 1B-7f1): Excel şablonu sistemden üretilir; doğrula → önizle (özet) → yaz; hatalı satır varken hiçbir kayıt yazılmaz; parti listesi ve geri alma. Bugün **cari** türü; ürün, fiyat listesi, açılış bakiyesi ve açılış stoğu 7f2/7f3.
+- ✅ İçe Aktarım (`/imports`, yalnız yönetici — D-6, X-16, 1B-7f1): Excel şablonu sistemden üretilir; doğrula → önizle (özet) → yaz; hatalı satır varken hiçbir kayıt yazılmaz; parti listesi ve geri alma. Türler: **cari**, **ürün**, **fiyat listesi**; açılış bakiyesi ve açılış stoğu 7f3.
 - ✅ Fiyat Listeleri (`/price-lists`, yalnız yönetici — X-10, 1B-7e1): liste oluşturma; satır (ürün, min. adet barem, liste fiyatı) ekleme/güncelleme/silme; denetim kaydı. Tarihli satırlar salt okunur.
 - ✅ Ürünler — liste / yeni / düzenle: ad, kod, **KDV oranı tanım tablosundan** (`taxRateId`), liste fiyatı (varsayılan fiyat listesine yazılır), başlangıç stoğu. *Taban fiyat alanı yok.*
 - ✅ Stok — giriş + hareketler (miktar hareketlerden türer — ADR-005) · **konsinye çıkış** (doktor başına konsinye konumu) ve **depoya transfer** (A-4, B-4, 1B-7d3); konsinyedeki mal listesi. Mali sonucu yok · **stok düzeltme** (B-7, 1B-7d4, yalnız yönetici): çok satır, ± fark, sebep + açıklama, tutanak no; müşavir stok dosyasında yıl içi düzeltme satırları

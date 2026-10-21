@@ -54,6 +54,8 @@ export const KURAL_METNI: Record<KuralKodu, (p: Parametreler) => string> = {
   URUN_BULUNAMADI: () => "Ürün bulunamadı.",
   URUN_PASIF: (p) => `${p.urun} pasif durumda.`,
   URUN_KODU_KAYITLI: () => "Bu ürün kodu zaten kullanılıyor.",
+  VERGI_ORANI_BULUNAMADI: () => "KDV oranı tanımlı değil.",
+  FIYAT_SATIRI_CAKISIYOR: () => "Bu listede aynı ürün ve min. adet için satır zaten var.",
   URUN_SIPARISTE_KULLANILDI: () =>
     "Bu ürün siparişlerde kullanıldığı için silinemez. Bunun yerine durumunu Pasif yapın.",
   FIYAT_COZUMLENEMEDI: (p) => `${p.urun} için fiyat çözümlenemedi.`,

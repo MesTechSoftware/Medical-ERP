@@ -7,6 +7,8 @@ import { sert, sonucOlustur, type Bildirim, type IslemSonucu, type KuralKodu } f
 import { XlsxHatasi, xlsxIlkSayfa } from "@/lib/xlsx-okuyucu";
 import { simdi, yerelGunMetni } from "@/lib/zaman";
 import { CARI_TANIMI } from "./cari";
+import { FIYAT_LISTESI_TANIMI } from "./fiyat-listesi";
+import { URUN_TANIMI } from "./urun";
 import type { IceAktarimTanimi, OzetSatiri, Satir } from "./tanim";
 
 /**
@@ -15,6 +17,8 @@ import type { IceAktarimTanimi, OzetSatiri, Satir } from "./tanim";
  */
 export const TANIMLAR: Partial<Record<ImportDataType, IceAktarimTanimi<unknown>>> = {
   CARI: CARI_TANIMI as IceAktarimTanimi<unknown>,
+  URUN: URUN_TANIMI as IceAktarimTanimi<unknown>,
+  FIYAT_LISTESI: FIYAT_LISTESI_TANIMI as IceAktarimTanimi<unknown>,
 };
 
 export type IceAktarimSonucu = IslemSonucu & {
