@@ -666,7 +666,7 @@ parametrelerini taşır. Koşullu `updateMany` kolonla birlikte gider; bu yüzde
 5. ✅ *(20.10.2026 — B-5-1, B-6-1, C-6-1, X-5-1, X-10-1)* **C-6 `hesaplaSatirTutarlari()`** + **B-5/B-6 `cozumleBirimFiyat()`** *(X-5 ham aritmetiğin iki adresi · `CM`'deki ilk sürüm burada tamamlanır: barem, tarih, X-4 `SERT` — X-10 §(3))*
 6. ✅ *(20.10.2026 — D-5-1, D-5-2, K-4-1)* **D-5 dışa aktarım + kütük**, **K-4 §(6) fatura hazırlık veri seti**
 7. ✅ *(21.10.2026 — 7a–7f, PR #39–#51)* **B-7 stok düzeltme**, **A-1…A-13 belge akışları** *(bayi dahil — X-8 §(4))*, **tek cari ekranı** *(`hesap_sinifi` süzgeci — X-8 §(5); **fiyat listesi ataması** — X-10 §(2)/(6), yalnız `YONETICI`)*, **fiyat listesi ekranı** *(başlık + satır; tarih ekranı Faz 2 — X-10 §(7))*, **D-6 import** *(`hesap_sinifi` zorunlu kolon; **ön koşul:** `import.azamiDosyaBoyutMb` değeri)* — **X-16 / ADR-006 sırası** *(13.10)*: cari girdi şeması (tek cari ekranı) → `CARI` tanımı → şablon üretici ve geliştirici komutu → önizleme özeti · küme kuralı bildirimleri ve üç koruma testi (`information_schema`, C8 deseni) · kabul kriteri taslakları `docs/arsiv/KARAR_ONERISI_2026-09-19.md` §10'dadır, testten önce `KABUL_KRITERLERI.md`'ye yazılır
-8. **F-02 (küçültülmüş)**, **F-03**, **F-05 + K-6 temizliği**, **F-06**, **F-07**, **F-10**, **F-12**
+8. ✅ *(21.10.2026 — bkz. "Madde 8" notu)* **F-02 (küçültülmüş)**, **F-03**, **F-05 + K-6 temizliği**, **F-06**, **F-07**, **F-10**, **F-12**
 9. **F-11 kabul senaryosu** — `KABUL_KRITERLERI.md`'ye göre **yeniden yazılmış** hâliyle *(§C-e)*
 10. **`TRACEABILITY.md` yeniden kurulur** — kod × test × **karar** *(X-7 §(5))*
 
@@ -990,6 +990,19 @@ bakiyesi (A-6) ve vade farkı (A-7) elle girişi.
   vade yalnız borçta (`VADE_YALNIZ_BORC`) · açılış stoğunda kayıtlı stok reddedilmez, `BILGI` sayılır.
 - Geliştirici komutu: `npm run sablon:uret -- <TÜR> [dosya.xlsx]` (ADR-006 §3).
 - **Madde 7f tamam — 1B madde 7 tamam** (7a–7f).
+
+**Madde 8 — F kalemleri (21.10.2026).** Çoğu önceki maddelerde fiilen kapandı; bu madde kapanışı doğrular ve
+kalan iki testi ekler:
+
+| Kalem | Durum | Nerede |
+|---|---|---|
+| F-02 | ✅ tek bakiye fonksiyonu `hesaplaDoktorBakiye(doktor, tarih?)`; ikinci fonksiyon yok | 1B-1 · `tek-cagri.test.ts` (K-2-4) |
+| F-03 | ✅ tahsilat iptali ters kayıt (7b); sevk edilmiş sipariş iptal edilemez, borç yalnız sevkiyatta doğduğu için sipariş iptalinde çevrilecek hareket yok | 1B-7b · `collections.itest.ts` |
+| F-05 + K-6 | ✅ kongre/bayi/prim dönemi modülleri C2–C5'te söküldü; kalan **24 kullanılmayan denetim kodu** katalogdan çıkarıldı (`audit.ts`) | bu madde |
+| F-06 | ✅ eşzamanlı iki sevkiyat: ikincisi kilitte bekler, eksiye düşüşü görür, izi (`NEGATIF_STOK` · `ONAY`) yalnız o siparişte | `sevkiyat.itest.ts` (yeni) · `stok.itest.ts` (B-4-4) |
+| F-07 | ✅ `createAuditLog(input, tx)` transaction parametresi zorunlu; kayıt yazılamazsa iş geri alınır | `audit.itest.ts` (X-3-3) |
+| F-10 | ✅ sevkiyat tek transaction (`sevkiyatYaz`, 7a) | `sevkiyat.itest.ts` |
+| F-12 | ✅ RULE-04: liste fiyatı sonradan değişse de satır ve sevkiyat borcu donmuş fiyattan (yeni test) · RULE-06: X-10-1 | `sevkiyat.itest.ts` · `fiyat.itest.ts` |
 
 ---
 
