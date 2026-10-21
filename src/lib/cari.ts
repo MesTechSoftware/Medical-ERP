@@ -130,40 +130,75 @@ function degisenAlanlar(once: Record<string, unknown>, sonra: Record<string, unk
   return Object.keys(sonra).filter((k) => s(once[k]) !== s(sonra[k]));
 }
 
+/** Yazılmaya hazır, denetlenmiş cari. */
+export type DenetlenmisCari = {
+  veri: ReturnType<typeof ortakDenetle>["veri"];
+  sinif: "DOKTOR" | "BAYI";
+  telefon: string;
+  sorumluSaticiId: string | null;
+};
+
+/**
+ * Cari açmanın satır kuralları — hiçbir şey yazmaz. Elle açma ve `CARI` içe aktarımı aynı denetimden
+ * geçer (X-16 §(1)); dosya içi tekillik içe aktarımın küme kuralıdır, burada yalnız veritabanına bakılır.
+ */
+export async function cariAcmaDenetle(
+  db: Prisma.TransactionClient,
+  girdi: CariAcmaGirdisi
+): Promise<{ hatalar: Bildirim[]; cari: DenetlenmisCari | null }> {
+  const v = CARI_ACMA_SEMASI.parse(girdi);
+  const hatalar: Bildirim[] = [];
+  if (!v.accountClass) hatalar.push(sert("ALAN_ZORUNLU", {}, "accountClass"));
+  // X-17 §(7), X-8 §(3): BAYI'nin sahibi olmaz; DOKTOR'un sahibi aktif SATICI olmalı.
+  if (v.accountClass === "BAYI" && v.sorumluSaticiId) hatalar.push(sert("BAYI_SAHIP_ATANAMAZ", {}, "ownerSellerId"));
+  else if (v.sorumluSaticiId) {
+    const s = await db.user.findUnique({ where: { id: v.sorumluSaticiId }, select: { role: true, isActive: true } });
+    if (!s || s.role !== "SATICI" || !s.isActive) hatalar.push(sert("SAHIP_AKTIF_SATICI_DEGIL", {}, "ownerSellerId"));
+  }
+  const { telefon, veri } = ortakDenetle(v, v.accountClass, hatalar);
+  await listeVarMi(db, veri.priceListId, hatalar);
+  if (telefon && (await db.doctor.findUnique({ where: { phoneNormalized: telefon }, select: { id: true } }))) {
+    hatalar.push(sert("TELEFON_KAYITLI", { telefon: v.phone.trim(), portfoyunuzde: 0 }, "phone"));
+  }
+  if (hatalar.length > 0 || !v.accountClass || !telefon) return { hatalar, cari: null };
+  return { hatalar, cari: { veri, sinif: v.accountClass, telefon, sorumluSaticiId: v.sorumluSaticiId } };
+}
+
+/** Denetlenmiş cariyi yazar: kayıt, sahiplik (tek yazma noktası, X-17 §(1)) ve denetim kaydı. */
+export async function cariAcmaYaz(
+  tx: Prisma.TransactionClient,
+  c: DenetlenmisCari,
+  yapan: { id: string; gerekce: string; partiId?: string }
+): Promise<{ id: string }> {
+  const cari = await tx.doctor.create({
+    data: { ...c.veri, accountClass: c.sinif, phoneNormalized: c.telefon, importBatchId: yapan.partiId ?? null },
+  });
+  if (c.sorumluSaticiId) {
+    const s = await degistirDoktorSahibi([cari.id], c.sorumluSaticiId, { metin: yapan.gerekce, yapanId: yapan.id }, tx);
+    if (s.durum === "HATA") throw new IsHatasi([sert(s.kuralKodu, {}, "ownerSellerId")]);
+  }
+  await createAuditLog(
+    {
+      actorId: yapan.id,
+      action: AUDIT_ACTIONS.DOCTOR_CREATE,
+      entityType: "Doctor",
+      entityId: cari.id,
+      after: { ...cari, degisenAlanlar: degisenAlanlar({}, c.veri) },
+    },
+    tx
+  );
+  return { id: cari.id };
+}
+
+/** Yöneticinin elle cari açması: denetle → yaz. */
 export async function cariAc(
   tx: Prisma.TransactionClient,
   girdi: CariAcmaGirdisi,
   yapanId: string
 ): Promise<{ id: string }> {
-  const v = CARI_ACMA_SEMASI.parse(girdi);
-  const hatalar: Bildirim[] = [];
-  if (!v.accountClass) hatalar.push(sert("ALAN_ZORUNLU", {}, "accountClass"));
-  // X-17 §(7), X-8 §(3): BAYI'nin sahibi olmaz.
-  if (v.accountClass === "BAYI" && v.sorumluSaticiId) hatalar.push(sert("BAYI_SAHIP_ATANAMAZ", {}, "ownerSellerId"));
-  const { telefon, veri } = ortakDenetle(v, v.accountClass, hatalar);
-  await listeVarMi(tx, veri.priceListId, hatalar);
-  if (telefon && (await tx.doctor.findUnique({ where: { phoneNormalized: telefon }, select: { id: true } }))) {
-    hatalar.push(sert("TELEFON_KAYITLI", { telefon: v.phone.trim(), portfoyunuzde: 0 }, "phone"));
-  }
-  if (hatalar.length > 0 || !v.accountClass || !telefon) throw new IsHatasi(hatalar);
-
-  const cari = await tx.doctor.create({ data: { ...veri, accountClass: v.accountClass, phoneNormalized: telefon } });
-  if (v.sorumluSaticiId) {
-    // Sahiplik tek yazma noktasından (X-17 §(1)); aktif SATICI değilse SERT.
-    const s = await degistirDoktorSahibi([cari.id], v.sorumluSaticiId, { metin: "İlk kayıt", yapanId }, tx);
-    if (s.durum === "HATA") throw new IsHatasi([sert(s.kuralKodu, {}, "ownerSellerId")]);
-  }
-  await createAuditLog(
-    {
-      actorId: yapanId,
-      action: AUDIT_ACTIONS.DOCTOR_CREATE,
-      entityType: "Doctor",
-      entityId: cari.id,
-      after: { ...cari, degisenAlanlar: degisenAlanlar({}, veri) },
-    },
-    tx
-  );
-  return { id: cari.id };
+  const { hatalar, cari } = await cariAcmaDenetle(tx, girdi);
+  if (!cari) throw new IsHatasi(hatalar);
+  return cariAcmaYaz(tx, cari, { id: yapanId, gerekce: "İlk kayıt" });
 }
 
 /** Düzeltme (X-16 §(9)): hesap sınıfı değişmez (X-17 §(2)), sahip devirle değişir (X-13 §(5)). */

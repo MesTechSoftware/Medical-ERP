@@ -81,7 +81,7 @@ export const policy = {
     girisKilitDakika: 10,
   },
   import: {
-    /** #22 — Kesin değer devreye almada; 1B madde 7 (D-6) öncesi dolar (E-3). */
-    azamiDosyaBoyutMb: null,
+    /** #22 — E-3 §(3): içe aktarım dosyasının azami boyutu. 1B-7f'de dolduruldu; devreye almada gözden geçirilir. */
+    azamiDosyaBoyutMb: 5,
   },
 } as const;

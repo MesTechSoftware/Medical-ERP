@@ -14,6 +14,7 @@ import {
   Download,
   ClipboardCheck,
   Tags,
+  Upload,
 } from "lucide-react";
 
 const navItems: NavItem[] = [
@@ -30,12 +31,13 @@ const navItems: NavItem[] = [
   { href: "/reports", label: "Raporlar", icon: BarChart3 },
   { href: "/audit-logs", label: "Audit Log", icon: ShieldCheck },
   { href: "/exports", label: "Dışa Aktarım", icon: Download },
+  { href: "/imports", label: "İçe Aktarım", icon: Upload },
 ];
 
 // D-2 17.10 eki: OPERASYON raporları ve denetim kaydını görmez; dışa aktarım yalnız YONETICI (D-5 §(4)).
 // Onay kararı yalnız YONETICI'nindir (A-8); OPERASYON bekleyen siparişi Kargo ekranında görür.
 // Menü yalnız görünümdür; yetki sayfanın kendi `requireAdmin()`'indedir.
-const YALNIZ_YONETICI = new Set(["/reports", "/audit-logs", "/exports", "/approvals", "/price-lists"]);
+const YALNIZ_YONETICI = new Set(["/reports", "/audit-logs", "/exports", "/approvals", "/price-lists", "/imports"]);
 
 export default async function AdminLayout({
   children,

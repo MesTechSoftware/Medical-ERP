@@ -97,6 +97,15 @@ export const KURAL_METNI: Record<KuralKodu, (p: Parametreler) => string> = {
     "Bu uyarı yalnız aynı gün ve aynı cari için yapılan nakit tahsilatları toplar; bir faturanın parça parça " +
     "tahsil edilmesi hâlindeki yükümlülüğü değerlendirmez.",
 
+  ICE_AKTARIM_DOSYA_GECERSIZ: (p) => `Dosya okunamadı: tek bir .xlsx dosyası, en fazla ${p.mb} MB olmalı.`,
+  ICE_AKTARIM_KOLON_EKSIK: (p) => `Zorunlu kolon eksik: "${p.kolon}". Şablonu yeniden indirin.`,
+  ICE_AKTARIM_KOLON_TANINMIYOR: (p) => `Tanınmayan kolon: "${p.kolon}". Şablonu yeniden indirin.`,
+  ICE_AKTARIM_BOS: () => "Dosyada başlık satırından sonra veri yok.",
+  ICE_AKTARIM_SATIR_HATALI: (p) => `${p.adet} satır hatalı; hiçbir kayıt yazılmadı. Hatalar düzeltilip dosya yeniden yüklenmeli.`,
+  DEGER_KATALOG_DISI: (p) => `"${p.deger}" geçerli bir değer değil; şablondaki listeden seçin.`,
+  PARTI_GERI_ALINAMAZ: () => "Partinin kayıtlarından en az biri bir belgeye bağlı; parti geri alınamaz. Düzeltme kayıt ekranından yapılır.",
+  PARTI_GERI_ALINMAZ_TUR: () => "Bu tür parti geri alınmaz; düzeltme ters kayıt ya da stok düzeltmesiyle yapılır.",
+  PARTI_ZATEN_GERI_ALINDI: () => "Bu parti zaten geri alınmış.",
   NEGATIF_STOK: (p) => `Stok yetersiz${p.urun ? ` (${p.urun})` : ""}: işlem sonrası stok ${p.sonra} adet olur.`,
   BEDELSIZ_ONAYI: (p) => `Bedelsiz satır (${p.urun}, ${BEDELSIZ_SEBEP_ADI[p.sebep as FreeReason] ?? p.sebep}) yönetici onayı gerektirir.`,
   NEGATIF_STOK_YONETICI_GEREKIR: (p) =>

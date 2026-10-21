@@ -952,6 +952,26 @@ bakiyesi (A-6) ve vade farkı (A-7) elle girişi.
 - Vade farkını yalnız `YONETICI` girer (A-7 rol söylemiyor; tutar doğuran elle hareket, vade değişikliğiyle aynı yetki).
 - **Madde 7e tamam** (7e1 fiyat listesi · 7e2 tek cari ekranı · 7e3 cari hareketler).
 
+**Madde 7f — bölünme (21.10.2026):** **7f1** altyapı + `CARI` · **7f2** `URUN` + `FIYAT_LISTESI` · **7f3**
+`ACILIS_BAKIYESI` + `ACILIS_STOGU`.
+
+**Madde 7f1 — D-6 içe aktarım altyapısı + `CARI` (21.10.2026, kriterler D-6-1, E-3-1, X-12-1, X-16-1).** Notlar (karar değil):
+
+- `src/lib/xlsx-okuyucu.ts` bağımlılıksız XLSX okuyucu (zip + deflate, paylaşılan/satır içi metin, ilk sayfa,
+  Excel satır numarası korunur, açılmış boyut sınırı). Yazıcı çok sayfalı kitap ve açılır liste (veri doğrulama)
+  üretir (`xlsxKitap`).
+- `src/lib/ice-aktarim/`: `tanim.ts` (ADR-006 §1 tanım tipi), `index.ts` (`calistirIceAktarim`, `sablonUret`,
+  `partiGeriAl`), `cari.ts` (`CARI_TANIMI`). `cariAc` ikiye ayrıldı: `cariAcmaDenetle` (yazmaz) + `cariAcmaYaz`;
+  ekran ve import aynı denetimi kullanır.
+- Ekran `/imports` (yalnız `YONETICI`): tür, şablon indir, dosya, "Doğrula ve önizle", özetin altında "Yaz";
+  partiler listesi ve geri alma. Dosya her aşamada yeniden gönderilir (saklanmaz, E-3 §(2)).
+- **Uygulama seçimleri:** `import.azamiDosyaBoyutMb = 5` (E-3 §(3) "belirlenir ve doldurulur"; devreye almada
+  gözden geçirilir; `next.config` server action gövde sınırı 6 MB) · **bütün türler yalnız `YONETICI`**
+  (X-16 §(6) yalnız `CARI`'yi yazıyor; diğerleri devreye alma aracı olduğundan en dar varsayılan, §0.6) · parti
+  numarası `TUR-YYYYAAGG-XXXXX` (A-14 kataloğuna önek eklenmedi) · kapalı katalog değerleri ASCII büyük harfe
+  çevrilir (`tr-TR` "Bayi"yi "BAYİ" yapardı) · katalog dışı değer `DEGER_KATALOG_DISI`.
+- Geri alma sahiplik izini de siler (X-17 §(10)); konsinye konumu olan cari belgeye bağlı sayılır.
+
 ---
 
 ### §D.5 · 1A'nın **yapmadıkları** — sınırı yazılı tutmak için

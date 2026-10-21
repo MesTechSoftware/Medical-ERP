@@ -48,7 +48,11 @@ function kolonAdi(n: number): string {
   return ad;
 }
 
-function sayfa(c: VeriSetiCiktisi): string {
+/** Kolonda açılır liste (Excel veri doğrulaması) — şablonun kapalı katalog kolonları (ADR-006 §3). */
+export type Dogrulama = { kolon: number; degerler: readonly string[] };
+export type XlsxSayfasi = VeriSetiCiktisi & { ad: string; dogrulamalar?: readonly Dogrulama[] };
+
+function sayfa(c: VeriSetiCiktisi, dogrulamalar: readonly Dogrulama[] = []): string {
   const sayiMi = c.kolonlar.map((k) => k.tip === "sayi");
   const metinHucre = (r: string, v: string) => `<c r="${r}" t="inlineStr"><is><t xml:space="preserve">${xml(v)}</t></is></c>`;
   const satir = (no: number, hucreler: string[]) => `<row r="${no}">${hucreler.join("")}</row>`;
@@ -63,37 +67,55 @@ function sayfa(c: VeriSetiCiktisi): string {
       })
     )
   );
+  const dv =
+    dogrulamalar.length === 0
+      ? ""
+      : `<dataValidations count="${dogrulamalar.length}">` +
+        dogrulamalar
+          .map((d) => {
+            const k = kolonAdi(d.kolon);
+            return `<dataValidation type="list" allowBlank="1" showErrorMessage="1" sqref="${k}2:${k}1048576"><formula1>"${xml(d.degerler.join(","))}"</formula1></dataValidation>`;
+          })
+          .join("") +
+        "</dataValidations>";
   return (
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
     '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
-    `<sheetData>${baslik}${govde.join("")}</sheetData></worksheet>`
+    `<sheetData>${baslik}${govde.join("")}</sheetData>${dv}</worksheet>`
   );
 }
 
-const PARCALAR = {
-  "[Content_Types].xml":
-    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
-    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
-    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
-    '<Default Extension="xml" ContentType="application/xml"/>' +
-    '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
-    '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
-    "</Types>",
-  "_rels/.rels":
-    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
-    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
-    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>' +
-    "</Relationships>",
-  "xl/workbook.xml":
-    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
-    '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
-    '<sheets><sheet name="Veri" sheetId="1" r:id="rId1"/></sheets></workbook>',
-  "xl/_rels/workbook.xml.rels":
-    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
-    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
-    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>' +
-    "</Relationships>",
-};
+function parcalar(adlar: readonly string[]): Record<string, string> {
+  const no = adlar.map((_, i) => i + 1);
+  return {
+    "[Content_Types].xml":
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+      '<Default Extension="xml" ContentType="application/xml"/>' +
+      '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+      no
+        .map((n) => `<Override PartName="/xl/worksheets/sheet${n}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`)
+        .join("") +
+      "</Types>",
+    "_rels/.rels":
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>' +
+      "</Relationships>",
+    "xl/workbook.xml":
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+      `<sheets>${adlar.map((ad, i) => `<sheet name="${xml(ad)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join("")}</sheets></workbook>`,
+    "xl/_rels/workbook.xml.rels":
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      no
+        .map((n) => `<Relationship Id="rId${n}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${n}.xml"/>`)
+        .join("") +
+      "</Relationships>",
+  };
+}
 
 /** Sıkıştırmasız (stored) ZIP. Tarih alanı sabittir (1980-01-01): aynı veri aynı baytı verir. */
 function zip(dosyalar: [ad: string, icerik: Buffer][]): Buffer {
@@ -139,11 +161,16 @@ function zip(dosyalar: [ad: string, icerik: Buffer][]): Buffer {
   return Buffer.concat([...yerel, merkezB, son]);
 }
 
-export function xlsxYaz(c: VeriSetiCiktisi): Buffer {
+/** Çok sayfalı kitap; ilk sayfa veri sayfasıdır (içe aktarım okuyucusu ilk sayfayı okur). */
+export function xlsxKitap(sayfalar: readonly XlsxSayfasi[]): Buffer {
   return zip([
-    ...Object.entries(PARCALAR).map(([ad, x]): [string, Buffer] => [ad, Buffer.from(x, "utf8")]),
-    ["xl/worksheets/sheet1.xml", Buffer.from(sayfa(c), "utf8")],
+    ...Object.entries(parcalar(sayfalar.map((s) => s.ad))).map(([ad, x]): [string, Buffer] => [ad, Buffer.from(x, "utf8")]),
+    ...sayfalar.map((s, i): [string, Buffer] => [`xl/worksheets/sheet${i + 1}.xml`, Buffer.from(sayfa(s, s.dogrulamalar), "utf8")]),
   ]);
+}
+
+export function xlsxYaz(c: VeriSetiCiktisi): Buffer {
+  return xlsxKitap([{ ...c, ad: "Veri" }]);
 }
 
 export const BICIM: Record<Bicim, { yaz: (c: VeriSetiCiktisi) => Buffer; mime: string; uzanti: string }> = {

@@ -38,6 +38,9 @@ const ACTION_YETKISI: Record<string, "requireAdmin" | "requireStaff" | "requireS
   "(admin)/doctors/actions.ts#updateCari": "requireAdmin", // X-16 §(9): düzeltme yolu
   "(admin)/doctors/actions.ts#addVadeFarki": "requireAdmin", // A-7: elle vade farkı
   "(admin)/doctors/actions.ts#reverseLedgerEntry": "requireAdmin", // X-16 §(10): ACL/VDF ters kaydı
+  "(admin)/imports/actions.ts#iceAktar": "requireAdmin", // X-16 §(6)
+  "(admin)/imports/actions.ts#sablonIndir": "requireAdmin",
+  "(admin)/imports/actions.ts#partiyiGeriAl": "requireAdmin", // X-12 §(3)
   "(admin)/price-lists/actions.ts#createPriceList": "requireAdmin", // X-10 §(6): fiyat tanımı
   "(admin)/price-lists/actions.ts#setPriceListItem": "requireAdmin",
   "(admin)/price-lists/actions.ts#deletePriceListItem": "requireAdmin",
@@ -57,6 +60,7 @@ const YALNIZ_YONETICI_SAYFALARI = [
   "(admin)/approvals/page.tsx",
   "(admin)/price-lists/page.tsx",
   "(admin)/doctors/new/page.tsx",
+  "(admin)/imports/page.tsx",
   "(admin)/doctors/[id]/edit/page.tsx",
   "(admin)/price-lists/[id]/page.tsx",
   "(admin)/products/new/page.tsx",
