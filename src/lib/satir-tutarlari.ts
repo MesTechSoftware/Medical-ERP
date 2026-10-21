@@ -132,3 +132,24 @@ export function hesaplaKomisyonTutari(tutar: ParaDegeri, oran: ParaDegeri): Deci
     .div(100)
     .toDecimalPlaces(2);
 }
+
+/**
+ * Açılış bakiyesi önizlemesinin toplamları (D-6 eki 24.09.2026): toplam borç, toplam alacak ve net
+ * (borç − alacak, mutlak değer + yön). Tutarlar brüttür ve zaten 2 hanedir; yuvarlanmaz. Aritmetik X-5 §(4) gereği buradadır.
+ */
+export function acilisToplamlari(satirlar: readonly { tutar: ParaDegeri; yon: "BORC" | "ALACAK" }[]): {
+  borc: Decimal;
+  alacak: Decimal;
+  /** Mutlak değer; yön ayrı (K-2: çıplak negatif gösterilmez). */
+  net: Decimal;
+  netYon: "BORC" | "ALACAK" | "KAPALI";
+} {
+  let borc = SIFIR;
+  let alacak = SIFIR;
+  for (const s of satirlar) {
+    if (s.yon === "BORC") borc = borc.plus(new D(s.tutar as Decimal.Value));
+    else alacak = alacak.plus(new D(s.tutar as Decimal.Value));
+  }
+  const fark = borc.minus(alacak);
+  return { borc, alacak, net: fark.abs(), netYon: fark.isZero() ? "KAPALI" : fark.isNegative() ? "ALACAK" : "BORC" };
+}

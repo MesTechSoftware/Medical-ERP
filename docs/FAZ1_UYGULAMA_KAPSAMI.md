@@ -665,7 +665,7 @@ parametrelerini taşır. Koşullu `updateMany` kolonla birlikte gider; bu yüzde
    **A-15** → **X-6 §(6) vade uyarısı**
 5. ✅ *(20.10.2026 — B-5-1, B-6-1, C-6-1, X-5-1, X-10-1)* **C-6 `hesaplaSatirTutarlari()`** + **B-5/B-6 `cozumleBirimFiyat()`** *(X-5 ham aritmetiğin iki adresi · `CM`'deki ilk sürüm burada tamamlanır: barem, tarih, X-4 `SERT` — X-10 §(3))*
 6. ✅ *(20.10.2026 — D-5-1, D-5-2, K-4-1)* **D-5 dışa aktarım + kütük**, **K-4 §(6) fatura hazırlık veri seti**
-7. **B-7 stok düzeltme**, **A-1…A-13 belge akışları** *(bayi dahil — X-8 §(4))*, **tek cari ekranı** *(`hesap_sinifi` süzgeci — X-8 §(5); **fiyat listesi ataması** — X-10 §(2)/(6), yalnız `YONETICI`)*, **fiyat listesi ekranı** *(başlık + satır; tarih ekranı Faz 2 — X-10 §(7))*, **D-6 import** *(`hesap_sinifi` zorunlu kolon; **ön koşul:** `import.azamiDosyaBoyutMb` değeri)* — **X-16 / ADR-006 sırası** *(13.10)*: cari girdi şeması (tek cari ekranı) → `CARI` tanımı → şablon üretici ve geliştirici komutu → önizleme özeti · küme kuralı bildirimleri ve üç koruma testi (`information_schema`, C8 deseni) · kabul kriteri taslakları `docs/arsiv/KARAR_ONERISI_2026-09-19.md` §10'dadır, testten önce `KABUL_KRITERLERI.md`'ye yazılır
+7. ✅ *(21.10.2026 — 7a–7f, PR #39–#51)* **B-7 stok düzeltme**, **A-1…A-13 belge akışları** *(bayi dahil — X-8 §(4))*, **tek cari ekranı** *(`hesap_sinifi` süzgeci — X-8 §(5); **fiyat listesi ataması** — X-10 §(2)/(6), yalnız `YONETICI`)*, **fiyat listesi ekranı** *(başlık + satır; tarih ekranı Faz 2 — X-10 §(7))*, **D-6 import** *(`hesap_sinifi` zorunlu kolon; **ön koşul:** `import.azamiDosyaBoyutMb` değeri)* — **X-16 / ADR-006 sırası** *(13.10)*: cari girdi şeması (tek cari ekranı) → `CARI` tanımı → şablon üretici ve geliştirici komutu → önizleme özeti · küme kuralı bildirimleri ve üç koruma testi (`information_schema`, C8 deseni) · kabul kriteri taslakları `docs/arsiv/KARAR_ONERISI_2026-09-19.md` §10'dadır, testten önce `KABUL_KRITERLERI.md`'ye yazılır
 8. **F-02 (küçültülmüş)**, **F-03**, **F-05 + K-6 temizliği**, **F-06**, **F-07**, **F-10**, **F-12**
 9. **F-11 kabul senaryosu** — `KABUL_KRITERLERI.md`'ye göre **yeniden yazılmış** hâliyle *(§C-e)*
 10. **`TRACEABILITY.md` yeniden kurulur** — kod × test × **karar** *(X-7 §(5))*
@@ -980,6 +980,16 @@ bakiyesi (A-6) ve vade farkı (A-7) elle girişi.
 - Liste ekranı mevcut satırı **günceller**; içe aktarım yalnız **açar** (X-16 §(9)) — fark denetimin `mevcutId`
   çıktısındadır, kural aynıdır.
 - `URUN` partisi ürünle birlikte açılan varsayılan liste satırını da taşır; geri almada ikisi birlikte silinir.
+
+**Madde 7f3 — `ACILIS_BAKIYESI` + `ACILIS_STOGU` (21.10.2026, kriterler A-6-1, D-6-2, B-4-6).** Notlar (karar değil):
+
+- `cari-hareket.ts` `acilisHareketiYaz` (`ACL`); açılış stoğu `stokHareketiYaz`'dan geçer. Önizleme toplamları
+  `satir-tutarlari.ts` `acilisToplamlari` (X-5 §(4) — ham aritmetik bu dosyada).
+- **Uygulama seçimleri:** açılış bakiyesinde cari **telefonla** bulunur (tek tekil iş anahtarı, X-15 §(2); muhasebe
+  kodu tekil değil) · A-6 "tek hareket": carinin ters kayıtla çevrilmemiş açılışı varsa yenisi reddedilir ·
+  vade yalnız borçta (`VADE_YALNIZ_BORC`) · açılış stoğunda kayıtlı stok reddedilmez, `BILGI` sayılır.
+- Geliştirici komutu: `npm run sablon:uret -- <TÜR> [dosya.xlsx]` (ADR-006 §3).
+- **Madde 7f tamam — 1B madde 7 tamam** (7a–7f).
 
 ---
 

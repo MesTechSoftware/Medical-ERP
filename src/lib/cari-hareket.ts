@@ -71,6 +71,30 @@ export async function vadeFarkiYaz(
   });
 }
 
+/**
+ * `ACILIS` — A-6: carinin tek açılış hareketi; iki yön de olabilir (avanslı açılış alacaktır). Kaynaksızdır,
+ * numarasını kendisi alır (`ACL`, A-14 §(8)). Vade yalnız borçta (A-7, nullable). Yalnız içe aktarımla
+ * yazılır (X-16 §(1)); düzeltmesi ters kayıttır (X-16 §(10)).
+ */
+export async function acilisHareketiYaz(
+  tx: Tx,
+  g: { doctorId: string; tutar: Decimal; yon: LedgerDirection; vade: Date | null; yapanId: string; partiId: string }
+) {
+  const documentNo = await uretBelgeNo("ACL", tx);
+  return tx.ledgerEntry.create({
+    data: {
+      doctorId: g.doctorId,
+      type: "ACILIS",
+      direction: g.yon,
+      amount: g.tutar,
+      dueDate: g.vade,
+      documentNo,
+      importBatchId: g.partiId,
+      createdById: g.yapanId,
+    },
+  });
+}
+
 /** `TAHSILAT` — A-11: yönü tahsilattan; tutar brüt tahsil edilen tutardır, komisyon cariye dokunmaz. */
 export function tahsilatHareketiYaz(
   tx: Tx,
