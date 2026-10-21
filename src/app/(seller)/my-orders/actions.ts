@@ -2,40 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireSeller } from "@/lib/session";
-import { priceSchema, quantitySchema } from "@/lib/validation";
-import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
-import { cozumleBirimFiyat } from "@/lib/fiyat";
-import { uretBelgeNo } from "@/lib/belge-no";
 import { canSellerOrderForDoctor, kapsamliDoktorlariGetir } from "@/lib/doctor";
-import { policy } from "@/lib/policy";
-import { siparisSahibiniKilitle } from "@/lib/sahiplik";
 import { IsHatasi } from "@/lib/hata";
-import { BEDELSIZ_ONAY_GEREKIR, blokKontrolleriniCalistir, type BlokIhlali } from "@/lib/onay-blogu";
-import { engel, sert, yumusak, type Bildirim, type IslemSonucu } from "@/lib/sonuc";
-import { bugun } from "@/lib/zaman";
+import { siparisAc, siparisSatirlariniOku } from "@/lib/siparis-giris";
+import { engel, type IslemSonucu } from "@/lib/sonuc";
 
-const orderLinesSchema = z
-  .array(
-    z.object({
-      productId: z.string().min(1),
-      quantity: quantitySchema,
-      // Satıcı birim fiyatı değiştirebilir (FR-12, X-5 §(9) `birim_fiyat`).
-      // Daima NET (KDV hariç), ham ondalık metin olarak gelir (X-5 §(6)).
-      // Girilmezse liste fiyatı kullanılır (X-5 §(9)).
-      birimFiyat: priceSchema.optional(),
-      // A-2: bedelsiz satır — sebep kapalı katalogdan; DIGER'de açıklama zorunlu (A-2 eki 20.10.2026).
-      bedelsiz: z
-        .object({
-          sebep: z.enum(["NUMUNE", "PROMOSYON", "MAL_FAZLASI", "DIGER"]),
-          aciklama: z.string().trim().max(200).optional(),
-        })
-        .optional(),
-    })
-  )
-  .min(1);
 
 export async function createOrder(
   _prev: unknown,
@@ -59,123 +32,18 @@ export async function createOrder(
   const ownership = canSellerOrderForDoctor(sellerId, doctor);
   if (!ownership.allowed) return engel(ownership.kuralKodu, {}, "doctorId");
 
-  let raw: unknown;
-  try {
-    raw = JSON.parse((formData.get("items") as string) || "[]");
-  } catch (e) {
-    // Bozuk form girdisi iş hatasıdır; başka hata teknik hatadır (X-3 §(4)).
-    if (e instanceof SyntaxError) return engel("SIPARIS_KALEMI_GECERSIZ");
-    throw e;
-  }
-
-  const parsedLines = orderLinesSchema.safeParse(raw);
-  if (!parsedLines.success) return engel("SIPARIS_KALEMI_GECERSIZ");
-  const lines = parsedLines.data;
-  if (lines.some((l) => l.bedelsiz?.sebep === "DIGER" && !l.bedelsiz.aciklama)) {
-    return engel("BEDELSIZ_ACIKLAMA_ZORUNLU");
-  }
-  const gerekce = ((formData.get("gerekce") as string) || "").trim() || null;
-  const gun = bugun();
-  let onayaGonderildi = false;
+  const okunan = siparisSatirlariniOku(formData.get("items") as string | null);
+  if ("hata" in okunan) return okunan.hata;
 
   try {
-    await prisma.$transaction(async (tx) => {
-      // Kilit sırası: doktor satırı → belge sayacı (ADR-008 §(1)); stok yazılmadığı için ürün kilidi yok.
-      // Sahip kilit altında yeniden okunur: arada devir tamamlandıysa sipariş
-      // reddedilir; satıcı alanı sipariş anındaki sahiptir (X-17 §(8), X-13 §(3)).
-      const sahip = await siparisSahibiniKilitle(tx, doctorId, sellerId);
-      if (sahip.durum === "HATA") throw new IsHatasi([sert(sahip.kuralKodu)]);
-      const items = [];
-      const ihlaller: BlokIhlali[] = [];
-      // Kalem hataları toplanır, hepsi birlikte döner (X-4 §(7)).
-      const hatalar: Bildirim[] = [];
-      for (const line of lines) {
-        const product = await tx.product.findUnique({
-          where: { id: line.productId },
-          select: { id: true, name: true, status: true, taxRate: { select: { rate: true } } },
-        });
-        if (!product) {
-          hatalar.push(sert("URUN_BULUNAMADI"));
-          continue;
-        }
-        if (product.status !== "AKTIF") {
-          hatalar.push(sert("URUN_PASIF", { urun: product.name }));
-          continue;
-        }
-
-        // Liste fiyatı tek yoldan çözülür; atanmış listede satır yoksa varsayılana
-        // düşülmez (X-10 §(3)) — `SERT`, satır kaydedilemez (X-4 §(4)). Satıcının
-        // girdiği fiyat ayrıca saklanır (X-5 §(9)).
-        // Barem satırın miktarına, geçerlilik siparişin gününe bakar (B-5, B-6).
-        const fiyat = await cozumleBirimFiyat(product.id, doctor.id, { miktar: line.quantity, gun }, tx);
-        if (fiyat.durum === "HATA") {
-          hatalar.push(sert("FIYAT_COZUMLENEMEDI", { urun: product.name }));
-          continue;
-        }
-
-        // RULE-03 taban fiyat reddi C6'da söküldü: iskonto tavanı yok, liste üstü
-        // satış serbest (GÇ-8, A-10 · Ü-3 §(10)). Taban etiketi 1B'de gelir.
-
-        // Fiyat ve oran sipariş anında DONDURULUR (RULE-04, C-6 §(2-a)). Bedelsiz satırın
-        // liste fiyatı görünür kalır, tutarı 0'dır (A-2, C-6 §(8)).
-        items.push({
-          productId: product.id,
-          quantity: line.quantity,
-          listPrice: fiyat.listeFiyat,
-          unitPrice: line.bedelsiz ? "0" : (line.birimFiyat ?? fiyat.listeFiyat),
-          vatRate: product.taxRate.rate,
-          isFree: !!line.bedelsiz,
-          freeReason: line.bedelsiz?.sebep ?? null,
-          freeNote: line.bedelsiz?.aciklama || null,
-        });
-        if (line.bedelsiz && BEDELSIZ_ONAY_GEREKIR[line.bedelsiz.sebep]) {
-          ihlaller.push({ kuralKodu: "BEDELSIZ_ONAYI", parametreler: { urun: product.name, sebep: line.bedelsiz.sebep } });
-        }
-      }
-      if (hatalar.length > 0) throw new IsHatasi(hatalar);
-
-      const documentNo = await uretBelgeNo("SIP", tx);
-      const order = await tx.order.create({
-        data: {
-          documentNo,
-          sellerId,
-          doctorId,
-          // Bugünkü akış onaylı sipariş açar; teklif aşaması 1B madde 7'dedir (A-5).
-          stage: "ONAYLI",
-          status: "BEKLIYOR",
-          // Vade tarihi cari harekettedir (X-11 §(4)); siparişte gün sayısı durur (A-7).
-          paymentTermDays: doctor.paymentTermDays ?? policy.finance.odemeVadesiGunVarsayilan,
-          items: { create: items },
-        },
-      });
-
-      // A-8 · A-2 eki: onay isteyen bedelsiz satır siparişe blok açar; sipariş kaydolur, onaylanmadan
-      // sevk edilemez. Gerekçesiz gönderimde hiçbir şey yazılmaz (diyalog).
-      const blok = await blokKontrolleriniCalistir(tx, {
-        belgeTipi: "SIP",
-        belgeId: order.id,
-        ihlaller,
+    await prisma.$transaction((tx) =>
+      siparisAc(tx, {
+        doktorId: doctorId,
+        satirlar: okunan.satirlar,
+        gerekce: ((formData.get("gerekce") as string) || "").trim() || null,
         yapan: { id: sellerId, rol: session.user.role },
-        gerekce,
-      });
-      if (blok.durum === "ONAY_GEREKLI") {
-        throw new IsHatasi(blok.ihlaller.map((i) => yumusak(i.kuralKodu, i.parametreler)));
-      }
-      onayaGonderildi = blok.durum === "BASARILI_UYARILI" && blok.onayaGonderildi;
-
-      // Stok sipariş anında düşmez; çıkış sevkiyatta doğar (A-3, `sevkiyatYaz()`).
-
-      await createAuditLog(
-        {
-          actorId: sellerId,
-          action: AUDIT_ACTIONS.ORDER_CREATE,
-          entityType: "Order",
-          entityId: order.id,
-          after: { documentNo, doctorId, doctorName: doctor.fullName, itemCount: lines.length, onayaGonderildi },
-        },
-        tx
-      );
-    });
+      })
+    );
   } catch (e) {
     // Yalnız iş hatası sonuca döner; teknik hata hata sınırına düşer (X-3 §(2)/(4), X-4 §(2)).
     if (e instanceof IsHatasi) return e.sonuc;

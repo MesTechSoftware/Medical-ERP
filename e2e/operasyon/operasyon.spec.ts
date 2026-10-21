@@ -106,3 +106,20 @@ test("stoksuz sevkiyatta gerekçe siparişi onaya gönderir; sevkiyat yazılmaz 
   await page.reload();
   await expect(page.locator("div.rounded-lg.border").filter({ hasText: s.doktorAdi }).getByText("Onay bekliyor")).toBeVisible();
 });
+
+test("bayiye sipariş girer; sipariş satıcısız açılır (X-8-3, D-2 §(1))", async ({ page }) => {
+  const ek = `${Date.now()}`.slice(-7);
+  const ad = `E2E Bayi Sip ${ek}`;
+  await sorgu(
+    `INSERT INTO "Doctor" (id, "accountClass", "fullName", "phoneNormalized", "partyType", status)
+     VALUES ($1, 'BAYI', $2, $3, 'TUZEL_KISI', 'AKTIF')`,
+    [`e2e-bayi-${ek}`, ad, `+90537${ek}`]
+  );
+  await page.goto("/orders/new");
+  await page.getByLabel("Doktor").selectOption({ label: `[Bayi] ${ad}` });
+  await page.getByLabel("Ürün").selectOption({ index: 1 });
+  await page.getByRole("button", { name: "Siparişi Oluştur" }).click();
+  await expect(page).toHaveURL(/\/orders\/(?!new$)[^/]+$/);
+  const [o] = await sorgu<{ sellerId: string | null }>(`SELECT "sellerId" FROM "Order" WHERE "doctorId" = $1`, [`e2e-bayi-${ek}`]);
+  expect(o.sellerId).toBeNull();
+});

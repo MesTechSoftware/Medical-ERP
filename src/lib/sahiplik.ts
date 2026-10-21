@@ -101,6 +101,22 @@ export async function siparisSahibiniKilitle(
 }
 
 /**
+ * Personelin girdiği sipariş (D-2 §(1), X-8 §(4)): cari kilitlenir ve satıcı **sipariş anındaki
+ * sahiptir** (X-13 §(3)). `DOKTOR` sahipsizse sipariş girilmez; `BAYI`'nin satıcısı olmaz (X-8 §(3)).
+ */
+export async function personelSiparisSaticisi(
+  tx: Prisma.TransactionClient,
+  doktorId: string
+): Promise<{ durum: "TAMAM"; saticiId: string | null } | { durum: "HATA"; kuralKodu: "DOKTOR_SAHIPSIZ" | "DOKTOR_PASIF" | "DOKTOR_KAPSAM_DISI" }> {
+  await doktorKilitle(tx, [doktorId]);
+  const d = await tx.doctor.findUnique({ where: { id: doktorId }, select: { accountClass: true, ownerSellerId: true, status: true } });
+  if (!d) return { durum: "HATA", kuralKodu: "DOKTOR_KAPSAM_DISI" };
+  if (d.status !== "AKTIF") return { durum: "HATA", kuralKodu: "DOKTOR_PASIF" };
+  if (d.accountClass === "BAYI") return { durum: "TAMAM", saticiId: null };
+  return d.ownerSellerId ? { durum: "TAMAM", saticiId: d.ownerSellerId } : { durum: "HATA", kuralKodu: "DOKTOR_SAHIPSIZ" };
+}
+
+/**
  * Pasifleştirilen satıcının portföyü (X-17 §(5)): bütün doktorları tek bir aktif satıcıya
  * devredilir ya da sahipsiz bırakılır. Hedefi yönetici seçer; otomatik devir yoktur.
  */

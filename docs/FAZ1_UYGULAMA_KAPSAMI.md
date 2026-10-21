@@ -1004,6 +1004,16 @@ kalan iki testi ekler:
 | F-10 | ✅ sevkiyat tek transaction (`sevkiyatYaz`, 7a) | `sevkiyat.itest.ts` |
 | F-12 | ✅ RULE-04: liste fiyatı sonradan değişse de satır ve sevkiyat borcu donmuş fiyattan (yeni test) · RULE-06: X-10-1 | `sevkiyat.itest.ts` · `fiyat.itest.ts` |
 
+**Madde 8 eki — personel sipariş girişi (21.10.2026, kriter X-8-3).** Kabul senaryosu hazırlanırken bulunan boşluk:
+yönetim tarafında sipariş girişi yoktu, **bayi siparişi hiç girilemiyordu** (X-8 §(4) bayi siparişi `SIP`; D-2 §(1)
+`OPERASYON` sipariş girer). Notlar (karar değil):
+
+- `src/lib/siparis-giris.ts` `siparisAc` + `siparisSatirlariniOku` + `siparisFormuUrunleri`: satıcı ve personel
+  ekranının ortak yolu (createOrder'ın gövdesi taşındı). Personel yolunda satıcı `personelSiparisSaticisi()`
+  (`sahiplik.ts`, doktor satırı kilidi) ile sipariş anındaki sahiptir (X-13 §(3)).
+- `/orders/new` (`YONETICI` + `OPERASYON`), Siparişler listesinde "Yeni Sipariş". Form satıcı formunun aynısıdır
+  (`OrderForm` `action` alır); bayi seçenekleri "[Bayi]" etiketiyle.
+
 ---
 
 ### §D.5 · 1A'nın **yapmadıkları** — sınırı yazılı tutmak için

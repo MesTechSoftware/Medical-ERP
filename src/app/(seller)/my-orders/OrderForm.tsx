@@ -4,13 +4,13 @@ import Link from "next/link";
 import { startTransition, useActionState, useMemo, useState } from "react";
 import { SubmitButton } from "@/components/form";
 import { SonucGosterimi, type SonucDurumu } from "@/components/Sonuc";
+import type { IslemSonucu } from "@/lib/sonuc";
 import { Tutar } from "@/components/Tutar";
 import { MATRAH, SATIR_TABANI, tabanli } from "@/lib/taban";
 import { formatla, paraOku } from "@/lib/money";
 import { hesaplaSatirTutarlari } from "@/lib/satir-tutarlari";
 import { BEDELSIZ_SEBEP_ADI } from "@/lib/sozluk";
 import type { FreeReason } from "@/generated/prisma/enums";
-import { createOrder } from "./actions";
 
 type Product = {
   id: string;
@@ -45,11 +45,16 @@ export type DoctorOption = {
 export default function OrderForm({
   products,
   doctors,
+  action,
+  iptalHref = "/my-orders",
 }: {
   products: Product[];
   doctors: DoctorOption[];
+  /** Satıcı ekranı `createOrder`, personel ekranı `createStaffOrder` (aynı `siparisAc` yolu). */
+  action: (prev: SonucDurumu, formData: FormData) => Promise<IslemSonucu>;
+  iptalHref?: string;
 }) {
-  const [state, formAction, gonderiliyor] = useActionState<SonucDurumu, FormData>(createOrder, null);
+  const [state, formAction, gonderiliyor] = useActionState<SonucDurumu, FormData>(action, null);
   const [rows, setRows] = useState<Row[]>([{ key: 1, ...YENI_SATIR }]);
   const [doctorId, setDoctorId] = useState("");
 
@@ -362,7 +367,7 @@ export default function OrderForm({
           Siparişi Oluştur
         </SubmitButton>
         <Link
-          href="/my-orders"
+          href={iptalHref}
           className="text-sm font-medium text-slate-600 hover:text-slate-900"
         >
           İptal

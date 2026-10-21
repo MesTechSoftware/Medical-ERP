@@ -2,7 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
 import { formatDate } from "@/lib/format";
-import { PageHeader, Card, StatusBadge, EmptyRow } from "@/components/ui";
+import { PageHeader, Card, StatusBadge, EmptyRow, LinkButton } from "@/components/ui";
 import Pagination from "@/components/Pagination";
 import { getPagination, pageCount } from "@/lib/pagination";
 import { OrderStatus } from "@/generated/prisma/enums";
@@ -52,7 +52,8 @@ export default async function OrdersPage({
     <div>
       <PageHeader
         title="Siparişler"
-        description="Tüm satıcı siparişleri ve durum yönetimi"
+        description="Doktor ve bayi siparişleri, durum yönetimi"
+        action={<LinkButton href="/orders/new">Yeni Sipariş</LinkButton>}
       />
 
       <div className="mb-4 flex flex-wrap gap-2">
