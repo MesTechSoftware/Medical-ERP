@@ -2,6 +2,7 @@ import type Decimal from "decimal.js";
 
 import type { Prisma } from "@/generated/prisma/client";
 import type { LedgerDirection } from "@/generated/prisma/enums";
+import { uretBelgeNo } from "@/lib/belge-no";
 
 /**
  * Cari hareketin TEK yazım yolu — X-11. Belge ve hareket aynı transaction'da yazılır (§(5));
@@ -43,6 +44,28 @@ export function iadeHareketiYaz(
       amount: g.tutar,
       documentNo: g.documentNo,
       returnNoteId: g.returnNoteId,
+      createdById: g.yapanId,
+    },
+  });
+}
+
+/**
+ * `VADE_FARKI` · `BORC` — A-7: yalnız elle girilir, otomatik hesaplanmaz. Kaynaksızdır; numarasını
+ * kendisi alır (`VDF`, A-14 §(8)). Borç doğurduğu için vade taşır. KDV kırılımı yoktur (C-6 §(9)).
+ */
+export async function vadeFarkiYaz(
+  tx: Tx,
+  g: { doctorId: string; tutar: Decimal; vade: Date; yapanId: string }
+) {
+  const documentNo = await uretBelgeNo("VDF", tx);
+  return tx.ledgerEntry.create({
+    data: {
+      doctorId: g.doctorId,
+      type: "VADE_FARKI",
+      direction: "BORC",
+      amount: g.tutar,
+      dueDate: g.vade,
+      documentNo,
       createdById: g.yapanId,
     },
   });

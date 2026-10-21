@@ -36,6 +36,8 @@ const ACTION_YETKISI: Record<string, "requireAdmin" | "requireStaff" | "requireS
   "(admin)/approvals/actions.ts#blokKarari": "requireAdmin", // A-8: karar yetkisi yönetici
   "(admin)/doctors/actions.ts#createCari": "requireAdmin", // X-8 §(5): BAYI dahil cari açma yöneticide
   "(admin)/doctors/actions.ts#updateCari": "requireAdmin", // X-16 §(9): düzeltme yolu
+  "(admin)/doctors/actions.ts#addVadeFarki": "requireAdmin", // A-7: elle vade farkı
+  "(admin)/doctors/actions.ts#reverseLedgerEntry": "requireAdmin", // X-16 §(10): ACL/VDF ters kaydı
   "(admin)/price-lists/actions.ts#createPriceList": "requireAdmin", // X-10 §(6): fiyat tanımı
   "(admin)/price-lists/actions.ts#setPriceListItem": "requireAdmin",
   "(admin)/price-lists/actions.ts#deletePriceListItem": "requireAdmin",

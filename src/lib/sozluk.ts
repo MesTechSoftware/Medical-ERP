@@ -79,6 +79,9 @@ export const KURAL_METNI: Record<KuralKodu, (p: Parametreler) => string> = {
   TAHSILAT_ZATEN_IPTAL: () => "Bu tahsilat zaten iptal.",
   CARI_HAREKET_BULUNAMADI: () => "Cari hareket bulunamadı.",
   VADE_YALNIZ_BORC: () => "Vade yalnız borç hareketinde değişir.",
+  TERS_KAYIT_UYGUN_DEGIL: () =>
+    "Elle ters kayıt yalnız açılış ve vade farkı hareketinde yapılır; diğer hareketler kendi belgesiyle düzeltilir (iade, tahsilat iptali).",
+  TERS_KAYIT_VAR: () => "Bu hareket zaten ters kayıtla çevrilmiş.",
   // X-6 §(6)/(7): tutar değil varlık; tahsilat borçlarla eşleştirilmez (20.10 eki).
   VADESI_GECMIS_HAREKET: (p) =>
     `Vadesi geçmiş hareket var; en eski vade ${String(p.enEskiVade).split("-").reverse().join(".")}. ` +
