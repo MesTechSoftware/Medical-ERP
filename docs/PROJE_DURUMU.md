@@ -106,7 +106,7 @@ kongre tabloları · e-belge ve kargo modül tabloları (KARARLAR §1.3 §(10): 
 - ❌ Primler · Kongreler · Bayiler · Bayi sevkiyat — **söküldü** (C2, C4, C5). Yeni hakediş (sevkiyat satırına donmuş oran) raporda — 1B madde 3c; oran sevkiyat satırına donar (1B-7a); kongre Faz 3+ modül; bayi = `Doctor` satırı (1B madde 7)
 
 **Satıcı** (`src/app/(seller)/`)
-- ✅ Siparişlerim — liste / yeni / detay; fiyat girişi KDV hariç, tek fiyat yolu `cozumleBirimFiyat()`
+- ✅ Siparişlerim — liste / yeni / detay; fiyat girişi KDV hariç, tek fiyat yolu `cozumleBirimFiyat()` (fiyat boş bırakılırsa carinin atanmış listesinden — 1B-9 düzeltmesi)
 - ✅ Doktorlarım — liste / yeni / düzenle (yalnız kendi portföyü)
 - ✅ Hesabım — doktor sayısı + ortalama iskonto
 - ✅ Raporum — kendi dönem cirosu, hakedişi, tahsilatı (D-2 §(1); kısıt sorguda)

@@ -667,7 +667,7 @@ parametrelerini taşır. Koşullu `updateMany` kolonla birlikte gider; bu yüzde
 6. ✅ *(20.10.2026 — D-5-1, D-5-2, K-4-1)* **D-5 dışa aktarım + kütük**, **K-4 §(6) fatura hazırlık veri seti**
 7. ✅ *(21.10.2026 — 7a–7f, PR #39–#51)* **B-7 stok düzeltme**, **A-1…A-13 belge akışları** *(bayi dahil — X-8 §(4))*, **tek cari ekranı** *(`hesap_sinifi` süzgeci — X-8 §(5); **fiyat listesi ataması** — X-10 §(2)/(6), yalnız `YONETICI`)*, **fiyat listesi ekranı** *(başlık + satır; tarih ekranı Faz 2 — X-10 §(7))*, **D-6 import** *(`hesap_sinifi` zorunlu kolon; **ön koşul:** `import.azamiDosyaBoyutMb` değeri)* — **X-16 / ADR-006 sırası** *(13.10)*: cari girdi şeması (tek cari ekranı) → `CARI` tanımı → şablon üretici ve geliştirici komutu → önizleme özeti · küme kuralı bildirimleri ve üç koruma testi (`information_schema`, C8 deseni) · kabul kriteri taslakları `docs/arsiv/KARAR_ONERISI_2026-09-19.md` §10'dadır, testten önce `KABUL_KRITERLERI.md`'ye yazılır
 8. ✅ *(21.10.2026 — bkz. "Madde 8" notu)* **F-02 (küçültülmüş)**, **F-03**, **F-05 + K-6 temizliği**, **F-06**, **F-07**, **F-10**, **F-12**
-9. **F-11 kabul senaryosu** — `KABUL_KRITERLERI.md`'ye göre **yeniden yazılmış** hâliyle *(§C-e)*
+9. ✅ *(21.10.2026 — `e2e/admin/kabul-senaryosu.spec.ts`)* **F-11 kabul senaryosu** — `KABUL_KRITERLERI.md`'ye göre **yeniden yazılmış** hâliyle *(§C-e)*
 10. **`TRACEABILITY.md` yeniden kurulur** — kod × test × **karar** *(X-7 §(5))*
 
 **1B çıkış kriteri:** `YOL_HARITASI.md` §3 Faz 1 çıkış listesi.
@@ -791,6 +791,10 @@ Bunlar **karar değil**, Yol (b)'nin doğurduğu uygulama kalemleridir; 1B madde
 - **Bilinen sınır:** sipariş formunun önizlemesi varsayılan listenin 1 adetlik fiyatını gösterir; carinin atanmış
   listesi ve barem sunucuda uygulanır, kayıtta donan değer doğrudur. Önizlemenin cari/bareme göre çözülmesi liste
   ekranı ve cari ataması ile (1B-7) gelir — bugün barem ve atanmış liste verisi yalnız import/ekranla girebilir.
+  *21.10.2026 — düzeltme (1B-9):* "kayıtta donan değer doğrudur" yalnız liste fiyatı için doğruydu. Form, fiyat
+  boş bırakılınca önizlemenin **varsayılan liste** fiyatını birim fiyat olarak gönderiyordu; atanmış listesi olan
+  carinin birim fiyatı varsayılan listeden donuyordu. Kabul senaryosu yakaladı; form artık yalnız elle girilen
+  fiyatı gönderir, boşta sunucu carinin listesini çözer. Önizlemenin kendisi hâlâ varsayılan listeyi gösterir.
 
 **Madde 6a — D-5 dışa aktarım + kütük (20.10.2026, kriterler D-5-1, D-5-2).** Notlar (karar değil):
 
@@ -1003,6 +1007,15 @@ kalan iki testi ekler:
 | F-07 | ✅ `createAuditLog(input, tx)` transaction parametresi zorunlu; kayıt yazılamazsa iş geri alınır | `audit.itest.ts` (X-3-3) |
 | F-10 | ✅ sevkiyat tek transaction (`sevkiyatYaz`, 7a) | `sevkiyat.itest.ts` |
 | F-12 | ✅ RULE-04: liste fiyatı sonradan değişse de satır ve sevkiyat borcu donmuş fiyattan (yeni test) · RULE-06: X-10-1 | `sevkiyat.itest.ts` · `fiyat.itest.ts` |
+
+**Madde 9 — F-11 kabul senaryosu (21.10.2026).** Tek e2e testi (`e2e/admin/kabul-senaryosu.spec.ts`), her
+koşuda CI'da. Eski PRD senaryosu geri çekilen mekanizmalara dayanıyordu (tahsilat bazlı prim, kongre, bayi paneli,
+sipariş anında stok düşümü); yenisi bugünkü kurallarla: ürün + stok → satıcı A ve doktoru → B'nin aynı telefonla
+reddi → 700 × 850 sipariş (714.000) → kısmi + kalan sevkiyat (408.000 + 306.000) → vade uzatma izi → tahsilat
+(bakiye kapalı) → A raporu ciro 595.000 / hakediş 29.750 → 100 iade (102.000 alacak; ciro 510.000 / hakediş
+25.500) → bayi listesi 600, bayi siparişi 50 (personel), sevk (36.000, prim yok), 20.000 tahsilat (16.000 borç);
+A'nın raporu değişmez. Senaryo bir hatayı yakaladı (madde 5 notundaki düzeltme). RULE-02 sunucu reddi ayrıca
+`e2e/seller/doctors.spec.ts`'te.
 
 **Madde 8 eki — personel sipariş girişi (21.10.2026, kriter X-8-3).** Kabul senaryosu hazırlanırken bulunan boşluk:
 yönetim tarafında sipariş girişi yoktu, **bayi siparişi hiç girilemiyordu** (X-8 §(4) bayi siparişi `SIP`; D-2 §(1)

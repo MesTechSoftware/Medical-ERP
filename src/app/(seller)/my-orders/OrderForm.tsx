@@ -95,11 +95,13 @@ export default function OrderForm({
   const tutarOf = new Map(gecerli.map((c, i) => [c.row.key, hesap.satirlar[i]]));
   const computed = satirlar.map((c) => ({ ...c, totals: tutarOf.get(c.row.key) }));
 
-  // Sunucuya net birim fiyat ham metin olarak gider (kanonik değer nettir, X-5).
+  // Sunucuya net birim fiyat ham metin olarak gider (kanonik değer nettir, X-5) — yalnız elle girildiyse.
+  // Boş fiyat gönderilmez: liste fiyatını sunucu **carinin** listesinden çözer (X-10 §(2)); önizlemenin
+  // varsayılan liste fiyatını göndermek atanmış listeyi ezerdi.
   const items = gecerli.map((c) => ({
     productId: c.row.productId,
     quantity: c.row.quantity,
-    birimFiyat: c.birimFiyat!,
+    ...(c.row.priceText.trim() && !c.row.bedelsiz ? { birimFiyat: c.birimFiyat! } : {}),
     ...(c.row.bedelsiz
       ? { bedelsiz: { sebep: c.row.sebep, ...(c.row.aciklama.trim() ? { aciklama: c.row.aciklama.trim() } : {}) } }
       : {}),
