@@ -384,3 +384,45 @@ describe("bedelsiz satır onayı sevkiyatı durdurur (A-2-2)", () => {
     expect(await prisma.shipment.count()).toBe(1);
   });
 });
+
+describe("F-06 — eşzamanlı sevkiyat negatif stoğa düşerse aşım izlidir (B-4-4, A-8-8)", () => {
+  it("iki eşzamanlı sevkiyat: ikincisi kilitte bekler, düşüşü görür; gerekçeyle yazılır ve ONAY'lı blok bırakır", async () => {
+    // Stok 100; her sipariş 60 adet.
+    const o1 = await siparis({ kalemler: [{ miktar: 60, birim: "10" }] });
+    const o2 = await siparis({ kalemler: [{ miktar: 60, birim: "10" }] });
+    const sevkEt = (o: typeof o1, bekleMs: number) =>
+      prisma.$transaction(async (tx) => {
+        const r = await sevkiyatYaz(tx, {
+          siparisId: o.id,
+          kalemler: [{ siparisKalemiId: o.items[0].id, miktar: 60 }],
+          carrierId: null,
+          trackingNumber: null,
+          externalDispatchNo: null,
+          yapan: yonetici(),
+          gerekce: "Depoda fazlası var",
+        });
+        await bekle(bekleMs);
+        return r;
+      });
+    const birinci = sevkEt(o1, 300);
+    await bekle(100);
+    const [r1, r2] = await Promise.all([birinci, sevkEt(o2, 0)]);
+    expect([r1.durum, r2.durum]).toEqual(["SEVK_EDILDI", "SEVK_EDILDI"]);
+    expect(await hesaplaStok(s.urun.id)).toBe(-20);
+    // İz yalnız stoğu eksiye düşüren ikinci siparişte (F-06: "tam olarak biri" değil, "aşım izli").
+    expect(await prisma.approvalBlock.findMany({ select: { documentId: true, ruleCode: true, decision: true } })).toEqual([
+      { documentId: o2.id, ruleCode: "NEGATIF_STOK", decision: "ONAY" },
+    ]);
+  });
+});
+
+describe("F-12 — RULE-04: fiyat sipariş anında donar", () => {
+  it("liste fiyatı sonradan değişse de sipariş satırı ve sevkiyat borcu donmuş fiyattan", async () => {
+    const o = await siparis({ kalemler: [{ miktar: 2, birim: "100" }] });
+    await prisma.priceListItem.create({ data: { priceListId: s.liste.id, productId: s.urun.id, listPrice: "999" } });
+    await prisma.orderItem.findUniqueOrThrow({ where: { id: o.items[0].id } }).then((i) => expect(i.unitPrice.toFixed(2)).toBe("100.00"));
+    await sevk(o.id, [{ siparisKalemiId: o.items[0].id, miktar: 2 }]);
+    // 100 × 2 = 200 + %20 KDV = 240
+    expect((await prisma.ledgerEntry.findFirstOrThrow()).amount.toFixed(2)).toBe("240.00");
+  });
+});
