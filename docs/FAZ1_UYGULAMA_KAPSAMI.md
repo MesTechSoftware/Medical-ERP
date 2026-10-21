@@ -911,6 +911,20 @@ liste ataması) + fiyat listesi ekranı · **7f** D-6 import (X-16 / ADR-006 sı
   tanım tabloları ekranıyla gelir.
 - **Madde 7d tamam** (7d1 iade · 7d2 bedelsiz · 7d3 konsinye + transfer · 7d4 düzeltme).
 
+**Madde 7e — bölünme (21.10.2026):** **7e1** fiyat listesi ekranı (X-10 §(7)) · **7e2** tek cari ekranı (A-13 fatura
+bilgileri, X-8 hesap sınıfı ve `BAYI` açma, X-10 liste ataması, eksik fatura bilgisi süzgeci) · **7e3** açılış
+bakiyesi (A-6) ve vade farkı (A-7) elle girişi.
+
+**Madde 7e1 — X-10 fiyat listesi ekranı (21.10.2026, kriter X-10-2).** Notlar (karar değil):
+
+- `/price-lists` ve `/price-lists/[id]` yalnız `YONETICI` (menü + `requireAdmin`); action'lar `createPriceList` ·
+  `setPriceListItem` · `deletePriceListItem`, her biri denetim kaydı yazar.
+- **Satır silinebilir:** satır tanım verisidir, belge değildir; sipariş satırı fiyatı dondurduğu için (B-6) silme
+  geçmişe dokunmaz. Barem kaldırmanın tek yolu budur (tarih ekranı Faz 2).
+- Liste pasifleştirme ekranda yok: `cozumleBirimFiyat()` `isActive`'e bakmıyor; anlamı tanımsız kalmasın diye açılmadı.
+- Ürün formu varsayılan listenin 1 adetlik süresiz satırını yazmaya devam eder (aynı satır, iki giriş noktası).
+- `IslemFormu` `basariMetni` alır: başarıda metin gösterilir ve form temizlenir.
+
 ---
 
 ### §D.5 · 1A'nın **yapmadıkları** — sınırı yazılı tutmak için

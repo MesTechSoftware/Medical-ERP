@@ -90,6 +90,7 @@ kongre tabloları · e-belge ve kargo modül tabloları (KARARLAR §1.3 §(10): 
 
 **Yönetici** (`src/app/(admin)/`)
 - ✅ Gösterge paneli — özet kartlar, kritik stok *(alacak tablosu, yaşlandırma, bayi kartları söküldü)*
+- ✅ Fiyat Listeleri (`/price-lists`, yalnız yönetici — X-10, 1B-7e1): liste oluşturma; satır (ürün, min. adet barem, liste fiyatı) ekleme/güncelleme/silme; denetim kaydı. Tarihli satırlar salt okunur.
 - ✅ Ürünler — liste / yeni / düzenle: ad, kod, **KDV oranı tanım tablosundan** (`taxRateId`), liste fiyatı (varsayılan fiyat listesine yazılır), başlangıç stoğu. *Taban fiyat alanı yok.*
 - ✅ Stok — giriş + hareketler (miktar hareketlerden türer — ADR-005) · **konsinye çıkış** (doktor başına konsinye konumu) ve **depoya transfer** (A-4, B-4, 1B-7d3); konsinyedeki mal listesi. Mali sonucu yok · **stok düzeltme** (B-7, 1B-7d4, yalnız yönetici): çok satır, ± fark, sebep + açıklama, tutanak no; müşavir stok dosyasında yıl içi düzeltme satırları
 - ✅ Kullanıcılar (`/users`, eski Satıcılar — 1B-4b, 20.10.2026) — liste (rol kolonu) / yeni (rol seçimi, geçici parola, gerekçe) / düzenle (geçici parola atama, pasifleştirme; rol değişmez) / satıcı detayı. Silme yok (E-2 §(6)). Son aktif yönetici ve kendini pasifleştirme sert kısıt (`kullanici.ts`, SERIALIZABLE)
