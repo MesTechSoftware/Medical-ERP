@@ -19,7 +19,8 @@ yolsuz geçen `KARARLAR.md` gibi atıflar `docs/KARARLAR.md` demektir.
 | `docs/IS_AKISI_OZETI.md` | İş mantığı, iş diliyle (kod değil) | Domain'i anlamak için |
 | `docs/SOZLESME_EKI.md` | C-1 teyit/bilgilendirme metni — sözleşme eki taslağı; karar içermez | Canlıya geçiş ön koşullarında |
 | `docs/adr/` | Mimari "**nasıl**" kararları (ADR-001…006 ve 008; **007 numarası boş** — taslak yazılmadı, yeniden kullanılmaz). Dizin: `docs/adr/README.md` §4 | Mimariye dokunmadan önce |
-| `docs/MEVCUT_SISTEM_DURUMU.md` · `docs/DENETIM_BULGULARI.md` · `docs/TRACEABILITY.md` | Denetim kayıtları — **dondurulmuş** | Tarihsel referans |
+| `docs/TRACEABILITY.md` | İzlenebilirlik matrisi (kriter × kod × test × karar) — **üretilmiş**, elle düzenlenmez: `npm run izlenebilirlik` | Bir kriterin kodunu/testini ararken |
+| `docs/MEVCUT_SISTEM_DURUMU.md` · `docs/DENETIM_BULGULARI.md` · `docs/arsiv/TRACEABILITY_PRD_V2.md` | Denetim kayıtları — **dondurulmuş** | Tarihsel referans |
 | `docs/arsiv/` | Yürürlükten kalkmış belgeler — `PRD_V2.md` dahil (C10, X-7); `FR-*`/`RULE-*` numaraları oradadır · `KARAR_ONERISI_2026-09-19.md` (X-16/X-17/ADR-006 önerisi; kabul kriteri taslakları 1B madde 7'de girdi olarak okunur) | Normalde **okuma** |
 
 Karar/plan ayrımı: *ne* ve *neden* → `KARARLAR.md`; *nasıl* → `docs/adr/`; *sıra ve iş dökümü* →

@@ -426,3 +426,29 @@ describe("F-12 — RULE-04: fiyat sipariş anında donar", () => {
     expect((await prisma.ledgerEntry.findFirstOrThrow()).amount.toFixed(2)).toBe("240.00");
   });
 });
+
+describe("D-3-1 — kargo bilgisi sevkiyatta", () => {
+  it("kargo firması ve takip no isteğe bağlı taşınır; gönderi günü otomatik (sevk günü)", async () => {
+    const o = await siparis();
+    const firma = await prisma.carrier.findFirstOrThrow();
+    const r = sevkEdildi(
+      await prisma.$transaction((tx) =>
+        sevkiyatYaz(tx, {
+          siparisId: o.id,
+          kalemler: [{ siparisKalemiId: o.items[0].id, miktar: 1 }],
+          carrierId: firma.id,
+          trackingNumber: "TR123",
+          externalDispatchNo: null,
+          yapan: yonetici(),
+          gerekce: null,
+        })
+      )
+    );
+    const sv = await prisma.shipment.findUniqueOrThrow({ where: { id: r.sevkiyatId } });
+    expect([sv.carrierId, sv.trackingNumber, sv.shippedOn?.toISOString().slice(0, 10)]).toEqual([
+      firma.id,
+      "TR123",
+      bugun().toISOString().slice(0, 10),
+    ]);
+  });
+});

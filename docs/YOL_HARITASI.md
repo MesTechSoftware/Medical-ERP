@@ -309,8 +309,8 @@ Bu turdaki hatalar tam olarak "test yokken sessizce yanlış çalışan" sınıf
 - [ ] **Config noktaları `policy.ts`'te** tanımlı; doldurulması gerekenler dolduruldu (`zaman.saatDilimi`, `auth.oturum*`, **`auth.girisDenemeSiniri`, `auth.girisKilitDakika`** *(X-9)*, **`pricing.varsayilanFiyatListesiKodu`** *(X-10)*, `import.azamiDosyaBoyutMb` *(D-6'dan önce; kesin değer devreye almada — KARARLAR §6)*)
 - [ ] **Bayiler tek cari ekranından yönetiliyor** (X-8 §(5)); `SATICI` `BAYI` göremiyor ve açamıyor; `BAYI` sevkiyatı prim matrahına girmiyor (X-8 §(3))
 - [ ] **Fiyat tek yoldan çözülüyor** (X-10): atanmış listede satırı olmayan ürün satıra girmiyor; cariye liste atamayı yalnız `YONETICI` yapabiliyor
-- [ ] `docs/TRACEABILITY.md` **yeniden kurulmuş** (kod × test × karar — X-7 §(5), §D.3 madde 10); TESTSIZ oranı **%15 altında** *(8 Ağustos başlangıcı %34, FR bazlı)*
-- [ ] Kabul senaryosu (F-11) **`KABUL_KRITERLERI.md`'ye göre yeniden yazılmış** hâliyle her commit'te koşuyor *(§C-e — "15 adım" sayısı eski senaryonundur)*
+- [x] `docs/TRACEABILITY.md` **yeniden kurulmuş** *(21.10.2026 — üretilmiş matris, 118 KANITLI, TESTSIZ %0; CI bayatlamayı yakalar)* (kod × test × karar — X-7 §(5), §D.3 madde 10); TESTSIZ oranı **%15 altında** *(8 Ağustos başlangıcı %34, FR bazlı)*
+- [x] Kabul senaryosu (F-11) **`KABUL_KRITERLERI.md`'ye göre yeniden yazılmış** *(21.10.2026 — `e2e/admin/kabul-senaryosu.spec.ts`)* hâliyle her commit'te koşuyor *(§C-e — "15 adım" sayısı eski senaryonundur)*
 - [x] `PROJE_DURUMU.md`'deki **iki belge hatası** düzeltilmiş (RULE-12 + rapor sayısı) — *11.09.2026'da yapıldı*
 
 ---

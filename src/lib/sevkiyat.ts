@@ -2,6 +2,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { uretBelgeNo } from "@/lib/belge-no";
 import { sevkiyatHareketiYaz } from "@/lib/cari-hareket";
 import { IsHatasi } from "@/lib/hata";
+import { onSevkiyatTamamlandi } from "@/lib/olaylar";
 import { blokKontrolleriniCalistir, sonBlokDurumu, type BlokIhlali } from "@/lib/onay-blogu";
 import { policy } from "@/lib/policy";
 import { hesaplaSatirTutarlari } from "@/lib/satir-tutarlari";
@@ -192,5 +193,6 @@ export async function sevkiyatYaz(tx: Prisma.TransactionClient, girdi: SevkiyatG
   if (tamamlandi) {
     await tx.order.update({ where: { id: siparis.id }, data: { status: "KARGOLANDI" } });
   }
+  onSevkiyatTamamlandi({ sevkiyatId: sevkiyat.id, siparisId: siparis.id, siparisTamamlandi: tamamlandi }); // D-1
   return { durum: "SEVK_EDILDI", sevkiyatId: sevkiyat.id, documentNo, tamamlandi };
 }

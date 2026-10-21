@@ -3,6 +3,7 @@ import type { FreeReason } from "@/generated/prisma/enums";
 import type { BelgeOneki } from "@/lib/belge-no";
 import { prisma } from "@/lib/db";
 import type { KuralKodu } from "@/lib/sonuc";
+import { onBlokAcildi, onBlokKararaBaglandi } from "@/lib/olaylar";
 import { simdi } from "@/lib/zaman";
 
 type Db = Prisma.TransactionClient | typeof prisma;
@@ -144,7 +145,7 @@ export async function blokKontrolleriniCalistir(
       acikKaldi = true;
       continue;
     }
-    await tx.approvalBlock.create({
+    const blok = await tx.approvalBlock.create({
       data: {
         documentType: girdi.belgeTipi,
         documentId: girdi.belgeId,
@@ -156,6 +157,8 @@ export async function blokKontrolleriniCalistir(
           : {}),
       },
     });
+    onBlokAcildi({ belgeTipi: girdi.belgeTipi, belgeId: girdi.belgeId, kuralKodu });
+    if (yetkili) onBlokKararaBaglandi({ blokId: blok.id, karar: "ONAY" });
     acikKaldi ||= !yetkili;
   }
   return { durum: "BASARILI_UYARILI", kademe: "YUMUSAK", ihlaller, onayaGonderildi: acikKaldi };
@@ -174,5 +177,6 @@ export async function blokKarariVer(
     where: { id: girdi.blokId, decision: null },
     data: { decision: girdi.karar, decidedById: girdi.yapanId, decidedAt: simdi(), decisionNote: girdi.not },
   });
+  if (r.count === 1) onBlokKararaBaglandi({ blokId: girdi.blokId, karar: girdi.karar });
   return r.count === 1;
 }

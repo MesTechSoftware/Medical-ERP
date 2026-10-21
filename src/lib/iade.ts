@@ -2,6 +2,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { uretBelgeNo } from "@/lib/belge-no";
 import { iadeHareketiYaz } from "@/lib/cari-hareket";
 import { IsHatasi } from "@/lib/hata";
+import { onIadeKaydedildi } from "@/lib/olaylar";
 import { hesaplaSatirTutarlari } from "@/lib/satir-tutarlari";
 import { sert, type Bildirim } from "@/lib/sonuc";
 import { stokHareketiYaz, stokKilitle, varsayilanDepoId } from "@/lib/stok";
@@ -134,5 +135,6 @@ export async function iadeYaz(
       yapanId: girdi.yapanId,
     });
   }
+  onIadeKaydedildi({ iadeId: iade.id, siparisId: siparis.id }); // D-1
   return { iadeId: iade.id, documentNo };
 }

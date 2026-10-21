@@ -7,6 +7,7 @@ import { IslemFormu } from "@/components/Sonuc";
 import { shipOrder } from "./actions";
 import { Tutar } from "@/components/Tutar";
 import { SATIR_TABANI } from "@/lib/taban";
+import { takipLinki } from "@/lib/kargo";
 import { belgeOnayDurumlari } from "@/lib/onay-blogu";
 import { OnayEtiketi } from "@/components/OnayEtiketi";
 
@@ -39,7 +40,7 @@ export default async function ShippingPage() {
         shipments: {
           orderBy: { createdAt: "desc" },
           take: 1,
-          include: { carrier: { select: { name: true } } },
+          include: { carrier: { select: { name: true, trackingUrlTemplate: true } } },
         },
       },
     }),
@@ -208,7 +209,18 @@ export default async function ShippingPage() {
                     {o.shipments[0]?.carrier?.name ?? "—"}
                   </td>
                   <td className="px-4 py-3 text-slate-700">
-                    {o.shipments[0]?.trackingNumber ?? "—"}
+                    {/* D-3: takip linki firmanın şablonundan; şablon yoksa yalnız numara. */}
+                    {(() => {
+                      const sv = o.shipments[0];
+                      const link = takipLinki(sv?.carrier?.trackingUrlTemplate, sv?.trackingNumber);
+                      return link ? (
+                        <a href={link} target="_blank" rel="noopener noreferrer" className="underline hover:text-slate-900">
+                          {sv?.trackingNumber}
+                        </a>
+                      ) : (
+                        (sv?.trackingNumber ?? "—")
+                      );
+                    })()}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-slate-500">
                     {o.shipments[0]?.shippedAt

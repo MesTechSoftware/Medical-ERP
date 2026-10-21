@@ -1,382 +1,143 @@
-# İzlenebilirlik Matrisi — PRD_V2.md v2.2
-
-> Üretim tarihi: 8 Ağustos 2026 · Kaynak: `PRD_V2.md` (FR-01…FR-64, FR-46a…g, RULE-01…15)
-> Yöntem: kod okuması + test adı/gövde eşlemesi. **Kötümser değerlendirme** — emin olunamayan satır `TESTSIZ` yazıldı.
->
-> **🔄 KARARLAR senkronizasyonu — 11.09.2026.** Bu matris **kodun aynasıdır**; KANITLI/TESTSIZ/YOK
-> durumları yalnız kod + test değişince güncellenir (Faz 1 sonunda yeniden koşulur). Faz 0'da
-> **hiç kod yazılmadı**, o yüzden buradaki sayaçlar **hâlâ 8 Ağustos denetimindeki gibidir**. Faz 0'ın
-> yaptığı, bu boşluklara **karar** vermektir; hangi boşluğun hangi karara/göreve bağlandığı **§6'da**
-> (aşağıda yeni eklendi). Ana kitap `KARARLAR.md`.
->
-> **🔄 16.09.2026 (2) — PRD taraması tamamlandı (sayaçlar değişmedi).** §6.4'e taramanın bulduğu
-> ⛔ satırları eklendi (§6.4 sonu). Sonuç: `FAZ1_UYGULAMA_KAPSAMI.md` §E.3.
->
-> **🔧 16.09.2026 — atıf düzeltmesi (sayaçlar değişmedi).** §6.4 sonundaki *"PRD'nin akıbeti §C-c'de açık"*
-> ifadesi bayattı (§C-c 13.09'da X-7 ile kapandı). 59 maddelik PRD taramasının çıktı tablosu artık
-> `FAZ1_UYGULAMA_KAPSAMI.md` **§E**'dir.
->
-> **🔄 15.09.2026 — KARARLAR X-8 · X-9 · X-10 işlendi (matris sayaçları değişmedi — kod değişmedi).**
-> Yalnız **§6.4** güncellendi: bayi yönetimi FR'leri (FR-39…FR-46) ve FR-60 **yeniden tanımlanır**
-> satırına alındı (bayi artık `Doktor` satırı — X-8); **RULE-14 tamamen düşer**, **RULE-06 ve
-> RULE-15 yeniden tanımlanır**. `LoginAttempt` (X-9) matriste FR/RULE satırı olmadığı için burada
-> görünmez — geri çekme listesinde **GÇ-14**.
->
-> **🔴 KARARLAR uyum denetimi — 13.09.2026.** §6 bir soruyu cevaplıyordu: *"hangi boşluk hangi
-> karara bağlandı?"* Cevaplamadığı soru şuydu: **"hangi KANITLI satır KARARLAR ile geçersizleşti?"**
-> Bu fark önemli — çünkü o satırlar Faz 1 sonunda **KANITLI kalmayacak, silinecek**.
-> Bir okuyucu bugün FR-49'u *"KANITLI, sorun yok"* diye okuyor; oysa o gereksinim
-> **K-6 ile geçersiz**. Yeni **§6.4** bu listeyi taşıyor.
->
-> ⚠️ **İki uyarı:**
-> 1. **KANITLI ≠ KARARLAR'a uygun.** İlki "kod + test var" demektir, ikincisi ayrı bir sorudur.
-> 2. **🔵 Bu matris dönüşüyor — `KARARLAR.md` X-7 (13.09.2026).** `PRD_V2.md` **arşivlenir**
->    (önce 71 FR + 15 RULE taranır); yerini **`KABUL_KRITERLERI.md`** alır. Matris
->    **"kod × test × karar"** hâline gelir: kolonlar **kriter kodu · davranış · kod yeri ·
->    kanıtlayan test · durum · kaynak karar**. Numaralandırma **karar kimliğinden türer**
->    (`A-3-1`, `C-6-2`); **`FR-*` terk edilir**.
->    · **İskelet Faz 1A'da** kurulur, **metinler Faz 1B görevlerinde** — testten **önce**.
->    · Yan fayda: §6.4'ün elle yazılması gereken *"bu satırın hedefte karşılığı var mı"*
->      sorusu **matrisin içinden** cevaplanır; `Ü-*` ve `C-*` numara çakışması notları da
->      konusuz kalır.
->    · **Bakım kuralı (X-7 §(7)):** kriteri olmayan karar **doğrulanamaz**; kararı olmayan
->      kriter **kaynaksızdır ve silinir**.
-
-## Durum tanımları
-
-- **KANITLI** — kodda var **ve** FR'nin tarif ettiği davranışı doğrulayan birim/e2e testi var
-- **TESTSIZ** — kodda var, ama davranışını doğrulayan test yok **veya** gereksinimin zorlanabilir bir parçası eksik
-- **YOK** — kodda karşılığı bulunamadı
-
-### Uygulanan karar kuralı (kısmi uygulamalar için)
-
-PRD bazı FR'lerde birden çok şart sayıyor. Tutarlılık için:
-
-- Gereksinimin **zorlanabilir** bir alt maddesi eksikse → `TESTSIZ` (Özet kolonunda eksik açıkça yazıldı)
-- Eksik olan alt madde PRD'de **tavsiye/yumuşak kontrol** diye nitelenmişse → çekirdek kural kanıtlıysa `KANITLI` + not
-
----
-
-## 1. Fonksiyonel Gereksinimler (FR)
-
-### 5.1 Doktor Yönetimi ve Satıcı–Doktor Eşleşmesi
-
-| FR | Özet | Uygulandığı yer (dosya:satır) | Kanıtlayan test | Durum |
-|----|------|-------------------------------|-----------------|-------|
-| FR-01 | Doktor kaydı alanları (ad, klinik, bölge, telefon…) | `src/app/(seller)/my-doctors/actions.ts:12-44` | — (zorunlu alan reddi için test yok) | TESTSIZ |
-| FR-02 | Doktorun en fazla bir sorumlu satıcısı | `prisma/schema.prisma` `Doctor.ownerSellerId` (tekil FK); `src/lib/doctor.ts:35` | `src/lib/doctor.test.ts:16` | KANITLI |
-| FR-03 | Satıcı doktor açar, sahiplik otomatik atanır | `src/app/(seller)/my-doctors/actions.ts:76` | `e2e/seller/doctors.spec.ts:46` | KANITLI |
-| FR-04 | Sahibi olmadığı doktora sipariş **oluşturamaz** (sunucu) | `src/app/(seller)/my-orders/actions.ts:43-50`; `src/lib/doctor.ts:35` | `src/lib/doctor.test.ts:16`; `e2e/seller/doctors.spec.ts:132` | KANITLI |
-| FR-05 | Satıcı yalnız kendi doktorlarını görür | `src/lib/doctor.ts:42`; `src/app/(seller)/my-doctors/page.tsx:24` | `src/lib/doctor.test.ts:63`; `e2e/seller/doctors.spec.ts:90` | KANITLI |
-| FR-06 | Admin doktoru devreder; devir kaydı tutulur | `src/app/(admin)/doctors/actions.ts:47-70` | `e2e/admin/doctor-transfer.spec.ts:44` | KANITLI |
-| FR-07 | Devir sonrası geçmiş **eski satıcıda kalır** | `src/app/(admin)/doctors/actions.ts:54-57` (`Order.sellerId` dokunulmaz); `src/lib/commission-service.ts:45-54` | `e2e/admin/doctor-transfer.spec.ts:44` | KANITLI |
-| FR-08 | Pasif satıcının doktorları sahipsiz havuza düşer | `src/lib/doctor.ts:27`; `src/app/(admin)/doctors/actions.ts:30-31` | `src/lib/doctor.test.ts:34`; `e2e/admin/doctor-transfer.spec.ts:132` | KANITLI |
-| FR-09 | Normalize telefon **benzersiz** (+ ad/klinik benzerlik uyarısı) | `src/lib/phone.ts:25-46`; `prisma/schema.prisma` `phoneNormalized @unique`; `src/app/(seller)/my-doctors/actions.ts:57-70` | `src/lib/phone.test.ts:11`; `e2e/seller/doctors.spec.ts:67` | KANITLI ¹ |
-| FR-10 | Doktor detayı: cari, vade, geçmiş, kongre defteri | `src/app/(admin)/doctors/[id]/page.tsx:33-129` | `e2e/admin/doctor-detail.spec.ts:42` | KANITLI |
-
-¹ Telefon benzersizliği (sert kural) tam ve yarış-güvenli. PRD'nin "yumuşak kontrol" dediği **ad-soyad + klinik benzerlik uyarısı kodda YOK**.
-
-### 5.2 Fiyatlandırma, Taban Fiyat ve KDV
-
-| FR | Özet | Uygulandığı yer (dosya:satır) | Kanıtlayan test | Durum |
-|----|------|-------------------------------|-----------------|-------|
-| FR-11 | Ürün bazlı liste + taban fiyat | `src/app/(admin)/products/actions.ts:18-44` | `e2e/admin/products.spec.ts:4,22` | KANITLI |
-| FR-12 | Satıcı birim fiyatı değiştirir; taban altı **reddedilir** | `src/app/(seller)/my-orders/actions.ts:93-104` | `e2e/seller/pricing.spec.ts:25` | KANITLI |
-| FR-13 | Fiyat sipariş anında **snapshot** | `src/app/(seller)/my-orders/actions.ts:121-130` | — (fiyat sonradan değişince eski sipariş korunuyor mu: test yok) | TESTSIZ |
-| FR-14 | Kalem bazında iskonto oranı hesaplanıp **saklanır** | `src/app/(seller)/my-orders/actions.ts:127`; `src/lib/vat.ts:90` | `src/lib/vat.test.ts:107` (yalnız saf hesap; saklanma doğrulanmıyor) | TESTSIZ |
-| FR-15 | Fiyat değişiklikleri audit log'a yazılır | `src/app/(admin)/products/actions.ts:117` | — (audit satırını doğrulayan test yok) | TESTSIZ |
-| FR-16 | KDV %20 **sistem parametresi**; ürün bazında override | `src/lib/vat.ts:15` (sabit); `src/app/(admin)/products/actions.ts:44` (override) | `src/lib/vat.test.ts:122` | TESTSIZ ² |
-| FR-17 | Kanonik net saklama + snapshot alanları | `src/lib/vat.ts` `lineTotals`; `src/app/(seller)/my-orders/actions.ts:121-130` | `src/lib/vat.test.ts:52,67` | KANITLI |
-| FR-18 | **Tüm** fiyat girişi ve listelerde KDV Dahil/Hariç + tercih hatırlanır | `src/lib/vat-mode.ts`; `src/components/VatToggle.tsx`; `src/app/(seller)/my-orders/OrderForm.tsx:52,180` | `e2e/seller/pricing.spec.ts:44`; `e2e/admin/reports.spec.ts:75` | TESTSIZ ³ |
-| FR-19 | Taban fiyat net; karşılaştırma net üzerinden | `src/app/(admin)/products/actions.ts:17-19`; `src/app/(seller)/my-orders/actions.ts:99` | `e2e/seller/pricing.spec.ts:25` | KANITLI |
-
-² %20 varsayılanı ve ürün override'ı var; **admin'in sistem geneli KDV oranını değiştirebileceği bir yol yok** (`SETTING_KEYS` içinde KDV anahtarı yok — `src/lib/settings.ts:10-16`).
-³ Toggle yalnız **2 ekranda**: `reports/page.tsx:43` ve `my-orders/OrderForm.tsx`. Diğer tüm liste/giriş ekranlarında yok (bkz. D-08).
-
-### 5.3 Doktor Cari, Vade ve Tahsilat
-
-| FR | Özet | Uygulandığı yer (dosya:satır) | Kanıtlayan test | Durum |
-|----|------|-------------------------------|-----------------|-------|
-| FR-20 | Bakiye = Σ sipariş (brüt, iptal hariç) − Σ tahsilat | `src/lib/doctor-cari.ts:29-48` | `e2e/admin/collections.spec.ts:87,139` | KANITLI |
-| FR-21 | Vade tarihi; varsayılan gün ve üst sınır **admin parametresi** | `src/app/(seller)/my-orders/actions.ts:64-67`; `src/lib/settings.ts:23-37` | — | TESTSIZ ⁴ |
-| FR-22 | Vade değiştirilebilir; geçmiş + audit | `src/app/(admin)/collections/actions.ts:205-263` | — (e2e yok) | TESTSIZ |
-| FR-23 | Tahsilat kaydı alanları | `src/app/(admin)/collections/actions.ts:60-74` | `e2e/admin/collections.spec.ts:50` | KANITLI |
-| FR-24 | FIFO mahsuplaşma **+ admin manuel düzeltme** | `src/lib/allocation.ts:30-54` (FIFO); `src/lib/allocation.ts:60-89` (manuel doğrulama) | `src/lib/allocation.test.ts:19`; `e2e/admin/collections.spec.ts:50` | TESTSIZ ⁵ |
-| FR-25 | Kısmi tahsilat; prim ve kongre **orantılı** | `src/lib/commission.ts:52-59`; `src/app/(admin)/collections/actions.ts:94-99` | `src/lib/commission.test.ts:66`; `src/lib/allocation.test.ts:36`; `e2e/admin/collections.spec.ts:139` | KANITLI |
-| FR-26 | Yaşlandırma kovaları (0/1-30/31-60/61-90/90+) | `src/lib/allocation.ts:127-153`; `src/lib/doctor-cari.ts:175-202` | `src/lib/allocation.test.ts:145,181`; `e2e/admin/collections.spec.ts:156` | KANITLI |
-| FR-27 | Satıcı panelinde kendi doktorlarının vadesi yaklaşan/geçen alacakları | `src/app/(seller)/account/page.tsx:44-54` | — (e2e yok) | TESTSIZ |
-| FR-28 | Vadesi geçmiş borcu olan doktora yeni siparişte **uyarı** | — bulunamadı (`my-orders/new/page.tsx` hiç gecikme verisi çekmiyor) | — | **YOK** |
-| FR-29 | Tahsilat iptali; ters kayıt; kongre negatife düşerse uyarı | `src/app/(admin)/collections/actions.ts:139-199`; `src/lib/congress-service.ts:89-132` | `e2e/admin/collections.spec.ts:87` | KANITLI |
-
-⁴ `setSetting()` (`src/lib/settings.ts:39`) hiçbir yerden **çağrılmıyor** — admin ayar ekranı yok; değerler sabit varsayılanlara (30/180) düşüyor.
-⁵ `validateManualAllocation` yazılmış ve birim testi var, ama **hiçbir action/UI'dan çağrılmıyor** — manuel mahsup düzeltmesi kullanıcıya açık değil.
-
-### 5.4 Satıcı Primi
-
-| FR | Özet | Uygulandığı yer (dosya:satır) | Kanıtlayan test | Durum |
-|----|------|-------------------------------|-----------------|-------|
-| FR-30 | Varsayılan prim %5, **sistem parametresi (admin değiştirebilir)** | `src/lib/commission.ts:17` (sabit) | `src/lib/commission.test.ts:15` | TESTSIZ ⁶ |
-| FR-31 | Satıcı bazında oran override | `src/lib/commission-service.ts:24-31` (yalnız okuma) | `src/lib/commission.test.ts:161` (saf hesap) | TESTSIZ ⁷ |
-| FR-32 | Dönem = takvim ayı | `src/lib/commission.ts:21-24`; `src/lib/commission-service.ts:17-22` | `src/lib/commission.test.ts:20` | KANITLI |
-| FR-33 | Matrah: tahsil edilen tutar, KDV hariç | `src/lib/commission-service.ts:39-59`; `src/lib/commission.ts:52-59` | `src/lib/commission.test.ts:57,66,72` | KANITLI |
-| FR-34 | Dönem kapat → matrah/oran/prim **dondurulur** | `src/app/(admin)/commissions/actions.ts:37-108` | `e2e/admin/commissions.spec.ts:85,151,205` | KANITLI |
-| FR-35 | Kapanmış dönem iptali → sonraki döneme negatif kayıt | `src/lib/commission-service.ts:140-201` | `src/lib/commission.test.ts:134`; `e2e/admin/commissions.spec.ts:85` | KANITLI |
-| FR-36 | HESAPLANDI → ONAYLANDI → ÖDENDİ | `src/app/(admin)/commissions/actions.ts:110-148` | `e2e/admin/commissions.spec.ts:173` | KANITLI |
-| FR-37 | Satıcı paneli: anlık tahsilat, tahmini prim, "henüz tahsil edilmedi" | `src/app/(seller)/my-commissions/page.tsx`; `src/lib/commission-service.ts:81-131` | — (e2e yok) | TESTSIZ |
-| FR-38 | Kongre harcaması primi **etkilemez** | Yapısal: prim yalnız `PaymentAllocation` okur (`src/lib/commission-service.ts:45-54`) | — (kongre→prim izolasyonu için test yok; `e2e/admin/dealer.spec.ts:186` yalnız bayi tarafını kanıtlıyor) | TESTSIZ |
-
-⁶ Oran `DEFAULT_COMMISSION_RATE` sabiti; `SystemSetting` üzerinden yönetilmiyor, admin UI yok.
-⁷ `User.commissionRate` şemada var ve okunuyor; **yazacak bir form/action yok** (`SellerForm.tsx` alanları: ad, e-posta, telefon, şifre, durum).
-
-### 5.5 Bayi Yönetimi
-
-| FR | Özet | Uygulandığı yer (dosya:satır) | Kanıtlayan test | Durum |
-|----|------|-------------------------------|-----------------|-------|
-| FR-39 | Bayi kaydı + opsiyonel DEALER hesabı | `src/app/(admin)/dealers/actions.ts:23-83` | `e2e/admin/dealer.spec.ts:225` | KANITLI |
-| FR-40 | Bayi × ürün sabit net fiyat; fiyatsız ürün sevk edilemez | `src/app/(admin)/dealers/actions.ts:86-120`; `src/lib/dealer-shipment.ts:57-62` | — | TESTSIZ |
-| FR-41 | Fiyat değişikliği geriye etki etmez (snapshot) | `src/lib/dealer-shipment.ts:64-72` | — | TESTSIZ |
-| FR-42 | Sevkiyat onayı: stok düşer + cariye yazılır, **tek transaction** | `src/app/(admin)/dealers/actions.ts:127-175` | `e2e/admin/dealer.spec.ts:90` | KANITLI |
-| FR-43 | Stok yetersizse sevkiyat tamamen reddedilir | `src/app/(admin)/dealers/actions.ts:140-153` | `e2e/admin/dealer.spec.ts:159` | KANITLI |
-| FR-44 | Sevkiyat iptali: stok `IN`, borç geri alınır | `src/app/(admin)/dealers/actions.ts:298-354` | `e2e/admin/dealer.spec.ts:120` | KANITLI |
-| FR-45 | Bayi cari = Σ sevkiyat (iptal hariç) − Σ ödeme | `src/lib/dealer-cari.ts:23-42` | `e2e/admin/dealer.spec.ts:90,120` | KANITLI |
-| FR-46 | Bayi ödemesi + vade takibi ve yaşlandırma | `src/app/(admin)/dealers/actions.ts:357-391`; `src/lib/dealer-cari.ts:79-110` | — | TESTSIZ |
-| FR-46a | DEALER login; erişim yalnız kendi verisi (sunucu) | `src/lib/dealer-session.ts:10` | `e2e/dealer/panel.spec.ts:83,106` | KANITLI |
-| FR-46b | Bayi dashboard (read-only) | `src/app/(dealer)/bayi/page.tsx:16` | `e2e/dealer/panel.spec.ts:46` | KANITLI |
-| FR-46c | Bayi yalnız kendi fiyat listesini görür | `src/app/(dealer)/bayi/fiyatlar/page.tsx:7` | `e2e/dealer/panel.spec.ts:83` | KANITLI |
-| FR-46d | Sevkiyat talebi; TALEP'te stok/cari **değişmez** | `src/app/(dealer)/bayi/talep/actions.ts:19-70` | `e2e/dealer/panel.spec.ts:52` | KANITLI |
-| FR-46e | Bayi talebini geri çeker; admin gerekçeli reddeder | `src/app/(dealer)/bayi/talep/actions.ts:74-110`; `src/app/(admin)/dealers/actions.ts:260-295` | — | TESTSIZ |
-| FR-46f | Bayi sipariş veremez / stok göremez / fiyat değiştiremez | `src/app/(dealer)/bayi/talep/actions.ts:17-27` (dealerId oturumdan) | `e2e/dealer/panel.spec.ts:106` | KANITLI |
-| FR-46g | Pasif bayi login olamaz | `src/app/(admin)/dealers/actions.ts:404-413`; `src/lib/session.ts:31-33` | `e2e/admin/dealer.spec.ts:225` | KANITLI |
-
-### 5.6 Kongre ve Doktor Kongre Bakiyesi
-
-| FR | Özet | Uygulandığı yer (dosya:satır) | Kanıtlayan test | Durum |
-|----|------|-------------------------------|-----------------|-------|
-| FR-47 | Kongre CRUD | `src/app/(admin)/congresses/actions.ts` | `e2e/admin/congress-edit.spec.ts:42` | KANITLI |
-| FR-48 | Kongre paketi (değer kuruş, kontenjan) | `src/app/(admin)/congresses/actions.ts` | `e2e/admin/congress-edit.spec.ts:59,77,126` | KANITLI |
-| FR-49 | Tahsilatta `EARN`, %100, matrah net | `src/lib/congress-service.ts:54-81`; `src/lib/congress-ledger.ts:145-148` | `src/lib/congress-ledger.test.ts:225`; `e2e/admin/congress.spec.ts:85` | KANITLI |
-| FR-50 | Her `EARN`'ün son kullanma tarihi = +12 ay | `src/lib/congress-ledger.ts:37-49` | `src/lib/congress-ledger.test.ts:37,51`; `e2e/admin/congress.spec.ts:85` | KANITLI |
-| FR-51 | Harcama FIFO (en eski kazanım önce) | `src/lib/congress-ledger.ts:111-139` | `src/lib/congress-ledger.test.ts:111`; `e2e/admin/congress.spec.ts:314` | KANITLI |
-| FR-52 | `EXPIRE`: gecelik job **+ lazy doğrulama** | `src/lib/congress-service.ts:235-281`; `scripts/expire-congress-balances.ts` | `src/lib/congress-ledger.test.ts:77,190` (lazy taraf) | TESTSIZ ⁸ |
-| FR-53 | Kayıt akışı: TALEP (rezerve) → admin onayı | `src/app/(seller)/my-congresses/actions.ts:76-100`; `src/app/(admin)/congresses/actions.ts:273` | `e2e/admin/congress.spec.ts:168,229,314` | KANITLI |
-| FR-54 | Bakiye yetersizse **sert red** + eksik tutar | `src/app/(seller)/my-congresses/actions.ts:94-108`; `src/lib/congress-ledger.ts:126-128` | `e2e/admin/congress.spec.ts:120` | KANITLI |
-| FR-55 | Kontenjan; rezerve talepler de düşer | `src/app/(seller)/my-congresses/actions.ts:65-71` | — (kontenjan dolu reddi test edilmiyor) | TESTSIZ ⁹ |
-| FR-56 | İptalde bakiye iade; **son kullanma uzamaz** | `src/lib/congress-service.ts:191-229` | `e2e/admin/congress.spec.ts:229` | KANITLI |
-| FR-57 | Hareket defteri + gerekçeli manuel `ADJUST` + audit | `src/app/(admin)/doctors/[id]/actions.ts:13-90`; `src/app/(admin)/doctors/[id]/page.tsx:129` | `e2e/admin/doctor-detail.spec.ts:59,87,102` | KANITLI |
-| FR-58 | Kongre ekranı: katılımcı, kalan kontenjan, **toplam kullanılan bakiye** | `src/app/(admin)/congresses/page.tsx:114,126` (Onaylı/Kontenjan) | — ("toplam kullanılan bakiye" görünmüyor) | TESTSIZ |
-| FR-59 | Satıcı: bakiye, yakında dolacak uyarısı, yeterli paketler | `src/app/(seller)/my-congresses/page.tsx:19-103`; `src/lib/congress-ledger.ts:79-91` | `src/lib/congress-ledger.test.ts:202` (yalnız saf hesap) | TESTSIZ |
-
-⁸ Lazy doğrulama gerçekten çalışıyor (`availableBalance`/`planFifoSpend` süresi dolmuş lotu saymıyor). Ancak job'ı **zamanlayan hiçbir şey yok** ve `expireLots()`'ın `EXPIRE` satırı yazışı test edilmemiş.
-⁹ Kontenjan kontrolü transaction **dışında** (`:67`) — eşzamanlı iki talepte aşılabilir.
-
-### 5.7 Dashboard ve Raporlama
-
-| FR | Özet | Uygulandığı yer (dosya:satır) | Kanıtlayan test | Durum |
-|----|------|-------------------------------|-----------------|-------|
-| FR-60 | Admin dashboard: kanal ciro, açık alacak + aging, **ay içi prim yükü**, bayi alacağı, açık kongre bakiyesi | `src/app/(admin)/dashboard/page.tsx:106-138`; `src/lib/reports-service.ts:172-182` | `e2e/admin/smoke.spec.ts:15` (yalnız sayfa açılıyor mu) | TESTSIZ ¹⁰ |
-| FR-61 | Satıcı dashboard: tahsilat/prim ilerlemesi, gecikmeler, portföy, ortalama iskonto | `src/app/(seller)/account/page.tsx:37-54`; `src/app/(seller)/my-commissions/page.tsx` | — | TESTSIZ |
-| FR-62 | Satıcı performans karşılaştırması | `src/lib/reports-service.ts:18-66`; `src/app/(admin)/reports/page.tsx:59` | `src/lib/reports.test.ts:26`; `e2e/admin/reports.spec.ts:25` | KANITLI |
-| FR-63 | Doktor ciro sıralaması + kongre bakiye + gecikmiş borç | `src/lib/reports-service.ts:78-132`; `src/app/(admin)/reports/page.tsx:113` | `e2e/admin/reports.spec.ts:25` | KANITLI |
-| FR-64 | Tüm raporlarda KDV dahil/hariç seçeneği | `src/app/(admin)/reports/page.tsx:43`; `src/components/VatToggle.tsx` | `src/lib/reports.test.ts:74`; `e2e/admin/reports.spec.ts:40,75` | KANITLI |
-
-¹⁰ Dashboard'da **"ay içi prim yükü" kalemi yok** — diğer beş kalem mevcut (açık kongre bakiyesi dahil, `:120-125`).
-
----
-
-## 2. Değişmez İş Kuralları (RULE)
-
-| RULE | Özet | Uygulandığı yer (dosya:satır) | Kanıtlayan test | Durum |
-|------|------|-------------------------------|-----------------|-------|
-| RULE-01 | Stok hiçbir koşulda eksiye düşemez | `src/app/(seller)/my-orders/actions.ts:110-117`; `src/app/(admin)/dealers/actions.ts:140-153` | `e2e/admin/dealer.spec.ts:159` (yalnız ardışık senaryo) | TESTSIZ ¹¹ |
-| RULE-02 | Bir doktora aynı anda tek satıcı | `src/lib/doctor.ts:35`; `prisma/schema.prisma` `Doctor.ownerSellerId` | `src/lib/doctor.test.ts:16`; `e2e/seller/doctors.spec.ts:132` | KANITLI |
-| RULE-03 | Satış fiyatı taban fiyatın (net) altına inemez | `src/app/(seller)/my-orders/actions.ts:99-104` | `e2e/seller/pricing.spec.ts:25` | KANITLI |
-| RULE-04 | Sipariş anındaki fiyat/KDV/tutar dondurulur | `src/app/(seller)/my-orders/actions.ts:121-130` | — | TESTSIZ |
-| RULE-05 | Kapanmış prim dönemi asla değişmez | `src/app/(admin)/commissions/actions.ts:53-62`; `src/lib/commission-service.ts:174-199` | `e2e/admin/commissions.spec.ts:85` | KANITLI |
-| RULE-06 | Fiyat listesinde olmayan ürün bayiye sevk edilemez | `src/lib/dealer-shipment.ts:57-62` | — | TESTSIZ |
-| RULE-07 | Kongre bakiyesi negatife düşürülerek harcanamaz | `src/lib/congress-ledger.ts:126-128` | `src/lib/congress-ledger.test.ts:133`; `e2e/admin/congress.spec.ts:120`; `e2e/admin/doctor-detail.spec.ts:102` | KANITLI |
-| RULE-08 | Bakiyeler ayrı kolonda tutulmaz, hesaplanır | `src/lib/doctor-cari.ts:29-48`; `src/lib/congress-ledger.ts:57-68` | `e2e/admin/collections.spec.ts:87`; `e2e/admin/congress.spec.ts:85` | KANITLI |
-| RULE-09 | Aynı bakiye iki pakete aynı anda kullanılamaz | `src/lib/congress-service.ts:158-166` (koşullu `updateMany`) | `e2e/admin/congress.spec.ts:168` (**gerçek eşzamanlı yarış testi**) | KANITLI |
-| RULE-10 | Parasal alanlar tam sayı kuruş; kanonik net | `src/lib/money.ts`; `prisma/schema.prisma` (BigInt) | `src/lib/money.test.ts:4,33` | KANITLI |
-| RULE-11 | Kongre harcaması FIFO | `src/lib/congress-ledger.ts:111-139` | `src/lib/congress-ledger.test.ts:111`; `e2e/admin/congress.spec.ts:314` | KANITLI |
-| RULE-12 | Tahsilat: mahsup + doktor bakiyesi + prim matrahı + kongre **tek transaction** | `src/app/(admin)/collections/actions.ts:59-110` | — (ara adımı bilerek patlatan atomiklik testi yok) | TESTSIZ ¹² |
-| RULE-13 | Kritik değişiklikler **istisnasız** audit log'a | `src/lib/audit.ts:148-163` | `src/lib/audit.test.ts:9`; `e2e/admin/doctor-detail.spec.ts:59` | TESTSIZ ¹³ |
-| RULE-14 | Bayi yalnız kendi verisi; onaysız talep stok/cari etkilemez | `src/lib/dealer-session.ts`; `src/app/(dealer)/bayi/talep/actions.ts` | `e2e/dealer/panel.spec.ts:52,83,106` | KANITLI |
-| RULE-15 | Bayi prim/kongreye hiç dahil olmaz | Yapısal (bayi yolları `CongressLedger`/`CommissionPeriod`'a hiç yazmıyor) | `e2e/admin/dealer.spec.ts:186` | KANITLI |
-
-¹¹ Koşullu `updateMany` deseni her iki kanalda da doğru kurulmuş; eksik olan **eşzamanlılık kanıtı** (bkz. D-02).
-¹² Sınır doğru çizilmiş ama mahsup planı transaction **dışında** hesaplanıyor (`:52-55`) — bkz. D-01.
-¹³ `createAuditLog` **best-effort**: hatayı yutuyor (`src/lib/audit.ts:160-162`) ve iş transaction'ının dışında çalışıyor. "İstisnasız" garantisi kod düzeyinde sağlanmıyor.
-
----
-
-## 3. Özet Sayaçlar
-
-### Fonksiyonel Gereksinimler (FR-01…FR-64 + FR-46a…g = 71 madde)
-
-| Durum | Adet | Oran |
-|-------|------|------|
-| **KANITLI** | 46 | %64,8 |
-| **TESTSIZ** | 24 | %33,8 |
-| **YOK** | 1 | %1,4 |
-
-**YOK olan tek madde:** FR-28 (vadesi geçmiş borcu olan doktora yeni sipariş uyarısı).
-
-### İş Kuralları (RULE-01…RULE-15 = 15 madde)
-
-| Durum | Adet | Oran |
-|-------|------|------|
-| **KANITLI** | 10 | %66,7 |
-| **TESTSIZ** | 5 | %33,3 |
-| **YOK** | 0 | %0 |
-
-**TESTSIZ kurallar:** RULE-01, RULE-04, RULE-06, RULE-12, RULE-13.
-
----
-
-## 4. Kısmi uygulamalar (kodda var ama gereksinimin bir parçası eksik)
-
-Bu maddeler yukarıda `TESTSIZ` sayıldı; eksik olan **zorlanabilir** parça:
-
-| FR | Eksik olan |
-|----|-----------|
-| FR-16 | Sistem geneli KDV oranını değiştirecek admin yolu yok (sabit) |
-| FR-18 | Toggle yalnız 2 ekranda; "tüm listelerde" karşılanmıyor |
-| FR-21 | `setSetting()` hiç çağrılmıyor — vade parametreleri admin'e açık değil |
-| FR-24 | `validateManualAllocation` hiçbir yerden çağrılmıyor — manuel mahsup düzeltmesi UI'da yok |
-| FR-30 | Prim oranı sabit; sistem parametresi değil |
-| FR-31 | `User.commissionRate` yazılamıyor (form alanı yok) |
-| FR-52 | Job'ı zamanlayan cron/timer/Actions/compose kaydı yok |
-| FR-58 | "Toplam kullanılan bakiye" gösterilmiyor |
-| FR-60 | "Ay içi prim yükü" gösterilmiyor |
-| FR-09 | Ad-soyad + klinik benzerlik uyarısı yok (PRD'de "yumuşak kontrol") |
-
----
-
-## 5. Test altyapısı gözlemi
-
-- **Birim test:** 10 dosya, tamamı `src/lib/` içindeki **saf fonksiyonlara** yönelik. Kapsam kaliteli (FIFO, KDV yuvarlama, prim, expiry, telefon).
-- **Test edilmeyen katman:** veritabanına dokunan servisler — `doctor-cari.ts`, `dealer-cari.ts`, `congress-service.ts`, `commission-service.ts`, `reports-service.ts`, `dealer-shipment.ts`, `settings.ts` için **hiç birim/entegrasyon testi yok**. Transaction sınırları ve yarış davranışı bu katmanda yaşıyor.
-- **E2E:** 18 spec dosyası. İçlerinde **yalnız bir tane gerçek eşzamanlılık testi** var (`e2e/admin/congress.spec.ts:213`, `Promise.all`).
-- **Uçtan uca kabul senaryosu:** PRD Ek'teki 15 adımlık zinciri tek akışta koşan bir test **yok** (bkz. D-03).
-
----
-
-## 6. KARARLAR senkronizasyonu — boşlukların karar/görev karşılığı *(11.09.2026)*
-
-Bu bölüm matrisin durumlarını **değiştirmez**; §4'teki "kısmi uygulamalar" ile §2/§3'teki TESTSIZ/YOK
-maddelerin Faz 0'da **hangi karara ve hangi göreve** bağlandığını gösterir. Kod bu görevlerle yazılınca
-ilgili satırlar KANITLI'ya döner ve matris yeniden koşulur.
-
-### 6.1 TESTSIZ/YOK maddeler → Faz 1 düzeltme görevleri
-
-| Madde | Matris durumu | Bağlandığı | Karar / görev |
-|---|---|---|---|
-| RULE-01 | TESTSIZ ¹¹ | **F-06** | İki kanalın aynı stoğu yarıştırdığı eşzamanlılık testi yazılır |
-| RULE-04 | TESTSIZ | **F-12** | Sipariş anı fiyat/KDV dondurma testi |
-| RULE-06 | TESTSIZ | **F-12** | Fiyat listesinde olmayan ürün bayiye sevk edilemez testi |
-| RULE-12 | TESTSIZ ¹² | **F-04** | Mahsup planı transaction içine + koşullu yazım; atomiklik testi |
-| RULE-13 | TESTSIZ ¹³ | **F-07** + **X-3/X-4** | Para hareketi doğuran aksiyonlarda audit transaction'ın parçası; hata/uyarı sözleşmesi (`KARARLAR.md` §5.2, §5.4) |
-| FR-28 | **YOK** | **Ü-10** | Vadesi geçmiş doktora sipariş uyarısı — Faz 2 küçük tamamlama |
-| FR-52 | TESTSIZ ⁸ | **F-08** | Expiry job'ı gerçekten zamanlanır + `EXPIRE` satırı testi |
-| FR-13/FR-15/FR-22 | TESTSIZ | **F-11** | 15 adımlık kabul senaryosu (adım 7 vade değişikliği dâhil) |
-
-### 6.2 Kısmi uygulamalar (§4) → Faz 2 ürünleştirme kalemleri
-
-| Madde | Eksik | Bağlandığı | Not |
-|---|---|---|---|
-| FR-16 | Sistem geneli KDV oranı admin'e kapalı | **Ü-1** + C-6 | KDV oranı **tanım tablosu** (`VergiOrani`), enum değil — mevzuat değişince satır ekleme (`KARARLAR.md` §0.1.1) |
-| FR-18 | Toggle yalnız 2 ekranda | **Ü-3** | KDV taban etiketi zorunluluğu + toggle **kurulum düzeyi, Faz 1'de kapalı**; B/C sınıfı ekranlarda kalıcı yok (`KARARLAR.md` §5.3) |
-| FR-21 | `setSetting()` çağrılmıyor (vade) | **Ü-1** | Admin ayar ekranı — instance-config işiyle birleşir |
-| FR-24 | `validateManualAllocation` UI'a bağlı değil | Ü-10 | Manuel mahsup düzeltmesi |
-| FR-30 | Prim oranı sabit | **Ü-1** | Sistem parametresi yapılır |
-| FR-31 | `User.commissionRate` form yok | **Ü-2** | Satıcı bazlı prim oranı form alanı |
-| FR-58 | "Toplam kullanılan bakiye" yok | Ü-10 | Kongre ekranı kartı |
-| FR-60 | "Ay içi prim yükü" yok | Ü-10 | Admin dashboard kartı |
-| FR-09 | Yumuşak benzerlik uyarısı yok | Faz 2 (düşük) | Sert kural (telefon) çalışıyor; PRD "yumuşak kontrol" der |
-| Raporlar | "üç" sayımı düzeltildi (dört) | X-1 | X-1: "tahsilat oranı" kaldırılır, zorunlu dönem aralığı + hakediş tanımı gelir (`KARARLAR.md` §5.1) |
-
-### 6.3 Faz 0'da doğan, PRD'de olmayan yeni maddeler
-
-Bunlar `PRD_V2.md` FR/RULE listesinde **yok**; izlenebilirlikleri `KARARLAR.md`'dedir. Kod yazıldıkça
-buraya kendi satırları (ve testleri) eklenecek.
-
-| Yeni madde | Şemaya etkisi | Kaynak |
-|---|---|---|
-| **X-1** satıcı raporu, dönem, hakediş tanımı | yok | `KARARLAR.md` §5.1 |
-| **X-3** hata yüzeyi / `global-error.tsx` | yok | §5.2 |
-| **X-4** iş hatası ve uyarı gösterim sözleşmesi | yok | §5.4 |
-| **A-15** nakit tahsilatta tevsik uyarısı | yok (config) | §3.1.c |
-| **Ü-3** KDV tabanı ve taban etiketi | yok | §5.3 |
-| **E-1** zaman dilimi ve gün sınırı | tip disiplini (`timestamptz`/`date`) | §5.5 |
-| **E-2** hesap yaşam döngüsü | ⚠️ **ekler** — oturum tablosu + `Kullanici.aktif`, `parola_hash`, `parola_degistirmeli` (**`son_giris_at` konmaz**) | §5.6 |
-| **E-3** dosya eki | yok — kapsam dışı, `ImportParti.dosya_adi` salt kayıt | §5.7 |
-| **D-5 (Ü-5)** dışa aktarım kütüğü | ⚠️ **ekler** — dışa aktarım log tablosu | §3.4.b |
-| **D-2** rol tasarımı | ⚠️ **değiştirir** — `Kullanici.rol` enum **üç değer**; `DEALER` rolü ve `Yetki` tablosu **yok** | §3.4.a |
-| **B-7** stok düzeltme | ⚠️ **ekler (3 tablo)** — `StokDuzeltme` + **`StokDuzeltmeSatir`** + `StokDuzeltmeSebep` + `DZL` öneki (29.08) | §3.2.a |
-| **A-9** cari hesap sahibi tipi | ⚠️ **eklememe kararı** — `Kurum` tablosu ve `Doktor.kurum_id` **konmaz** (§0.1 on ikinci uygulama) | §3.1 · §1.3 §E |
-| **§1.3** modülerlik | ⚠️ **kural** — çekirdek tabloda modül kolonu/FK **yok**; FK yönü daima modül → çekirdek; modül yazılmadan **tablosu da yazılmaz** | §1.3 |
-| **A-13 / A-14 / C-6 / A-4 / A-11 / D-3 / A-8 / A-5 / A-10 / B-5 / B-6 / A-6 / A-7 / A-12 / C-1** | ⚠️ **hepsi ekler** — 19.08 ve öncesinde karara bağlandı, **hiçbiri kodda yok**; tam liste `FAZ1_UYGULAMA_KAPSAMI.md` §B | §3.1–§3.3 |
-
-> **İki belge hatası** (`PROJE_DURUMU.md`): RULE-12 satırı ve rapor sayısı → **düzeltildi** (11.09.2026).
-
----
-
-### 6.4 🔴 KARARLAR ile **geçersizleşen** FR/RULE satırları *(13.09.2026'da eklendi)*
-
-Aşağıdaki satırlar matriste bugün **KANITLI veya TESTSIZ** görünüyor — yani kod var. Ama
-KARARLAR bu gereksinimleri **geçersiz kıldı**: Faz 1 sonunda KANITLI'ya dönmeyecekler,
-**matristen düşecekler**. Gerekçeler ve geri çekme sırası: `FAZ1_UYGULAMA_KAPSAMI.md` §A.
-
-> **Neden bu tablo şart:** matris "kodun aynası" olduğu için, aynadaki bir satırın **hedefte
-> karşılığı olmadığını** başka hiçbir yer söylemiyordu. Faz 1'de bir geliştirici FR-49'u
-> düzeltmeye çalışabilirdi — oysa FR-49 **silinecek**.
-
-| Matris satırı | Bugünkü durum | KARARLAR | Sonuç |
-|---|---|---|---|
-| **FR-24** FIFO mahsuplaşma + manuel düzeltme | TESTSIZ ⁵ | **X-6 §(1)/(2)** — tablo **kaldırıldı**; **runtime FIFO de yasak** | ⛔ **düşer, kesin** |
-| **FR-25** Kısmi tahsilat; prim ve kongre orantılı | KANITLI | X-1 §(7) + K-6 §(2) | ⚠️ **prim ve kongre yarısı düşer** |
-| **FR-26** Yaşlandırma kovaları | KANITLI | **X-6 §(5)** — **Faz 2+'ya taşındı**. Faz 1'de yalnız bakiye + *"vadesi geçmiş hareket var"* uyarısı; 🔴 **tutar gösterilmez** | ⛔ **Faz 1'den çıkar** |
-| **FR-30 · FR-33 · FR-37** Prim oranı, matrah, satıcı paneli | TESTSIZ / KANITLI | **X-1 §(7), A-3** — hakediş **sevkiyat anında** doğar; tahsilat bazlı prim **kalıcı kapsam dışı** | ⚠️ **matrah tanımı değişir** |
-| **FR-38** Kongre harcaması primi etkilemez | TESTSIZ | K-6 — kongre harcaması **doktor bakiyesinden düşmüyor** artık | ⛔ konusuz |
-| **FR-46a…46g** Bayi paneli (7 madde) | 6 KANITLI + 1 TESTSIZ | **D-2 §(6)** — bayi **cari tipidir, kullanıcı değildir**; panel **Faz 3+ modül** | ⛔ **7 madde birden düşer** |
-| **FR-49 · FR-50 · FR-51 · FR-52 · FR-53 · FR-54 · FR-56 · FR-57 · FR-58 · FR-59** Kongre defteri (10 madde) | 7 KANITLI + 3 TESTSIZ | **K-6 §(2)/(4)** — EARN/SPEND/EXPIRE, FIFO lot, 12 ay geçerlilik, doktor bakiyesi **silinir** | ⛔ **10 madde birden düşer** |
-| **FR-12 · FR-19** Taban fiyat altı reddedilir | KANITLI | **A-10** (`iskontoTavani` = `null`) + **Ü-3 §(10)** (liste üstü satış serbest, negatif iskonto) | ⛔ düşer |
-| **FR-16** Sistem geneli KDV oranı | TESTSIZ ² | **C-6 §(2)** — `Urun.kdv_orani` kolonu **konmaz**; `VergiOrani` tanım tablosu | ⚠️ **yeniden tanımlanır** |
-| **FR-18 · FR-64** KDV dahil/hariç toggle + çerez tercihi | TESTSIZ ³ / KANITLI | **Ü-3 §(1)/(3)/(6)** — kullanıcı tercihi ve tarayıcı saklaması **yok**; Faz 1'de toggle **görünmez**; yerine **taban etiketi** | ⚠️ **yerini taban etiketi alır** |
-| **FR-62'nin `tahsilatOrani` kalemi** | KANITLI | **X-1 §(1)** — metrik **kalıcı olarak kaldırıldı** | ⛔ düşer |
-| **RULE-03** Taban fiyat altına inilemez | KANITLI | A-10, Ü-3 §(10) | ⛔ düşer |
-| **RULE-07 · RULE-09 · RULE-11** Kongre bakiyesi kuralları | KANITLI ×3 | K-6 §(2) | ⛔ **üçü de konusuz** |
-| **RULE-12** Tahsilat dört bileşen tek transaction | TESTSIZ ¹² | GÇ-1/GÇ-3/GÇ-4 | ⚠️ **dört bileşenin üçü düşer** |
-| **RULE-14** Bayi yalnız kendi verisi; onaysız talep stok/cari etkilemez | KANITLI | D-2 §(6) · **X-8 §(4)** | ⛔ **düşer** *(15.09: "onaysız talep" yarısı da gitti — ayrı bayi talep mekanizması yok; karşılığı A-5 teklif aşaması)* |
-| **RULE-06** Fiyat listesinde olmayan ürün bayiye sevk edilemez | TESTSIZ | **X-8** (`dealer-shipment.ts` sökülür) · **X-10 §(3)** — atanmış listede satır yoksa çözümlenmez, varsayılana düşülmez; bütün carilere | ⚠️ **yeniden tanımlanır** *(15.09)* |
-| **RULE-15** Bayi prim/kongreye hiç dahil olmaz | KANITLI | **X-8 §(3)** — `BAYI` sınıfına satıcı atanmaz, prim doğmaz | ⚠️ **biçim değiştirir** *(15.09)* |
-| **FR-39 · FR-40 · FR-41 · FR-42 · FR-43 · FR-44 · FR-45 · FR-46** Bayi yönetimi (8 madde) | 5 KANITLI + 3 TESTSIZ | **X-8** — bayi `Doktor` satırı; `Dealer*` tabloları kalkar; kayıt/sevkiyat/iptal/cari/ödeme **genel belge akışlarıdır**. FR-39'un `DEALER` hesabı yarısı D-2 ile düşer. **FR-40/41 (bayi × ürün fiyatı) → X-10: cariye atanan fiyat listesi** | ⚠️ **yeniden tanımlanır** *(15.09)* |
-| **FR-11** Ürün bazlı liste + taban fiyat | KANITLI | taban yarısı **A-10/GÇ-8** · liste yarısı **X-10 §(5)** — ürün kartında fiyat yok, varsayılan listenin satırı | ⚠️ **yeniden tanımlanır** *(15.09)* |
-| **FR-60** Dashboard — kanal ciro, bayi alacağı kalemleri | TESTSIZ ¹⁰ | **X-8** — kırılım `hesap_sinifi`'nden türer; kart Faz 2 (Ü-10) | ⚠️ **yeniden tanımlanır** *(15.09)* |
-| **RULE-01** Stok eksiye düşemez | TESTSIZ ¹¹ | **B-4** — negatif stok **yumuşak kısıt** | ⚠️ **kural yeniden tanımlanır** |
-| **RULE-10** Tam sayı kuruş | KANITLI | **X-5** — parasal alanlar `Decimal`; ölçek şemada | ⛔ **ilk yarısı düşer** *(kanonik net yarısı kalır)* |
-| **FR-14** Kalem bazında iskonto oranı **saklanır** | TESTSIZ | **X-5 §(9)/(10)** — satırda `birim_fiyat` saklanır, **oran türetilir** | ⚠️ **yeniden tanımlanır** |
-
-**Sayısal etki:** 71 FR'nin **en az 22'si** ve 15 RULE'un **en az 7'si** doğrudan etkileniyor.
-*15.09.2026 (X-8 sonrası):* **22 FR tamamen düşer, 19 FR yeniden tanımlanır** *(X-10 ile FR-11 eklendi)*; **5 RULE düşer**
-(03 · 07 · 09 · 11 · 14), **5 RULE yeniden tanımlanır** (01 · 06 · 10 · 12 · 15). PRD taramasında
-karşılığı aranacak: **49 FR + 10 RULE = 59 madde** (`FAZ1_UYGULAMA_KAPSAMI.md` §D.1 Şerit A — defter **§E**).
-Bu, matrisin %30'undan fazlasıdır — dolayısıyla Faz 1 sonunda matris **yeniden koşulmaz,
-yeniden kurulur**. Kaynak listesinin (PRD) akıbeti bu yüzden §C-c'de açık maddeydi — ✅ *13.09'da X-7 ile kapandı: taranır, arşivlenir.*
-
-**16.09.2026 — PRD taramasının eklediği ⛔ satırları** (`FAZ1_UYGULAMA_KAPSAMI.md` §E):
-
-| Matris satırı | Bugünkü durum | KARARLAR | Sonuç |
-|---|---|---|---|
-| **FR-34 · FR-35 · FR-36** Dönem kapatma, sonraki döneme düzeltme, prim durumları | KANITLI ×3 | **X-1** §(6)/(7) + kapsam dışı | ⛔ **düşer** (GÇ-16) |
-| **FR-43** Stok yetersizse sevkiyat reddedilir | KANITLI | **B-4** — yumuşak kısıt | ⛔ **düşer** (GÇ-17) |
-| **FR-17** KDV ve brüt tutarın satırda saklanması | KANITLI | **C-6** §(3) | ⚠️ saklama yarısı düşer (GÇ-18) |
-| **FR-21** Vade üst sınırı · siparişte vade | TESTSIZ | KARARLAR §2 madde 16 · **A-7** | ⚠️ üst sınır ve sipariş tarihi düşer (GÇ-11, GÇ-19) |
-| **FR-23** Çek yöntemi | KANITLI | §2 madde 17-b | ⚠️ çek düşer |
-| **FR-29 · FR-37** Tahsilat iptalinde prim geri alma · tahmini prim | KANITLI / TESTSIZ | **X-1** §(7) · X-6 | ⚠️ prim yarısı düşer |
-| **FR-10 · FR-60 · FR-61 · FR-63** Gecikme tutarı · kongre bakiyesi | karışık | **X-6** §(7) · K-6 | ⚠️ tutar ve kongre yarısı düşer |
-| **FR-55** Kontenjan sert sınırı | TESTSIZ | **K-3** | ⚠️ yumuşak kısıt (modül, Faz 3+) |
-| **RULE-13** Mahsup ve kongre bakiyesi düzeltmesi | TESTSIZ | X-6 · K-6 | ⚠️ iki kalem düşer |
-
-✅ *Karşılığı çıkmayanlar (FR-03…09, FR-22, FR-30, FR-31) aynı gün KARARLAR **X-13 · X-14 · X-15** ile karşılık buldu; davranışları korunur.*
-
+# İzlenebilirlik Matrisi — kriter × kod × test × karar
+<!-- ÜRETİLMİŞ DOSYA — elle düzenlenmez: `npm run izlenebilirlik` (src/lib/izlenebilirlik.ts). -->
+
+> **Kaynak:** `KABUL_KRITERLERI.md` (KARARLAR X-7 §(5)). Durum: **KANITLI** (andığı test mevcut) · **TESTSIZ**
+> (metin var, test yok) · **YOK** (metin yazılmamış) · **KAPSAM DIŞI** (konusuz, süreç, Faz 2+, 1A-C8 yokluk).
+> Kod yeri, kriter metninde anılan fonksiyonun tanımlandığı dosyadır. Eski PRD matrisi (8 Ağustos 2026)
+> `docs/arsiv/TRACEABILITY_PRD_V2.md`'dedir.
+
+**Özet:** 118 KANITLI · 0 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.0** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
+
+| Kriter | Karar | Durum | Kod yeri | Test | Kriter metni |
+|---|---|---|---|---|---|
+| §0.2-1 | §0.2 | KANITLI | `src/lib/cari-hareket.ts` | `src/lib/tek-cagri.test.ts`<br>`src/app/(admin)/collections/collections.itest.ts`<br>`src/app/(admin)/doctors/cari-hareket.itest.ts`<br>`src/lib/iade.itest.ts` | Cari hareket satırı silinmez; tutarı, yönü ve tipi değişmez — düzeltme ters harekettir (`TERS_KAYIT`, `tersKayitYaz`): tahsilat iptali, a… |
+| §0.3-1 | §0.3 | KANITLI | — | `src/lib/sonuc.test.ts`<br>`src/lib/onay-blogu.itest.ts` | İş kuralı ihlali üç kademeden biriyle bildirilir ve akışı en yüksek kademe belirler: `SERT` → `ENGELLENDI` (kayıt oluşmaz) · `YUMUSAK` →… |
+| §1.3-1 | §1.3 | KANITLI | — | `src/lib/modul.test.ts`<br>`src/lib/tek-cagri.test.ts` | Modülün açık/kapalı durumu yalnız `modulAcikMi(kod)` ile okunur; kod kataloğu `policy.modules` anahtarlarıdır. `policy.modules`'u başka d… |
+| K-1-1 | K-1 | KAPSAM DIŞI | — | — | — |
+| K-2-1 | K-2 | KANITLI | — | `src/lib/bakiye.itest.ts` | `hesaplaDoktorBakiye(doktor, tarih?)` = Σ borç − Σ alacak; bütün cari hareket tipleri (`ACILIS`, `VADE_FARKI`, `TERS_KAYIT` dahil) bakiye… |
+| K-2-2 | K-2 | KANITLI | — | `src/lib/bakiye.itest.ts` | Negatif bakiye avanstır ve yönü `ALACAK`'tır; ayrı avans kaydı yoktur. Ekranda çıplak negatif sayı gösterilmez, tutar yön etiketiyle göst… |
+| K-2-3 | K-2 | KANITLI | — | `src/lib/bakiye.itest.ts` | `tarih` verilirse sonuç o günün İstanbul günü sonu itibarıyladır: o günün hareketi dahil, ertesi günün hareketi hariç (C-2 §(3), E-1 §(5)). |
+| K-2-4 | K-2 | KANITLI | — | `src/lib/tek-cagri.test.ts` | Cari hareket tutarını toplayan tek kod `src/lib/doctor-cari.ts`'tedir; başka dosya `LedgerEntry` toplamı almaz (K-2: tüm ekranlar tek fon… |
+| K-3-1 | K-3 | KAPSAM DIŞI | — | — | — |
+| K-4-1 | K-4 | KANITLI | `src/lib/satir-tutarlari.ts` | `src/lib/disa-aktarim.itest.ts` | Fatura hazırlık veri seti sevkiyat satırından üretilir ve sayılan belgeler filtresinden geçer (bedelsiz satır ve iptal sipariş çıkmaz); d… |
+| K-5-1 | K-5 | KAPSAM DIŞI | — | — | — |
+| K-6-1 | K-6 | KANITLI | — | `src/lib/modul.test.ts` | Kongre modülü kapalı teslim edilir: `modulAcikMi("congress")` `false` döner (`policy.modules.congress`). |
+| K-7-1 | K-7 | KANITLI | — | `src/lib/ice-aktarim/ice-aktarim.itest.ts`<br>`src/lib/ice-aktarim/urun-fiyat.itest.ts`<br>`src/lib/ice-aktarim/acilis.itest.ts` | Geçiş şablonları sistemden üretilir (ekranda ve `npm run sablon:uret`); ürün şablonu KDV oranını **kodla** taşır, ÜTS sütununu okumaz; aç… |
+| K-8-1 | K-8 | KAPSAM DIŞI | — | — | — |
+| K-9-1 | K-9 | KAPSAM DIŞI | — | — | — |
+| K-10-1 | K-10 | KAPSAM DIŞI | — | — | — |
+| A-1-1 | A-1 | KANITLI | `src/lib/satir-tutarlari.ts` | `src/lib/iade.itest.ts`<br>`e2e/admin/iade.spec.ts`<br>`src/lib/yetki.test.ts` | İade ayrı belgedir (`IAD`); sipariş ve sevkiyat değişmez. Satır sipariş satırına referansla miktar taşır; iade edilebilir = sevk edilen −… |
+| A-1-2 | A-1 | KANITLI | — | `src/lib/iade.itest.ts`<br>`src/lib/satir-tutarlari.test.ts` | İade ciro ve hakedişi iade belgesinin tarihinde düşürür: iade satırı aynı hesapla, donmuş oranla ters satır olarak yazılır (`ters`, yuvar… |
+| A-2-1 | A-2 | KANITLI | — | `src/app/(seller)/my-orders/orders.itest.ts`<br>`src/lib/sevkiyat.itest.ts` | Bedelsiz satır sipariş satırında bayrak + kapalı listeden sebep taşır (`NUMUNE` · `PROMOSYON` · `MAL_FAZLASI` · `DIGER`; `DIGER`'de açıkl… |
+| A-2-2 | A-2 | KANITLI | — | `src/app/(seller)/my-orders/orders.itest.ts`<br>`src/lib/sevkiyat.itest.ts`<br>`e2e/seller/orders.spec.ts` | Numune onaysız kaydolur. Diğer sebepler gerekçesiz `ONAY_GEREKLI` · `YUMUSAK` `BEDELSIZ_ONAYI` döner (sipariş ve numara yazılmaz); gerekç… |
+| A-3-1 | A-3 | KANITLI | `src/lib/satir-tutarlari.ts` | `src/lib/sevkiyat.itest.ts`<br>`src/app/(seller)/my-orders/orders.itest.ts`<br>`e2e/admin/sevkiyat.spec.ts` | Bir sipariş satırına birden çok sevkiyat bağlanabilir; sevkiyat yalnız `ONAYLI` · `HAZIRLANIYOR` siparişte, kalem başına kalan miktarı aş… |
+| A-4-1 | A-4 | KANITLI | — | `src/lib/stok-transfer.itest.ts`<br>`e2e/admin/konsinye.spec.ts` | `KonsinyeCikis` (`KNS`) malı depodan doktorun konsinye konumuna taşır; konum doktor başına tektir ve ilk çıkışta açılır (veritabanında `U… |
+| A-5-1 | A-5 | KANITLI | — | `src/lib/sayilan-belgeler.itest.ts` | `TEKLIF` aşamasındaki siparişin satırları sayılan sipariş ve sayılan sevk satırı kümesine girmez. |
+| A-5-2 | A-5 | KANITLI | — | `src/lib/sayilan-belgeler.itest.ts` | `IPTAL` durumundaki sipariş sayılmaz (X-6 §(9), K-1). |
+| A-5-3 | A-5 | KANITLI | — | `src/lib/sayilan-belgeler.itest.ts` | Bedelsiz satır (A-2) sayılan sevk satırı kümesine girmez. |
+| A-5-4 | A-5 | KANITLI | — | `src/lib/sayilan-belgeler.itest.ts` | `ACILIS` ve `VADE_FARKI` cari hareketleri sayılan cari hareket kümesine girmez; bakiye hesabı bu filtreyi kullanmaz (A-6, A-7, X-11 §(6)). |
+| A-5-5 | A-5 | KANITLI | — | `src/lib/sayilan-belgeler.itest.ts` | Konsinye çıkış, stok transferi ve stok düzeltmesinden doğan stok hareketi sayılan stok hareketi değildir (A-4, B-7). |
+| A-5-6 | A-5 | KANITLI | — | `src/lib/reports-service.itest.ts` | Ciro raporları sevk satırlarını yalnız bu filtreyle okur (K-4 §(2), X-1 §(5)); `TEKLIF`, iptal ve bedelsiz satır ciroya yansımaz. |
+| A-6-1 | A-6 | KANITLI | — | `src/lib/ice-aktarim/acilis.itest.ts`<br>`e2e/admin/ice-aktarim.spec.ts` | Açılış bakiyesi carinin **tek** `ACILIS` hareketidir; yalnız içe aktarımla yazılır, `ACL` numarası alır, iki yön de olabilir, vade yalnız… |
+| A-7-1 | A-7 | KANITLI | — | `src/lib/sevkiyat.itest.ts` | Borç doğuran cari harekette vade tarihi vardır ve sevk gününden işler: vade = sevk günü (İstanbul takvim günü) + siparişin `odeme_vadesi_… |
+| A-7-2 | A-7 | KANITLI | — | `src/app/(admin)/doctors/cari-hareket.itest.ts`<br>`e2e/admin/vade-farki.spec.ts` | Vade farkı yalnız elle ve yalnız `YONETICI` tarafından girilir (cari detayı): tutar (> 0, KDV kırılımsız), vade ve gerekçe zorunlu (alanı… |
+| A-8-1 | A-8 | KANITLI | — | `src/lib/onay-blogu.itest.ts` | `acikBlokVarMi(belgeTipi, belgeId)` her kural kodu için belgenin **son** bloğuna bakar: kararı verilmemiş ya da `RED` ise `true` döner; b… |
+| A-8-2 | A-8 | KANITLI | `src/lib/onay-blogu.ts` | `src/lib/onay-blogu.itest.ts` | `blokKontrolleriniCalistir()` ihlal yoksa `BASARILI` döner ve blok yazmaz. |
+| A-8-3 | A-8 | KANITLI | — | `src/lib/onay-blogu.itest.ts` | İhlal varsa ve gerekçe boşsa (yalnız boşluk dahil) `ONAY_GEREKLI` · `YUMUSAK` döner, **bütün** ihlaller sonuçtadır (X-4 §(7)); blok yazıl… |
+| A-8-4 | A-8 | KANITLI | — | `src/lib/onay-blogu.itest.ts` | Gerekçe varsa ve kullanıcı `YONETICI` değilse kural kodu başına bir açık blok yazılır (açan + gerekçe); sonuç `BASARILI_UYARILI`, `onayaG… |
+| A-8-5 | A-8 | KANITLI | `src/lib/onay-blogu.ts` | `src/lib/onay-blogu.itest.ts` | Gerekçe varsa ve kullanıcı `YONETICI` ise blok yazılır ve aynı işlemde `ONAY` ile kapanır (karar veren = açan, karar notu = gerekçe); `on… |
+| A-8-6 | A-8 | KANITLI | — | `src/lib/tek-cagri.test.ts` | `OnayBlogu` yalnız `src/lib/onay-blogu.ts`'te yazılır. |
+| A-8-7 | A-8 | KANITLI | — | `src/lib/sevkiyat.itest.ts` | Sevkiyat stoğu sıfırın altına düşürecekse ve gerekçe yoksa `ONAY_GEREKLI` · `YUMUSAK` `NEGATIF_STOK` döner (ürün adı ve işlem sonrası sto… |
+| A-8-8 | A-8 | KANITLI | — | `src/lib/sevkiyat.itest.ts`<br>`e2e/admin/onay.spec.ts` | `YONETICI` gerekçeyle sevk eder: sevkiyat yazılır, siparişe (`SIP`) bağlı `NEGATIF_STOK` bloğu aynı işlemde `ONAY` alır. Ekrandan girilen… |
+| A-8-9 | A-8 | KANITLI | — | `src/lib/sevkiyat.itest.ts`<br>`e2e/operasyon/operasyon.spec.ts` | Diğer rol gerekçe yazarsa sevkiyat, numara ve hareket yazılmaz; yalnız açık blok yazılır, sonuç "onaya gönderildi"dir. Kararı verilmemiş… |
+| A-8-10 | A-8 | KANITLI | — | `src/lib/sevkiyat.itest.ts`<br>`e2e/admin/onay.spec.ts`<br>`src/lib/yetki.test.ts` | `RED`'den sonra stok hâlâ yetmiyorsa gerekçesiz sevk yeniden `ONAY_GEREKLI` döner, yeni gerekçe yeni blok açar (eski blok iz olarak kalır… |
+| A-9-1 | A-9 | KAPSAM DIŞI | — | — | — |
+| A-10-1 | A-10 | KANITLI | — | `src/app/(seller)/my-orders/orders.itest.ts` | İskonto tavanı ve taban fiyat reddi yoktur: liste altı ve liste üstü birim fiyat kabul edilir; liste ve birim fiyat ayrı donar. |
+| A-11-1 | A-11 | KANITLI | — | `src/app/(admin)/collections/collections.itest.ts`<br>`src/lib/satir-tutarlari.test.ts` | Tahsilatta ödeme yöntemi zorunludur; komisyon oranı yöntemden kayda kopyalanır ve donar, komisyon tutarı oran × tutar (2 hane, yarım sıfı… |
+| A-12-1 | A-12 | KANITLI | `src/lib/doctor-cari.ts` | `src/lib/risk.itest.ts` | `hesaplaDoktorRisk(doktor)` = cari bakiye (`hesaplaDoktorBakiye` ile aynı tanım; avans riski düşürür) + açık sipariş tutarı. Açık sipariş… |
+| A-12-2 | A-12 | KANITLI | — | `src/lib/risk.itest.ts` | Açık sipariş tutarı yalnız **sevk edilmemiş miktarı** sayar: satır miktarı − sevk satırlarındaki miktar. Tamamen sevk edilmiş satır riske… |
+| A-12-3 | A-12 | KANITLI | `src/lib/satir-tutarlari.ts` | `src/lib/risk.itest.ts` | Risk tabanı brüttür: açık satır tutarı `hesaplaSatirTutarlari()` toplamıdır (KDV dahil, satır bazında yuvarlanmış — C-6 §(5)). Bedelsiz s… |
+| A-12-4 | A-12 | KANITLI | — | `src/lib/risk.itest.ts` | `kredi_limiti` boşsa doktor limitsizdir, aşım yoktur. Limit doluysa risk limitten **büyükse** aşım vardır; eşitlik aşım değildir. Fonksiy… |
+| A-13-1 | A-13 | KANITLI | — | `src/lib/cari.test.ts`<br>`src/lib/cari.itest.ts`<br>`e2e/admin/cari.spec.ts` | Vergi kimliği hane sayısından doğrulanır: 10 hane VKN, 11 hane TCKN kontrol algoritması; başka uzunluk ya da tutmayan kontrol hanesi `SER… |
+| A-13-2 | A-13 | KANITLI | `src/lib/cari.ts` | `src/lib/cari.itest.ts`<br>`src/lib/disa-aktarim.itest.ts` | Eksik fatura bilgisi bilgi kademesidir: VKN/TCKN boş, fatura adresi ya da ili boş, ya da tüzel kişide vergi dairesi boş. Cari listesinde… |
+| A-14-1 | A-14 | KANITLI | — | `src/lib/kisitlar.itest.ts` | `uretBelgeNo(onek, tx)` `{ÖNEK}-{YIL}-{SIRA}` biçiminde, sırası 6 hane sıfır dolgulu numara üretir; her önek ayrı sayılır (A-14 §(1)/(2)). |
+| A-14-2 | A-14 | KANITLI | — | `src/lib/kisitlar.itest.ts` | Eşzamanlı transaction'lar aynı numarayı alamaz; numara sayaç satırının kilidi altında alınır (A-14 §(3)). |
+| A-14-3 | A-14 | KANITLI | `src/lib/belge-no.ts` | `src/lib/kisitlar.itest.ts` | Numara belgeyi yazan transaction'ın içinde alınır: transaction geri alınırsa sayaç ilerlemez, boşluk oluşmaz (A-14 §(3)). `uretBelgeNo` t… |
+| A-14-4 | A-14 | KANITLI | — | `src/lib/belge-no.itest.ts` | Yıl, kayıt anının **İstanbul** takvim yılıdır ve her yıl sayaç 1'den başlar: 31 Aralık 23:59 (İstanbul) eski yılın, 1 Ocak 00:01 yeni yıl… |
+| A-14-5 | A-14 | KANITLI | — | `src/lib/tek-cagri.test.ts` | Sayaç tablosuna yalnız `src/lib/belge-no.ts` dokunur; kaynakta elle kurulmuş belge numarası (`"SIP-…"` gibi önekli metin) yoktur — `MAX(b… |
+| A-15-1 | A-15 | KANITLI | — | `src/app/(admin)/collections/collections.itest.ts`<br>`src/lib/sonuc.test.ts` | Tahsilat kaydında aynı cari + aynı `Europe/Istanbul` günü + `tip = NAKIT` + aynı yön, iptal edilmemiş tahsilatların toplamı `finance.naki… |
+| B-1-1 | B-1 | KAPSAM DIŞI | — | — | — |
+| B-2-1 | B-2 | KAPSAM DIŞI | — | — | — |
+| B-3-1 | B-3 | KAPSAM DIŞI | — | — | — |
+| B-4-1 | B-4 | KANITLI | — | `src/lib/kisitlar.itest.ts` | `hesaplaStok(urun, konum?, tarih?)` = Σ giriş − Σ çıkış hareketi; `konum` verilirse yalnız o konum, `tarih` verilirse o günün İstanbul gü… |
+| B-4-2 | B-4 | KANITLI | `src/lib/stok.ts`<br>`src/lib/belge-no.ts` | `src/lib/tek-cagri.test.ts`<br>`src/lib/stok.itest.ts` | Stok hareketi yalnız `stokHareketiYaz()` ile yazılır. Fonksiyon önce hareketin ürün satırlarını **id sırasıyla** kilitler, sonra stoğu ok… |
+| B-4-3 | B-4 | KANITLI | — | `src/lib/stok.itest.ts` | Negatife düşüş engellenmez: hareket yazılır. Yazımdan sonra stoğu sıfırın altında kalan ve o yazımda **çıkış alan** her ürün × konum `NEG… |
+| B-4-5 | B-4 | KANITLI | — | `src/lib/stok-transfer.itest.ts`<br>`e2e/admin/konsinye.spec.ts` | `StokTransfer` (`TRF`) konumdan **depoya** taşır (hedef depo değilse ya da kaynak = hedefse `SERT` `TRANSFER_KONUMU_GECERSIZ`); mali sonu… |
+| B-4-6 | B-4 | KANITLI | `src/lib/stok.ts` | `src/lib/ice-aktarim/acilis.itest.ts` | Açılış stoğu konum bazındadır: ürün ve konum koduyla (boş konum varsayılan depo), pozitif tam sayı miktar; her satır `stokHareketiYaz()`… |
+| B-4-4 | B-4 | KANITLI | — | `src/lib/stok.itest.ts` | Aynı ürüne eşzamanlı iki çıkış aynı ön stoğu göremez: ikinci yazım birincinin commit'ini bekler ve onun sonucunu okur (ADR-008 §(6), F-06). |
+| B-5-1 | B-5 | KANITLI | — | `src/lib/fiyat.itest.ts`<br>`src/lib/kisitlar.itest.ts` | Fiyat satırı belge gününde geçerliyse seçilir: aralık yarı açıktır (`gecerli_baslangic` dahil, `gecerli_bitis` hariç), boş uç süresizdir.… |
+| B-6-1 | B-6 | KANITLI | — | `src/lib/fiyat.itest.ts`<br>`src/app/(seller)/my-orders/orders.itest.ts` | Barem `min_adet` alt sınır satırlarıyla kurulur, üst sınır yoktur: satır miktarını karşılayan **en yüksek** `min_adet`'li satır seçilir;… |
+| B-7-1 | B-7 | KANITLI | `src/lib/session.ts` | `src/lib/stok-duzeltme.itest.ts`<br>`e2e/admin/stok-duzeltme.spec.ts`<br>`src/lib/yetki.test.ts`<br>`e2e/operasyon/operasyon.spec.ts` | Stok düzeltme (`DZL`) yalnız `YONETICI`'dedir (action `requireAdmin`, servis başka rolde teknik hata). Belge çok satırlıdır: ürün · konum… |
+| B-7-2 | B-7 | KANITLI | — | `src/lib/disa-aktarim.itest.ts` | Stok veri seti, miktar satırlarına ("Bakiye") ek olarak seçilen günün takvim yılı başından gün sonuna kadarki her `DZL` satırını "Düzeltm… |
+| C-1-1 | C-1 | KANITLI | — | `src/lib/sevkiyat.itest.ts`<br>`e2e/admin/sevkiyat.spec.ts` | Sevkiyat müşterinin irsaliye numarasını isteğe bağlı salt kayıt olarak taşır (en çok 32 karakter; doğrulanmaz, hiçbir hesaba girmez) ve s… |
+| C-2-1 | C-2 | KANITLI | — | `src/lib/disa-aktarim.itest.ts` | Müşavir verisi dışa aktarımla verilir: cari hareket, tahsilat ve stok veri setleri tarih parametresi alır; stok veri seti gün sonu itibar… |
+| C-3-1 | C-3 | KANITLI | — | `src/lib/audit.test.ts`<br>`src/lib/cari.itest.ts`<br>`src/lib/ice-aktarim/ice-aktarim.itest.ts` | Denetim kaydı vergi kimliği ve fatura alanlarının değerini yazmaz (yalnız değişen alan adı, A-13 §(7)). Belgeye bağlı olmayan cari yalnız… |
+| C-4-1 | C-4 | KAPSAM DIŞI | — | — | — |
+| C-5-1 | C-5 | KAPSAM DIŞI | — | — | — |
+| C-6-1 | C-6 | KANITLI | `src/lib/satir-tutarlari.ts` | `src/lib/satir-tutarlari.test.ts`<br>`src/app/(seller)/my-orders/orders.itest.ts` | Satır hesabı ve yuvarlama tek fonksiyondadır (`hesaplaSatirTutarlari()`): matrah = birim fiyat × miktar ve KDV = matrah × oran, her ikisi… |
+| C-7-1 | C-7 | KAPSAM DIŞI | — | — | — |
+| D-1-1 | D-1 | KANITLI | `src/lib/olaylar.ts` | `src/lib/olaylar.itest.ts` | Bildirim olay noktaları akışlarda çağrılır, işleyicileri boştur (`notifications.enabled = false`): `onBlokAcildi` (blok yazılınca), `onBl… |
+| D-2-1 | D-2 | KANITLI | — | `src/lib/yetki.test.ts`<br>`e2e/operasyon/operasyon.spec.ts` | Roller üç değerli kapalı katalogdur. `OPERASYON` giriş yapar; ana sayfası Dashboard'dur. Sipariş hazırlama, teslim ve iptal, kargolama, t… |
+| D-3-1 | D-3 | KANITLI | `src/lib/kargo.ts` | `src/lib/kargo.test.ts`<br>`src/lib/sevkiyat.itest.ts` | Sevkiyat kargo firmasını (tanım tablosu), takip numarasını (elle, isteğe bağlı) ve gönderi gününü (otomatik, sevk günü) taşır. Takip link… |
+| D-4-1 | D-4 | KANITLI | — | `src/lib/reports-service.itest.ts` | Hakediş yalnız satırın matrahı ve satıra donmuş oranla hesaplanır; satıcının dönem cirosu, hedefi ya da kotası oranı değiştirmez — aynı s… |
+| D-5-1 | D-5 | KANITLI | `src/lib/disa-aktarim.ts`<br>`src/lib/satir-tutarlari.ts` | `src/lib/disa-aktarim.itest.ts`<br>`src/lib/disa-aktarim-yazici.test.ts`<br>`e2e/admin/disa-aktarim.spec.ts`<br>`src/lib/yetki.test.ts`<br>`e2e/operasyon/operasyon.spec.ts` | Dışa aktarım yalnız `calistirDisaAktarim()` ile çalışır ve `{ kolonlar, satirlar }` döner; format katmanı (XLSX, CSV) iş kavramı tanımaz.… |
+| D-5-2 | D-5 | KANITLI | — | `src/lib/disa-aktarim.itest.ts`<br>`src/lib/tek-cagri.test.ts` | Her dışa aktarım veritabanındaki kütüğe yazılır: zaman, kullanıcı kimliği, veri seti kodu, parametreler (dönem/gün, biçim), satır sayısı.… |
+| D-6-1 | D-6 | KANITLI | — | `src/lib/ice-aktarim/ice-aktarim.itest.ts`<br>`e2e/admin/ice-aktarim.spec.ts`<br>`src/lib/yetki.test.ts` | İçe aktarım üç aşamalıdır: doğrula → önizle → tek transaction'da yaz. "Yaz" yalnız hatasız önizlemeden sonra açılır ve aynı dosyayı yenid… |
+| D-6-2 | D-6 | KANITLI | — | `src/lib/ice-aktarim/acilis.itest.ts` | Açılış türlerinde (`ACILIS_BAKIYESI`, `ACILIS_STOGU`) doğrulama içe aktarım tanımının kendisidir (elle giriş yolu yok — X-16 §(1)); ikisi… |
+| E-1-1 | E-1 | KANITLI | `src/lib/stok.ts`<br>`src/lib/doctor-cari.ts` | `src/lib/zaman.test.ts`<br>`src/lib/kisitlar.itest.ts`<br>`src/lib/disa-aktarim.itest.ts` | Gün sınırı İstanbul takvim günüdür; `date` kolonları UTC gece yarısı olarak yazılır. Aralıklar yarı açıktır `[başlangıç, bitiş)`; tarih p… |
+| E-2-1 | E-2 | KANITLI | — | `src/lib/oturum.test.ts`<br>`src/lib/oturum.itest.ts`<br>`e2e/admin/session-revocation.spec.ts` | Oturum veritabanındadır. Girişte 256-bit rastgele bir token üretilir; veritabanında token değil yalnız SHA-256 hash'i durur. Çerez yalnız… |
+| E-2-2 | E-2 | KANITLI | — | `src/lib/oturum.test.ts`<br>`src/lib/oturum.itest.ts` | Hareketsizlik süresi `auth.oturumHareketsizlikSaat` (4 saat) **kayar**: son görülme anından itibaren sayılır. Mutlak süre `auth.oturumMut… |
+| E-2-3 | E-2 | KANITLI | — | `src/lib/oturum.itest.ts`<br>`src/lib/tek-cagri.test.ts`<br>`e2e/admin/session-revocation.spec.ts` | Kullanıcının pasifleştirilmesi açık oturumlarının hepsini **aynı transaction'da** iptal eder; pasifleştirilen kullanıcının açık sayfası b… |
+| E-2-4 | E-2 | KANITLI | — | `e2e/admin/csrf.spec.ts` | Uygulamada route handler yoktur; her yazma server action'dır. Başka bir origin'den gönderilen server action çağrısı reddedilir ve etkisi… |
+| E-2-5 | E-2 | KANITLI | — | `e2e/admin/users.spec.ts`<br>`src/lib/yetki.test.ts` | Hesabı yalnız `YONETICI` açar; giriş sayfasında kayıt yolu yoktur. Açarken rol (`SATICI` · `OPERASYON` · `YONETICI`) seçilir; rol düzenle… |
+| E-2-6 | E-2 | KANITLI | — | `src/lib/parola.test.ts`<br>`src/lib/tek-cagri.test.ts` | Parola en az 8 karakterdir; yaygın parola listesindeki parola büyük/küçük harf farkı gözetilmeden reddedilir; karmaşıklık kuralı yoktur.… |
+| E-2-7 | E-2 | KANITLI | — | `src/lib/oturum.itest.ts`<br>`e2e/admin/parola-degistir.spec.ts` | Yöneticinin verdiği parola geçicidir: açılan ya da parolası sıfırlanan hesap `parola_degistirmeli = true` olur. Bu kullanıcı korumalı her… |
+| E-2-8 | E-2 | KANITLI | — | `e2e/admin/users.spec.ts` | Parola sıfırlama, hedef kullanıcının açık oturumlarını **aynı transaction'da** iptal eder. |
+| E-2-9 | E-2 | KANITLI | — | `src/lib/kullanici.itest.ts`<br>`e2e/admin/users.spec.ts` | Kullanıcı kendi hesabını pasifleştiremez. Son aktif `YONETICI` pasifleştirilemez; iki yönetici eşzamanlı olarak birbirini pasifleştirirse… |
+| E-3-1 | E-3 | KANITLI | — | `src/lib/ice-aktarim/ice-aktarim.itest.ts`<br>`src/lib/xlsx-okuyucu.test.ts` | İçe aktarım dosyası saklanmaz; tek dosya, `.xlsx` uzantısı ve zip imzası, en fazla `import.azamiDosyaBoyutMb` (5) MB — aşan ya da okunama… |
+| X-1-1 | X-1 | KANITLI | — | `src/lib/reports-service.itest.ts`<br>`e2e/operasyon/operasyon.spec.ts` | `getSellerReports(kullanici, { baslangic, bitis })` dönemi zorunlu, yarı açık aralık olarak alır. Satıcı başına üç mutlak sayı döner, ora… |
+| X-2-1 | X-2 | KANITLI | `src/app/(admin)/collections/actions.ts` | `src/app/(admin)/collections/collections.itest.ts`<br>`src/lib/tek-cagri.test.ts` | Tahsilat kaydı ve `THS` numarası aynı transaction'dadır: tahsilat yazılamazsa numara harcanmaz, sonraki tahsilat aynı numarayı alır. `BAY… |
+| X-3-1 | X-3 | KANITLI | — | `src/lib/hata-yuzeyi.test.ts` | Beklenmeyen hatada kullanıcı üç şey görür: sabit açıklama, hata referansı, ana sayfaya dönüş bağlantısı. Hata mesajı, stack, SQL, Prisma… |
+| X-3-2 | X-3 | KANITLI | — | `src/lib/hata.test.ts` | Teknik hata container log'una tek JSON satırı olarak yazılır: zaman, referans, rota (sorgu dizesi olmadan), kullanıcı kimliği (adı değil)… |
+| X-3-3 | X-3 | KANITLI | — | `src/lib/hata-yuzeyi.test.ts`<br>`src/lib/audit.itest.ts`<br>`src/app/(admin)/collections/collections.itest.ts` | Sessiz hata yoktur: server action'daki `catch` yalnız tanımlı iş hatalarını (iş kuralı hatası sınıfı, benzersizlik ihlali) kullanıcı mesa… |
+| X-4-1 | X-4 | KANITLI | `src/lib/hata.ts` | `src/lib/sonuc.test.ts` | Her server action `IslemSonucu` döner: `durum` · `kademe` (bildirimlerin en yükseği) · `bildirimler` (`kademe` + `kural_kodu` + `parametr… |
+| X-4-2 | X-4 | KANITLI | `src/lib/sonuc.ts` | `src/lib/sonuc.test.ts` | Sunucu metin üretmez: kural kodu kodda kapalı bir katalogdur (`KURAL_KODLARI`) ve metni tek sözlüktendir (`sozluk.ts`); katalogdaki her k… |
+| X-4-3 | X-4 | KANITLI | — | `src/lib/sonuc.test.ts`<br>`src/app/(seller)/my-orders/orders.itest.ts` | Bildirim yutulmaz: bir işlemin bütün bildirimleri kademeye göre sıralı döner ve gösterilir. Sipariş girişinde kalem hataları (fiyat çözüm… |
+| X-4-4 | X-4 | KANITLI | — | `e2e/admin/is-sonucu.spec.ts`<br>`src/lib/sonuc.test.ts` | Gösterim kademe başına tek desendir ve tek bileşendedir (`Sonuc.tsx`): `SERT` bildirim alanı olan formda alanın altında, alan işaretli (`… |
+| X-5-1 | X-5 | KANITLI | `src/lib/money.ts` | `src/lib/money.test.ts`<br>`src/lib/satir-tutarlari.test.ts`<br>`src/app/(seller)/my-orders/orders.itest.ts` | Parasal alanlar `Decimal`'dir (birim fiyat 18,4 · tutar 18,2 · oran 5,2); `Decimal` üzerinde ham aritmetik yalnız `satir-tutarlari.ts` ve… |
+| X-6-1 | X-6 | KANITLI | `src/lib/doctor-cari.ts` | `src/lib/bakiye.itest.ts`<br>`src/app/(admin)/collections/collections.itest.ts` | Vade görünürlüğü tutar değil varlıktır: cari borçluyken (`hesaplaDoktorBakiye()` yönü `BORC`) vadesi bugünden (İstanbul günü) önce olan,… |
+| X-7-1 | X-7 | KANITLI | — | `src/lib/izlenebilirlik.test.ts` | `TRACEABILITY.md` bu dosyadan üretilir (kriter · karar · durum · kod yeri · test); elle düzenlenmez (`npm run izlenebilirlik`). CI dosyan… |
+| X-8-1 | X-8 | KANITLI | — | `src/lib/kapsam.itest.ts`<br>`src/lib/yetki.test.ts` | `SATICI` `BAYI` carisini görmez (X-13-1) ve açamaz: satıcı ekranından açılan cari daima `DOKTOR`'dur. `BAYI`'yi yalnız `YONETICI` açar; `… |
+| X-8-2 | X-8 | KANITLI | `src/lib/cari.ts`<br>`src/lib/sahiplik.ts` | `src/lib/cari.itest.ts`<br>`src/lib/yetki.test.ts`<br>`e2e/admin/cari.spec.ts` | `YONETICI` cari açma akışı (`cariAc`, tek tanım — X-16 §(1)): hesap sınıfı seçili gelmez ve seçilmeden kayıt yapılmaz (`ALAN_ZORUNLU` `ac… |
+| X-8-3 | X-8 | KANITLI | `src/lib/siparis-giris.ts` | `src/app/(admin)/orders/personel-siparis.itest.ts`<br>`e2e/operasyon/operasyon.spec.ts`<br>`src/lib/yetki.test.ts` | Personel (`YONETICI`, `OPERASYON`) her aktif cariye sipariş girer (`siparisAc` — satıcı ekranıyla aynı kurallar). Doktor siparişinin satı… |
+| X-9-1 | X-9 | KANITLI | — | `src/lib/rate-limit.test.ts` | Giriş denemesi sayacı bellek içidir (tablo yok): `auth.girisDenemeSiniri` (5) başarısız denemede hesap `auth.girisKilitDakika` (10) dakik… |
+| X-10-1 | X-10 | KANITLI | — | `src/lib/fiyat.itest.ts`<br>`src/app/(seller)/my-orders/orders.itest.ts` | Fiyat listesi carinin atanmış listesidir, atanmamışsa `pricing.varsayilanFiyatListesiKodu` listesidir. Atanmış listede ürünün uygun satır… |
+| X-10-2 | X-10 | KANITLI | — | `src/app/(admin)/price-lists/price-lists.itest.ts`<br>`e2e/admin/fiyat-listesi.spec.ts`<br>`src/lib/yetki.test.ts` | Fiyat listesi ekranı yalnız `YONETICI`'dedir: liste başlığı (kod — 2–32 karakter, büyük harfe çevrilir, `UNIQUE` — ve ad) ve satırlar (ür… |
+| X-10-3 | X-10 | KANITLI | — | `src/lib/cari.itest.ts`<br>`e2e/admin/cari.spec.ts` | Cariye fiyat listesi ataması cari formundadır ve yalnız `YONETICI` yapar; boş bırakılırsa varsayılan liste geçerlidir; tanınmayan liste `… |
+| X-11-1 | X-11 | KANITLI | — | `src/app/(admin)/collections/collections.itest.ts`<br>`src/lib/sevkiyat.itest.ts`<br>`src/lib/tek-cagri.test.ts` | Borç ya da alacak doğuran her olay tek cari hareket satırı yazar: tutar pozitif, yön ayrı, kaynak belgenin numarasıyla ve belgeyle aynı t… |
+| X-11-2 | X-11 | KANITLI | — | `src/app/(admin)/doctors/cari-hareket.itest.ts`<br>`e2e/admin/vade-farki.spec.ts` | Elle ters kayıt yalnız `ACILIS` ve `VADE_FARKI` hareketinde, yalnız `YONETICI` ve gerekçeyle yapılır: `TERS_KAYIT` ters yönde, aynı tutar… |
+| X-12-1 | X-12 | KANITLI | — | `src/lib/ice-aktarim/ice-aktarim.itest.ts`<br>`e2e/admin/ice-aktarim.spec.ts` | Parti geri alma yalnız `YONETICI`, gerekçe zorunlu, tek transaction; koşul partinin **tamamına** bakar (C-3 §(6)): bir kayıt bile belgeye… |
+| X-13-1 | X-13 | KANITLI | — | `src/lib/kapsam.itest.ts`<br>`src/lib/tek-cagri.test.ts` | `kapsamliDoktorlariGetir(kullanici)` doktor okumasının kapsamını **sorgu süzgeci** olarak döner. `SATICI`'ya yalnız sahibi olduğu `DOKTOR… |
+| X-14-1 | X-14 | KANITLI | `src/lib/satir-tutarlari.ts` | `src/lib/satir-tutarlari.test.ts`<br>`src/lib/reports-service.itest.ts` | Hakediş = sevkiyat satırının matrahı × satıra donmuş oran (`hesaplaSatirTutarlari()`, X-5 §(4)); tutar saklanmaz, raporda hesaplanır. Sat… |
+| X-14-2 | X-14 | KANITLI | — | `src/lib/sevkiyat.itest.ts` | Uygulanan prim oranı sevkiyat anında sevkiyat satırına donar: satıcının özel oranı, yoksa `finance.primOraniVarsayilan`; `BAYI` carinin s… |
+| X-15-1 | X-15 | KANITLI | — | `src/app/(admin)/collections/collections.itest.ts`<br>`src/lib/yetki.test.ts` | Vade değişikliği yalnız `YONETICI`, gerekçe zorunlu, yalnız borç hareketinde (`VADE_YALNIZ_BORC`); eski/yeni vade, kişi, zaman ve gerekçe… |
+| X-15-5-1 | X-15-5 | KANITLI | — | `src/lib/cari.itest.ts`<br>`src/lib/ice-aktarim/ice-aktarim.itest.ts`<br>`e2e/admin/cari.spec.ts` | Telefon alanı doktorda "Cep telefonu (kişisel)", bayide "Telefon" etiketlidir; benzersizlik iki sınıfta da geçerlidir (`TELEFON_KAYITLI`,… |
+| X-16-1 | X-16 | KANITLI | `src/lib/cari.ts` | `src/lib/ice-aktarim/ice-aktarim.itest.ts`<br>`src/lib/ice-aktarim/kapsam.itest.ts`<br>`e2e/admin/ice-aktarim.spec.ts` | `CARI` satırı `YONETICI` cari açma akışının denetiminden (`cariAcmaDenetle`) aynen geçer, aynı kural kodlarıyla; satır hatası satır numar… |
+| X-16-2 | X-16 | KANITLI | `src/lib/urun.ts` | `src/lib/ice-aktarim/urun-fiyat.itest.ts`<br>`src/lib/ice-aktarim/kapsam.itest.ts` | `URUN` satırı ürün ekranının denetiminden (`urunAcmaDenetle`) geçer: ad, kod, liste fiyatı, KDV oranı **kodla** (`VERGI_ORANI_BULUNAMADI`… |
+| X-16-3 | X-16 | KANITLI | `src/lib/fiyat-listesi.ts` | `src/lib/ice-aktarim/urun-fiyat.itest.ts`<br>`src/lib/ice-aktarim/kapsam.itest.ts` | `FIYAT_LISTESI` satırı liste ekranının denetiminden (`fiyatSatiriDenetle`) geçer; liste ve ürün koduyla çözülür. Tarih kolonu yoktur, sat… |
+| X-17-1 | X-17 | KANITLI | — | `src/lib/sahiplik.itest.ts`<br>`src/lib/tek-cagri.test.ts` | Doktorun sahibi yalnız `degistirDoktorSahibi(doktorlar, yeniSahip |
+| X-17-2 | X-17 | KANITLI | — | `src/lib/sahiplik.itest.ts`<br>`src/lib/tek-cagri.test.ts` | Sahipliği değiştiren ve sipariş giren transaction ilgili doktor satırlarını **id sırasıyla**, ürün satırlarından ve belge sayacından önce… |
+| X-17-3 | X-17 | KANITLI | — | `e2e/admin/doctor-transfer.spec.ts` | Devir cari listesinden **çoklu seçimle** yapılır; gerekçe bir kez girilir, her doktora ayrı iz satırı düşer. Seçimsiz ya da gerekçesiz de… |
+| X-17-4 | X-17 | KANITLI | — | `src/lib/sahiplik.itest.ts`<br>`e2e/admin/seller-deactivation.spec.ts` | Doktoru olan bir `SATICI` pasifleştirilirken portföy seçimi (**tek bir aktif satıcıya devret** ya da **sahipsiz bırak**) ve gerekçe zorun… |
+| X-17-5 | X-17 | KANITLI | — | `e2e/admin/doctor-transfer.spec.ts` | Cari listesinde **"Sahipsiz" süzgeci** yalnız sahipsiz `DOKTOR` carilerini listeler. Sahipsiz uyarısındaki sayı bütün sahipsiz `DOKTOR`'l… |
+| Ü-3-1 | Ü-3 | KANITLI | — | `src/lib/taban.test.ts`<br>`e2e/admin/reports.spec.ts` | Ekranda gösterilen her para tutarının yanında vergi tabanı yazılıdır (*KDV hariç* / *KDV dahil*); tabloda etiket kolon başlığındadır ve b… |

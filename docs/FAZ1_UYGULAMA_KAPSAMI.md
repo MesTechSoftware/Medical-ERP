@@ -668,7 +668,7 @@ parametrelerini taşır. Koşullu `updateMany` kolonla birlikte gider; bu yüzde
 7. ✅ *(21.10.2026 — 7a–7f, PR #39–#51)* **B-7 stok düzeltme**, **A-1…A-13 belge akışları** *(bayi dahil — X-8 §(4))*, **tek cari ekranı** *(`hesap_sinifi` süzgeci — X-8 §(5); **fiyat listesi ataması** — X-10 §(2)/(6), yalnız `YONETICI`)*, **fiyat listesi ekranı** *(başlık + satır; tarih ekranı Faz 2 — X-10 §(7))*, **D-6 import** *(`hesap_sinifi` zorunlu kolon; **ön koşul:** `import.azamiDosyaBoyutMb` değeri)* — **X-16 / ADR-006 sırası** *(13.10)*: cari girdi şeması (tek cari ekranı) → `CARI` tanımı → şablon üretici ve geliştirici komutu → önizleme özeti · küme kuralı bildirimleri ve üç koruma testi (`information_schema`, C8 deseni) · kabul kriteri taslakları `docs/arsiv/KARAR_ONERISI_2026-09-19.md` §10'dadır, testten önce `KABUL_KRITERLERI.md`'ye yazılır
 8. ✅ *(21.10.2026 — bkz. "Madde 8" notu)* **F-02 (küçültülmüş)**, **F-03**, **F-05 + K-6 temizliği**, **F-06**, **F-07**, **F-10**, **F-12**
 9. ✅ *(21.10.2026 — `e2e/admin/kabul-senaryosu.spec.ts`)* **F-11 kabul senaryosu** — `KABUL_KRITERLERI.md`'ye göre **yeniden yazılmış** hâliyle *(§C-e)*
-10. **`TRACEABILITY.md` yeniden kurulur** — kod × test × **karar** *(X-7 §(5))*
+10. ✅ *(21.10.2026 — bkz. "Madde 10" notu)* **`TRACEABILITY.md` yeniden kurulur** — kod × test × **karar** *(X-7 §(5))*
 
 **1B çıkış kriteri:** `YOL_HARITASI.md` §3 Faz 1 çıkış listesi.
 
@@ -1007,6 +1007,20 @@ kalan iki testi ekler:
 | F-07 | ✅ `createAuditLog(input, tx)` transaction parametresi zorunlu; kayıt yazılamazsa iş geri alınır | `audit.itest.ts` (X-3-3) |
 | F-10 | ✅ sevkiyat tek transaction (`sevkiyatYaz`, 7a) | `sevkiyat.itest.ts` |
 | F-12 | ✅ RULE-04: liste fiyatı sonradan değişse de satır ve sevkiyat borcu donmuş fiyattan (yeni test) · RULE-06: X-10-1 | `sevkiyat.itest.ts` · `fiyat.itest.ts` |
+
+**Madde 10 — izlenebilirlik matrisi (21.10.2026, kriter X-7-1).** Notlar (karar değil):
+
+- `docs/TRACEABILITY.md` artık **üretilir**: `src/lib/izlenebilirlik.ts` `KABUL_KRITERLERI.md`'yi okur; kriter ·
+  karar · durum (KANITLI / TESTSIZ / YOK / KAPSAM DIŞI) · kod yeri (metinde anılan fonksiyonun dosyası) · test.
+  `npm run izlenebilirlik`. `izlenebilirlik.test.ts`: dosya güncel mi, anılan test dosyaları var mı (birden çok
+  dosyaya uyan ad belirsizdir, yolla yazılır), TESTSIZ oranı < %15. Eski PRD matrisi `docs/arsiv/TRACEABILITY_PRD_V2.md`.
+- Sonuç: **118 KANITLI · 0 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI** (8 Ağustos FR bazlı başlangıç TESTSIZ %34).
+- Kapanış sırasında yazılan 12 kriter metni (§0.2-1, K-7-1, A-10-1, C-1-1, C-2-1, C-3-1, D-1-1, D-3-1, E-1-1,
+  X-7-1, X-9-1, X-15-5-1). İkisi kodda eksik çıktı ve tamamlandı:
+  - **D-1 olay noktaları** (`src/lib/olaylar.ts`: `onBlokAcildi`, `onBlokKararaBaglandi`, `onSevkiyatTamamlandi`,
+    `onIadeKaydedildi` — işleyiciler boş, akışlarda çağrılır).
+  - **D-3 takip linki** (`src/lib/kargo.ts` `takipLinki`; Kargo ekranında firmanın `{takip_no}` şablonundan).
+- "KANITLI" kanıtın varlığını ölçer, yeterliliğini değil: anılan test dosyası depoda olmalıdır.
 
 **Madde 9 — F-11 kabul senaryosu (21.10.2026).** Tek e2e testi (`e2e/admin/kabul-senaryosu.spec.ts`), her
 koşuda CI'da. Eski PRD senaryosu geri çekilen mekanizmalara dayanıyordu (tahsilat bazlı prim, kongre, bayi paneli,

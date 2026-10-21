@@ -15,6 +15,20 @@ describe("sanitizeAuditData", () => {
     expect(out).toEqual({ name: "Ahmet" });
   });
 
+  it("vergi kimliği ve fatura alanlarının değeri yazılmaz (A-13 §(7), C-3-1)", () => {
+    const out = sanitizeAuditData({
+      fullName: "Dr. A",
+      taxId: "1234567890",
+      invoiceTitle: "A Ltd.",
+      taxOffice: "Kadıköy",
+      invoiceAddress: "Adres",
+      invoiceDistrict: "İlçe",
+      invoiceCity: "İl",
+      degisenAlanlar: ["taxId"],
+    });
+    expect(out).toEqual({ fullName: "Dr. A", degisenAlanlar: ["taxId"] });
+  });
+
   it("iç içe nesnelerde de temizler", () => {
     const out = sanitizeAuditData({ user: { name: "Ayşe", password: "x" } });
     expect(out).toEqual({ user: { name: "Ayşe" } });
