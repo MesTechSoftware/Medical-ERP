@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { xlsxKitap } from "../../src/lib/disa-aktarim-yazici";
+import { sorgu, stoksuzSiparis } from "../helpers";
 
 /** X-16-1 · D-6-1 — ekrandan cari içe aktarımı: şablon, önizleme, hatalı satır, yazma, geri alma. */
 const BASLIK = ["Hesap sınıfı", "Ad Soyad / Ünvan", "Klinik", "Bölge", "Telefon"];
@@ -46,4 +47,27 @@ test("şablon iner; hatalı satır yazmayı kapatır; hatasız dosya önizlenip 
   await satir.getByLabel("Geri alma gerekçesi").fill("Deneme");
   await satir.getByRole("button", { name: "Partiyi geri al" }).click();
   await expect(page.locator("tr[data-parti]").first()).toContainText("Geri alındı");
+});
+
+test("açılış bakiyesi: özet brüt toplamları gösterir, yazılır, parti geri alınmaz (A-6-1, D-6-2)", async ({ page }) => {
+  const s = await stoksuzSiparis(); // yeni cari
+  const [{ telefon }] = await sorgu<{ telefon: string }>(`SELECT "phoneNormalized" AS telefon FROM "Doctor" WHERE id = $1`, [s.doktorId]);
+  await page.goto("/imports");
+  await page.getByLabel("Veri türü").selectOption("ACILIS_BAKIYESI");
+  await page.getByLabel("Dosya (.xlsx)").setInputFiles({
+    name: "acilis.xlsx",
+    mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    buffer: xlsxKitap([
+      { ad: "Veri", kolonlar: ["Cari telefonu", "Yön", "Tutar"].map((b) => ({ baslik: b, tip: "metin" as const })), satirlar: [[telefon, "BORC", "750"]] },
+    ]),
+  });
+  await page.getByRole("button", { name: "Doğrula ve önizle" }).click();
+  await expect(page.getByText("Toplam borç")).toBeVisible();
+  await expect(page.getByText("₺750,00 (KDV dahil)").first()).toBeVisible();
+  await page.getByRole("button", { name: "Yaz (1 kayıt)" }).click();
+  await expect(page.getByText(/Parti ACILIS_BAKIYESI-\d{8}-\w{5} yazıldı\./)).toBeVisible();
+  await expect(page.locator("tr[data-parti]").first()).toContainText("Yazıldı");
+
+  const [h] = await sorgu<{ type: string; amount: string }>(`SELECT type::text, amount::text FROM "LedgerEntry" WHERE "doctorId" = $1`, [s.doktorId]);
+  expect(h).toEqual({ type: "ACILIS", amount: "750.00" });
 });

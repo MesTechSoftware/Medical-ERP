@@ -108,6 +108,12 @@ export const KURAL_METNI: Record<KuralKodu, (p: Parametreler) => string> = {
   PARTI_GERI_ALINAMAZ: () => "Partinin kayıtlarından en az biri bir belgeye bağlı; parti geri alınamaz. Düzeltme kayıt ekranından yapılır.",
   PARTI_GERI_ALINMAZ_TUR: () => "Bu tür parti geri alınmaz; düzeltme ters kayıt ya da stok düzeltmesiyle yapılır.",
   PARTI_ZATEN_GERI_ALINDI: () => "Bu parti zaten geri alınmış.",
+  TUTAR_NEGATIF: () => "Tutar negatif olamaz; işaret yerine Yön kolonunu (BORC / ALACAK) kullanın.",
+  CARI_BULUNAMADI: () => "Bu telefonla kayıtlı cari yok.",
+  ACILIS_KAYITLI: (p) =>
+    p.satirlar ? `Aynı cari dosyada birden çok kez geçiyor (satır ${p.satirlar}); carinin tek açılış hareketi olur.` : "Bu carinin açılış hareketi zaten var; düzeltme ters kayıtla yapılır.",
+  STOK_KONUMU_BULUNAMADI: () => "Bu kodla aktif stok konumu yok.",
+  ACILIS_STOGU_TEKRAR: (p) => `Aynı ürün ve konum dosyada birden çok kez geçiyor (satır ${p.satirlar}).`,
   NEGATIF_STOK: (p) => `Stok yetersiz${p.urun ? ` (${p.urun})` : ""}: işlem sonrası stok ${p.sonra} adet olur.`,
   BEDELSIZ_ONAYI: (p) => `Bedelsiz satır (${p.urun}, ${BEDELSIZ_SEBEP_ADI[p.sebep as FreeReason] ?? p.sebep}) yönetici onayı gerektirir.`,
   NEGATIF_STOK_YONETICI_GEREKIR: (p) =>

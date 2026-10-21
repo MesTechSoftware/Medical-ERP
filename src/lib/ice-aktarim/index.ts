@@ -6,6 +6,8 @@ import { policy } from "@/lib/policy";
 import { sert, sonucOlustur, type Bildirim, type IslemSonucu, type KuralKodu } from "@/lib/sonuc";
 import { XlsxHatasi, xlsxIlkSayfa } from "@/lib/xlsx-okuyucu";
 import { simdi, yerelGunMetni } from "@/lib/zaman";
+import { ACILIS_BAKIYESI_TANIMI } from "./acilis-bakiyesi";
+import { ACILIS_STOGU_TANIMI } from "./acilis-stogu";
 import { CARI_TANIMI } from "./cari";
 import { FIYAT_LISTESI_TANIMI } from "./fiyat-listesi";
 import { URUN_TANIMI } from "./urun";
@@ -19,6 +21,8 @@ export const TANIMLAR: Partial<Record<ImportDataType, IceAktarimTanimi<unknown>>
   CARI: CARI_TANIMI as IceAktarimTanimi<unknown>,
   URUN: URUN_TANIMI as IceAktarimTanimi<unknown>,
   FIYAT_LISTESI: FIYAT_LISTESI_TANIMI as IceAktarimTanimi<unknown>,
+  ACILIS_BAKIYESI: ACILIS_BAKIYESI_TANIMI as IceAktarimTanimi<unknown>,
+  ACILIS_STOGU: ACILIS_STOGU_TANIMI as IceAktarimTanimi<unknown>,
 };
 
 export type IceAktarimSonucu = IslemSonucu & {

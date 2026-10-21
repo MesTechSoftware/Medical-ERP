@@ -28,6 +28,7 @@ export async function iceAktar(_prev: unknown, formData: FormData): Promise<IceA
     revalidatePath("/doctors");
     revalidatePath("/products");
     revalidatePath("/price-lists");
+    revalidatePath("/stock");
   }
   return sonuc;
 }
