@@ -7,6 +7,7 @@ import { bilgi, type Bildirim } from "@/lib/sonuc";
 import { BRUT, MATRAH, SATIR_TABANI, tabanli } from "@/lib/taban";
 import { ayAraligi, bugun, gunAraligi, gunEkle, takvimYili, yerelGunMetni } from "@/lib/zaman";
 import { policy } from "@/lib/policy";
+import { EKSIK_FATURA_BILGISI } from "@/lib/cari";
 
 /**
  * Dışa aktarımın TEK yolu — K-4 §(2), D-5. Tek çağrı noktası listesinin 7. maddesi.
@@ -473,6 +474,40 @@ export function faturaGeriyeDonukUyarisi(
   const esik = gunKolonu(gunEkle(gun, -sinir))!;
   const adet = c.satirlar.filter((r) => r[i] !== null && r[i]! < esik).length;
   return adet > 0 ? bilgi("FATURA_GERIYE_DONUK", { adet, gun: sinir }) : null;
+}
+
+/**
+ * A-13 §(5): dışa aktarım çıktısında eksik fatura bilgisi uyarısı (`BILGI`, engellemez). Doktor
+ * listesinde bütün cariler; fatura hazırlıkta aralıkta sevk satırı olan muhataplar sayılır.
+ * Tanım `EKSIK_FATURA_BILGISI`'dir (`cari.ts`).
+ */
+export async function eksikFaturaBilgisiUyarisi(
+  p: { kod: "DOKTOR_LISTESI" } | { kod: "FATURA_HAZIRLIK"; aralik: Aralik },
+  db: Db = prisma
+): Promise<Bildirim | null> {
+  const kapsam: Prisma.DoctorWhereInput =
+    p.kod === "DOKTOR_LISTESI"
+      ? {}
+      : {
+          orders: {
+            some: {
+              items: {
+                some: {
+                  shipmentItems: {
+                    some: {
+                      AND: [
+                        sayilanBelgeler.sevkSatiri,
+                        { shipment: { shippedOn: { gte: bugun(p.aralik.baslangic), lt: bugun(p.aralik.bitis) } } },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          },
+        };
+  const sayi = await db.doctor.count({ where: { AND: [kapsam, EKSIK_FATURA_BILGISI] } });
+  return sayi > 0 ? bilgi("EKSIK_FATURA_BILGISI", { sayi }) : null;
 }
 
 export async function calistirDisaAktarim(p: DisaAktarimParametresi, db: Db = prisma): Promise<VeriSetiCiktisi> {

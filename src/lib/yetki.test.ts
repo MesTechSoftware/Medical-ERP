@@ -34,6 +34,8 @@ const ACTION_YETKISI: Record<string, "requireAdmin" | "requireStaff" | "requireS
   "(admin)/users/actions.ts#updateUser": "requireAdmin",
   "(admin)/exports/actions.ts#disaAktar": "requireAdmin", // D-5 §(4)
   "(admin)/approvals/actions.ts#blokKarari": "requireAdmin", // A-8: karar yetkisi yönetici
+  "(admin)/doctors/actions.ts#createCari": "requireAdmin", // X-8 §(5): BAYI dahil cari açma yöneticide
+  "(admin)/doctors/actions.ts#updateCari": "requireAdmin", // X-16 §(9): düzeltme yolu
   "(admin)/price-lists/actions.ts#createPriceList": "requireAdmin", // X-10 §(6): fiyat tanımı
   "(admin)/price-lists/actions.ts#setPriceListItem": "requireAdmin",
   "(admin)/price-lists/actions.ts#deletePriceListItem": "requireAdmin",
@@ -52,6 +54,8 @@ const YALNIZ_YONETICI_SAYFALARI = [
   "(admin)/exports/page.tsx",
   "(admin)/approvals/page.tsx",
   "(admin)/price-lists/page.tsx",
+  "(admin)/doctors/new/page.tsx",
+  "(admin)/doctors/[id]/edit/page.tsx",
   "(admin)/price-lists/[id]/page.tsx",
   "(admin)/products/new/page.tsx",
   "(admin)/products/[id]/edit/page.tsx",
@@ -109,9 +113,12 @@ describe("cari açma — BAYI yalnız YONETICI (X-8-1)", () => {
     expect(kaynak).not.toMatch(/accountClass:(?!\s*"DOKTOR")/);
   });
 
-  it("yönetim rota grubunda cari açan action yoktur (OPERASYON cari açmaz; yönetici ekranı 1B-7)", () => {
+  it("yönetim rota grubunda cari yalnız cariAc() ile açılır; action requireAdmin (OPERASYON cari açmaz)", () => {
     for (const dosya of dosyalar(join(APP, "(admin)"), /^actions\.ts$/)) {
       expect(readFileSync(join(APP, dosya), "utf8"), dosya).not.toMatch(/doctor\.create\s*\(/);
     }
+    expect(actionGuardlari()["(admin)/doctors/actions.ts#createCari"]).toBe("requireAdmin");
+    const lib = readFileSync(join(APP, "..", "lib", "cari.ts"), "utf8");
+    expect(lib).not.toMatch(/accountClass:\s*"/); // sınıf girdiden gelir, varsayılan yok (X-16 §(8))
   });
 });

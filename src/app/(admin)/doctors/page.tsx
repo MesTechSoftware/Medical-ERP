@@ -2,7 +2,9 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireStaff } from "@/lib/session";
 import { formatPhone } from "@/lib/phone";
-import { PageHeader, Card, StatusBadge, EmptyRow } from "@/components/ui";
+import { PageHeader, Card, StatusBadge, EmptyRow, LinkButton } from "@/components/ui";
+import { EKSIK_FATURA_BILGISI } from "@/lib/cari";
+import type { Prisma } from "@/generated/prisma/client";
 import Pagination from "@/components/Pagination";
 import { getPagination, pageCount } from "@/lib/pagination";
 import TransferForm from "./TransferForm";
@@ -10,7 +12,7 @@ import TransferForm from "./TransferForm";
 export default async function AdminDoctorsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; per?: string; sahip?: string }>;
+  searchParams: Promise<{ page?: string; per?: string; sahip?: string; sinif?: string; fatura?: string }>;
 }) {
   const session = await requireStaff();
   // Cariyi OPERASYON da görür (X-13 §(1)); devir yalnız YONETICI (X-13 §(5)) — yetki action'dadır.
@@ -21,7 +23,16 @@ export default async function AdminDoctorsPage({
   // "Sahipsiz" süzgeci (X-17 §(6)): bayinin sahibi hiç olmaz, sahipsiz sayılmaz (X-8 §(3)).
   const SAHIPSIZ = { ownerSellerId: null, accountClass: "DOKTOR" } as const;
   const sahipsizSuzgec = params.sahip === "yok";
-  const where = sahipsizSuzgec ? SAHIPSIZ : {};
+  // X-8 §(5): liste hesap sınıfıyla süzülür; A-13 §(5): eksik fatura bilgisi süzgeci (bilgi kademesi).
+  const sinif = params.sinif === "BAYI" || params.sinif === "DOKTOR" ? params.sinif : null;
+  const eksikFatura = params.fatura === "eksik";
+  const where: Prisma.DoctorWhereInput = {
+    AND: [
+      sahipsizSuzgec ? SAHIPSIZ : {},
+      sinif ? { accountClass: sinif } : {},
+      eksikFatura ? EKSIK_FATURA_BILGISI : {},
+    ],
+  };
 
   // FR-05: admin TÜM doktorları görür.
   const [doctors, total, unowned, sellers] = await Promise.all([
@@ -48,7 +59,8 @@ export default async function AdminDoctorsPage({
     <div>
       <PageHeader
         title="Doktorlar"
-        description="Tüm doktor portföyü ve satıcı devirleri"
+        description="Doktor ve bayi carileri, satıcı devirleri"
+        action={devirYetkisi ? <LinkButton href="/doctors/new">Yeni Cari</LinkButton> : undefined}
       />
 
       {unowned > 0 && (
@@ -60,8 +72,11 @@ export default async function AdminDoctorsPage({
 
       <div className="mb-4 flex flex-wrap gap-2">
         {[
-          { href: "/doctors", label: "Tümü", active: !sahipsizSuzgec },
+          { href: "/doctors", label: "Tümü", active: !sahipsizSuzgec && !sinif && !eksikFatura },
+          { href: "/doctors?sinif=DOKTOR", label: "Doktorlar", active: sinif === "DOKTOR" },
+          { href: "/doctors?sinif=BAYI", label: "Bayiler", active: sinif === "BAYI" },
           { href: "/doctors?sahip=yok", label: "Sahipsiz", active: sahipsizSuzgec },
+          { href: "/doctors?fatura=eksik", label: "Eksik fatura bilgisi", active: eksikFatura },
         ].map((f) => (
           <Link
             key={f.href}
@@ -127,6 +142,9 @@ export default async function AdminDoctorsPage({
                         {d.title ? `${d.title} ` : ""}
                         {d.fullName}
                       </Link>
+                      {d.accountClass === "BAYI" && (
+                        <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">Bayi</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-slate-500">
                       {d.clinic}
@@ -138,7 +156,9 @@ export default async function AdminDoctorsPage({
                       {formatPhone(d.phoneNormalized)}
                     </td>
                     <td className="px-4 py-3">
-                      {d.ownerSeller ? (
+                      {d.accountClass === "BAYI" ? (
+                        <span className="text-slate-400">—</span>
+                      ) : d.ownerSeller ? (
                         <span className="text-slate-900">
                           {d.ownerSeller.name}
                         </span>
@@ -166,7 +186,7 @@ export default async function AdminDoctorsPage({
         totalPages={pageCount(total, perPage)}
         total={total}
         basePath="/doctors"
-        params={{ sahip: params.sahip }}
+        params={{ sahip: params.sahip, sinif: params.sinif, fatura: params.fatura }}
       />
     </div>
   );

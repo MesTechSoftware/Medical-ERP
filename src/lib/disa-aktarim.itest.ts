@@ -302,7 +302,8 @@ describe("fatura hazırlık veri seti (K-4-1)", () => {
     h.sablon = SABLON;
     const r = await disaAktar(null, fd);
     expect(r).toMatchObject({ durum: "BASARILI_UYARILI", kademe: "BILGI", parametreler: { satir: 2 } });
-    expect(r.bildirimler.map((b) => b.kural_kodu)).toEqual(["FATURA_GERIYE_DONUK"]);
+    // Muhatabın fatura bilgisi eksik (A-13 §(5)) — ikisi de BILGI, dosya iner.
+    expect(r.bildirimler.map((b) => b.kural_kodu)).toEqual(["FATURA_GERIYE_DONUK", "EKSIK_FATURA_BILGISI"]);
     const csv = Buffer.from(r.dosya!.icerik, "base64").toString("utf8");
     expect(csv.split("\r\n")[0]).toBe("\uFEFFAlıcı VKN;Mal Hizmet;Miktar;KDV Oranı;Mal Hizmet Tutarı");
     expect(await prisma.exportLog.count()).toBe(1);
