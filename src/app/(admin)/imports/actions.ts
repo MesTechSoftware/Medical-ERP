@@ -26,6 +26,8 @@ export async function iceAktar(_prev: unknown, formData: FormData): Promise<IceA
   if (sonuc.partiNo) {
     revalidatePath("/imports");
     revalidatePath("/doctors");
+    revalidatePath("/products");
+    revalidatePath("/price-lists");
   }
   return sonuc;
 }

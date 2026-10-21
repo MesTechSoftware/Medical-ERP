@@ -972,6 +972,15 @@ bakiyesi (A-6) ve vade farkı (A-7) elle girişi.
   çevrilir (`tr-TR` "Bayi"yi "BAYİ" yapardı) · katalog dışı değer `DEGER_KATALOG_DISI`.
 - Geri alma sahiplik izini de siler (X-17 §(10)); konsinye konumu olan cari belgeye bağlı sayılır.
 
+**Madde 7f2 — `URUN` + `FIYAT_LISTESI` içe aktarımı (21.10.2026, kriterler X-16-2, X-16-3).** Notlar (karar değil):
+
+- `src/lib/urun.ts` (`urunAcmaDenetle` / `urunAcmaYaz` / `varsayilanListeFiyatiYaz`) ve `src/lib/fiyat-listesi.ts`
+  (`fiyatSatiriDenetle` / `fiyatSatiriYaz`) — ürün ekranı ve liste ekranı bu tek tanımlara bağlandı; içe aktarım
+  aynı denetimden geçer. Ürün ekranındaki "başlangıç stoğu" ekrana özgü kaldı (içe aktarımda `ACILIS_STOGU`, 7f3).
+- Liste ekranı mevcut satırı **günceller**; içe aktarım yalnız **açar** (X-16 §(9)) — fark denetimin `mevcutId`
+  çıktısındadır, kural aynıdır.
+- `URUN` partisi ürünle birlikte açılan varsayılan liste satırını da taşır; geri almada ikisi birlikte silinir.
+
 ---
 
 ### §D.5 · 1A'nın **yapmadıkları** — sınırı yazılı tutmak için

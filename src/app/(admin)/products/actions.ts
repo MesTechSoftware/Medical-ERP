@@ -6,13 +6,11 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { priceSchema } from "@/lib/validation";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
-import { policy } from "@/lib/policy";
 import { stokHareketiYaz, varsayilanDepoId } from "@/lib/stok";
 import { EntityStatus } from "@/generated/prisma/enums";
-import { benzersizIhlali } from "@/lib/hata";
+import { benzersizIhlali, IsHatasi } from "@/lib/hata";
+import { urunAcmaDenetle, urunAcmaYaz, varsayilanListeFiyatiYaz } from "@/lib/urun";
 import { engel, sonucOlustur, sert, type IslemSonucu } from "@/lib/sonuc";
-import type { Prisma } from "@/generated/prisma/client";
-import type Decimal from "decimal.js";
 
 function parseProductForm(formData: FormData) {
   const name = (formData.get("name") as string)?.trim();
@@ -37,46 +35,26 @@ function parseProductForm(formData: FormData) {
   return { data: { name, code, taxRateId, status }, listPrice: listPrice.data };
 }
 
-/**
- * Ürünün liste fiyatı ürün tablosunda değil, VARSAYILAN LİSTENİN satırındadır
- * (X-10 §(5), GÇ-15). Liste ekranı 1B madde 7'ye kadar ürün formu bu satırı yazar
- * (FAZ1 §D.1 not 3). Tarih alanları boş (süresiz) kalır (X-10 §(7)).
- */
-async function varsayilanListeFiyatiYaz(
-  tx: Prisma.TransactionClient,
-  productId: string,
-  listPrice: Decimal
-) {
-  const liste = await tx.priceList.findUnique({
-    where: { code: policy.pricing.varsayilanFiyatListesiKodu },
-    select: { id: true },
-  });
-  if (!liste) throw new Error("Varsayılan fiyat listesi tanımlı değil.");
-  const satir = await tx.priceListItem.findFirst({
-    where: { priceListId: liste.id, productId, minQuantity: 1, validFrom: null, validTo: null },
-    select: { id: true },
-  });
-  if (satir) {
-    await tx.priceListItem.update({ where: { id: satir.id }, data: { listPrice } });
-  } else {
-    await tx.priceListItem.create({ data: { priceListId: liste.id, productId, listPrice } });
-  }
-}
 
 export async function createProduct(
   _prev: unknown,
   formData: FormData
 ): Promise<IslemSonucu> {
   const session = await requireAdmin();
-  const parsed = parseProductForm(formData);
-  if (parsed.hata) return parsed.hata;
-
   const initialStock = Math.max(0, parseInt(String(formData.get("initialStock") ?? ""), 10) || 0);
 
   try {
     await prisma.$transaction(async (tx) => {
-      const p = await tx.product.create({ data: parsed.data });
-      await varsayilanListeFiyatiYaz(tx, p.id, parsed.listPrice);
+      // Kural tek tanımdadır (`urun.ts`); `URUN` içe aktarımı aynı denetimden geçer (X-16 §(1)).
+      const { hatalar, urun } = await urunAcmaDenetle(tx, {
+        name: String(formData.get("name") ?? ""),
+        code: String(formData.get("code") ?? ""),
+        taxRateId: String(formData.get("taxRateId") ?? "").trim(),
+        listPrice: String(formData.get("listPrice") ?? ""),
+        status: formData.get("status") === "PASIF" ? "PASIF" : "AKTIF",
+      });
+      if (!urun) throw new IsHatasi(hatalar);
+      const p = await urunAcmaYaz(tx, urun, { id: session.user.id });
       // Başlangıç stoğu varsa hareket kaydı oluştur (stok miktarı saklanmaz — ADR-005).
       if (initialStock > 0) {
         await stokHareketiYaz(tx, [
@@ -89,19 +67,10 @@ export async function createProduct(
           },
         ]);
       }
-      await createAuditLog(
-        {
-          actorId: session.user.id,
-          action: AUDIT_ACTIONS.PRODUCT_CREATE,
-          entityType: "Product",
-          entityId: p.id,
-          after: { ...p, listPrice: parsed.listPrice },
-        },
-        tx
-      );
     });
   } catch (e) {
-    // Ürün kodu benzersizdir; teknik hata hata sınırına düşer (X-3 §(4)).
+    if (e instanceof IsHatasi) return e.sonuc;
+    // Ürün kodu benzersizdir (yarış: DB kısıtı); teknik hata hata sınırına düşer (X-3 §(4)).
     if (benzersizIhlali(e)) return engel("URUN_KODU_KAYITLI", {}, "code");
     throw e;
   }

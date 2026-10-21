@@ -4,8 +4,8 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
-import { benzersizIhlali } from "@/lib/hata";
-import { priceSchema, quantitySchema } from "@/lib/validation";
+import { benzersizIhlali, IsHatasi } from "@/lib/hata";
+import { fiyatSatiriDenetle, fiyatSatiriYaz } from "@/lib/fiyat-listesi";
 import { basarili, engel, sert, sonucOlustur, type Bildirim, type IslemSonucu } from "@/lib/sonuc";
 
 /**
@@ -48,40 +48,22 @@ export async function createPriceList(_prev: unknown, formData: FormData): Promi
  */
 export async function setPriceListItem(priceListId: string, _prev: unknown, formData: FormData): Promise<IslemSonucu> {
   const session = await requireAdmin();
-  const productId = String(formData.get("productId") ?? "");
-  const fiyat = priceSchema.safeParse(String(formData.get("listPrice") ?? ""));
-  const minAdet = quantitySchema.safeParse(parseInt(String(formData.get("minQuantity") ?? "1"), 10));
-  const hatalar: Bildirim[] = [];
-  if (!productId) hatalar.push(sert("ALAN_ZORUNLU", {}, "productId"));
-  if (!fiyat.success) hatalar.push(sert("GECERSIZ_TUTAR", {}, "listPrice"));
-  if (!minAdet.success) hatalar.push(sert("GECERSIZ_MIKTAR", {}, "minQuantity"));
-  if (hatalar.length > 0 || !fiyat.success || !minAdet.success) return sonucOlustur(hatalar);
-
-  const [liste, urun] = await Promise.all([
-    prisma.priceList.findUnique({ where: { id: priceListId }, select: { id: true } }),
-    prisma.product.findUnique({ where: { id: productId }, select: { id: true } }),
-  ]);
-  if (!liste) return engel("FIYAT_LISTESI_BULUNAMADI");
-  if (!urun) return engel("URUN_BULUNAMADI", {}, "productId");
-
-  await prisma.$transaction(async (tx) => {
-    const anahtar = { priceListId, productId, minQuantity: minAdet.data, validFrom: null, validTo: null };
-    const mevcut = await tx.priceListItem.findFirst({ where: anahtar, select: { id: true, listPrice: true } });
-    const satir = mevcut
-      ? await tx.priceListItem.update({ where: { id: mevcut.id }, data: { listPrice: fiyat.data } })
-      : await tx.priceListItem.create({ data: { ...anahtar, listPrice: fiyat.data } });
-    await createAuditLog(
-      {
-        actorId: session.user.id,
-        action: AUDIT_ACTIONS.PRICE_LIST_ITEM_SET,
-        entityType: "PriceList",
-        entityId: priceListId,
-        before: mevcut ? { productId, minQuantity: minAdet.data, listPrice: mevcut.listPrice.toFixed(4) } : undefined,
-        after: { itemId: satir.id, productId, minQuantity: minAdet.data, listPrice: fiyat.data.toFixed(4) },
-      },
-      tx
-    );
-  });
+  try {
+    await prisma.$transaction(async (tx) => {
+      // Kural tek tanımdadır (`fiyat-listesi.ts`); `FIYAT_LISTESI` içe aktarımı aynı denetimden geçer.
+      const { hatalar, satir, mevcutId } = await fiyatSatiriDenetle(tx, {
+        priceListId,
+        productId: String(formData.get("productId") ?? ""),
+        minQuantity: String(formData.get("minQuantity") ?? "1"),
+        listPrice: String(formData.get("listPrice") ?? ""),
+      });
+      if (!satir) throw new IsHatasi(hatalar);
+      await fiyatSatiriYaz(tx, satir, { id: session.user.id, mevcutId });
+    });
+  } catch (e) {
+    if (e instanceof IsHatasi) return e.sonuc;
+    throw e;
+  }
   revalidatePath(`/price-lists/${priceListId}`);
   revalidatePath("/price-lists");
   return basarili();
