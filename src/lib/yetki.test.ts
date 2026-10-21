@@ -34,6 +34,9 @@ const ACTION_YETKISI: Record<string, "requireAdmin" | "requireStaff" | "requireS
   "(admin)/users/actions.ts#updateUser": "requireAdmin",
   "(admin)/exports/actions.ts#disaAktar": "requireAdmin", // D-5 §(4)
   "(admin)/approvals/actions.ts#blokKarari": "requireAdmin", // A-8: karar yetkisi yönetici
+  "(admin)/price-lists/actions.ts#createPriceList": "requireAdmin", // X-10 §(6): fiyat tanımı
+  "(admin)/price-lists/actions.ts#setPriceListItem": "requireAdmin",
+  "(admin)/price-lists/actions.ts#deletePriceListItem": "requireAdmin",
   // SATICI ekranları.
   "(seller)/my-orders/actions.ts#createOrder": "requireSeller",
   "(seller)/my-doctors/actions.ts#createDoctor": "requireSeller",
@@ -48,6 +51,8 @@ const YALNIZ_YONETICI_SAYFALARI = [
   "(admin)/audit-logs/page.tsx",
   "(admin)/exports/page.tsx",
   "(admin)/approvals/page.tsx",
+  "(admin)/price-lists/page.tsx",
+  "(admin)/price-lists/[id]/page.tsx",
   "(admin)/products/new/page.tsx",
   "(admin)/products/[id]/edit/page.tsx",
   "(admin)/users/new/page.tsx",

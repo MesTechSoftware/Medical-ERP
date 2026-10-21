@@ -16,6 +16,9 @@ import { formatla } from "@/lib/money";
 export const AUDIT_ACTIONS = {
   PRODUCT_CREATE: "PRODUCT_CREATE",
   PRODUCT_UPDATE: "PRODUCT_UPDATE",
+  PRICE_LIST_CREATE: "PRICE_LIST_CREATE",
+  PRICE_LIST_ITEM_SET: "PRICE_LIST_ITEM_SET",
+  PRICE_LIST_ITEM_DELETE: "PRICE_LIST_ITEM_DELETE",
   STOCK_ENTRY: "STOCK_ENTRY",
   STOCK_ADJUSTMENT: "STOCK_ADJUSTMENT",
   ORDER_CREATE: "ORDER_CREATE",
@@ -67,6 +70,9 @@ export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];
 export const AUDIT_ACTION_LABELS: Record<string, string> = {
   PRODUCT_CREATE: "Ürün oluşturma",
   PRODUCT_UPDATE: "Ürün güncelleme",
+  PRICE_LIST_CREATE: "Fiyat listesi oluşturma",
+  PRICE_LIST_ITEM_SET: "Fiyat listesi satırı",
+  PRICE_LIST_ITEM_DELETE: "Fiyat listesi satırı silme",
   STOCK_ENTRY: "Stok girişi",
   STOCK_ADJUSTMENT: "Stok düzeltme",
   ORDER_CREATE: "Sipariş oluşturma",

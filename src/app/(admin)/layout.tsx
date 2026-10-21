@@ -13,12 +13,14 @@ import {
   BarChart3,
   Download,
   ClipboardCheck,
+  Tags,
 } from "lucide-react";
 
 const navItems: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/products", label: "Ürünler", icon: Globe },
   { href: "/stock", label: "Stok", icon: Layers },
+  { href: "/price-lists", label: "Fiyat Listeleri", icon: Tags },
   { href: "/users", label: "Kullanıcılar", icon: Users },
   { href: "/doctors", label: "Doktorlar", icon: Stethoscope },
   { href: "/orders", label: "Siparişler", icon: ClipboardList },
@@ -33,7 +35,7 @@ const navItems: NavItem[] = [
 // D-2 17.10 eki: OPERASYON raporları ve denetim kaydını görmez; dışa aktarım yalnız YONETICI (D-5 §(4)).
 // Onay kararı yalnız YONETICI'nindir (A-8); OPERASYON bekleyen siparişi Kargo ekranında görür.
 // Menü yalnız görünümdür; yetki sayfanın kendi `requireAdmin()`'indedir.
-const YALNIZ_YONETICI = new Set(["/reports", "/audit-logs", "/exports", "/approvals"]);
+const YALNIZ_YONETICI = new Set(["/reports", "/audit-logs", "/exports", "/approvals", "/price-lists"]);
 
 export default async function AdminLayout({
   children,

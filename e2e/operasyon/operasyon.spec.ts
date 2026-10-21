@@ -33,7 +33,7 @@ test("menü raporları ve denetim kaydını göstermez; rol etiketi Operasyon", 
   await expect(page.locator("header").getByText("Operasyon", { exact: true })).toBeVisible();
 });
 
-for (const yol of ["/reports", "/audit-logs", "/exports", "/approvals", "/products/new", "/users/new"]) {
+for (const yol of ["/reports", "/audit-logs", "/exports", "/approvals", "/price-lists", "/products/new", "/users/new"]) {
   test(`${yol} OPERASYON'u Dashboard'a yönlendirir`, async ({ page }) => {
     await page.goto(yol);
     await expect(page).toHaveURL(/\/dashboard$/);

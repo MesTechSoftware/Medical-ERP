@@ -53,6 +53,9 @@ export const KURAL_METNI: Record<KuralKodu, (p: Parametreler) => string> = {
   URUN_SIPARISTE_KULLANILDI: () =>
     "Bu ürün siparişlerde kullanıldığı için silinemez. Bunun yerine durumunu Pasif yapın.",
   FIYAT_COZUMLENEMEDI: (p) => `${p.urun} için fiyat çözümlenemedi.`,
+  FIYAT_LISTESI_KODU_GECERSIZ: () => "Liste kodu 2–32 karakter olmalı; yalnız harf (A–Z), rakam, - ve _ kullanılabilir.",
+  FIYAT_LISTESI_KODU_KAYITLI: () => "Bu liste kodu zaten kullanılıyor.",
+  FIYAT_LISTESI_BULUNAMADI: () => "Fiyat listesi ya da satırı bulunamadı.",
   SIPARIS_KALEMI_GECERSIZ: () => "En az bir ürün ve geçerli miktar giriniz.",
   BEDELSIZ_ACIKLAMA_ZORUNLU: () => "Bedelsiz satırda \"Diğer\" sebebi için açıklama zorunludur.",
   SIPARIS_DURUMU_UYGUN_DEGIL: () => "Siparişin durumu bu işleme uygun değil; sayfayı yenileyin.",
