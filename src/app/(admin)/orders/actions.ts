@@ -9,6 +9,7 @@ import { OrderStatus } from "@/generated/prisma/enums";
 import { stokHareketiYaz, stokKilitle } from "@/lib/stok";
 import { IsHatasi } from "@/lib/hata";
 import { iadeYaz } from "@/lib/iade";
+import { siparisAc, siparisSatirlariniOku } from "@/lib/siparis-giris";
 import { basarili, engel, type IslemSonucu } from "@/lib/sonuc";
 
 function revalidateOrders() {
@@ -181,4 +182,33 @@ export async function createReturn(orderId: string, _prev: unknown, formData: Fo
     if (e instanceof IsHatasi) return e.sonuc;
     throw e;
   }
+}
+
+/**
+ * Personel sipariş girişi (D-2 §(1), X-8 §(4)): `YONETICI` ve `OPERASYON`, her aktif cariye. Kurallar
+ * satıcı ekranıyla aynı yoldan (`siparisAc`); satıcı sipariş anındaki sahiptir, bayide yoktur.
+ * Yönetici girerse bedelsiz onayı aynı işlemde verilir (A-8-5).
+ */
+export async function createStaffOrder(_prev: unknown, formData: FormData): Promise<IslemSonucu> {
+  const session = await requireStaff();
+  const doctorId = String(formData.get("doctorId") ?? "").trim();
+  if (!doctorId) return engel("ALAN_ZORUNLU", {}, "doctorId");
+  const okunan = siparisSatirlariniOku(formData.get("items") as string | null);
+  if ("hata" in okunan) return okunan.hata;
+  let id: string;
+  try {
+    ({ id } = await prisma.$transaction((tx) =>
+      siparisAc(tx, {
+        doktorId: doctorId,
+        satirlar: okunan.satirlar,
+        gerekce: String(formData.get("gerekce") ?? "").trim() || null,
+        yapan: { id: session.user.id, rol: session.user.role },
+      })
+    ));
+  } catch (e) {
+    if (e instanceof IsHatasi) return e.sonuc;
+    throw e;
+  }
+  revalidateOrders();
+  redirect(`/orders/${id}`);
 }
