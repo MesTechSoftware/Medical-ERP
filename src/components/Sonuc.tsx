@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useActionState, useState } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState } from "react";
 import type { IslemSonucu, Parametreler } from "@/lib/sonuc";
 import { bildirimMetni } from "@/lib/sozluk";
 
@@ -133,14 +133,22 @@ export function IslemFormu({
   action,
   children,
   className,
+  basariMetni,
 }: {
   action: (prev: SonucDurumu, formData: FormData) => Promise<IslemSonucu>;
   children: React.ReactNode;
   className?: string;
+  /** Sayfada kalan formun başarı metni; verilirse başarıda form temizlenir. */
+  basariMetni?: string;
 }) {
   const [sonuc, formAction] = useActionState<SonucDurumu, FormData>(action, null);
+  const form = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    if (basariMetni && sonuc?.durum === "BASARILI") form.current?.reset();
+  }, [sonuc, basariMetni]);
   return (
     <form
+      ref={form}
       className={className}
       onSubmit={(e) => {
         e.preventDefault();
@@ -150,7 +158,7 @@ export function IslemFormu({
       }}
     >
       {children}
-      <SonucGosterimi sonuc={sonuc} />
+      <SonucGosterimi sonuc={sonuc} basari={basariMetni ? () => basariMetni : undefined} />
     </form>
   );
 }

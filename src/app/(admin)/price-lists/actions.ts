@@ -1,0 +1,110 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { prisma } from "@/lib/db";
+import { requireAdmin } from "@/lib/session";
+import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
+import { benzersizIhlali } from "@/lib/hata";
+import { priceSchema, quantitySchema } from "@/lib/validation";
+import { basarili, engel, sert, sonucOlustur, type Bildirim, type IslemSonucu } from "@/lib/sonuc";
+
+/**
+ * Fiyat listesi ekranı (X-10 §(1)/(6)/(7)): başlık ve satırlar (fiyat, `min_adet`). Liste satırı
+ * yazmak fiyat tanımıdır → yalnız `YONETICI`; her yazım denetim kaydındadır (RULE-13). Tarih
+ * alanlarının ekranı Faz 2'dir: ekran satırı süresiz yazar; tarihli satır (import) salt okunur.
+ * Sipariş satırı çözümlenen fiyatı dondurduğu için (B-6, RULE-04) satır değişikliği geçmişe dokunmaz.
+ */
+
+const KOD = /^[A-Z0-9_-]{2,32}$/;
+
+export async function createPriceList(_prev: unknown, formData: FormData): Promise<IslemSonucu> {
+  const session = await requireAdmin();
+  const code = String(formData.get("code") ?? "").trim().toUpperCase();
+  const name = String(formData.get("name") ?? "").trim();
+  const hatalar: Bildirim[] = [];
+  if (!KOD.test(code)) hatalar.push(sert("FIYAT_LISTESI_KODU_GECERSIZ", {}, "code"));
+  if (!name) hatalar.push(sert("ALAN_ZORUNLU", {}, "name"));
+  if (hatalar.length > 0) return sonucOlustur(hatalar);
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const liste = await tx.priceList.create({ data: { code, name } });
+      await createAuditLog(
+        { actorId: session.user.id, action: AUDIT_ACTIONS.PRICE_LIST_CREATE, entityType: "PriceList", entityId: liste.id, after: { code, name } },
+        tx
+      );
+    });
+  } catch (e) {
+    if (benzersizIhlali(e)) return engel("FIYAT_LISTESI_KODU_KAYITLI", {}, "code");
+    throw e;
+  }
+  revalidatePath("/price-lists");
+  return basarili();
+}
+
+/**
+ * Satır yazar ya da günceller: aynı liste + ürün + `min_adet` için süresiz satır tektir (B-5 çakışma
+ * yasağı DB'de). Barem `min_adet` alt sınırıdır (B-6).
+ */
+export async function setPriceListItem(priceListId: string, _prev: unknown, formData: FormData): Promise<IslemSonucu> {
+  const session = await requireAdmin();
+  const productId = String(formData.get("productId") ?? "");
+  const fiyat = priceSchema.safeParse(String(formData.get("listPrice") ?? ""));
+  const minAdet = quantitySchema.safeParse(parseInt(String(formData.get("minQuantity") ?? "1"), 10));
+  const hatalar: Bildirim[] = [];
+  if (!productId) hatalar.push(sert("ALAN_ZORUNLU", {}, "productId"));
+  if (!fiyat.success) hatalar.push(sert("GECERSIZ_TUTAR", {}, "listPrice"));
+  if (!minAdet.success) hatalar.push(sert("GECERSIZ_MIKTAR", {}, "minQuantity"));
+  if (hatalar.length > 0 || !fiyat.success || !minAdet.success) return sonucOlustur(hatalar);
+
+  const [liste, urun] = await Promise.all([
+    prisma.priceList.findUnique({ where: { id: priceListId }, select: { id: true } }),
+    prisma.product.findUnique({ where: { id: productId }, select: { id: true } }),
+  ]);
+  if (!liste) return engel("FIYAT_LISTESI_BULUNAMADI");
+  if (!urun) return engel("URUN_BULUNAMADI", {}, "productId");
+
+  await prisma.$transaction(async (tx) => {
+    const anahtar = { priceListId, productId, minQuantity: minAdet.data, validFrom: null, validTo: null };
+    const mevcut = await tx.priceListItem.findFirst({ where: anahtar, select: { id: true, listPrice: true } });
+    const satir = mevcut
+      ? await tx.priceListItem.update({ where: { id: mevcut.id }, data: { listPrice: fiyat.data } })
+      : await tx.priceListItem.create({ data: { ...anahtar, listPrice: fiyat.data } });
+    await createAuditLog(
+      {
+        actorId: session.user.id,
+        action: AUDIT_ACTIONS.PRICE_LIST_ITEM_SET,
+        entityType: "PriceList",
+        entityId: priceListId,
+        before: mevcut ? { productId, minQuantity: minAdet.data, listPrice: mevcut.listPrice.toFixed(4) } : undefined,
+        after: { itemId: satir.id, productId, minQuantity: minAdet.data, listPrice: fiyat.data.toFixed(4) },
+      },
+      tx
+    );
+  });
+  revalidatePath(`/price-lists/${priceListId}`);
+  revalidatePath("/price-lists");
+  return basarili();
+}
+
+/** Satırı kaldırır (ör. barem kaldırma). Tanım verisidir; siparişler fiyatı dondurmuştur. */
+export async function deletePriceListItem(itemId: string): Promise<IslemSonucu> {
+  const session = await requireAdmin();
+  const satir = await prisma.priceListItem.findUnique({ where: { id: itemId } });
+  if (!satir) return engel("FIYAT_LISTESI_BULUNAMADI");
+  await prisma.$transaction(async (tx) => {
+    await tx.priceListItem.delete({ where: { id: itemId } });
+    await createAuditLog(
+      {
+        actorId: session.user.id,
+        action: AUDIT_ACTIONS.PRICE_LIST_ITEM_DELETE,
+        entityType: "PriceList",
+        entityId: satir.priceListId,
+        before: { itemId, productId: satir.productId, minQuantity: satir.minQuantity, listPrice: satir.listPrice.toFixed(4) },
+      },
+      tx
+    );
+  });
+  revalidatePath(`/price-lists/${satir.priceListId}`);
+  return basarili();
+}
