@@ -295,9 +295,9 @@ Bu turdaki hatalar tam olarak "test yokken sessizce yanlış çalışan" sınıf
 - [x] **§C-r · §C-s kapatıldı** — KARARLAR **X-11** (`CariHareket`) · **X-12** (`ImportParti`) — **16.09.2026**
 - [x] **Şerit A (§E) tarandı** — 59/59 sonuç kodlu — **16.09.2026**
 - [x] **Şerit A'nın ❌'leri kapatıldı** — KARARLAR **X-13 · X-14 · X-15** · **ADR-005** — **16.09.2026**
-- [ ] **Satıcı sahipliği uygulanıyor** (X-13) · **prim oranı hakedişe donuyor** (X-14) · **vade değişikliği izli** (X-15)
-- [ ] F-00…F-12'nin **ayakta kalanları** tamam, CI yeşil *(F-08/F-09 konusuz; **F-01/F-04 düştü** — X-6)*
-- [ ] §3.2 uygulama işleri tamam (X-1+D-2 **tek commit**; E-1/E-2/E-3; D-5; X-3/X-4; Ü-3; A-15; X-2 blocker)
+- [x] **Satıcı sahipliği uygulanıyor** (X-13) · **prim oranı hakedişe donuyor** (X-14) · **vade değişikliği izli** (X-15) *(21.10.2026 — X-13-1, X-14-2, X-15-1 KANITLI; kabul senaryosu)*
+- [x] F-00…F-12'nin **ayakta kalanları** tamam, CI yeşil *(21.10.2026 — 1B madde 8 tablosu)* *(F-08/F-09 konusuz; **F-01/F-04 düştü** — X-6)*
+- [x] §3.2 uygulama işleri tamam (X-1+D-2 **tek commit**; E-1/E-2/E-3; D-5; X-3/X-4; Ü-3; A-15; X-2 blocker) *(1B madde 2–6, 17–20.10.2026)*
 - [x] **§A geri çekme listesi uygulandı** *(13.10: 1A'da kapandı — hash'ler `FAZ1_UYGULAMA_KAPSAMI.md` §A; GÇ-12'nin davranış tarafı 1B madde 7)* — kongre defteri, tahsilat bazlı prim, FIFO mahsup, bayi paneli, `DEALER` rolü, **`Dealer*` tabloları ve bayi yönetim ekranları (X-8)**, taban fiyat reddi, KDV toggle çerezi, **`LoginAttempt` (X-9)** kodda ve şemada **kalmadı**
 - [x] **Şema kapanışı** yapıldı *(13.10: `CM` — `ee22ca7`, tek migration `20261004000000_init`; anti-şema testi C8)*: KARARLAR §4'ün **tamamı tek migration'da** — **15** tablo *(X-10, X-11, X-12)*, 4 belge,
       40+ kolon, yeni tipler, kısıtlar + E-1 tip disiplini (`timestamptz`/`date`).
@@ -305,10 +305,10 @@ Bu turdaki hatalar tam olarak "test yokken sessizce yanlış çalışan" sınıf
       `PaymentAllocation`, izlenebilirlik alanları, dosya alanları …) — ✅ **14.09.2026: bu satır
       artık dikkate değil `anti-şema testine` bağlıdır** (`FAZ1_UYGULAMA_KAPSAMI.md` §D.1 commit **C8**; yasak listesi §D.2'de, **15.09'da KARARLAR §4 ile tamamlandı**):
       `information_schema` sorgulayan tek test, yasak kolon eklenirse CI'ı kırar.
-- [ ] **~~11~~ 12 tek çağrı noktası fonksiyonu** *(X-17)* yazıldı ve inline tekrarları kaldırıldı; **sayılan belgeler filtresi** altı dışlamayı taşıyor
-- [ ] **Config noktaları `policy.ts`'te** tanımlı; doldurulması gerekenler dolduruldu (`zaman.saatDilimi`, `auth.oturum*`, **`auth.girisDenemeSiniri`, `auth.girisKilitDakika`** *(X-9)*, **`pricing.varsayilanFiyatListesiKodu`** *(X-10)*, `import.azamiDosyaBoyutMb` *(D-6'dan önce; kesin değer devreye almada — KARARLAR §6)*)
-- [ ] **Bayiler tek cari ekranından yönetiliyor** (X-8 §(5)); `SATICI` `BAYI` göremiyor ve açamıyor; `BAYI` sevkiyatı prim matrahına girmiyor (X-8 §(3))
-- [ ] **Fiyat tek yoldan çözülüyor** (X-10): atanmış listede satırı olmayan ürün satıra girmiyor; cariye liste atamayı yalnız `YONETICI` yapabiliyor
+- [x] **~~11~~ 12 tek çağrı noktası fonksiyonu** *(X-17)* yazıldı ve inline tekrarları kaldırıldı; **sayılan belgeler filtresi** altı dışlamayı taşıyor
+- [x] **Config noktaları `policy.ts`'te** tanımlı; doldurulması gerekenler dolduruldu (`zaman.saatDilimi`, `auth.oturum*`, **`auth.girisDenemeSiniri`, `auth.girisKilitDakika`** *(X-9)*, **`pricing.varsayilanFiyatListesiKodu`** *(X-10)*, `import.azamiDosyaBoyutMb` *(D-6'dan önce; kesin değer devreye almada — KARARLAR §6)*)
+- [x] **Bayiler tek cari ekranından yönetiliyor** (X-8 §(5)); `SATICI` `BAYI` göremiyor ve açamıyor; `BAYI` sevkiyatı prim matrahına girmiyor (X-8 §(3))
+- [x] **Fiyat tek yoldan çözülüyor** (X-10): atanmış listede satırı olmayan ürün satıra girmiyor; cariye liste atamayı yalnız `YONETICI` yapabiliyor
 - [x] `docs/TRACEABILITY.md` **yeniden kurulmuş** *(21.10.2026 — üretilmiş matris, 118 KANITLI, TESTSIZ %0; CI bayatlamayı yakalar)* (kod × test × karar — X-7 §(5), §D.3 madde 10); TESTSIZ oranı **%15 altında** *(8 Ağustos başlangıcı %34, FR bazlı)*
 - [x] Kabul senaryosu (F-11) **`KABUL_KRITERLERI.md`'ye göre yeniden yazılmış** *(21.10.2026 — `e2e/admin/kabul-senaryosu.spec.ts`)* hâliyle her commit'te koşuyor *(§C-e — "15 adım" sayısı eski senaryonundur)*
 - [x] `PROJE_DURUMU.md`'deki **iki belge hatası** düzeltilmiş (RULE-12 + rapor sayısı) — *11.09.2026'da yapıldı*

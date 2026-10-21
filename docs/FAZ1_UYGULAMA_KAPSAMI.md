@@ -225,10 +225,10 @@ Bayi için **ayrı fonksiyon yazılmaz** (X-8 §(2)). Liste **12'de kapalıdır*
 | 2 | `hesaplaDoktorBakiye(doktor, tarih?)` | K-2 · C-2 · E-1 | 1B madde 1 · F-02 (madde 8) · ✅ *(14.10.2026)* `src/lib/doctor-cari.ts` — tarih İstanbul günü sonu, `yon` (`BORC`/`ALACAK`/`KAPALI`); tek kaynak `tek-cagri.test.ts` ile korunur |
 | 3 | `hesaplaDoktorRisk()` | A-12 | 1B madde 1 · ✅ *(16.10.2026)* `src/lib/doctor-cari.ts` — bakiye + sayılan siparişlerin sevk edilmemiş brüt tutarı; `limitAsildi` (bilgi kademesi). Limit değişikliği logu cari formunun işidir (1B madde 7) |
 | 4 | `hesaplaStok(urun, konum?, tarih?)` | B-4 · K-10 · C-2 · `docs/adr/ADR-005` | **ilk sürüm `CM`** — saklı stok kalkar (§D.1 not 3-c) · kilit biçimi ve `NEGATIF_STOK` izi **1B madde 1** · ✅ *(16.10.2026)* `src/lib/stok.ts` — tek yazım yolu `stokHareketiYaz()`; kilit **ürün satırı** (`SELECT … ORDER BY id FOR UPDATE`, ADR-005 açık kalemi), siparişte `uretBelgeNo()`'dan önce (ADR-008); `NEGATIF_STOK` kalemi döner, `OnayBlogu` kaydı #6 |
-| 5 | `cozumleBirimFiyat()` | B-5 · B-6 · **X-10** | **ilk sürüm `CM`** (liste seçimi) · tamamı **1B madde 5** (barem, tarih, X-4 `SERT`) — §D.1 not 3 |
+| 5 | `cozumleBirimFiyat()` | B-5 · B-6 · **X-10** | **ilk sürüm `CM`** (liste seçimi) · tamamı **1B madde 5** (barem, tarih, X-4 `SERT`) — §D.1 not 3 · ✅ *(20.10.2026)* `src/lib/fiyat.ts` |
 | 6 | `acikBlokVarMi()` / `blokKontrolleriniCalistir()` | A-8 | 1B madde 1 · ✅ *(16.10.2026)* `src/lib/onay-blogu.ts` — her kural için son blok belirler (A-8 eki 16.10); gerekçesiz → `ONAY_GEREKLI`, `YONETICI` bloğu aynı işlemde `ONAY`'lar, diğer roller onaya gönderir. **Akışlara bağlanması** (sipariş gerekçe diyaloğu, sevkiyatta `acikBlokVarMi`) X-4 yüzeyiyle **1B madde 4/7**; karar ekranı (*Onay bekleyenler*) **1B madde 7** |
-| 7 | `calistirDisaAktarim(kod, parametreler)` | K-4 · D-5 | 1B madde 6 |
-| 8 | `hesaplaSatirTutarlari()` | C-6 · X-5 | **ilk sürüm `CM`** — saklı toplamlar kalkar (GÇ-18); lint istisnası da bu fonksiyonu arar · tamamı **1B madde 5** |
+| 7 | `calistirDisaAktarim(kod, parametreler)` | K-4 · D-5 | 1B madde 6 · ✅ *(20.10.2026)* `src/lib/disa-aktarim.ts` |
+| 8 | `hesaplaSatirTutarlari()` | C-6 · X-5 | **ilk sürüm `CM`** — saklı toplamlar kalkar (GÇ-18); lint istisnası da bu fonksiyonu arar · tamamı **1B madde 5** · ✅ *(20.10.2026)* `src/lib/satir-tutarlari.ts` (iade için `ters` satır — 1B-7d1) |
 | 9 | `uretBelgeNo(onek, tx)` | A-14 | 1B madde 2 · ✅ *(16.10.2026)* `src/lib/belge-no.ts` (ilk sürüm `CM`) — İstanbul yılı ve yıl sıfırlaması testli; sayaç tablosu ve elle kurulmuş numara `tek-cagri.test.ts` ile kapalı |
 | 10 | `modulAcikMi(kod)` | K-9 · §1.3 | 1B madde 1 · ✅ *(16.10.2026)* `src/lib/modul.ts` — `policy.modules`'tan okur; başka dosya okumaz. Kongre kodu C2'de söküldüğü için bugün çağıranı yok |
 | 11 | `kapsamliDoktorlariGetir(kullanici)` | D-2 · **X-13** §(1) (`SATICI`'ya yalnız kendi `DOKTOR` carileri) | 1B madde 3 · ✅ *(17.10.2026)* `src/lib/doctor.ts` — Prisma `where` parçası döner (süzme sorguda); `YONETICI`/`OPERASYON` hepsini görür. Satıcı ekranlarının altı doktor okuması bağlandı; satıcı rota grubunda elle sahip süzgeci `tek-cagri.test.ts` ile kapalı |
@@ -267,7 +267,7 @@ Bayi için **ayrı fonksiyon yazılmaz** (X-8 §(2)). Liste **12'de kapalıdır*
 | 19 | `auth.oturumMutlakSaat` | `12` (kaymaz) | **C7 — 1A çıkışı** | E-2 |
 | 20 | `auth.girisDenemeSiniri` | `5` — eski `LoginAttempt` kodundan *(C7b'de dolduruldu)* | **C7b — 1A çıkışı** | **X-9** |
 | 21 | `auth.girisKilitDakika` | `10` — eski `LoginAttempt` kodundan *(C7b'de dolduruldu)* | **C7b — 1A çıkışı** | **X-9** |
-| 22 | `import.azamiDosyaBoyutMb` | kesin değer devreye almada | **1B madde 7 (D-6) öncesi** — 1A çıkışında değil | E-3 |
+| 22 | `import.azamiDosyaBoyutMb` | `5` *(1B-7f1'de dolduruldu; devreye almada gözden geçirilir)* | **1B madde 7 (D-6) öncesi** — 1A çıkışında değil | E-3 |
 | 23 | `finance.primOraniVarsayilan` | `5.00` — bugünkü `DEFAULT_COMMISSION_RATE`; devreye almada yazılı teyit | **C7 — 1A çıkışı** | **X-14** §(1) |
 
 ---
