@@ -102,7 +102,6 @@
 
 ## Açık uygulama kalemleri (atıf)
 
-- Raporum'da satıcı KPI'ları (tasarım 2-6).
 - 6 aylık geçmiş demo seed'i (tasarım 2-7).
 
 ## Geçerlilik sınırı
