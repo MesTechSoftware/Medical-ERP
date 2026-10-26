@@ -78,5 +78,25 @@ export default defineConfig({
         storageState: "playwright/.auth/operasyon.json",
       },
     },
+    // Mobil web (ADR-009): kritik akışlar telefon, Android ve dokunmatik tablette de koşar.
+    // Rol oturumunu spec dosyası seçer (`test.use({ storageState })`). iPhone/iPad WebKit'tir.
+    {
+      name: "mobil-iphone",
+      testMatch: "mobil/**/*.spec.ts",
+      dependencies: ["setup"],
+      use: { ...devices["iPhone 13"] },
+    },
+    {
+      name: "mobil-android",
+      testMatch: "mobil/**/*.spec.ts",
+      dependencies: ["setup"],
+      use: { ...devices["Pixel 7"] },
+    },
+    {
+      name: "mobil-ipad",
+      testMatch: "mobil/**/*.spec.ts",
+      dependencies: ["setup"],
+      use: { ...devices["iPad (gen 7)"] },
+    },
   ],
 });

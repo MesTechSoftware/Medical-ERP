@@ -1,6 +1,7 @@
 import Image from "next/image";
 import SidebarLink from "@/components/SidebarLink";
 import LogoutButton from "@/components/LogoutButton";
+import MobilNavSeridi from "@/components/MobilNavSeridi";
 import { type LucideIcon } from "lucide-react";
 
 export type NavItem = { href: string; label: string; icon: LucideIcon };
@@ -17,7 +18,7 @@ export default function AppShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="flex min-h-dvh w-full">
       {/* Sidebar */}
       <aside className="hidden w-60 shrink-0 flex-col border-r border-slate-200 bg-white md:flex">
         {/* px-7 + gap-2: işaret ve metin, alttaki nav ikon/etiket sütunlarına hizalanır */}
@@ -41,7 +42,7 @@ export default function AppShell({
             </div>
           </div>
         </div>
-        <nav className="flex flex-1 flex-col gap-1 px-4 py-4">
+        <nav aria-label="Ana menü" className="flex flex-1 flex-col gap-1 px-4 py-4">
           {navItems.map((item) => (
             <SidebarLink
               key={item.href}
@@ -55,9 +56,29 @@ export default function AppShell({
 
       {/* Main */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-3">
-          {/* Mobil nav */}
-          <nav className="flex gap-1 overflow-x-auto md:hidden">
+        <header className="border-b border-slate-200 bg-white">
+          {/* Telefonda iki satır: üstte işaret + kullanıcı, altta tam genişlik nav şeridi.
+              Dokunmatikte py-2: 44 px'lik Çıkış ile satır yine 61 px, yan menünün logo bloğuyla hizalı. */}
+          <div className="kenar-x flex items-center gap-3 py-3 dokunmatik:py-2">
+            <Image
+              src="/logo-mark.png"
+              unoptimized
+              alt=""
+              width={278}
+              height={480}
+              className="h-8 w-auto md:hidden"
+            />
+            <div className="ml-auto flex items-center gap-3">
+              <div className="text-right">
+                <div className="text-sm font-medium text-slate-900">
+                  {userName}
+                </div>
+                <div className="text-xs text-slate-500">{roleLabel}</div>
+              </div>
+              <LogoutButton />
+            </div>
+          </div>
+          <MobilNavSeridi>
             {navItems.map((item) => (
               <SidebarLink
                 key={item.href}
@@ -66,18 +87,9 @@ export default function AppShell({
                 icon={<item.icon size={20} strokeWidth={1.75} className="shrink-0" />}
               />
             ))}
-          </nav>
-          <div className="ml-auto flex items-center gap-3">
-            <div className="text-right">
-              <div className="text-sm font-medium text-slate-900">
-                {userName}
-              </div>
-              <div className="text-xs text-slate-500">{roleLabel}</div>
-            </div>
-            <LogoutButton />
-          </div>
+          </MobilNavSeridi>
         </header>
-        <main className="flex-1 p-6">{children}</main>
+        <main className="kenar-x kenar-alt flex-1 pt-(--kenar)">{children}</main>
       </div>
     </div>
   );

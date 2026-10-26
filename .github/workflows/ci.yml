@@ -78,7 +78,7 @@ jobs:
         run: npm run test:integration
 
       - name: Playwright tarayıcılarını kur
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium webkit
 
       - name: E2E testler
         run: npm run test:e2e
