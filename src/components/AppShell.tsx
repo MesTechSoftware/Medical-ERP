@@ -89,7 +89,8 @@ export default function AppShell({
             ))}
           </MobilNavSeridi>
         </header>
-        <main className="kenar-x kenar-alt flex-1 pt-(--kenar)">{children}</main>
+        {/* İçerik (iskelet ya da gelen sayfa) eklenince 180 ms opaklıkla gelir; ölçekleme yok. */}
+        <main className="kenar-x kenar-alt flex-1 pt-(--kenar) *:animate-fade-in">{children}</main>
       </div>
     </div>
   );

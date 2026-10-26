@@ -54,6 +54,33 @@ madde 7'de kalkar. 1A çıkış kriterlerinin tamamı işaretli (`FAZ1_UYGULAMA_
 Prisma client `src/generated/prisma/` altına üretilir (gitignored — taze klonda ve CI'da
 `prisma generate` zorunlu). Bağlantı dizesi `prisma.config.ts`'tedir.
 
+## Arayüz katmanı — görsel tasarım sistemi *(26.10.2026, `docs/adr/ADR-009`)*
+
+> Bu bölüm 26.10.2026'da eklendi (Faz 1 → 2 arası revize turu, PR #57–#62); dosyanın geri
+> kalanı yukarıdaki tarihli ölçümdür.
+
+- **Tek token kaynağı `src/app/globals.css`:**
+  - semantik renkler (nötr / olumlu / uyarı / hata / bilgi), markadan (`--color-brand`) ayrı ve WCAG AA;
+  - yoğunluk: `<html data-density="compact">`. Masaüstü 32 px; telefon ve `pointer: coarse` cozy (kontrol 44 px, satır 48 px);
+  - hareket eğrileri/süreleri ve `prefers-reduced-motion`.
+- **Ortak bileşenler ve sınıflar:**
+  - tablolar `.tablo-kutusu` + `.veri-tablosu` (sabit başlık ve ilk sütun, `.sayi`, telefonda `.oncelik-dusuk` gizli);
+  - kontrol ve butonlar `src/components/stil.ts` (`KONTROL*`, `buton()`);
+  - form alanları `form.tsx` (masaüstünde etiket solda);
+  - durum etiketi `StatusChip`, iki seviyeli kritik stok `stokDurumu()`;
+  - yükleme iskeleti `Iskelet.tsx` + grup `loading.tsx`.
+- **Mobil web aynı uygulamadır** (mobil uygulama değil — KARARLAR §3.5):
+  - telefonda iki satırlı başlık ve kayan nav şeridi;
+  - dokunma hedefleri ≥ 44 px, input yazısı ≥ 16 px;
+  - `dvh` ve güvenli alan;
+  - 390 / 412 / 810 px'te sayfa yatay kaymaz.
+- **Zorlama:**
+  - `src/lib/tasarim.test.ts`: kontrast, `data-density`, `100vh` yasağı, ham palet sınıfı yasağı;
+  - Playwright `mobil-iphone` / `mobil-android` / `mobil-ipad` projeleri;
+  - masaüstü ritim ve iskelet eşleşmesi: `e2e/admin/tasarim.spec.ts`;
+  - E2E seçicileri stil sınıfına bağlanmaz.
+- **Henüz yok (2. tur):** KPI kartı hiyerarşisi, mikro grafikler, "Veri yok" boş KPI durumu.
+
 ## Veri Modeli (`prisma/schema.prisma`)
 
 **33 model + 14 enum**, **tek migration** (`20261004000000_init`). Ad rejimi `docs/adr/ADR-001`:

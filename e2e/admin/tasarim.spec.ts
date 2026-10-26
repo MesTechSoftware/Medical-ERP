@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { iskeletGercekleEslesir, iskeletiAc } from "../helpers";
 
 /**
  * ADR-009 — masaüstü (fare) compact ritim: tablo satırı, başlık ve araç çubuğu 32 px;
@@ -49,4 +50,51 @@ test("masaüstünde form etiketi alanın solunda, kontrol ve buton 32 px", async
   const buton = (await page.getByRole("button", { name: "Cariyi Aç" }).boundingBox())!;
   yakin(buton.height, 32);
   expect(buton.width, "masaüstünde tam genişlik değil").toBeLessThan(300);
+});
+
+test.describe("yükleme iskeleti ve hareket", () => {
+  test("1280 px: iskelet gerçek yerleşimle eşleşir", async ({ page }) => {
+    await iskeletGercekleEslesir(page, "/products");
+  });
+
+  test.describe("768 px", () => {
+    test.use({ viewport: { width: 768, height: 1024 } });
+    test("iskelet gerçek yerleşimle eşleşir", async ({ page }) => {
+      await iskeletGercekleEslesir(page, "/products");
+    });
+  });
+
+  test("iskelet nabzı yavaş ve linear değil; içerik 180 ms opaklıkla gelir", async ({ page }) => {
+    await iskeletiAc(page, "/products");
+    const cubuk = page.getByRole("main").getByRole("status").locator('[aria-hidden="true"]').first();
+    const nabiz = await cubuk.evaluate((e) => {
+      const s = getComputedStyle(e);
+      return { ad: s.animationName, sure: parseFloat(s.animationDuration), egri: s.animationTimingFunction };
+    });
+    expect(nabiz.ad).toBe("skeleton-pulse");
+    expect(nabiz.sure).toBeGreaterThanOrEqual(1.5);
+    expect(nabiz.egri).not.toBe("linear");
+
+    await page.goto("/products");
+    await expect(page.getByRole("heading", { level: 1, name: "Ürünler" })).toBeVisible();
+    const gecis = await page.getByRole("main").evaluate((m) => {
+      const s = getComputedStyle(m.firstElementChild!);
+      return { ad: s.animationName, sure: parseFloat(s.animationDuration) };
+    });
+    expect(gecis).toEqual({ ad: "fade-in", sure: 0.18 });
+  });
+
+  test("azaltılmış harekette animasyon yok, uygulama çalışır", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await iskeletiAc(page, "/products");
+    const cubuk = page.getByRole("main").getByRole("status").locator('[aria-hidden="true"]').first();
+    expect(await cubuk.evaluate((e) => parseFloat(getComputedStyle(e).animationDuration))).toBeLessThan(0.001);
+
+    await page.goto("/dashboard");
+    await page.getByRole("navigation", { name: "Ana menü" }).getByRole("link", { name: "Ürünler" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Ürünler" })).toBeVisible();
+    expect(
+      await page.getByRole("main").evaluate((m) => parseFloat(getComputedStyle(m.firstElementChild!).animationDuration))
+    ).toBeLessThan(0.001);
+  });
 });

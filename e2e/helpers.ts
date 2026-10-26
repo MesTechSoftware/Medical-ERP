@@ -118,3 +118,63 @@ export async function stoksuzSiparis({ stoklu = false } = {}) {
   );
   return { doktorId, doktorAdi, urunAdi, urunId: `e2e-urun-${ek}`, urunKodu: `E2E-${ek}`, siparisId, kalemId, documentNo };
 }
+
+/**
+ * Yükleme iskeletini belirlenimci gösterir (ADR-009): belge akışı, kabuk açıldıktan sonra sayfa
+ * içeriği gelmeden kesilir. React akışında içerik `<div hidden id="S:…">` parçalarıyla gelir; kabuğu
+ * (`<aside`) taşımayan ilk parça sayfa içeriğidir, ondan önceki her şey (kabuk + grup iskeleti) kalır.
+ * Uygulama JS paketleri bu sırada engellenir: eksik akışla hidrasyon kırılır ve Next sayfayı yeniden
+ * yükler; satır içi açma betikleri ($RC) çalışmaya devam eder, CSS de yüklenir.
+ * (Geliştirme sunucusunda `loading.tsx` önceden getirilmez; istemci gezintisini geciktirmek
+ * iskeleti göstermez — tek güvenilir yol akışın kendisidir.)
+ */
+export async function iskeletiAc(page: Page, yol: string) {
+  const js = /\/_next\/static\/.*\.js(\?|$)/;
+  await page.route(js, (route) => route.abort());
+  await page.route(
+    (u) => u.pathname === yol && !u.searchParams.has("_rsc"),
+    async (route) => {
+      const yanit = await route.fetch();
+      const govde = await yanit.text();
+      const parcalar = [...govde.matchAll(/<div hidden id="S:[^"]+"/g)].map((m) => m.index!);
+      const kes = parcalar.find((i, n) => !govde.slice(i, parcalar[n + 1] ?? govde.length).includes("<aside"));
+      expect(kes, "akışta sayfa içeriği parçası bulunmalı").toBeDefined();
+      await route.fulfill({ response: yanit, body: govde.slice(0, kes) });
+    },
+    { times: 1 }
+  );
+  await page.goto(yol);
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+}
+
+/** Tablonun üst kenarı, başlık ve ilk satır yüksekliği (px). */
+export async function tabloOlcu(tablo: import("@playwright/test").Locator) {
+  const [t, th, td] = await Promise.all([
+    tablo.boundingBox(),
+    tablo.locator("thead th").first().boundingBox(),
+    tablo.locator("tbody td").first().boundingBox(),
+  ]);
+  return { ust: t!.y, baslik: th!.height, satir: td!.height };
+}
+
+/**
+ * İskelet gerçek yerleşimle eşleşir: tablonun üst kenarı ve başlık yüksekliği ±2 px, iskelet
+ * satırı `--row-h`. Gerçek satır içeriği sararsa uzayabilir; kısalamaz. Kabuk iskelet sırasında yerindedir.
+ */
+export async function iskeletGercekleEslesir(page: Page, yol: string) {
+  await iskeletiAc(page, yol);
+  await expect(page.getByRole("navigation", { name: "Ana menü" })).toBeVisible();
+  const iskelet = page.getByRole("main").getByRole("status");
+  await expect(iskelet).toContainText("Yükleniyor");
+  const satirH = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--row-h")));
+  const i = await tabloOlcu(iskelet.getByRole("table"));
+
+  await page.goto(yol);
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  const g = await tabloOlcu(page.getByRole("main").getByRole("table"));
+
+  expect(Math.abs(i.ust - g.ust), "tablo üst kenarı").toBeLessThanOrEqual(2);
+  expect(Math.abs(i.baslik - g.baslik), "başlık satırı").toBeLessThanOrEqual(2);
+  expect(Math.abs(i.satir - satirH), "iskelet satırı --row-h").toBeLessThanOrEqual(1);
+  expect(g.satir, "gerçek satır --row-h'den kısa olamaz").toBeGreaterThanOrEqual(satirH - 1);
+}
