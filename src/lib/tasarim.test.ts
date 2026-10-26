@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
 import { describe, expect, it } from "vitest";
@@ -60,6 +60,24 @@ describe("görsel tasarım sistemi (ADR-009)", () => {
     const ihlal = dosyalar(SRC, /\.(tsx|ts|css)$/)
       .filter((y) => !y.endsWith(".test.ts"))
       .filter((y) => /100vh|\b(?:min-h|max-h|h)-screen\b/.test(readFileSync(y, "utf8")))
+      .map((y) => relative(SRC, y));
+    expect(ihlal).toEqual([]);
+  });
+
+  it("mikro grafik ve KPI bileşenleri sunucuda çizilir — \"use client\" yok, istemciye JS gitmez", () => {
+    const ihlal = ["components/grafik", "components/kpi"]
+      .filter((d) => existsSync(join(SRC, d)))
+      .flatMap((d) => dosyalar(join(SRC, d), /\.(tsx|ts)$/))
+      .filter((y) => !y.endsWith(".test.ts") && /^["']use client["']/m.test(readFileSync(y, "utf8")))
+      .map((y) => relative(SRC, y));
+    expect(ihlal).toEqual([]);
+  });
+
+  it("grafiklerde ham renk yok — SVG fill/stroke yalnız token sınıfıyla", () => {
+    const ihlal = ["components/grafik", "components/kpi"]
+      .filter((d) => existsSync(join(SRC, d)))
+      .flatMap((d) => dosyalar(join(SRC, d), /\.tsx$/))
+      .filter((y) => /\b(?:fill|stroke)=\{?["'`](?:#|rgb|hsl)/.test(readFileSync(y, "utf8")))
       .map((y) => relative(SRC, y));
     expect(ihlal).toEqual([]);
   });

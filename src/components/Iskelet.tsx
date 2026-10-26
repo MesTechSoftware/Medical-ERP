@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui";
+import { BOYUT_SINIFI, type GrafikBoyutu } from "@/components/grafik/ortak";
 
 /*
  * Yükleme iskeletleri (ADR-009). Ölçü tahmin edilmez: gerçek bileşenlerin sınıfları ve token'ları
@@ -67,4 +68,9 @@ export function SayfaIskeleti() {
       <TabloIskeleti />
     </div>
   );
+}
+
+/** Mikro grafik iskeleti: grafikle aynı ölçü (`BOYUT_SINIFI`). */
+export function GrafikIskeleti({ boyut }: { boyut: GrafikBoyutu }) {
+  return <span aria-hidden="true" className={`block animate-skeleton rounded bg-slate-100 ${BOYUT_SINIFI[boyut]}`} />;
 }
