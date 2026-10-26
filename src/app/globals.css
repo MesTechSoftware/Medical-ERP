@@ -228,7 +228,8 @@
     }
   }
 
-  /* Dokunmatikte tablo hücresindeki bağlantı ve butonlar (Detay, Sil, ad bağlantısı) 44 px. */
+  /* Dokunmatikte tablo hücresindeki bağlantı ve butonlar (Detay, Sil, ad bağlantısı) 44 px;
+     hücre dikey boşluğu 2 px — 44 px hedefli satır da cozy satır yüksekliğinde (48 px) kalır. */
   @media (max-width: 767px), (pointer: coarse) {
     .veri-tablosu td :is(a, button) {
       display: inline-flex;
@@ -236,6 +237,10 @@
       justify-content: center;
       min-width: 44px;
       min-height: 44px;
+    }
+
+    .veri-tablosu :is(th, td) {
+      padding-block: 2px;
     }
   }
 

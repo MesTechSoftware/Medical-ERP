@@ -78,6 +78,8 @@ jobs:
         run: npm run test:integration
 
       - name: Playwright tarayıcılarını kur
+        # Normalde ~1 dk; indirme/apt takılırsa iş 6 saat beklemesin (26.10.2026'da 40+ dk asılı kaldı).
+        timeout-minutes: 10
         run: npx playwright install --with-deps chromium webkit
 
       - name: E2E testler
