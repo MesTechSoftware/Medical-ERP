@@ -107,6 +107,9 @@
   /* Sayfa kenar boşluğu: telefonda 16 px, md ve üstünde 24 px. */
   --kenar: 1rem;
 
+  /* Tablo kutusunun md ve üstündeki azami yüksekliği: başlık kutunun içinde sabit kalır. */
+  --tablo-azami-y: calc(100dvh - 12rem);
+
   --dur-instant: 100ms;
   --dur-fast: 150ms;
   --dur-normal: 240ms;
@@ -131,6 +134,116 @@
 }
 
 @layer components {
+  /* Tablo kutusu: yatay taşma kutunun içinde kalır. md ve üstünde dikey iç kaydırma ve sabit
+     başlık; telefonda dikey iç kaydırma yoktur, sayfa kayar (başlık orada sabit kalmaz). */
+  .tablo-kutusu {
+    overflow-x: auto;
+  }
+
+  @media (min-width: 768px) {
+    .tablo-kutusu {
+      max-height: var(--tablo-azami-y);
+      overflow: auto;
+    }
+  }
+
+  /* Veri tablosu: satır, başlık ve araç çubuğu aynı yükseklikte (--row-h / --toolbar-h).
+     Zebra yok, satır ayırıcı var. Kenar çizgileri sabit hücrelerle kaymasın diye
+     başlıkta gölgeyle çizilir (border-collapse altında border sabit hücreyle gitmez). */
+  .veri-tablosu {
+    width: 100%;
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+  }
+
+  .veri-tablosu :is(th, td) {
+    height: var(--row-h);
+    padding: var(--space-1) var(--space-3);
+  }
+
+  .veri-tablosu th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: var(--color-white);
+    box-shadow: inset 0 -1px 0 var(--color-slate-200);
+    text-align: start;
+    font-size: var(--text-xs);
+    line-height: var(--text-xs--line-height);
+    font-weight: var(--font-weight-medium);
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--color-slate-500);
+  }
+
+  .veri-tablosu :is(tbody, tfoot) tr {
+    background-color: var(--color-white);
+  }
+
+  .veri-tablosu tbody tr:not(:last-child) > td {
+    border-bottom: 1px solid var(--color-slate-100);
+  }
+
+  @media (hover: hover) {
+    .veri-tablosu tbody tr:hover {
+      background-color: var(--color-slate-50);
+    }
+  }
+
+  /* İlk sütun yatay kaydırmada sabit; satırın rengini (hover dahil) devralır. Birden çok
+     sütuna yayılan hücre (boş durum, toplam satırı) sabitlenmez — kayınca değeri örterdi. */
+  .veri-tablosu :is(th, td):first-child:not([colspan]) {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+  }
+
+  .veri-tablosu td:first-child {
+    background-color: inherit;
+  }
+
+  /* Köşe hücresi hem yukarıda hem solda sabit; öbür başlıkların (z 2) üstünde kalmalı.
+     Seçici, yukarıdaki :is() kuralıyla aynı özgüllükte ve ondan sonra gelir. */
+  .veri-tablosu th:first-child:not([colspan]) {
+    z-index: 3;
+  }
+
+  .veri-tablosu td.sayi {
+    white-space: nowrap;
+  }
+
+  /* Telefonda öncelikli olmayan sütun gizlenir (kimlik, tutar, durum ve aksiyon sütunlarına
+     konmaz); hücreler tek satırdır, geniş tablo kutunun içinde yatay kayar. */
+  @media (max-width: 767px) {
+    .veri-tablosu .oncelik-dusuk {
+      display: none;
+    }
+
+    .veri-tablosu td {
+      white-space: nowrap;
+    }
+  }
+
+  /* Sayı: sağa hizalı, eşit genişlikli rakam. */
+  .sayi {
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Küçük kontrol (checkbox) için tıklanabilir alan: yalnız dokunmatikte 44×44 px. */
+  .dokunma-hedefi {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  @media (max-width: 767px), (pointer: coarse) {
+    .dokunma-hedefi {
+      min-width: 44px;
+      min-height: 44px;
+    }
+  }
+
   /* Telefon nav şeridi: sağ kenardaki solma "kaydırılabilir" ipucudur. Solma kenar boşluğu
      kadardır; şeridin sonuna gelinince son öğe solmaz. */
   .nav-seridi {

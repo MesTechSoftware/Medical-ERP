@@ -82,7 +82,7 @@ export default async function AdminDoctorsPage({
             key={f.href}
             href={f.href}
             className={
-              "rounded-full px-3 py-1 text-sm font-medium transition " +
+              "inline-flex h-(--toolbar-h) items-center rounded-full px-3 text-sm font-medium transition " +
               (f.active
                 ? "bg-slate-900 text-white"
                 : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-100")
@@ -103,17 +103,17 @@ export default async function AdminDoctorsPage({
       )}
 
       <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="tablo-kutusu">
+          <table className="veri-tablosu">
             <thead>
-              <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
-                <th className="w-8 px-4 py-2"></th>
-                <th className="px-4 py-2 font-medium">Ad Soyad</th>
-                <th className="px-4 py-2 font-medium">Klinik / Bölge</th>
-                <th className="px-4 py-2 font-medium">Telefon</th>
-                <th className="px-4 py-2 font-medium">Sorumlu Satıcı</th>
-                <th className="px-4 py-2 text-right font-medium">Sipariş</th>
-                <th className="px-4 py-2 font-medium">Durum</th>
+              <tr>
+                <th className="w-8"></th>
+                <th>Ad Soyad</th>
+                <th className="oncelik-dusuk">Klinik / Bölge</th>
+                <th className="oncelik-dusuk">Telefon</th>
+                <th>Sorumlu Satıcı</th>
+                <th className="sayi oncelik-dusuk">Sipariş</th>
+                <th>Durum</th>
               </tr>
             </thead>
             <tbody>
@@ -121,20 +121,22 @@ export default async function AdminDoctorsPage({
                 <EmptyRow colSpan={7} text="Henüz doktor kaydı yok." />
               )}
               {doctors.map((d) => (
-                <tr key={d.id} className="border-b border-slate-100 last:border-0">
-                    <td className="px-4 py-3">
+                <tr key={d.id}>
+                    <td>
                       {devirYetkisi && d.accountClass === "DOKTOR" && (
-                        <input
-                          type="checkbox"
-                          id={`sec-${d.id}`}
-                          name="doctorId"
-                          value={d.id}
-                          form="toplu-devir"
-                          aria-label={`${d.fullName} seç`}
-                        />
+                        <label className="dokunma-hedefi">
+                          <input
+                            type="checkbox"
+                            id={`sec-${d.id}`}
+                            name="doctorId"
+                            value={d.id}
+                            form="toplu-devir"
+                            aria-label={`${d.fullName} seç`}
+                          />
+                        </label>
                       )}
                     </td>
-                    <td className="px-4 py-3 font-medium text-slate-900">
+                    <td className="font-medium text-slate-900">
                       <Link
                         href={`/doctors/${d.id}`}
                         className="hover:underline"
@@ -146,16 +148,16 @@ export default async function AdminDoctorsPage({
                         <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">Bayi</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-slate-500">
+                    <td className="text-slate-500 oncelik-dusuk">
                       {d.clinic}
                       <span className="ml-1 text-xs text-slate-400">
                         {d.region}
                       </span>
                     </td>
-                    <td className="px-4 py-3 tabular-nums text-slate-500">
+                    <td className="tabular-nums text-slate-500 oncelik-dusuk">
                       {formatPhone(d.phoneNormalized)}
                     </td>
-                    <td className="px-4 py-3">
+                    <td>
                       {d.accountClass === "BAYI" ? (
                         <span className="text-slate-400">—</span>
                       ) : d.ownerSeller ? (
@@ -168,10 +170,10 @@ export default async function AdminDoctorsPage({
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums">
+                    <td className="sayi oncelik-dusuk">
                       {d._count.orders}
                     </td>
-                    <td className="px-4 py-3">
+                    <td>
                       <StatusBadge status={d.status} />
                     </td>
                 </tr>

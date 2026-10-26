@@ -83,13 +83,13 @@ export default async function DashboardPage() {
           <h2 className="mb-4 text-sm font-semibold text-slate-900">
             Kritik Stok ({criticalProducts.length})
           </h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="tablo-kutusu">
+            <table className="veri-tablosu">
               <thead>
-                <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
-                  <th className="px-3 py-2 font-medium">Ürün</th>
-                  <th className="px-3 py-2 font-medium">Kod</th>
-                  <th className="px-3 py-2 text-right font-medium">Stok</th>
+                <tr>
+                  <th>Ürün</th>
+                  <th className="oncelik-dusuk">Kod</th>
+                  <th className="sayi">Stok</th>
                 </tr>
               </thead>
               <tbody>
@@ -97,13 +97,10 @@ export default async function DashboardPage() {
                   <EmptyRow colSpan={3} text="Kritik stokta ürün yok." />
                 )}
                 {criticalProducts.map((p) => (
-                  <tr
-                    key={p.id}
-                    className="border-b border-slate-100 last:border-0"
-                  >
-                    <td className="px-3 py-2 text-slate-900">{p.name}</td>
-                    <td className="px-3 py-2 text-slate-500">{p.code}</td>
-                    <td className="px-3 py-2 text-right font-semibold tabular-nums text-red-600">
+                  <tr key={p.id}>
+                    <td className="text-slate-900">{p.name}</td>
+                    <td className="text-slate-500 oncelik-dusuk">{p.code}</td>
+                    <td className="sayi font-semibold text-red-600">
                       {p.stock}
                     </td>
                   </tr>

@@ -64,7 +64,7 @@ export default async function OrdersPage({
               key={f.value}
               href={f.value ? `/orders?status=${f.value}` : "/orders"}
               className={
-                "rounded-full px-3 py-1 text-sm font-medium transition " +
+                "inline-flex h-(--toolbar-h) items-center rounded-full px-3 text-sm font-medium transition " +
                 (active
                   ? "bg-slate-900 text-white"
                   : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-100")
@@ -77,17 +77,17 @@ export default async function OrdersPage({
       </div>
 
       <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="tablo-kutusu">
+          <table className="veri-tablosu">
             <thead>
-              <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
-                <th className="px-4 py-2 font-medium">Tarih</th>
-                <th className="px-4 py-2 font-medium">Satıcı</th>
-                <th className="px-4 py-2 font-medium">Doktor</th>
-                <th className="px-4 py-2 font-medium">Hastane</th>
-                <th className="px-4 py-2 text-right font-medium">{tabanli("Tutar", SATIR_TABANI.toplam)}</th>
-                <th className="px-4 py-2 font-medium">Durum</th>
-                <th className="px-4 py-2"></th>
+              <tr>
+                <th>Tarih</th>
+                <th className="oncelik-dusuk">Satıcı</th>
+                <th>Doktor</th>
+                <th className="oncelik-dusuk">Hastane</th>
+                <th className="sayi">{tabanli("Tutar", SATIR_TABANI.toplam)}</th>
+                <th>Durum</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -95,27 +95,24 @@ export default async function OrdersPage({
                 <EmptyRow colSpan={7} text="Sipariş bulunamadı." />
               )}
               {orders.map((o) => (
-                <tr
-                  key={o.id}
-                  className="border-b border-slate-100 last:border-0"
-                >
-                  <td className="px-4 py-3 whitespace-nowrap text-slate-500">
+                <tr key={o.id}>
+                  <td className="whitespace-nowrap text-slate-500">
                     {formatDate(o.orderDate)}
                   </td>
-                  <td className="px-4 py-3 text-slate-900">{o.seller?.name ?? "—"}</td>
-                  <td className="px-4 py-3 font-medium text-slate-900">
+                  <td className="text-slate-900 oncelik-dusuk">{o.seller?.name ?? "—"}</td>
+                  <td className="font-medium text-slate-900">
                     {o.doctor.fullName}
                   </td>
-                  <td className="px-4 py-3 text-slate-500">
+                  <td className="text-slate-500 oncelik-dusuk">
                     {o.doctor.clinic}
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums">
+                  <td className="sayi">
                     <Tutar deger={siparisToplami(o.items).toplam} taban={SATIR_TABANI.toplam} baslikta />
                   </td>
-                  <td className="px-4 py-3">
+                  <td>
                     <StatusBadge status={o.status} />
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="text-right">
                     <Link
                       href={`/orders/${o.id}`}
                       className="text-sm font-medium text-slate-600 hover:text-slate-900"

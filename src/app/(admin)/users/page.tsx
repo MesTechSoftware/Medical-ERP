@@ -38,16 +38,16 @@ export default async function UsersPage() {
       />
 
       <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="tablo-kutusu">
+          <table className="veri-tablosu">
             <thead>
-              <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
-                <th className="px-4 py-2 font-medium">Kullanıcı</th>
-                <th className="px-4 py-2 font-medium">Rol</th>
-                <th className="px-4 py-2 font-medium">İletişim</th>
-                <th className="px-4 py-2 text-right font-medium">Doktor</th>
-                <th className="px-4 py-2 font-medium">Durum</th>
-                <th className="px-4 py-2 text-right font-medium">İşlem</th>
+              <tr>
+                <th>Kullanıcı</th>
+                <th>Rol</th>
+                <th className="oncelik-dusuk">İletişim</th>
+                <th className="sayi oncelik-dusuk">Doktor</th>
+                <th>Durum</th>
+                <th className="sayi">İşlem</th>
               </tr>
             </thead>
             <tbody>
@@ -57,11 +57,8 @@ export default async function UsersPage() {
               {users.map((u) => {
                 const satici = u.role === "SATICI";
                 return (
-                  <tr
-                    key={u.id}
-                    className="border-b border-slate-100 last:border-0"
-                  >
-                    <td className="px-4 py-3">
+                  <tr key={u.id}>
+                    <td>
                       {satici ? (
                         <Link
                           href={`/users/${u.id}`}
@@ -73,20 +70,20 @@ export default async function UsersPage() {
                         <span className="font-medium text-slate-900">{u.name}</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-slate-600">{ROLE_LABEL[u.role]}</td>
-                    <td className="px-4 py-3 text-slate-500">
+                    <td className="text-slate-600">{ROLE_LABEL[u.role]}</td>
+                    <td className="text-slate-500 oncelik-dusuk">
                       <div>{u.email}</div>
                       {u.phone && (
                         <div className="text-xs text-slate-400">{u.phone}</div>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums">
+                    <td className="sayi oncelik-dusuk">
                       {satici ? (doktorSayisi.get(u.id) ?? 0) : "—"}
                     </td>
-                    <td className="px-4 py-3">
+                    <td>
                       <StatusBadge status={u.isActive ? "AKTIF" : "PASIF"} />
                     </td>
-                    <td className="px-4 py-3">
+                    <td>
                       {yonetici && (
                         <div className="flex items-center justify-end gap-3">
                           <Link

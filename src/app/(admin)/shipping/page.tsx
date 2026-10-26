@@ -181,16 +181,16 @@ export default async function ShippingPage() {
         <h2 className="mb-4 text-sm font-semibold text-slate-900">
           Kargolanan Siparişler
         </h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="tablo-kutusu">
+          <table className="veri-tablosu">
             <thead>
-              <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
-                <th className="px-4 py-2 font-medium">Doktor</th>
-                <th className="px-4 py-2 font-medium">Satıcı</th>
-                <th className="px-4 py-2 font-medium">Kargo</th>
-                <th className="px-4 py-2 font-medium">Takip No</th>
-                <th className="px-4 py-2 font-medium">Tarih</th>
-                <th className="px-4 py-2 font-medium">Durum</th>
+              <tr>
+                <th>Doktor</th>
+                <th className="oncelik-dusuk">Satıcı</th>
+                <th className="oncelik-dusuk">Kargo</th>
+                <th>Takip No</th>
+                <th>Tarih</th>
+                <th>Durum</th>
               </tr>
             </thead>
             <tbody>
@@ -198,18 +198,15 @@ export default async function ShippingPage() {
                 <EmptyRow colSpan={6} text="Henüz kargolanan sipariş yok." />
               )}
               {shipped.map((o) => (
-                <tr
-                  key={o.id}
-                  className="border-b border-slate-100 last:border-0"
-                >
-                  <td className="px-4 py-3 font-medium text-slate-900">
+                <tr key={o.id}>
+                  <td className="font-medium text-slate-900">
                     {o.doctor.fullName}
                   </td>
-                  <td className="px-4 py-3 text-slate-500">{o.seller?.name ?? "—"}</td>
-                  <td className="px-4 py-3 text-slate-700">
+                  <td className="text-slate-500 oncelik-dusuk">{o.seller?.name ?? "—"}</td>
+                  <td className="text-slate-700 oncelik-dusuk">
                     {o.shipments[0]?.carrier?.name ?? "—"}
                   </td>
-                  <td className="px-4 py-3 text-slate-700">
+                  <td className="text-slate-700">
                     {/* D-3: takip linki firmanın şablonundan; şablon yoksa yalnız numara. */}
                     {(() => {
                       const sv = o.shipments[0];
@@ -223,12 +220,12 @@ export default async function ShippingPage() {
                       );
                     })()}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-slate-500">
+                  <td className="whitespace-nowrap text-slate-500">
                     {o.shipments[0]?.shippedAt
                       ? formatDateTime(o.shipments[0].shippedAt)
                       : "—"}
                   </td>
-                  <td className="px-4 py-3">
+                  <td>
                     <StatusBadge status={o.status} />
                   </td>
                 </tr>

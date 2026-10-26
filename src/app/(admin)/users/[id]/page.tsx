@@ -66,14 +66,14 @@ export default async function SellerDetailPage({
           <h2 className="mb-4 text-sm font-semibold text-slate-900">
             Siparişler
           </h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="tablo-kutusu">
+            <table className="veri-tablosu">
               <thead>
-                <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
-                  <th className="px-3 py-2 font-medium">Tarih</th>
-                  <th className="px-3 py-2 font-medium">Doktor</th>
-                  <th className="px-3 py-2 text-right font-medium">{tabanli("Tutar", SATIR_TABANI.toplam)}</th>
-                  <th className="px-3 py-2 font-medium">Durum</th>
+                <tr>
+                  <th>Tarih</th>
+                  <th>Doktor</th>
+                  <th className="sayi">{tabanli("Tutar", SATIR_TABANI.toplam)}</th>
+                  <th>Durum</th>
                 </tr>
               </thead>
               <tbody>
@@ -81,18 +81,15 @@ export default async function SellerDetailPage({
                   <EmptyRow colSpan={4} text="Sipariş yok." />
                 )}
                 {orders.map((o) => (
-                  <tr
-                    key={o.id}
-                    className="border-b border-slate-100 last:border-0"
-                  >
-                    <td className="px-3 py-2 whitespace-nowrap text-slate-500">
+                  <tr key={o.id}>
+                    <td className="whitespace-nowrap text-slate-500">
                       {formatDate(o.orderDate)}
                     </td>
-                    <td className="px-3 py-2 text-slate-900">{o.doctor.fullName}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">
+                    <td className="text-slate-900">{o.doctor.fullName}</td>
+                    <td className="sayi">
                       <Tutar deger={siparisToplami(o.items).toplam} taban={SATIR_TABANI.toplam} baslikta />
                     </td>
-                    <td className="px-3 py-2">
+                    <td>
                       <StatusBadge status={o.status} />
                     </td>
                   </tr>
@@ -106,13 +103,13 @@ export default async function SellerDetailPage({
           <h2 className="mb-4 text-sm font-semibold text-slate-900">
             Doktor Portföyü
           </h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="tablo-kutusu">
+            <table className="veri-tablosu">
               <thead>
-                <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
-                  <th className="px-3 py-2 font-medium">Doktor</th>
-                  <th className="px-3 py-2 font-medium">Klinik</th>
-                  <th className="px-3 py-2 font-medium">Bölge</th>
+                <tr>
+                  <th>Doktor</th>
+                  <th>Klinik</th>
+                  <th className="oncelik-dusuk">Bölge</th>
                 </tr>
               </thead>
               <tbody>
@@ -120,13 +117,10 @@ export default async function SellerDetailPage({
                   <EmptyRow colSpan={3} text="Portföyde doktor yok." />
                 )}
                 {doctors.map((d) => (
-                  <tr
-                    key={d.id}
-                    className="border-b border-slate-100 last:border-0"
-                  >
-                    <td className="px-3 py-2 text-slate-900">{d.fullName}</td>
-                    <td className="px-3 py-2 text-slate-500">{d.clinic ?? "—"}</td>
-                    <td className="px-3 py-2 text-slate-500">{d.region}</td>
+                  <tr key={d.id}>
+                    <td className="text-slate-900">{d.fullName}</td>
+                    <td className="text-slate-500">{d.clinic ?? "—"}</td>
+                    <td className="text-slate-500 oncelik-dusuk">{d.region}</td>
                   </tr>
                 ))}
               </tbody>

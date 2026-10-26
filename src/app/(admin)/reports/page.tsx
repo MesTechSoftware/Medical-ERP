@@ -58,13 +58,13 @@ export default async function ReportsPage({
           <h2 className="mb-4 text-sm font-semibold text-slate-900">
             Doktor Ciro Sıralaması (dönem, ilk 25)
           </h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="tablo-kutusu">
+            <table className="veri-tablosu">
               <thead>
-                <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
-                  <th className="px-3 py-2 font-medium">Doktor</th>
-                  <th className="px-3 py-2 font-medium">Satıcı</th>
-                  <th className="px-3 py-2 text-right font-medium">{tabanli("Ciro", MATRAH)}</th>
+                <tr>
+                  <th>Doktor</th>
+                  <th className="oncelik-dusuk">Satıcı</th>
+                  <th className="sayi">{tabanli("Ciro", MATRAH)}</th>
                 </tr>
               </thead>
               <tbody>
@@ -72,14 +72,14 @@ export default async function ReportsPage({
                   <EmptyRow colSpan={3} text="Doktor yok." />
                 )}
                 {doctors.map((d) => (
-                  <tr key={d.doctorId} className="border-b border-slate-100 last:border-0">
-                    <td className="px-3 py-2 font-medium text-slate-900">
+                  <tr key={d.doctorId}>
+                    <td className="font-medium text-slate-900">
                       {d.fullName}
                     </td>
-                    <td className="px-3 py-2 text-slate-500">
+                    <td className="text-slate-500 oncelik-dusuk">
                       {d.sellerName ?? "—"}
                     </td>
-                    <td className="px-3 py-2 text-right tabular-nums">
+                    <td className="sayi">
                       <Tutar deger={d.ciro} taban={MATRAH} baslikta />
                     </td>
                   </tr>

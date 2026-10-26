@@ -43,16 +43,16 @@ export default async function ImportsPage() {
       </div>
       <Card>
         <h2 className="mb-4 text-sm font-semibold text-slate-900">Partiler</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="tablo-kutusu">
+          <table className="veri-tablosu">
             <thead>
-              <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
-                <th className="px-3 py-2 font-medium">Parti</th>
-                <th className="px-3 py-2 font-medium">Tür</th>
-                <th className="px-3 py-2 font-medium">Dosya</th>
-                <th className="px-3 py-2 font-medium">Yapan · Zaman</th>
-                <th className="px-3 py-2 text-right font-medium">Kayıt</th>
-                <th className="px-3 py-2 font-medium">Durum</th>
+              <tr>
+                <th>Parti</th>
+                <th>Tür</th>
+                <th className="oncelik-dusuk">Dosya</th>
+                <th className="oncelik-dusuk">Yapan · Zaman</th>
+                <th className="sayi">Kayıt</th>
+                <th>Durum</th>
               </tr>
             </thead>
             <tbody>
@@ -60,15 +60,15 @@ export default async function ImportsPage() {
               {partiler.map((p) => {
                 const kayit = Object.values(p._count).reduce((a, b) => a + b, 0);
                 return (
-                  <tr key={p.id} data-parti={p.batchNo} className="border-b border-slate-100 align-top last:border-0">
-                    <td className="px-3 py-2 whitespace-nowrap font-medium text-slate-900">{p.batchNo}</td>
-                    <td className="px-3 py-2">{TUR_ADI[p.dataType]}</td>
-                    <td className="px-3 py-2 text-slate-500">{p.fileName ?? "—"}</td>
-                    <td className="px-3 py-2 text-slate-500">
+                  <tr key={p.id} data-parti={p.batchNo} className="align-top">
+                    <td className="whitespace-nowrap font-medium text-slate-900">{p.batchNo}</td>
+                    <td>{TUR_ADI[p.dataType]}</td>
+                    <td className="text-slate-500 oncelik-dusuk">{p.fileName ?? "—"}</td>
+                    <td className="text-slate-500 oncelik-dusuk">
                       {p.user.name} · {formatDateTime(p.createdAt)}
                     </td>
-                    <td className="px-3 py-2 text-right tabular-nums">{kayit}</td>
-                    <td className="px-3 py-2">
+                    <td className="sayi">{kayit}</td>
+                    <td>
                       {p.revertedAt ? (
                         <span className="text-slate-500">
                           Geri alındı ({p.revertedBy?.name}, {formatDateTime(p.revertedAt)}): {p.revertReason}

@@ -152,15 +152,15 @@ export default async function StockPage() {
             <h2 className="mb-4 text-sm font-semibold text-slate-900">
               Hareket Geçmişi
             </h2>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+            <div className="tablo-kutusu">
+              <table className="veri-tablosu">
                 <thead>
-                  <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
-                    <th className="px-4 py-2 font-medium">Tarih</th>
-                    <th className="px-4 py-2 font-medium">Ürün</th>
-                    <th className="px-4 py-2 font-medium">Tip</th>
-                    <th className="px-4 py-2 text-right font-medium">Miktar</th>
-                    <th className="px-4 py-2 font-medium">Açıklama</th>
+                  <tr>
+                    <th>Tarih</th>
+                    <th>Ürün</th>
+                    <th>Tip</th>
+                    <th className="sayi">Miktar</th>
+                    <th className="oncelik-dusuk">Açıklama</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -168,20 +168,17 @@ export default async function StockPage() {
                     <EmptyRow colSpan={5} text="Henüz hareket yok." />
                   )}
                   {movements.map((m) => (
-                    <tr
-                      key={m.id}
-                      className="border-b border-slate-100 last:border-0"
-                    >
-                      <td className="px-4 py-3 whitespace-nowrap text-slate-500">
+                    <tr key={m.id}>
+                      <td className="whitespace-nowrap text-slate-500">
                         {formatDateTime(m.createdAt)}
                       </td>
-                      <td className="px-4 py-3 text-slate-900">
+                      <td className="text-slate-900">
                         {m.product.name}
                         <span className="ml-1 text-xs text-slate-400">
                           {m.product.code}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td>
                         {m.type === "GIRIS" ? (
                           <span className="inline-flex rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
                             Giriş
@@ -192,11 +189,11 @@ export default async function StockPage() {
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right tabular-nums">
+                      <td className="sayi">
                         {m.type === "GIRIS" ? "+" : "−"}
                         {m.quantity}
                       </td>
-                      <td className="px-4 py-3 text-slate-500">
+                      <td className="text-slate-500 oncelik-dusuk">
                         {m.note}
                         {konumlar.length > 1 && <span className="ml-1 text-xs text-slate-400">· {m.location.name}</span>}
                       </td>

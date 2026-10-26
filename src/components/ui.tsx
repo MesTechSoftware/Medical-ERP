@@ -120,7 +120,7 @@ export function EmptyRow({ colSpan, text }: { colSpan: number; text: string }) {
     <tr>
       <td
         colSpan={colSpan}
-        className="px-4 py-8 text-center text-sm text-slate-400"
+        className="py-8 text-center text-sm text-slate-400"
       >
         {text}
       </td>

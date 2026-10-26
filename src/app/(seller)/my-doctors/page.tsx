@@ -44,17 +44,17 @@ export default async function DoctorsPage({
       />
 
       <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="tablo-kutusu">
+          <table className="veri-tablosu">
             <thead>
-              <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
-                <th className="px-4 py-2 font-medium">Ad Soyad</th>
-                <th className="px-4 py-2 font-medium">Klinik</th>
-                <th className="px-4 py-2 font-medium">Bölge</th>
-                <th className="px-4 py-2 font-medium">Telefon</th>
-                <th className="px-4 py-2 text-right font-medium">Sipariş</th>
-                <th className="px-4 py-2 font-medium">Durum</th>
-                <th className="px-4 py-2"></th>
+              <tr>
+                <th>Ad Soyad</th>
+                <th>Klinik</th>
+                <th className="oncelik-dusuk">Bölge</th>
+                <th>Telefon</th>
+                <th className="sayi oncelik-dusuk">Sipariş</th>
+                <th>Durum</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -62,26 +62,23 @@ export default async function DoctorsPage({
                 <EmptyRow colSpan={7} text="Henüz doktor kaydınız yok." />
               )}
               {doctors.map((d) => (
-                <tr
-                  key={d.id}
-                  className="border-b border-slate-100 last:border-0"
-                >
-                  <td className="px-4 py-3 font-medium text-slate-900">
+                <tr key={d.id}>
+                  <td className="font-medium text-slate-900">
                     {d.title ? `${d.title} ` : ""}
                     {d.fullName}
                   </td>
-                  <td className="px-4 py-3 text-slate-500">{d.clinic}</td>
-                  <td className="px-4 py-3 text-slate-500">{d.region}</td>
-                  <td className="px-4 py-3 tabular-nums text-slate-500">
+                  <td className="text-slate-500">{d.clinic}</td>
+                  <td className="text-slate-500 oncelik-dusuk">{d.region}</td>
+                  <td className="tabular-nums text-slate-500">
                     {formatPhone(d.phoneNormalized)}
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums">
+                  <td className="sayi oncelik-dusuk">
                     {d._count.orders}
                   </td>
-                  <td className="px-4 py-3">
+                  <td>
                     <StatusBadge status={d.status} />
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="text-right">
                     <Link
                       href={`/my-doctors/${d.id}/edit`}
                       className="text-sm font-medium text-slate-600 hover:text-slate-900"
