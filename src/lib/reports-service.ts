@@ -334,6 +334,24 @@ export async function tahsilatToplamlari(araliklar: readonly Donem[]): Promise<D
   return araliklar.map((_, i) => new Decimal(s[`a${i}`]));
 }
 
+/**
+ * Satıcının dönem tahsilatı ve karşılaştırma dönemininki (Raporum KPI'ı). Atıf `getSellerReports`
+ * ile aynı yoldan (`donemTahsilatlari`, X-17 §(3)): tahsilat anında doktorun sahibi olan satıcı.
+ */
+export async function saticiTahsilatOzeti(
+  k: { simdi: Donem; onceki: Donem | null },
+  saticiId: string
+): Promise<{ simdi: Decimal; onceki: Decimal | null }> {
+  const [simdi, onceki] = await Promise.all([
+    donemTahsilatlari(k.simdi, [saticiId]),
+    k.onceki ? donemTahsilatlari(k.onceki, [saticiId]) : null,
+  ]);
+  return {
+    simdi: new Decimal(simdi.get(saticiId) ?? 0),
+    onceki: onceki ? new Decimal(onceki.get(saticiId) ?? 0) : null,
+  };
+}
+
 /** Aralıkta en çok sevk edilen ürünler (adet; sayılan belgeler). Adet tam sayıdır, para değildir. */
 export async function enCokSevkEdilenler(aralik: Donem, adet: number): Promise<{ urunId: string; ad: string; miktar: number }[]> {
   const satirlar = await prisma.shipmentItem.findMany({

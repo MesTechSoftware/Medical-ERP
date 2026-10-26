@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { prisma } from "@/lib/db";
 import { bakiyeSerisi } from "@/lib/doctor-cari";
 import { donemCoz, karsilastirmaAraliklari, sonAylar } from "@/lib/donem";
-import { ciroOzeti, enCokSevkEdilenler, saticiCiroSerileri, tahsilatToplamlari } from "@/lib/reports-service";
+import { ciroOzeti, enCokSevkEdilenler, saticiCiroSerileri, saticiTahsilatOzeti, tahsilatToplamlari } from "@/lib/reports-service";
 import { referansVeri, yeniDoktorVerisi } from "../../test/integration/referans";
 
 // KPI sorguları (tasarım 2. tur, ADR-010): ciro serisi ve karşılaştırması getCiroTotal ile aynı
@@ -178,6 +178,28 @@ describe("tahsilatToplamlari — aralık başına SUM, tek sorgu", () => {
     const [ekim, eylul] = await tahsilatToplamlari([K.simdi, K.onceki!]);
     expect(ekim.toFixed(2)).toBe("500.00");
     expect(eylul.toFixed(2)).toBe("250.00");
+  });
+});
+
+describe("saticiTahsilatOzeti — X-17 §(3) atfı, iki dönem (Raporum)", () => {
+  it("satıcının doktorlarının AKTIF tahsilatı; başka satıcınınki ve sahipsiz doktorunki sayılmaz", async () => {
+    const ali = await kullanici("Ali");
+    const veli = await kullanici("Veli");
+    const aliDr = await prisma.doctor.create({ data: { ...yeniDoktorVerisi(`Dr. ${++no}`), ownerSellerId: ali.id } });
+    const veliDr = await prisma.doctor.create({ data: { ...yeniDoktorVerisi(`Dr. ${++no}`), ownerSellerId: veli.id } });
+    const sahipsiz = await doktor();
+    await tahsilat(aliDr.id, "300.00", new Date("2026-10-05T09:00:00Z"));
+    await tahsilat(aliDr.id, "999.00", new Date("2026-10-06T09:00:00Z"), "IPTAL");
+    await tahsilat(aliDr.id, "120.00", new Date("2026-09-05T09:00:00Z"));
+    await tahsilat(aliDr.id, "50.00", new Date("2026-09-28T09:00:00Z")); // önceki dönemin dışında (1–26 Eylül)
+    await tahsilat(veliDr.id, "900.00", new Date("2026-10-06T09:00:00Z"));
+    await tahsilat(sahipsiz.id, "70.00", new Date("2026-10-07T09:00:00Z"));
+
+    const o = await saticiTahsilatOzeti(K, ali.id);
+    expect(o.simdi.toFixed(2)).toBe("300.00");
+    expect(o.onceki?.toFixed(2)).toBe("120.00");
+    expect((await saticiTahsilatOzeti({ simdi: K.simdi, onceki: null }, ali.id)).onceki).toBeNull();
+    expect((await saticiTahsilatOzeti(K, veli.id)).simdi.toFixed(2)).toBe("900.00");
   });
 });
 
