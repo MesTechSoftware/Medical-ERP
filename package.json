@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:demo": "tsx prisma/seed-demo.ts",
+    "db:seed:gecmis": "tsx prisma/seed-gecmis.ts",
     "sablon:uret": "tsx --env-file=.env scripts/sablon-uret.ts",
     "izlenebilirlik": "tsx scripts/izlenebilirlik.ts",
     "db:reset": "prisma migrate reset --force",

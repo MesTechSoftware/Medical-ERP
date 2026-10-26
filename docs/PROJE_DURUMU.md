@@ -79,7 +79,17 @@ Prisma client `src/generated/prisma/` altına üretilir (gitignored — taze klo
   - Playwright `mobil-iphone` / `mobil-android` / `mobil-ipad` projeleri;
   - masaüstü ritim ve iskelet eşleşmesi: `e2e/admin/tasarim.spec.ts`;
   - E2E seçicileri stil sınıfına bağlanmaz.
-- **Henüz yok (2. tur):** KPI kartı hiyerarşisi, mikro grafikler, "Veri yok" boş KPI durumu.
+- **2. tur — KPI kartları ve mikro grafikler** *(27.10.2026, `docs/adr/ADR-010`, PR #63–#71)*:
+  - `KpiCard` / `KpiSatiri`: sayfa başına ≤ 4 KPI, ilki birincil; her KPI'da iyi yön ve boş
+    davranışı zorunlu; değer kart genişliğine göre küçülür, taşmaz; yerleşim satırın kendi
+    genişliğinden (container query). Karşılaştırma geçen ayın aynı günleriyle (K-1).
+  - Mikro grafikler sunucuda saf SVG (`src/components/grafik/`): Sparkline, ColumnMicro, BarMicro,
+    OranCubugu; istemciye JS yok. Geometri ve yüzde yalnız `src/lib/kpi/olcek.ts` (X-5 eki).
+  - Ekranlar: dashboard ("bu ay"), raporlar ve Raporum (seçili dönem), doktor detayı (cari bakiye
+    trendi). KPI sorguları mevcut tek hesap yollarından; her KPI kendi hata alanında (`kpiGetir`).
+  - Tarih aralığı indeksleri: `Shipment(shippedAt)`, `ReturnNote(createdAt)`,
+    `DoctorPayment(status, paidAt)`.
+  - Demo geçmişi: `npm run db:seed:gecmis` (aşağıda, "Çalıştırma").
 
 ## Veri Modeli (`prisma/schema.prisma`)
 
@@ -212,8 +222,14 @@ npx prisma generate      # client gitignored — taze klonda zorunlu
 npx prisma migrate deploy
 npm run db:seed          # referans veri (canlıda da çalışır, hiçbir şey silmez)
 npm run db:seed:demo     # demo verisi — yalnız geliştirme
+DEMO_GECMIS=evet DEMO_GECMIS_HOST=localhost npm run db:seed:gecmis   # 6 aylık demo geçmişi (isteğe bağlı)
 npm run dev              # http://localhost:3000
 ```
+
+Demo geçmişi demo seed'inin üstüne çalışır: sipariş, sevk, teslim, iade, tahsilat ve stok girişi
+uygulamanın kendi servislerinden yazılır ve geçmişe kaydırılır; sonda tutarlılık denetimi, ihlalde
+hiçbir şey yazılmaz. Canlıda, bayraksız ya da izinli olmayan veritabanı sunucusunda, demo işareti
+yokken ya da geçmiş zaten varken çalışmaz.
 
 Demo hesapları (yalnız `db:seed:demo`, üretime taşınmaz): `admin@medikal.local` / `admin123` ·
 `ahmet@…`, `ayse@…`, `mehmet@…` / `satici123`.
