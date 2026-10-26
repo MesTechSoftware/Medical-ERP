@@ -84,14 +84,14 @@ export default async function AuditLogsPage({
       </form>
 
       <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="tablo-kutusu">
+          <table className="veri-tablosu">
             <thead>
-              <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
-                <th className="px-4 py-2 font-medium">Tarih</th>
-                <th className="px-4 py-2 font-medium">Kullanıcı</th>
-                <th className="px-4 py-2 font-medium">İşlem</th>
-                <th className="px-4 py-2 font-medium">Entity</th>
+              <tr>
+                <th>Tarih</th>
+                <th>Kullanıcı</th>
+                <th>İşlem</th>
+                <th className="oncelik-dusuk">Entity</th>
               </tr>
             </thead>
             <tbody>
@@ -99,22 +99,19 @@ export default async function AuditLogsPage({
                 <EmptyRow colSpan={4} text="Kayıt bulunamadı." />
               )}
               {logs.map((log) => (
-                <tr
-                  key={log.id}
-                  className="border-b border-slate-100 last:border-0"
-                >
-                  <td className="px-4 py-3 whitespace-nowrap text-slate-500">
+                <tr key={log.id}>
+                  <td className="whitespace-nowrap text-slate-500">
                     {formatDateTime(log.createdAt)}
                   </td>
-                  <td className="px-4 py-3 text-slate-900">
+                  <td className="text-slate-900">
                     {log.actor?.name ?? (
                       <span className="text-slate-400">sistem / anonim</span>
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td>
                     {AUDIT_ACTION_LABELS[log.action] ?? log.action}
                   </td>
-                  <td className="px-4 py-3 text-slate-500">
+                  <td className="text-slate-500 oncelik-dusuk">
                     {log.entityType}
                     {log.entityId && (
                       <span className="ml-1 text-xs text-slate-400">

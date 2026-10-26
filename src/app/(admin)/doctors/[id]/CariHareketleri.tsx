@@ -32,38 +32,38 @@ export default async function CariHareketleri({ doktorId, yonetici }: { doktorId
   return (
     <Card>
       <h2 className="mb-4 text-sm font-semibold text-slate-900">Cari Hareketler</h2>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+      <div className="tablo-kutusu">
+        <table className="veri-tablosu">
           <thead>
-            <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
-              <th className="px-3 py-2 font-medium">Tarih</th>
-              <th className="px-3 py-2 font-medium">Tip</th>
-              <th className="px-3 py-2 font-medium">Belge No</th>
-              <th className="px-3 py-2 text-right font-medium">{tabanli("Borç", BRUT)}</th>
-              <th className="px-3 py-2 text-right font-medium">{tabanli("Alacak", BRUT)}</th>
-              <th className="px-3 py-2 font-medium">Vade</th>
-              {yonetici && <th className="px-3 py-2"></th>}
+            <tr>
+              <th>Tarih</th>
+              <th>Tip</th>
+              <th className="oncelik-dusuk">Belge No</th>
+              <th className="sayi">{tabanli("Borç", BRUT)}</th>
+              <th className="sayi">{tabanli("Alacak", BRUT)}</th>
+              <th>Vade</th>
+              {yonetici && <th></th>}
             </tr>
           </thead>
           <tbody>
             {hareketler.length === 0 && <EmptyRow colSpan={yonetici ? 7 : 6} text="Cari hareket yok." />}
             {hareketler.map((h) => (
-              <tr key={h.id} data-hareket-id={h.id} className="border-b border-slate-100 align-top last:border-0">
-                <td className="px-3 py-2 whitespace-nowrap text-slate-500">{formatDate(h.createdAt)}</td>
-                <td className="px-3 py-2">
+              <tr key={h.id} data-hareket-id={h.id} className="align-top">
+                <td className="whitespace-nowrap text-slate-500">{formatDate(h.createdAt)}</td>
+                <td>
                   {TIP[h.type] ?? h.type}
                   {h.reversal && <span className="ml-1 text-xs text-slate-400">(çevrildi)</span>}
                 </td>
-                <td className="px-3 py-2 whitespace-nowrap text-slate-500">{h.documentNo}</td>
-                <td className="px-3 py-2 text-right tabular-nums">
+                <td className="whitespace-nowrap text-slate-500 oncelik-dusuk">{h.documentNo}</td>
+                <td className="sayi">
                   {h.direction === "BORC" ? <Tutar deger={h.amount} taban={BRUT} baslikta /> : ""}
                 </td>
-                <td className="px-3 py-2 text-right tabular-nums">
+                <td className="sayi">
                   {h.direction === "ALACAK" ? <Tutar deger={h.amount} taban={BRUT} baslikta /> : ""}
                 </td>
-                <td className="px-3 py-2 whitespace-nowrap text-slate-500">{h.dueDate ? formatDate(h.dueDate) : "—"}</td>
+                <td className="whitespace-nowrap text-slate-500">{h.dueDate ? formatDate(h.dueDate) : "—"}</td>
                 {yonetici && (
-                  <td className="px-3 py-2">
+                  <td>
                     {h.direction === "BORC" && h.type !== "TERS_KAYIT" && (
                       <details>
                         <summary className="cursor-pointer text-xs text-slate-600">Vade değiştir</summary>

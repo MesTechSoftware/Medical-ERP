@@ -94,29 +94,26 @@ export default function OrderDetail({
         <h2 className="mb-4 text-sm font-semibold text-slate-900">
           Sipariş Kalemleri
         </h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="tablo-kutusu">
+          <table className="veri-tablosu">
             <thead>
-              <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
-                <th className="px-3 py-2 font-medium">Ürün</th>
-                <th className="px-3 py-2 text-right font-medium">Miktar</th>
-                <th className="px-3 py-2 text-right font-medium">
+              <tr>
+                <th>Ürün</th>
+                <th className="sayi">Miktar</th>
+                <th className="sayi">
                   {tabanli("Birim Fiyat", MATRAH)}
                 </th>
-                <th className="px-3 py-2 text-right font-medium">{tabanli("Tutar", SATIR_TABANI.matrah)}</th>
-                <th className="px-3 py-2 text-right font-medium">KDV</th>
-                <th className="px-3 py-2 text-right font-medium">
+                <th className="sayi">{tabanli("Tutar", SATIR_TABANI.matrah)}</th>
+                <th className="sayi">KDV</th>
+                <th className="sayi">
                   {tabanli("Tutar", SATIR_TABANI.toplam)}
                 </th>
               </tr>
             </thead>
             <tbody>
               {order.items.map((it, i) => (
-                <tr
-                  key={it.id}
-                  className="border-b border-slate-100 last:border-0"
-                >
-                  <td className="px-3 py-2 text-slate-900">
+                <tr key={it.id}>
+                  <td className="text-slate-900">
                     {it.product.name}
                     <span className="ml-1 text-xs text-slate-400">
                       {it.product.code}
@@ -128,22 +125,22 @@ export default function OrderDetail({
                       </span>
                     )}
                   </td>
-                  <td className="px-3 py-2 text-right tabular-nums">
+                  <td className="sayi">
                     {it.quantity}
                   </td>
-                  <td className="px-3 py-2 text-right tabular-nums">
+                  <td className="sayi">
                     <Tutar deger={it.unitPrice} taban={MATRAH} baslikta />
                   </td>
-                  <td className="px-3 py-2 text-right tabular-nums">
+                  <td className="sayi">
                     <Tutar deger={hesap.satirlar[i].matrah} taban={SATIR_TABANI.matrah} baslikta />
                   </td>
-                  <td className="px-3 py-2 text-right tabular-nums text-slate-500">
+                  <td className="sayi text-slate-500">
                     <Tutar deger={hesap.satirlar[i].kdvTutar} taban={SATIR_TABANI.kdvTutar} baslikta />
                     <span className="ml-1 text-xs text-slate-400">
                       {formatla(it.vatRate, "oran")}
                     </span>
                   </td>
-                  <td className="px-3 py-2 text-right tabular-nums">
+                  <td className="sayi">
                     <Tutar deger={hesap.satirlar[i].toplam} taban={SATIR_TABANI.toplam} baslikta />
                   </td>
                 </tr>
@@ -152,26 +149,26 @@ export default function OrderDetail({
             {/* Toplamlar kalemlerin TOPLAMIDIR; yeniden yuvarlanmaz (C-6 §(5)). */}
             <tfoot className="border-t border-slate-200">
               <tr>
-                <td colSpan={4} className="px-3 py-1.5 text-right text-slate-600">
+                <td colSpan={4} className="text-right text-slate-600">
                   {tabanli("Ara Toplam", SATIR_TABANI.matrah)}
                 </td>
-                <td className="px-3 py-1.5 text-right tabular-nums text-slate-600">
+                <td className="sayi text-slate-600">
                   <Tutar deger={hesap.toplam.matrah} taban={SATIR_TABANI.matrah} baslikta />
                 </td>
               </tr>
               <tr>
-                <td colSpan={4} className="px-3 py-1.5 text-right text-slate-600">
+                <td colSpan={4} className="text-right text-slate-600">
                   KDV
                 </td>
-                <td className="px-3 py-1.5 text-right tabular-nums text-slate-600">
+                <td className="sayi text-slate-600">
                   <Tutar deger={hesap.toplam.kdvTutar} taban={SATIR_TABANI.kdvTutar} baslikta />
                 </td>
               </tr>
               <tr>
-                <td colSpan={4} className="px-3 py-3 text-right font-medium">
+                <td colSpan={4} className="text-right font-medium">
                   {tabanli("Genel Toplam", SATIR_TABANI.toplam)}
                 </td>
-                <td className="px-3 py-3 text-right text-base font-semibold tabular-nums">
+                <td className="sayi text-base font-semibold">
                   <Tutar deger={hesap.toplam.toplam} taban={SATIR_TABANI.toplam} baslikta />
                 </td>
               </tr>

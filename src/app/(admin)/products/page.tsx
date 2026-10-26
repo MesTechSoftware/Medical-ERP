@@ -49,19 +49,19 @@ export default async function ProductsPage() {
       />
 
       <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="tablo-kutusu">
+          <table className="veri-tablosu">
             <thead>
-              <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
-                <th className="px-4 py-2 font-medium">Ürün</th>
-                <th className="px-4 py-2 font-medium">Kod</th>
-                <th className="px-4 py-2 text-right font-medium">
+              <tr>
+                <th>Ürün</th>
+                <th className="oncelik-dusuk">Kod</th>
+                <th className="sayi">
                   {tabanli("Liste Fiyatı", MATRAH)}
                 </th>
-                <th className="px-4 py-2 text-right font-medium">KDV</th>
-                <th className="px-4 py-2 text-right font-medium">Stok</th>
-                <th className="px-4 py-2 font-medium">Durum</th>
-                <th className="px-4 py-2 text-right font-medium">İşlem</th>
+                <th className="sayi oncelik-dusuk">KDV</th>
+                <th className="sayi">Stok</th>
+                <th>Durum</th>
+                <th className="sayi">İşlem</th>
               </tr>
             </thead>
             <tbody>
@@ -69,21 +69,18 @@ export default async function ProductsPage() {
                 <EmptyRow colSpan={7} text="Henüz ürün eklenmemiş." />
               )}
               {products.map((p) => (
-                <tr
-                  key={p.id}
-                  className="border-b border-slate-100 last:border-0"
-                >
-                  <td className="px-4 py-3 font-medium text-slate-900">
+                <tr key={p.id}>
+                  <td className="font-medium text-slate-900">
                     {p.name}
                   </td>
-                  <td className="px-4 py-3 text-slate-500">{p.code}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">
+                  <td className="text-slate-500 oncelik-dusuk">{p.code}</td>
+                  <td className="sayi">
                     <Tutar deger={p.listPrice} taban={MATRAH} baslikta />
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums text-slate-500">
+                  <td className="sayi text-slate-500 oncelik-dusuk">
                     {formatla(p.taxRate.rate, "oran")}
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums">
+                  <td className="sayi">
                     <span
                       className={
                         p.stock <= CRITICAL_STOCK
@@ -94,10 +91,10 @@ export default async function ProductsPage() {
                       {p.stock}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
+                  <td>
                     <StatusBadge status={p.status} />
                   </td>
-                  <td className="px-4 py-3">
+                  <td>
                     {yonetici && (
                       <div className="flex items-center justify-end gap-3">
                         <Link

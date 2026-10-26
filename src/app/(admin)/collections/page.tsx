@@ -65,17 +65,17 @@ export default async function CollectionsPage({
           <h2 className="mb-4 text-sm font-semibold text-slate-900">
             Tahsilat Geçmişi
           </h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="tablo-kutusu">
+            <table className="veri-tablosu">
               <thead>
-                <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
-                  <th className="px-4 py-2 font-medium">Tarih</th>
-                  <th className="px-4 py-2 font-medium">Doktor</th>
-                  <th className="px-4 py-2 font-medium">Yöntem</th>
-                  <th className="px-4 py-2 font-medium">Referans</th>
-                  <th className="px-4 py-2 text-right font-medium">{tabanli("Tutar", BRUT)}</th>
-                  <th className="px-4 py-2 font-medium">Durum</th>
-                  <th className="px-4 py-2"></th>
+                <tr>
+                  <th>Tarih</th>
+                  <th>Doktor</th>
+                  <th className="oncelik-dusuk">Yöntem</th>
+                  <th className="oncelik-dusuk">Referans</th>
+                  <th className="sayi">{tabanli("Tutar", BRUT)}</th>
+                  <th>Durum</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -87,30 +87,27 @@ export default async function CollectionsPage({
                   return (
                     <tr
                       key={p.id}
-                      className={
-                        "border-b border-slate-100 last:border-0 " +
-                        (cancelled ? "text-slate-400 line-through" : "")
-                      }
+                      className={cancelled ? "text-slate-400 line-through" : undefined}
                     >
-                      <td className="px-4 py-3 whitespace-nowrap">
+                      <td className="whitespace-nowrap">
                         {formatDate(p.paidAt)}
                       </td>
-                      <td className="px-4 py-3 text-slate-900">
+                      <td className="text-slate-900">
                         {p.doctor.fullName}
                       </td>
-                      <td className="px-4 py-3 text-slate-500">
+                      <td className="text-slate-500 oncelik-dusuk">
                         {p.paymentMethod.name}
                       </td>
-                      <td className="px-4 py-3 text-slate-500">
+                      <td className="text-slate-500 oncelik-dusuk">
                         {p.referenceNo ?? "—"}
                       </td>
-                      <td className="px-4 py-3 text-right tabular-nums">
+                      <td className="sayi">
                         <Tutar deger={p.amount} taban={BRUT} baslikta />
                       </td>
-                      <td className="px-4 py-3">
+                      <td>
                         {cancelled ? "İptal" : "Aktif"}
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="text-right">
                         {!cancelled && <CancelCollection paymentId={p.id} />}
                       </td>
                     </tr>

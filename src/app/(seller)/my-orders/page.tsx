@@ -50,17 +50,17 @@ export default async function MyOrdersPage({
       />
 
       <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="tablo-kutusu">
+          <table className="veri-tablosu">
             <thead>
-              <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
-                <th className="px-4 py-2 font-medium">Tarih</th>
-                <th className="px-4 py-2 font-medium">Doktor</th>
-                <th className="px-4 py-2 font-medium">Hastane</th>
-                <th className="px-4 py-2 text-right font-medium">Kalem</th>
-                <th className="px-4 py-2 text-right font-medium">{tabanli("Tutar", SATIR_TABANI.toplam)}</th>
-                <th className="px-4 py-2 font-medium">Durum</th>
-                <th className="px-4 py-2"></th>
+              <tr>
+                <th>Tarih</th>
+                <th>Doktor</th>
+                <th className="oncelik-dusuk">Hastane</th>
+                <th className="sayi oncelik-dusuk">Kalem</th>
+                <th className="sayi">{tabanli("Tutar", SATIR_TABANI.toplam)}</th>
+                <th>Durum</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -68,30 +68,27 @@ export default async function MyOrdersPage({
                 <EmptyRow colSpan={7} text="Henüz sipariş oluşturmadınız." />
               )}
               {orders.map((o) => (
-                <tr
-                  key={o.id}
-                  className="border-b border-slate-100 last:border-0"
-                >
-                  <td className="px-4 py-3 whitespace-nowrap text-slate-500">
+                <tr key={o.id}>
+                  <td className="whitespace-nowrap text-slate-500">
                     {formatDate(o.orderDate)}
                   </td>
-                  <td className="px-4 py-3 font-medium text-slate-900">
+                  <td className="font-medium text-slate-900">
                     {o.doctor.fullName}
                   </td>
-                  <td className="px-4 py-3 text-slate-500">{o.doctor.clinic ?? "—"}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">
+                  <td className="text-slate-500 oncelik-dusuk">{o.doctor.clinic ?? "—"}</td>
+                  <td className="sayi oncelik-dusuk">
                     {o.items.length}
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums">
+                  <td className="sayi">
                     <Tutar deger={siparisToplami(o.items).toplam} taban={SATIR_TABANI.toplam} baslikta />
                   </td>
-                  <td className="px-4 py-3">
+                  <td>
                     <span className="flex flex-wrap items-center gap-1">
                       <StatusBadge status={o.status} />
                       <OnayEtiketi durum={onayDurumu.get(o.id)} />
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="text-right">
                     <Link
                       href={`/my-orders/${o.id}`}
                       className="text-sm font-medium text-slate-600 hover:text-slate-900"

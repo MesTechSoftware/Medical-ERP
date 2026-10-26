@@ -140,15 +140,15 @@ export default async function DoctorDetailPage({
           <h2 className="mb-4 text-sm font-semibold text-slate-900">
             Sipariş Geçmişi
           </h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="tablo-kutusu">
+            <table className="veri-tablosu">
               <thead>
-                <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
-                  <th className="px-3 py-2 font-medium">Belge No</th>
-                  <th className="px-3 py-2 font-medium">Tarih</th>
-                  <th className="px-3 py-2 font-medium">Satıcı</th>
-                  <th className="px-3 py-2 text-right font-medium">{tabanli("Tutar", SATIR_TABANI.toplam)}</th>
-                  <th className="px-3 py-2 font-medium">Durum</th>
+                <tr>
+                  <th>Belge No</th>
+                  <th>Tarih</th>
+                  <th className="oncelik-dusuk">Satıcı</th>
+                  <th className="sayi">{tabanli("Tutar", SATIR_TABANI.toplam)}</th>
+                  <th>Durum</th>
                 </tr>
               </thead>
               <tbody>
@@ -157,23 +157,20 @@ export default async function DoctorDetailPage({
                 )}
                 {orders.map((o) => {
                   return (
-                    <tr
-                      key={o.id}
-                      className="border-b border-slate-100 last:border-0"
-                    >
-                      <td className="px-3 py-2 whitespace-nowrap text-slate-500">
+                    <tr key={o.id}>
+                      <td className="whitespace-nowrap text-slate-500">
                         {o.documentNo}
                       </td>
-                      <td className="px-3 py-2 whitespace-nowrap text-slate-500">
+                      <td className="whitespace-nowrap text-slate-500">
                         {formatDate(o.orderDate)}
                       </td>
-                      <td className="px-3 py-2 text-slate-500">
+                      <td className="text-slate-500 oncelik-dusuk">
                         {o.seller?.name ?? "—"}
                       </td>
-                      <td className="px-3 py-2 text-right tabular-nums">
+                      <td className="sayi">
                         <Tutar deger={siparisToplami(o.items).toplam} taban={SATIR_TABANI.toplam} baslikta />
                       </td>
-                      <td className="px-3 py-2">
+                      <td>
                         <StatusBadge status={o.status} />
                       </td>
                     </tr>
@@ -188,14 +185,14 @@ export default async function DoctorDetailPage({
           <h2 className="mb-4 text-sm font-semibold text-slate-900">
             Tahsilat Geçmişi
           </h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="tablo-kutusu">
+            <table className="veri-tablosu">
               <thead>
-                <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
-                  <th className="px-3 py-2 font-medium">Tarih</th>
-                  <th className="px-3 py-2 font-medium">Yöntem</th>
-                  <th className="px-3 py-2 text-right font-medium">{tabanli("Tutar", BRUT)}</th>
-                  <th className="px-3 py-2 font-medium">Durum</th>
+                <tr>
+                  <th>Tarih</th>
+                  <th className="oncelik-dusuk">Yöntem</th>
+                  <th className="sayi">{tabanli("Tutar", BRUT)}</th>
+                  <th>Durum</th>
                 </tr>
               </thead>
               <tbody>
@@ -205,21 +202,18 @@ export default async function DoctorDetailPage({
                 {payments.map((p) => (
                   <tr
                     key={p.id}
-                    className={
-                      "border-b border-slate-100 last:border-0 " +
-                      (p.status === "IPTAL" ? "text-slate-400 line-through" : "")
-                    }
+                    className={p.status === "IPTAL" ? "text-slate-400 line-through" : undefined}
                   >
-                    <td className="px-3 py-2 whitespace-nowrap">
+                    <td className="whitespace-nowrap">
                       {formatDate(p.paidAt)}
                     </td>
-                    <td className="px-3 py-2">
+                    <td className="oncelik-dusuk">
                       {p.paymentMethod.name}
                     </td>
-                    <td className="px-3 py-2 text-right tabular-nums">
+                    <td className="sayi">
                       <Tutar deger={p.amount} taban={BRUT} baslikta />
                     </td>
-                    <td className="px-3 py-2">
+                    <td>
                       {p.status === "IPTAL" ? "İptal" : "Aktif"}
                     </td>
                   </tr>
