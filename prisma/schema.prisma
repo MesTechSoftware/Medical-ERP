@@ -556,6 +556,7 @@ model Shipment {
   stockMovements StockMovement[]
 
   @@index([orderId])
+  @@index([shippedAt]) // ADR-010: KPI ciro serisi ve en çok sevk edilenler tarih aralığıyla okunur
 }
 
 // Borç ve prim sevkiyat satırında doğar (A-3); KDV burada hesaplanır (C-6 §(7)).
@@ -591,6 +592,7 @@ model ReturnNote {
   stockMovements StockMovement[]
 
   @@index([doctorId])
+  @@index([createdAt]) // ADR-010: iadenin ekseni belge tarihidir (X-1 §(4)); KPI aralıkla okur
 }
 
 model ReturnNoteItem {
@@ -723,7 +725,7 @@ model DoctorPayment {
   ledgerEntries LedgerEntry[]
 
   @@index([doctorId])
-  @@index([status])
+  @@index([status, paidAt]) // ADR-010: KPI tahsilatı AKTIF + tarih aralığı; tek başına status'u da karşılar
 }
 
 // ─── Onay, içe/dışa aktarım, denetim ─────────────────────────────────────────
