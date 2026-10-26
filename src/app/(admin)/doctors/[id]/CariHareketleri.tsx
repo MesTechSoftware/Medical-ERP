@@ -80,7 +80,7 @@ export default async function CariHareketleri({ doktorId, yonetici }: { doktorId
                     )}
                     {(h.type === "ACILIS" || h.type === "VADE_FARKI") && !h.reversal && (
                       <details>
-                        <summary className="cursor-pointer text-xs text-red-600">Ters kayıt</summary>
+                        <summary className="cursor-pointer text-xs text-negative">Ters kayıt</summary>
                         <IslemFormu action={reverseLedgerEntry.bind(null, h.id)} className="mt-2 w-48 space-y-2">
                           <input aria-label="Ters kayıt gerekçesi" name="reason" required placeholder="Gerekçe" className={KUTU} />
                           <button type="submit" className={DUGME}>

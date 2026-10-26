@@ -5,21 +5,15 @@ import { Tutar } from "@/components/Tutar";
 import { MATRAH, tabanli } from "@/lib/taban";
 import { cozumleBirimFiyat } from "@/lib/fiyat";
 import { hesaplaStok } from "@/lib/stok";
+import { StokMiktari } from "@/components/StokMiktari";
 import { requireStaff } from "@/lib/session";
-import {
-  PageHeader,
-  LinkButton,
-  Card,
-  StatusBadge,
-  EmptyRow,
-} from "@/components/ui";
+import { PageHeader, LinkButton, Card, StatusBadge, EmptyRow } from "@/components/ui";
 import ConfirmSubmit from "@/components/ConfirmSubmit";
 import { IslemFormu } from "@/components/Sonuc";
 import { deleteProduct } from "./actions";
 import { bugun } from "@/lib/zaman";
 import { buton } from "@/components/stil";
 
-const CRITICAL_STOCK = 10;
 
 export default async function ProductsPage() {
   const session = await requireStaff();
@@ -82,15 +76,7 @@ export default async function ProductsPage() {
                     {formatla(p.taxRate.rate, "oran")}
                   </td>
                   <td className="sayi">
-                    <span
-                      className={
-                        p.stock <= CRITICAL_STOCK
-                          ? "font-semibold text-red-600"
-                          : "text-slate-900"
-                      }
-                    >
-                      {p.stock}
-                    </span>
+                    <StokMiktari miktar={p.stock} />
                   </td>
                   <td>
                     <StatusBadge status={p.status} />

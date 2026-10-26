@@ -64,5 +64,19 @@ describe("görsel tasarım sistemi (ADR-009)", () => {
     expect(ihlal).toEqual([]);
   });
 
-  it.todo("ham palet renk sınıfı yok — semantik renk adımında (tasarım 4) açılır");
+  it("ham palet renk sınıfı yok — renk yalnız semantik token'dan; nötr griler serbest", () => {
+    // slate/gray/zinc/neutral/stone, beyaz ve siyah nötrdür; marka ve semantik token'lar ad taşır.
+    const PALET =
+      /\b(?:bg|text|border|ring|outline|fill|stroke|from|to|via|divide|decoration|accent|caret)-(?:red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d{2,3}\b/;
+    const ihlal = dosyalar(SRC, /\.(tsx|ts)$/)
+      .filter((y) => !y.endsWith(".test.ts"))
+      .flatMap((y) =>
+        readFileSync(y, "utf8")
+          .split("\n")
+          .map((satir, i) => ({ yer: `${relative(SRC, y)}:${i + 1}`, satir }))
+      )
+      .filter(({ satir }) => PALET.test(satir))
+      .map(({ yer, satir }) => `${yer}: ${satir.trim()}`);
+    expect(ihlal).toEqual([]);
+  });
 });

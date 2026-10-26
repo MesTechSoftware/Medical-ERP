@@ -64,7 +64,7 @@ export default async function AdminDoctorsPage({
       />
 
       {unowned > 0 && (
-        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="mb-4 rounded-lg border border-critical/30 bg-critical-bg px-4 py-3 text-sm text-critical">
           <strong>{unowned}</strong> doktor sahipsiz havuzda. Bir satıcıya
           atanana kadar bu doktorlara sipariş girilemez.
         </div>
@@ -165,7 +165,7 @@ export default async function AdminDoctorsPage({
                           {d.ownerSeller.name}
                         </span>
                       ) : (
-                        <span className="font-medium text-amber-700">
+                        <span className="font-medium text-critical">
                           Sahipsiz
                         </span>
                       )}

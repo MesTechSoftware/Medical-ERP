@@ -4,12 +4,13 @@ import Decimal from "decimal.js";
 import { Tutar } from "@/components/Tutar";
 import { BRUT, MATRAH } from "@/lib/taban";
 import { hesaplaStok } from "@/lib/stok";
+import { CRITICAL_STOCK } from "@/lib/stok-durumu";
 import { getCiroTotal } from "@/lib/reports-service";
 import { gunAraligi, simdi, TUM_ZAMANLAR } from "@/lib/zaman";
 import { PageHeader, Card, StatCard, EmptyRow } from "@/components/ui";
+import { StokMiktari } from "@/components/StokMiktari";
 import { buton } from "@/components/stil";
 
-const CRITICAL_STOCK = 10;
 
 export default async function DashboardPage() {
   // "Bugün" İstanbul takvim günüdür (E-1 §(3)).
@@ -60,12 +61,12 @@ export default async function DashboardPage() {
         <StatCard
           label="Bekleyen Sipariş"
           value={String(pendingCount)}
-          tone={pendingCount > 0 ? "danger" : "default"}
+          tone={pendingCount > 0 ? "warning" : "default"}
         />
         <StatCard
           label="Kargolanacak"
           value={String(preparingCount)}
-          tone={preparingCount > 0 ? "danger" : "default"}
+          tone={preparingCount > 0 ? "warning" : "default"}
         />
       </div>
 
@@ -101,8 +102,8 @@ export default async function DashboardPage() {
                   <tr key={p.id}>
                     <td className="text-slate-900">{p.name}</td>
                     <td className="text-slate-500 oncelik-dusuk">{p.code}</td>
-                    <td className="sayi font-semibold text-red-600">
-                      {p.stock}
+                    <td className="sayi">
+                      <StokMiktari miktar={p.stock} />
                     </td>
                   </tr>
                 ))}
