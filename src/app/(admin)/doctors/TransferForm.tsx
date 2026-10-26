@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { SubmitButton } from "@/components/form";
 import { SonucGosterimi, type SonucDurumu } from "@/components/Sonuc";
 import { transferDoctor } from "./actions";
+import { KONTROL_TEK_SATIR } from "@/components/stil";
 
 /**
  * Toplu devir formu (X-17 §(4)). Doktor seçimi listedeki kutulardan gelir; kutular
@@ -28,7 +29,7 @@ export default function TransferForm({
           id="toplu-satici"
           name="sellerId"
           defaultValue=""
-          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-500"
+          className={KONTROL_TEK_SATIR}
         >
           <option value="">— Sahipsiz havuz —</option>
           {sellers.map((s) => (
@@ -47,7 +48,7 @@ export default function TransferForm({
           id="toplu-gerekce"
           name="reason"
           placeholder="Örn. bölge değişikliği"
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
+          className={`w-full ${KONTROL_TEK_SATIR}`}
         />
       </div>
 

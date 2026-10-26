@@ -7,6 +7,7 @@ import { BLOK_KURAL_ADI } from "@/lib/sozluk";
 import { PageHeader, Card, StatusBadge } from "@/components/ui";
 import { IslemFormu } from "@/components/Sonuc";
 import { blokKarari } from "./actions";
+import { KONTROL_COK_SATIR, buton } from "@/components/stil";
 
 /**
  * Onay bekleyenler (A-8): karar verilmemiş bloklar, en eskisi önce. Bugün tek kural
@@ -77,14 +78,14 @@ export default async function ApprovalsPage() {
                       name="not"
                       required
                       rows={2}
-                      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
+                      className={`w-full ${KONTROL_COK_SATIR}`}
                     />
                     <div className="flex gap-2">
                       <button
                         type="submit"
                         name="karar"
                         value="ONAY"
-                        className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+                        className={buton("birincil")}
                       >
                         Onayla
                       </button>
@@ -92,7 +93,7 @@ export default async function ApprovalsPage() {
                         type="submit"
                         name="karar"
                         value="RED"
-                        className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
+                        className={buton("olumsuz-cerceve")}
                       >
                         Reddet
                       </button>

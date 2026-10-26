@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 
 /**
  * Rapor dönemi (X-1 §(2)): varsayılan içinde bulunulan aydır; "tüm zamanlar" ayrı,
@@ -17,20 +18,18 @@ export default function DonemSecici({ anahtar, yol }: { anahtar: string; yol: st
           name="donem"
           type="month"
           defaultValue={tum ? "" : anahtar}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-500"
+          className={KONTROL_TEK_SATIR}
         />
       </div>
       <button
         type="submit"
-        className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+        className={buton("ikincil")}
       >
         Göster
       </button>
       <Link
         href={`${yol}?donem=tum`}
-        className={`rounded-lg px-3 py-2 text-sm font-medium ${
-          tum ? "bg-slate-900 text-white" : "text-slate-600 hover:text-slate-900"
-        }`}
+        className={buton(tum ? "birincil" : "ikincil")}
       >
         Tüm zamanlar
       </Link>

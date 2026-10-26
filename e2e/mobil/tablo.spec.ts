@@ -76,13 +76,13 @@ test("sayfalama ve filtre hapları dokunmatikte en az 44 px; telefonda kısa bi�
   await page.goto("/orders?per=1");
   const sayfalama = page.getByRole("navigation", { name: "Sayfalama" });
   await expect(sayfalama).toBeVisible();
-  await dokunmaHedefi(page, "Sonraki", await sayfalama.getByRole("link", { name: "Sonraki" }).boundingBox());
+  await dokunmaHedefi(sayfalama.getByRole("link", { name: "Sonraki" }), "Sonraki");
   if (telefonda(page)) {
     await expect(sayfalama.getByText(/^1 \/ \d+$/)).toBeVisible();
     await expect(sayfalama.getByText(/toplam \d+ kayıt/)).toBeHidden();
   }
   for (const ad of ["Tümü", "Bekliyor", "İptal"]) {
-    await dokunmaHedefi(page, `hap: ${ad}`, await page.getByRole("link", { name: ad, exact: true }).boundingBox());
+    await dokunmaHedefi(page.getByRole("link", { name: ad, exact: true }), `hap: ${ad}`);
   }
 });
 
@@ -91,7 +91,7 @@ test("satır kutucuğunun dokunma alanı 44 px; kenarına dokunmak işaretler", 
   const kutucuk = page.getByRole("checkbox", { name: /seç$/ }).first();
   await expect(kutucuk).toBeVisible();
   const alan = kutucuk.locator("xpath=ancestor::label[1]");
-  await dokunmaHedefi(page, "kutucuk alanı", await alan.boundingBox());
+  await dokunmaHedefi(alan, "kutucuk alanı");
   await alan.click({ position: { x: 2, y: 2 } });
   await expect(kutucuk).toBeChecked();
 });

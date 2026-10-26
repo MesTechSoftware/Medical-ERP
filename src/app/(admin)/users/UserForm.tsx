@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { Field, SelectField, SubmitButton } from "@/components/form";
 import { SonucGosterimi } from "@/components/Sonuc";
 import type { UserFormState } from "./actions";
+import { buton } from "@/components/stil";
 
 type Action = (prev: unknown, formData: FormData) => Promise<UserFormState>;
 
@@ -132,11 +133,11 @@ export default function UserForm({
         alanlar={["name", "email", "password", "gerekce", isEdit ? "status" : "role", ...(portfoy ? ["portfoy", "portfoyGerekce"] : [])]}
       />
 
-      <div className="flex items-center gap-3 pt-2">
+      <div className="flex flex-wrap items-center gap-3 pt-2">
         <SubmitButton>{submitLabel}</SubmitButton>
         <Link
           href="/users"
-          className="text-sm font-medium text-slate-600 hover:text-slate-900"
+          className={buton("metin")}
         >
           İptal
         </Link>

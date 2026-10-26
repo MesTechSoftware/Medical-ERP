@@ -3,6 +3,7 @@
 import { startTransition, useActionState, useEffect, useRef, useState } from "react";
 import type { IslemSonucu, Parametreler } from "@/lib/sonuc";
 import { bildirimMetni } from "@/lib/sozluk";
+import { KONTROL_COK_SATIR, buton } from "@/components/stil";
 
 /**
  * İş sonucunun TEK gösterimi — X-4 §(4) kapalı liste, kademe başına bir desen:
@@ -78,12 +79,12 @@ export function SonucGosterimi({
               name="gerekce"
               required
               rows={2}
-              className="w-full rounded-lg border border-amber-300 px-3 py-2 text-sm outline-none focus:border-amber-500"
+              className={`w-full ${KONTROL_COK_SATIR}`}
             />
           </div>
           <button
             type="submit"
-            className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700"
+            className={buton("uyari")}
           >
             Gerekçeyle devam et
           </button>
@@ -107,7 +108,7 @@ export function SonucGosterimi({
           <button
             type="button"
             onClick={() => setKapatilan(sonuc)}
-            className="shrink-0 text-xs font-medium text-sky-700 hover:text-sky-900"
+            className="shrink-0 text-xs font-medium text-sky-700 hover:text-sky-900 dokunmatik:min-h-11 dokunmatik:min-w-11"
           >
             Kapat
           </button>

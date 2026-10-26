@@ -7,6 +7,7 @@ import { hesaplaStok } from "@/lib/stok";
 import { getCiroTotal } from "@/lib/reports-service";
 import { gunAraligi, simdi, TUM_ZAMANLAR } from "@/lib/zaman";
 import { PageHeader, Card, StatCard, EmptyRow } from "@/components/ui";
+import { buton } from "@/components/stil";
 
 const CRITICAL_STOCK = 10;
 
@@ -111,7 +112,7 @@ export default async function DashboardPage() {
           <div className="mt-3 text-right">
             <Link
               href="/stock"
-              className="text-sm font-medium text-slate-600 hover:text-slate-900"
+              className={buton("metin")}
             >
               Stok Yönetimi →
             </Link>

@@ -3,11 +3,11 @@
 import { startTransition, useActionState } from "react";
 import { SonucGosterimi, type SonucDurumu } from "@/components/Sonuc";
 import type { IslemSonucu } from "@/lib/sonuc";
+import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 
 type Secenek = { value: string; label: string };
 
-const KUTU =
-  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-500";
+const KUTU = `w-full ${KONTROL_TEK_SATIR}`;
 
 /**
  * Tek satırlık konum belgesi (konsinye çıkış — A-4, transfer — B-4): seçimler + ürün + miktar.
@@ -71,7 +71,7 @@ export default function KonumBelgesiFormu({
       <SonucGosterimi sonuc={sonuc} basari={(p) => `${basari}: ${p.documentNo}.`} />
       <button
         type="submit"
-        className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+        className={buton("birincil", { form: true })}
       >
         {dugme}
       </button>

@@ -6,6 +6,7 @@ import { Field, SelectField, SubmitButton } from "@/components/form";
 import { SonucGosterimi, type SonucDurumu } from "@/components/Sonuc";
 import type { IslemSonucu } from "@/lib/sonuc";
 import { BRUT, tabanli } from "@/lib/taban";
+import { buton } from "@/components/stil";
 
 type Secenek = { value: string; label: string };
 export type CariDegerleri = Partial<Record<string, string>> & { accountClass?: "DOKTOR" | "BAYI" };
@@ -56,7 +57,7 @@ export default function CariFormu({
             <legend className="mb-1 text-sm font-medium text-slate-700">Hesap sınıfı</legend>
             <div className="flex gap-4 text-sm">
               {(["DOKTOR", "BAYI"] as const).map((s) => (
-                <label key={s} className="flex items-center gap-2">
+                <label key={s} className="flex items-center gap-2 dokunmatik:min-h-11">
                   <input type="radio" name="accountClass" value={s} checked={sinif === s} onChange={() => setSinif(s)} />
                   {s === "DOKTOR" ? "Doktor" : "Bayi"}
                 </label>
@@ -107,9 +108,9 @@ export default function CariFormu({
       </details>
 
       <SonucGosterimi sonuc={sonuc} alanlar={ALANLAR} />
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <SubmitButton disabled={gonderiliyor}>{acilis ? "Cariyi Aç" : "Kaydet"}</SubmitButton>
-        <Link href={iptalHref} className="text-sm font-medium text-slate-600 hover:text-slate-900">
+        <Link href={iptalHref} className={buton("metin")}>
           İptal
         </Link>
       </div>

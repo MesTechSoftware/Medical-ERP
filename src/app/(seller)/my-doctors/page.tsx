@@ -12,6 +12,7 @@ import {
 } from "@/components/ui";
 import Pagination from "@/components/Pagination";
 import { getPagination, pageCount } from "@/lib/pagination";
+import { buton } from "@/components/stil";
 
 export default async function DoctorsPage({
   searchParams,
@@ -81,7 +82,7 @@ export default async function DoctorsPage({
                   <td className="text-right">
                     <Link
                       href={`/my-doctors/${d.id}/edit`}
-                      className="text-sm font-medium text-slate-600 hover:text-slate-900"
+                      className={buton("metin")}
                     >
                       Düzenle
                     </Link>

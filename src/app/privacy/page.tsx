@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { buton } from "@/components/stil";
 
 export const metadata: Metadata = {
   title: "Gizlilik Politikası — Medikal Satış Operasyon",
@@ -116,7 +117,7 @@ export default function PrivacyPage() {
         <div className="mt-10 border-t border-slate-200 pt-6">
           <Link
             href="/login"
-            className="text-sm font-medium text-slate-600 hover:text-slate-900"
+            className={buton("metin")}
           >
             ← Girişe dön
           </Link>

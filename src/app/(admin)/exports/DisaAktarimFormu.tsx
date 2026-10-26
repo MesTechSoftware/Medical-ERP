@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState } from "react";
 import { Field, SelectField, SubmitButton } from "@/components/form";
 import { SonucGosterimi } from "@/components/Sonuc";
 import { disaAktar, type DisaAktarimSonucu } from "./actions";
+import { KONTROL_TEK_SATIR } from "@/components/stil";
 
 const VERI_SETI_ADI: Record<string, string> = {
   CARI_HAREKET: "Cari hareket",
@@ -47,7 +48,7 @@ export default function DisaAktarimFormu() {
           name="kod"
           value={kod}
           onChange={(e) => setKod(e.target.value)}
-          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-500"
+          className={`w-full ${KONTROL_TEK_SATIR}`}
         >
           {Object.entries(VERI_SETI_ADI).map(([k, ad]) => (
             <option key={k} value={k}>
@@ -59,7 +60,7 @@ export default function DisaAktarimFormu() {
 
       {ARALIKLI.has(kod) && (
         <>
-          <label className="flex items-center gap-2 text-sm text-slate-700">
+          <label className="flex items-center gap-2 text-sm text-slate-700 dokunmatik:min-h-11">
             <input
               type="checkbox"
               name="tumZamanlar"

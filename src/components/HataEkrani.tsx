@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { buton } from "@/components/stil";
 
 /**
  * Beklenmeyen hatanın TEK ekranı — X-3 §(2). Üç şey gösterir: sabit açıklama, hata referansı,
@@ -27,7 +28,7 @@ export default function HataEkrani({ referans }: { referans?: string }) {
         </p>
         <Link
           href="/"
-          className="mt-4 inline-block rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+          className={`mt-4 ${buton("birincil")}`}
         >
           Ana sayfaya dön
         </Link>

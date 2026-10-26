@@ -11,6 +11,7 @@ import { formatla, paraOku } from "@/lib/money";
 import { hesaplaSatirTutarlari } from "@/lib/satir-tutarlari";
 import { BEDELSIZ_SEBEP_ADI } from "@/lib/sozluk";
 import type { FreeReason } from "@/generated/prisma/enums";
+import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 
 type Product = {
   id: string;
@@ -154,7 +155,7 @@ export default function OrderForm({
             required
             value={doctorId}
             onChange={(e) => setDoctorId(e.target.value)}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-500"
+            className={`w-full ${KONTROL_TEK_SATIR}`}
           >
             <option value="" disabled>
               Seçiniz...
@@ -179,7 +180,7 @@ export default function OrderForm({
             <button
               type="button"
               onClick={addRow}
-              className="text-sm font-medium text-slate-600 hover:text-slate-900"
+              className={buton("metin")}
             >
               + Kalem Ekle
             </button>
@@ -205,7 +206,7 @@ export default function OrderForm({
                   onChange={(e) =>
                     updateRow(row.key, { productId: e.target.value, priceText: "" })
                   }
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-500"
+                  className={`w-full ${KONTROL_TEK_SATIR}`}
                 >
                   <option value="">Seçiniz...</option>
                   {products.map((prod) => (
@@ -234,7 +235,7 @@ export default function OrderForm({
                       quantity: Math.max(1, parseInt(e.target.value, 10) || 1),
                     })
                   }
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
+                  className={`w-full ${KONTROL_TEK_SATIR}`}
                 />
               </div>
 
@@ -258,7 +259,7 @@ export default function OrderForm({
                   onChange={(e) =>
                     updateRow(row.key, { priceText: e.target.value })
                   }
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm tabular-nums outline-none focus:border-slate-500"
+                  className={`w-full tabular-nums ${KONTROL_TEK_SATIR}`}
                 />
               </div>
 
@@ -286,7 +287,7 @@ export default function OrderForm({
                   checked={row.bedelsiz}
                   onChange={(e) => updateRow(row.key, { bedelsiz: e.target.checked })}
                 />
-                <label htmlFor={`free-${row.key}`} className="text-xs text-slate-600">
+                <label htmlFor={`free-${row.key}`} className="text-xs text-slate-600 dokunmatik:inline-flex dokunmatik:min-h-11 dokunmatik:items-center dokunmatik:pr-2">
                   Bedelsiz
                 </label>
               </div>
@@ -299,7 +300,7 @@ export default function OrderForm({
                     id={`reason-${row.key}`}
                     value={row.sebep}
                     onChange={(e) => updateRow(row.key, { sebep: e.target.value as FreeReason })}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-500"
+                    className={`w-full ${KONTROL_TEK_SATIR}`}
                   >
                     {Object.entries(BEDELSIZ_SEBEP_ADI).map(([kod, ad]) => (
                       <option key={kod} value={kod}>
@@ -319,7 +320,7 @@ export default function OrderForm({
                     maxLength={200}
                     value={row.aciklama}
                     onChange={(e) => updateRow(row.key, { aciklama: e.target.value })}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
+                    className={`w-full ${KONTROL_TEK_SATIR}`}
                   />
                 </div>
               )}
@@ -327,7 +328,7 @@ export default function OrderForm({
               <button
                 type="button"
                 onClick={() => removeRow(row.key)}
-                className="px-2 py-2 text-sm text-slate-400 hover:text-red-600"
+                className="inline-flex items-center justify-center px-2 py-2 text-sm text-slate-400 hover:text-negative dokunmatik:min-h-11 dokunmatik:min-w-11"
                 aria-label="Kalemi sil"
               >
                 ✕
@@ -364,13 +365,13 @@ export default function OrderForm({
 
       <SonucGosterimi sonuc={state} />
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <SubmitButton disabled={items.length === 0 || gonderiliyor}>
           Siparişi Oluştur
         </SubmitButton>
         <Link
           href={iptalHref}
-          className="text-sm font-medium text-slate-600 hover:text-slate-900"
+          className={buton("metin")}
         >
           İptal
         </Link>

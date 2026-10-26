@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { Field, SubmitButton } from "@/components/form";
 import { SonucGosterimi, type SonucDurumu } from "@/components/Sonuc";
 import type { IslemSonucu } from "@/lib/sonuc";
+import { buton } from "@/components/stil";
 
 type Action = (prev: SonucDurumu, formData: FormData) => Promise<IslemSonucu>;
 
@@ -78,11 +79,11 @@ export default function DoctorForm({
 
       <SonucGosterimi sonuc={state} alanlar={ALANLAR} />
 
-      <div className="flex items-center gap-3 pt-2">
+      <div className="flex flex-wrap items-center gap-3 pt-2">
         <SubmitButton>{submitLabel}</SubmitButton>
         <Link
           href="/my-doctors"
-          className="text-sm font-medium text-slate-600 hover:text-slate-900"
+          className={buton("metin")}
         >
           İptal
         </Link>

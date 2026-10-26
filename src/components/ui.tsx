@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { buton } from "@/components/stil";
 
 /** Sayfa başlığı + opsiyonel sağ aksiyon alanı. */
 export function PageHeader({
@@ -12,13 +13,15 @@ export function PageHeader({
 }) {
   return (
     <div className="mb-6 flex items-start justify-between gap-4">
-      <div>
+      <div className="min-w-0">
         <h1 className="text-xl font-semibold text-slate-900">{title}</h1>
         {description && (
           <p className="mt-1 text-sm text-slate-500">{description}</p>
         )}
       </div>
-      {action}
+      {/* Aksiyon daralmaz, başlık sarar: dokunmatikteki min-w-11 esnek öğenin içerik
+          genişliği korumasını kaldırır, tek satırlık buton metni taşardı. */}
+      {action && <div className="shrink-0">{action}</div>}
     </div>
   );
 }
@@ -34,7 +37,7 @@ export function LinkButton({
   return (
     <Link
       href={href}
-      className="inline-flex items-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+      className={buton("birincil")}
     >
       {children}
     </Link>

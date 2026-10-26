@@ -5,8 +5,9 @@ import type { ImportDataType } from "@/generated/prisma/enums";
 import { SatirHatalari, SonucGosterimi } from "@/components/Sonuc";
 import type { IceAktarimSonucu } from "@/lib/ice-aktarim";
 import { iceAktar, sablonIndir } from "./actions";
+import { KONTROL_COK_SATIR, KONTROL_TEK_SATIR, buton } from "@/components/stil";
 
-const KUTU = "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-500";
+const KUTU = `w-full ${KONTROL_TEK_SATIR}`;
 
 /**
  * Doğrula → önizle → yaz (X-16 §(4)/(7)): "Yaz" yalnız hatasız önizlemeden sonra açılır ve özetin
@@ -57,14 +58,14 @@ export default function IceAktarimFormu({ turler }: { turler: { kod: ImportDataT
           <label htmlFor="ia-dosya" className="mb-1 block text-sm font-medium text-slate-700">
             Dosya (.xlsx)
           </label>
-          <input id="ia-dosya" name="dosya" type="file" accept=".xlsx" required className={KUTU} />
+          <input id="ia-dosya" name="dosya" type="file" accept=".xlsx" required className={`w-full ${KONTROL_COK_SATIR}`} />
         </div>
       </div>
       <div className="flex flex-wrap gap-2">
-        <button type="button" onClick={sablon} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+        <button type="button" onClick={sablon} className={buton("ikincil")}>
           Şablonu indir
         </button>
-        <button type="submit" name="asama" value="onizle" disabled={gonderiliyor} className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
+        <button type="submit" name="asama" value="onizle" disabled={gonderiliyor} className={buton("birincil", { form: true })}>
           Doğrula ve önizle
         </button>
       </div>
@@ -93,7 +94,7 @@ export default function IceAktarimFormu({ turler }: { turler: { kod: ImportDataT
             </div>
           </dl>
           {yazilabilir && (
-            <button type="submit" name="asama" value="yaz" disabled={gonderiliyor} className="mt-4 rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800">
+            <button type="submit" name="asama" value="yaz" disabled={gonderiliyor} className={`mt-4 ${buton("olumlu")}`}>
               Yaz ({sonuc.acilacak} kayıt)
             </button>
           )}

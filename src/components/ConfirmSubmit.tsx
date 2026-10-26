@@ -1,5 +1,7 @@
 "use client";
 
+import { buton } from "@/components/stil";
+
 /** Onay soran submit butonu. Bir <form action={boundServerAction}> içinde kullanılır. */
 export default function ConfirmSubmit({
   children,
@@ -16,10 +18,7 @@ export default function ConfirmSubmit({
       onClick={(e) => {
         if (!window.confirm(confirmText)) e.preventDefault();
       }}
-      className={
-        className ??
-        "text-sm font-medium text-red-600 transition hover:text-red-800"
-      }
+      className={className ?? buton("metin-olumsuz")}
     >
       {children}
     </button>

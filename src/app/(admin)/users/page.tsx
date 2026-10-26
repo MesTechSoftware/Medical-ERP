@@ -9,6 +9,7 @@ import {
   StatusBadge,
   EmptyRow,
 } from "@/components/ui";
+import { buton } from "@/components/stil";
 
 export default async function UsersPage() {
   const session = await requireStaff();
@@ -88,7 +89,7 @@ export default async function UsersPage() {
                         <div className="flex items-center justify-end gap-3">
                           <Link
                             href={`/users/${u.id}/edit`}
-                            className="text-sm font-medium text-slate-600 hover:text-slate-900"
+                            className={buton("metin")}
                           >
                             Düzenle
                           </Link>

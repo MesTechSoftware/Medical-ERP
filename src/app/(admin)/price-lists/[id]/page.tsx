@@ -9,8 +9,9 @@ import { IslemFormu } from "@/components/Sonuc";
 import { Tutar } from "@/components/Tutar";
 import ConfirmSubmit from "@/components/ConfirmSubmit";
 import { deletePriceListItem, setPriceListItem } from "../actions";
+import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 
-const KUTU = "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-500";
+const KUTU = `w-full ${KONTROL_TEK_SATIR}`;
 
 /**
  * Liste satırları (X-10 §(7)): ürün · `min_adet` (barem alt sınırı, B-6) · liste fiyatı (KDV hariç).
@@ -41,7 +42,7 @@ export default async function PriceListDetailPage({ params }: { params: Promise<
         title={`${liste.code} — ${liste.name}`}
         description="Satır aynı ürün ve min. adet için tektir; fiyat yeniden girilirse güncellenir."
         action={
-          <Link href="/price-lists" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+          <Link href="/price-lists" className={buton("metin")}>
             ← Fiyat Listeleri
           </Link>
         }
@@ -120,7 +121,7 @@ export default async function PriceListDetailPage({ params }: { params: Promise<
                 </label>
                 <input id="satir-fiyat" name="listPrice" type="number" step="0.0001" min={0} required className={KUTU} />
               </div>
-              <button type="submit" className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
+              <button type="submit" className={buton("birincil", { form: true })}>
                 Kaydet
               </button>
             </IslemFormu>

@@ -13,6 +13,7 @@ import {
   StatusBadge,
   EmptyRow,
 } from "@/components/ui";
+import { buton } from "@/components/stil";
 
 export default async function SellerDetailPage({
   params,
@@ -48,7 +49,7 @@ export default async function SellerDetailPage({
           session.user.role === "YONETICI" && (
             <Link
               href={`/users/${id}/edit`}
-              className="text-sm font-medium text-slate-600 hover:text-slate-900"
+              className={buton("metin")}
             >
               Düzenle
             </Link>
