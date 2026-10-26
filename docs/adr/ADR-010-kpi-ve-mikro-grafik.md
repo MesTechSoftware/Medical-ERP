@@ -81,7 +81,15 @@
 - ✅ İstemci paketi büyümez; grafik tarayıcıda çalışan kod değildir.
 - ✅ Bir KPI sorgusunun hatası sayfayı düşürmez, referansla izlenir.
 - ⚠️ Ciro serisi satırları belleğe çeker. "Tüm zamanlar" seçimi, öncekinde olduğu gibi bütün satırları okur. Demo hacminde süreler PR açıklamalarında raporlanır.
-- ⚠️ Yeni sorguların kullandığı tarih kolonlarında indeks yoktu: `Shipment.shippedAt`, `DoctorPayment(status, paidAt)`, `ReturnNote.createdAt`. Ayrı migration'da eklenir (tasarım 2-5).
+- ⚠️ **Tarih indeksleri (tasarım 2-5):** `Shipment(shippedAt)`, `ReturnNote(createdAt)` ve `DoctorPayment(status, paidAt)` eklendi. Sonuncusu tek başına `status` indeksinin yerini aldı.
+  - Ölçüm, geçici bir veritabanında yapıldı: 36 ay × 1000 sipariş, 72 bin sevk satırı, 18 bin tahsilat, 3 bin iade.
+    - Planlayıcı üç indeksi de kullanıyor (tam tarama yerine bitmap index scan).
+    - Tahsilat sorgusu 4,6 → ~2 ms, iade sorgusu 7,3 → ~5 ms (EXPLAIN ANALYZE, 7 koşu medyanı).
+    - Sevk tabanlı sorgularda (ciro serisi, en çok sevk edilenler) uçtan uca fark gürültü içinde kaldı. Şirket ciro özeti ~190 ms.
+  - Sevk sorgularında maliyet indekste değil:
+    - Prisma, sayılan belge süzgecini ve tarih süzgecini `Shipment`'a iki ayrı JOIN yoluyla bağlıyor; sipariş yolu tam taranıyor.
+    - İlişkiler ayrı sorgularda, büyük `IN` listeleriyle yükleniyor; toplama JS'te yapılıyor.
+  - Bu hacmin (ayda ~1000 sipariş) üstüne çıkılırsa iyileştirme sorgu biçiminde yapılır: tek ilişki yolu ve ilişki yükleme stratejisi. Bu ayrı bir iştir ve ölçümle yapılır.
 
 ## Değerlendirilen alternatifler
 
@@ -94,7 +102,6 @@
 
 ## Açık uygulama kalemleri (atıf)
 
-- Tarih indeksleri (tasarım 2-5).
 - Raporum'da satıcı KPI'ları (tasarım 2-6).
 - 6 aylık geçmiş demo seed'i (tasarım 2-7).
 
