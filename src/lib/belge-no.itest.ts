@@ -26,4 +26,12 @@ describe("uretBelgeNo — yıl (A-14-4)", () => {
     an("2027-03-01T09:00:00Z");
     expect(await no()).toBe("SIP-2027-000002");
   });
+
+  it("kayıt anı verilirse yıl o anın İstanbul yılıdır; o yılın sayacı ayrı ilerler", async () => {
+    const gecmis = new Date("2025-12-31T21:30:00Z"); // İstanbul 01.01.2026 00:30
+    const onceki = new Date("2025-06-15T09:00:00Z");
+    expect(await prisma.$transaction((tx) => uretBelgeNo("THS", tx, onceki))).toBe("THS-2025-000001");
+    expect(await prisma.$transaction((tx) => uretBelgeNo("THS", tx, gecmis))).toBe("THS-2026-000001");
+    expect(await prisma.$transaction((tx) => uretBelgeNo("THS", tx, onceki))).toBe("THS-2025-000002");
+  });
 });
