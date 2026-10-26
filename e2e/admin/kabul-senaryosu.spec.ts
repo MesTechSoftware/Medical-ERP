@@ -93,7 +93,7 @@ test("kabul senaryosu (F-11)", async ({ page, browser }) => {
   await page.getByRole("button", { name: "Hazırlığa Al" }).click();
   await expect(page.getByRole("link", { name: "Kargo Bilgisi Gir" })).toBeVisible();
   await page.goto("/shipping");
-  const kart = () => page.locator("div.rounded-lg.border").filter({ hasText: doktorAdi });
+  const kart = () => page.locator("[data-sevk-karti]").filter({ hasText: doktorAdi });
   await kart().locator('input[name^="miktar_"]').fill("400");
   await kart().getByRole("button", { name: "Kargola" }).click();
   await expect(kart().getByText("kalan 300/700")).toBeVisible();
@@ -177,8 +177,8 @@ test("kabul senaryosu (F-11)", async ({ page, browser }) => {
   await page.getByRole("button", { name: "Hazırlığa Al" }).click();
   await expect(page.getByRole("link", { name: "Kargo Bilgisi Gir" })).toBeVisible();
   await page.goto("/shipping");
-  await page.locator("div.rounded-lg.border").filter({ hasText: bayiAdi }).getByRole("button", { name: "Kargola" }).click();
-  await expect(page.locator("div.rounded-lg.border").filter({ hasText: bayiAdi })).toHaveCount(0);
+  await page.locator("[data-sevk-karti]").filter({ hasText: bayiAdi }).getByRole("button", { name: "Kargola" }).click();
+  await expect(page.locator("[data-sevk-karti]").filter({ hasText: bayiAdi })).toHaveCount(0);
   expect(await tutarlar(bayiId)).toEqual([{ type: "SEVKIYAT", direction: "BORC", amount: "36000.00" }]);
   expect((await sorgu<{ c: string | null }>(`SELECT si."commissionRate"::text AS c FROM "ShipmentItem" si JOIN "Shipment" s ON s.id = si."shipmentId" JOIN "Order" o ON o.id = s."orderId" WHERE o."doctorId" = $1`, [bayiId]))[0].c).toBeNull();
 

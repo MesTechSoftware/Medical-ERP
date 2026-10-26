@@ -75,6 +75,7 @@ export default async function ShippingPage() {
               {pending.map((o) => (
                 <div
                   key={o.id}
+                  data-sevk-karti={o.id}
                   className="rounded-lg border border-slate-200 p-3"
                 >
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-2">

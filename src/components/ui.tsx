@@ -104,7 +104,7 @@ export function StatCard({
         ? "text-green-600"
         : "text-slate-900";
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div role="group" aria-label={label} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="text-xs font-medium uppercase text-slate-500">{label}</div>
       <div className={"mt-1 text-2xl font-semibold tabular-nums " + valueColor}>
         {value}
