@@ -30,7 +30,7 @@ test("dönem cirosu kartının tabanı KDV hariçtir (Ü-3 C sınıfı)", async 
   // Ciro sevk edilen maldan (sevkiyat satırı) doğar (A-3); satırı yazan akış 1B madde 7'dedir.
   // CM → 1B arası tutar boştur (FAZ1 R-11) — tutarın doğrulaması 1B'ye taşındı.
   await page.goto("/reports");
-  const card = page.getByText("Dönem Cirosu").locator("..");
+  const card = page.getByRole("group", { name: "Dönem Cirosu" });
   await expect(card).toContainText("KDV hariç");
 });
 

@@ -9,7 +9,7 @@ import { sorgu, stoksuzSiparis } from "../helpers";
 test("yönetici stoksuz ürünü gerekçeyle kısmen sevk eder; girilen miktar diyalogdan sonra korunur (A-8-8)", async ({ page }) => {
   const s = await stoksuzSiparis();
   await page.goto("/shipping");
-  const kart = page.locator("div.rounded-lg.border").filter({ hasText: s.doktorAdi });
+  const kart = page.locator("[data-sevk-karti]").filter({ hasText: s.doktorAdi });
   await kart.locator(`#miktar_${s.kalemId}`).fill("1");
   await kart.getByRole("button", { name: "Kargola" }).click();
 
@@ -18,7 +18,7 @@ test("yönetici stoksuz ürünü gerekçeyle kısmen sevk eder; girilen miktar d
   await diyalog.getByLabel("Gerekçe").fill("Mal depoda, girişi yapılmadı");
   await diyalog.getByRole("button", { name: "Gerekçeyle devam et" }).click();
 
-  await expect(page.locator("div.rounded-lg.border").filter({ hasText: s.doktorAdi }).getByText("kalan 1/2")).toBeVisible();
+  await expect(page.locator("[data-sevk-karti]").filter({ hasText: s.doktorAdi }).getByText("kalan 1/2")).toBeVisible();
   const [kalem] = await sorgu<{ quantity: number }>(`SELECT quantity FROM "ShipmentItem" WHERE "orderItemId" = $1`, [s.kalemId]);
   expect(kalem.quantity).toBe(1);
   const [blok] = await sorgu<{ decision: string; openReason: string }>(

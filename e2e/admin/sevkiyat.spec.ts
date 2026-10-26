@@ -47,13 +47,13 @@ test("kısmi sevkiyat: 3'ün 1'i sevk edilir, borç yazılır, sipariş beklemed
   );
 
   await page.goto("/shipping");
-  const kart = page.locator("div.rounded-lg.border").filter({ hasText: doktorAdi });
+  const kart = page.locator("[data-sevk-karti]").filter({ hasText: doktorAdi });
   await expect(kart.getByText("kalan 3/3")).toBeVisible();
   await kart.locator(`#miktar_${kalemId}`).fill("1");
   await kart.getByRole("button", { name: "Kargola" }).click();
 
   await expect(page).toHaveURL(/\/shipping$/);
-  await expect(page.locator("div.rounded-lg.border").filter({ hasText: doktorAdi }).getByText("kalan 2/3")).toBeVisible();
+  await expect(page.locator("[data-sevk-karti]").filter({ hasText: doktorAdi }).getByText("kalan 2/3")).toBeVisible();
   const [borc] = await sorgu<{ amount: string; type: string }>(
     `SELECT amount::text, type FROM "LedgerEntry" WHERE "doctorId" = $1`,
     [doktorId]

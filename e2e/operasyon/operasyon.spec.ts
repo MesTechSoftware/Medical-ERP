@@ -89,7 +89,7 @@ test("stok girişi yapar (stok hareketi — D-2 §(1))", async ({ page }) => {
 test("stoksuz sevkiyatta gerekçe siparişi onaya gönderir; sevkiyat yazılmaz (A-8-9)", async ({ page }) => {
   const s = await stoksuzSiparis();
   await page.goto("/shipping");
-  const kart = page.locator("div.rounded-lg.border").filter({ hasText: s.doktorAdi });
+  const kart = page.locator("[data-sevk-karti]").filter({ hasText: s.doktorAdi });
   await kart.getByRole("button", { name: "Kargola" }).click();
   const diyalog = kart.getByRole("dialog");
   await expect(diyalog).toContainText("işlem sonrası stok -2 adet olur.");
@@ -104,7 +104,7 @@ test("stoksuz sevkiyatta gerekçe siparişi onaya gönderir; sevkiyat yazılmaz 
   expect(blok.decision).toBeNull();
 
   await page.reload();
-  await expect(page.locator("div.rounded-lg.border").filter({ hasText: s.doktorAdi }).getByText("Onay bekliyor")).toBeVisible();
+  await expect(page.locator("[data-sevk-karti]").filter({ hasText: s.doktorAdi }).getByText("Onay bekliyor")).toBeVisible();
 });
 
 test("bayiye sipariş girer; sipariş satıcısız açılır (X-8-3, D-2 §(1))", async ({ page }) => {

@@ -7,8 +7,8 @@ import { sorgu, stoksuzSiparis } from "../helpers";
 test("sevk edilen 2 kalemden 1'i sebebiyle iade edilir; sebepsiz iade alanın altında reddedilir (A-1-1)", async ({ page }) => {
   const s = await stoksuzSiparis({ stoklu: true });
   await page.goto("/shipping");
-  await page.locator("div.rounded-lg.border").filter({ hasText: s.doktorAdi }).getByRole("button", { name: "Kargola" }).click();
-  await expect(page.locator("div.rounded-lg.border").filter({ hasText: s.doktorAdi })).toHaveCount(0);
+  await page.locator("[data-sevk-karti]").filter({ hasText: s.doktorAdi }).getByRole("button", { name: "Kargola" }).click();
+  await expect(page.locator("[data-sevk-karti]").filter({ hasText: s.doktorAdi })).toHaveCount(0);
 
   await page.goto(`/orders/${s.siparisId}`);
   await expect(page.getByText("iade edilebilir 2")).toBeVisible();
