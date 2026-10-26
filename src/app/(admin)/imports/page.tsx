@@ -76,7 +76,7 @@ export default async function ImportsPage() {
                         </span>
                       ) : TANIMLAR[p.dataType]?.geriAl ? (
                         <details>
-                          <summary className="cursor-pointer text-xs text-red-600">Geri al</summary>
+                          <summary className="cursor-pointer text-xs text-negative">Geri al</summary>
                           <IslemFormu action={partiyiGeriAl.bind(null, p.id)} className="mt-2 w-56 space-y-2">
                             <input aria-label="Geri alma gerekçesi" name="reason" required placeholder="Gerekçe" className={`w-full ${KONTROL_TEK_SATIR}`} />
                             <button type="submit" className={buton("olumsuz")}>

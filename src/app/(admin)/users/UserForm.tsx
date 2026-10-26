@@ -101,11 +101,11 @@ export default function UserForm({
       />
 
       {portfoy && (
-        <fieldset className="space-y-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
-          <legend className="px-1 text-sm font-medium text-amber-800">
+        <fieldset className="space-y-3 rounded-lg border border-critical/30 bg-critical-bg p-4">
+          <legend className="px-1 text-sm font-medium text-critical">
             Pasifleştirirsen {portfoy.doktorSayisi} doktorun portföyü
           </legend>
-          <p className="text-xs text-amber-800">
+          <p className="text-xs text-critical">
             Satıcıyı pasifleştirirken zorunludur. Doktorlar yeniden aktifleştirmede geri dönmez.
           </p>
           <SelectField

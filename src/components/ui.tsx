@@ -53,39 +53,41 @@ export function Card({ children }: { children: React.ReactNode }) {
   );
 }
 
-const STATUS_STYLES: Record<string, string> = {
-  // Sipariş durumları
-  BEKLIYOR: "bg-amber-100 text-amber-800",
-  HAZIRLANIYOR: "bg-blue-100 text-blue-800",
-  KARGOLANDI: "bg-indigo-100 text-indigo-800",
-  TESLIM_EDILDI: "bg-green-100 text-green-800",
-  IPTAL: "bg-red-100 text-red-700",
-  // Aktif/pasif
-  AKTIF: "bg-green-100 text-green-800",
-  PASIF: "bg-slate-200 text-slate-600",
+/** Semantik ton (ADR-009). Bilgi mavisi etikette yoktur — mavi bağlantılara ayrılmıştır. */
+export type Ton = "notr" | "olumlu" | "uyari" | "hata";
+
+const TON_SINIFI: Record<Ton, string> = {
+  notr: "bg-neutral-bg text-neutral",
+  olumlu: "bg-positive-bg text-positive",
+  uyari: "bg-critical-bg text-critical",
+  hata: "bg-negative-bg text-negative",
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  BEKLIYOR: "Bekliyor",
-  HAZIRLANIYOR: "Hazırlanıyor",
-  KARGOLANDI: "Kargolandı",
-  TESLIM_EDILDI: "Teslim Edildi",
-  IPTAL: "İptal Edildi",
-  AKTIF: "Aktif",
-  PASIF: "Pasif",
+/** Durum etiketi: kısa metin + semantik renk. Renk tek başına bilgi taşımaz, metin daima yazılır. */
+export function StatusChip({ ton, children }: { ton: Ton; children: React.ReactNode }) {
+  return (
+    <span
+      className={`inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${TON_SINIFI[ton]}`}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** Sipariş ve aktif/pasif durumları: yalnız anlam taşıyan durum renklenir, süreç adımları nötrdür. */
+const DURUMLAR: Record<string, { ton: Ton; etiket: string }> = {
+  BEKLIYOR: { ton: "uyari", etiket: "Bekliyor" },
+  HAZIRLANIYOR: { ton: "notr", etiket: "Hazırlanıyor" },
+  KARGOLANDI: { ton: "notr", etiket: "Kargolandı" },
+  TESLIM_EDILDI: { ton: "olumlu", etiket: "Teslim Edildi" },
+  IPTAL: { ton: "hata", etiket: "İptal Edildi" },
+  AKTIF: { ton: "olumlu", etiket: "Aktif" },
+  PASIF: { ton: "notr", etiket: "Pasif" },
 };
 
 export function StatusBadge({ status }: { status: string }) {
-  return (
-    <span
-      className={
-        "inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium " +
-        (STATUS_STYLES[status] ?? "bg-slate-100 text-slate-600")
-      }
-    >
-      {STATUS_LABELS[status] ?? status}
-    </span>
-  );
+  const durum = DURUMLAR[status];
+  return <StatusChip ton={durum?.ton ?? "notr"}>{durum?.etiket ?? status}</StatusChip>;
 }
 
 /** Özet istatistik kartı (dashboard ve cari ekranları için). */
@@ -98,14 +100,16 @@ export function StatCard({
   label: string;
   value: React.ReactNode;
   hint?: string;
-  tone?: "default" | "danger" | "success";
+  tone?: "default" | "danger" | "warning" | "success";
 }) {
   const valueColor =
     tone === "danger"
-      ? "text-red-600"
-      : tone === "success"
-        ? "text-green-600"
-        : "text-slate-900";
+      ? "text-negative"
+      : tone === "warning"
+        ? "text-critical"
+        : tone === "success"
+          ? "text-positive"
+          : "text-slate-900";
   return (
     <div role="group" aria-label={label} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="text-xs font-medium uppercase text-slate-500">{label}</div>

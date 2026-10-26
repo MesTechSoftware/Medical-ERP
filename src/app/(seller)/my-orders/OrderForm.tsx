@@ -141,7 +141,7 @@ export default function OrderForm({
           Doktor
         </label>
         {doctors.length === 0 ? (
-          <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          <p className="rounded-lg border border-critical/30 bg-critical-bg px-3 py-2 text-sm text-critical">
             Portföyünüzde doktor yok.{" "}
             <Link href="/my-doctors/new" className="font-medium underline">
               Önce doktor ekleyin

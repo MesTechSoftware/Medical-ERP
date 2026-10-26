@@ -122,7 +122,7 @@ export default async function DoctorDetailPage({
         <StatCard
           label="Sorumlu Satıcı"
           value={doctor.ownerSeller?.name ?? "Sahipsiz"}
-          tone={doctor.ownerSeller ? "default" : "danger"}
+          tone={doctor.ownerSeller ? "default" : "warning"}
         />
         {/* Cari hareketten okunur (X-11); CM → 1B arası boş görünür (FAZ1 R-11). */}
         <StatCard label="Toplam Borç" value={<Tutar deger={cari.toplamBorc} taban={BRUT} />} />

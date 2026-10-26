@@ -77,13 +77,13 @@ export default function IceAktarimFormu({ turler }: { turler: { kod: ImportDataT
           <h3 className="mb-2 font-semibold text-slate-900">Önizleme</h3>
           <dl className="grid gap-1 sm:grid-cols-2">
             {sonuc.ozet.map((o) => (
-              <div key={o.etiket} className={`flex justify-between gap-2 ${o.bilgi ? "text-sky-800" : "text-slate-700"}`}>
+              <div key={o.etiket} className={`flex justify-between gap-2 ${o.bilgi ? "text-information" : "text-slate-700"}`}>
                 <dt>{o.etiket}</dt>
                 <dd className="tabular-nums">{o.deger}</dd>
               </div>
             ))}
             {(sonuc.kodAdetleri ?? []).map((k) => (
-              <div key={k.kod} className="flex justify-between gap-2 text-red-700">
+              <div key={k.kod} className="flex justify-between gap-2 text-negative">
                 <dt>Reddedilen — {k.kod}</dt>
                 <dd className="tabular-nums">{k.adet}</dd>
               </div>

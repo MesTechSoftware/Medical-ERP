@@ -48,7 +48,7 @@ export function SonucGosterimi({
   return (
     <>
       {sert.length > 0 && (
-        <ul role="alert" data-kademe="SERT" className="space-y-1 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+        <ul role="alert" data-kademe="SERT" className="space-y-1 rounded-lg bg-negative-bg px-3 py-2 text-sm text-negative">
           {sert.map((b, i) => (
             <li key={i}>{bildirimMetni(b)}</li>
           ))}
@@ -60,18 +60,18 @@ export function SonucGosterimi({
           role="dialog"
           aria-labelledby="onay-baslik"
           data-kademe="YUMUSAK"
-          className="space-y-3 rounded-lg border border-amber-300 bg-amber-50 p-4"
+          className="space-y-3 rounded-lg border border-critical/30 bg-critical-bg p-4"
         >
-          <h3 id="onay-baslik" className="text-sm font-semibold text-amber-900">
+          <h3 id="onay-baslik" className="text-sm font-semibold text-critical">
             Onay gerekiyor
           </h3>
-          <ul className="space-y-1 text-sm text-amber-900">
+          <ul className="space-y-1 text-sm text-critical">
             {yumusak.map((b, i) => (
               <li key={i}>{bildirimMetni(b)}</li>
             ))}
           </ul>
           <div>
-            <label htmlFor="gerekce" className="mb-1 block text-sm font-medium text-amber-900">
+            <label htmlFor="gerekce" className="mb-1 block text-sm font-medium text-critical">
               Gerekçe
             </label>
             <textarea
@@ -95,7 +95,7 @@ export function SonucGosterimi({
         <div
           role="status"
           data-kademe={sonuc.kademe ?? undefined}
-          className="flex items-start justify-between gap-3 rounded-lg bg-sky-50 px-3 py-2 text-sm text-sky-800"
+          className="flex items-start justify-between gap-3 rounded-lg bg-information-bg px-3 py-2 text-sm text-information"
         >
           <ul className="space-y-1">
             {sonuc.parametreler?.onayaGonderildi === 1 && (
@@ -108,7 +108,7 @@ export function SonucGosterimi({
           <button
             type="button"
             onClick={() => setKapatilan(sonuc)}
-            className="shrink-0 text-xs font-medium text-sky-700 hover:text-sky-900 dokunmatik:min-h-11 dokunmatik:min-w-11"
+            className="shrink-0 text-xs font-medium text-information hover:underline dokunmatik:min-h-11 dokunmatik:min-w-11"
           >
             Kapat
           </button>
@@ -116,7 +116,7 @@ export function SonucGosterimi({
       )}
 
       {(sonuc.durum === "BASARILI" || sonuc.durum === "BASARILI_UYARILI") && basari && (
-        <p role="status" className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
+        <p role="status" className="rounded-lg bg-positive-bg px-3 py-2 text-sm text-positive">
           {basari(sonuc.parametreler ?? {})}
         </p>
       )}
@@ -142,7 +142,7 @@ export function SatirHatalari({ bildirimler }: { bildirimler: IslemSonucu["bildi
         </thead>
         <tbody>
           {bildirimler.map((b, i) => (
-            <tr key={i} className="text-red-700">
+            <tr key={i} className="text-negative">
               <td className="tabular-nums">{b.parametreler.satir}</td>
               <td>{b.parametreler.kolon ?? "—"}</td>
               <td>{bildirimMetni(b)}</td>

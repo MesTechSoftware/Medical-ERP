@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { PageHeader, Card, EmptyRow } from "@/components/ui";
+import { PageHeader, Card, EmptyRow, StatusChip } from "@/components/ui";
 import { formatDateTime } from "@/lib/format";
 import StockEntryForm from "./StockEntryForm";
 import KonumBelgesiFormu from "./KonumBelgesiFormu";
@@ -179,15 +179,8 @@ export default async function StockPage() {
                         </span>
                       </td>
                       <td>
-                        {m.type === "GIRIS" ? (
-                          <span className="inline-flex rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                            Giriş
-                          </span>
-                        ) : (
-                          <span className="inline-flex rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700">
-                            Çıkış
-                          </span>
-                        )}
+                        {/* Yön bir durum değildir: çıkış hata sayılmaz, metin yeter (ADR-009). */}
+                        <StatusChip ton="notr">{m.type === "GIRIS" ? "Giriş" : "Çıkış"}</StatusChip>
                       </td>
                       <td className="sayi">
                         {m.type === "GIRIS" ? "+" : "−"}
