@@ -90,7 +90,7 @@ describe("tek çağrı noktası — belge numarası (A-14-5, X-2-1)", () => {
 
   it("tahsilat kaydı yalnız tahsilat akışında yazılır", () => {
     const desen = /doctorPayment\.(create|createMany|upsert)\s*\(|INSERT\s+INTO\s+"DoctorPayment"/;
-    expect(ihlaller(desen, join("app", "(admin)", "collections", "actions.ts"))).toEqual([]);
+    expect(ihlaller(desen, join("lib", "tahsilat.ts"))).toEqual([]);
   });
 });
 
