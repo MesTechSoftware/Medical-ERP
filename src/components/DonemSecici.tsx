@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 
+/** Seçicinin altındaki açıklama — iskelet (`DonemSeciciIskeleti`) aynı metni kullanır. */
+export function donemAciklamasi(anahtar: string): string {
+  const donem = anahtar === "tum" ? "Tüm zamanlar gösteriliyor." : `${anahtar} ayı gösteriliyor.`;
+  return `${donem} Ciro sevkiyat, tahsilat tahsilat tarihine göre.`;
+}
+
 /**
  * Rapor dönemi (X-1 §(2)): varsayılan içinde bulunulan aydır; "tüm zamanlar" ayrı,
  * bilinçli bir seçimdir. JS'siz GET formu — dönem URL'dedir.
@@ -33,9 +39,7 @@ export default function DonemSecici({ anahtar, yol }: { anahtar: string; yol: st
       >
         Tüm zamanlar
       </Link>
-      <p className="w-full text-xs text-slate-500">
-        {tum ? "Tüm zamanlar gösteriliyor." : `${anahtar} ayı gösteriliyor.`} Ciro sevkiyat, tahsilat tahsilat tarihine göre.
-      </p>
+      <p className="w-full text-xs text-slate-500">{donemAciklamasi(anahtar)}</p>
     </form>
   );
 }

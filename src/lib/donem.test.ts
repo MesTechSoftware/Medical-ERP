@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { donemCoz, sonAylar, karsilastirmaAraliklari } from "@/lib/donem";
+import { donemBitisAyi, donemCoz, karsilastirmaNotu, sonAylar, karsilastirmaAraliklari } from "@/lib/donem";
 import { TUM_ZAMANLAR } from "@/lib/zaman";
 
 // X-1 §(2): ekranın varsayılan dönemi içinde bulunulan aydır; "tüm zamanlar" bilinçli seçimdir.
@@ -82,5 +82,27 @@ describe("karsilastirmaAraliklari — K-1 aynı gün aralığı", () => {
 
   it("tüm zamanların karşılaştırması yoktur", () => {
     expect(karsilastirmaAraliklari(donemCoz("tum")).onceki).toBeNull();
+  });
+
+  it("devam eden ay işaretlidir; geçmiş ay ve tüm zamanlar değildir", () => {
+    const an = new Date("2026-10-26T11:00:00Z");
+    expect(karsilastirmaAraliklari(donemCoz("2026-10", an), an).devamEdiyor).toBe(true);
+    expect(karsilastirmaAraliklari(donemCoz("2026-09", an), an).devamEdiyor).toBe(false);
+    expect(karsilastirmaAraliklari(donemCoz("tum"), an).devamEdiyor).toBe(false);
+  });
+});
+
+describe("karsilastirmaNotu — K-1 tabanı yazılı", () => {
+  it("devam eden ay aynı günlerle, geçmiş ay önceki tam ayla", () => {
+    expect(karsilastirmaNotu(true)).toBe("geçen ayın aynı günlerine göre");
+    expect(karsilastirmaNotu(false)).toBe("önceki aya göre");
+  });
+});
+
+describe("donemBitisAyi — KPI trendinin son ayı", () => {
+  it("seçili ay; tüm zamanlarda içinde bulunulan ay", () => {
+    const an = new Date("2026-10-26T11:00:00Z");
+    expect(donemBitisAyi(donemCoz("2026-07", an), an)).toEqual({ yil: 2026, ay: 7 });
+    expect(donemBitisAyi(donemCoz("tum"), an)).toEqual({ yil: 2026, ay: 10 });
   });
 });

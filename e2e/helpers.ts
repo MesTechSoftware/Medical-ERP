@@ -120,9 +120,10 @@ export async function stoksuzSiparis({ stoklu = false } = {}) {
 }
 
 /**
- * Yükleme iskeletini belirlenimci gösterir (ADR-009): belge akışı, kabuk açıldıktan sonra sayfa
- * içeriği gelmeden kesilir. React akışında içerik `<div hidden id="S:…">` parçalarıyla gelir; kabuğu
- * (`<aside`) taşımayan ilk parça sayfa içeriğidir, ondan önceki her şey (kabuk + grup iskeleti) kalır.
+ * Yükleme iskeletini belirlenimci gösterir (ADR-009): belge akışı, kabuk ve iskelet açıldıktan sonra
+ * sayfa içeriği gelmeden kesilir. React akışında içerik `<div hidden id="S:…">` parçalarıyla gelir;
+ * sayfa başlığını (`<h1`) taşıyan ilk parça sayfa içeriğidir — ondan önceki her şey (kabuk, grup ve
+ * varsa sayfaya özel iskelet) kalır. Kabukta ve iskelette `<h1` yoktur.
  * Uygulama JS paketleri bu sırada engellenir: eksik akışla hidrasyon kırılır ve Next sayfayı yeniden
  * yükler; satır içi açma betikleri ($RC) çalışmaya devam eder, CSS de yüklenir.
  * (Geliştirme sunucusunda `loading.tsx` önceden getirilmez; istemci gezintisini geciktirmek
@@ -137,7 +138,7 @@ export async function iskeletiAc(page: Page, yol: string) {
       const yanit = await route.fetch();
       const govde = await yanit.text();
       const parcalar = [...govde.matchAll(/<div hidden id="S:[^"]+"/g)].map((m) => m.index!);
-      const kes = parcalar.find((i, n) => !govde.slice(i, parcalar[n + 1] ?? govde.length).includes("<aside"));
+      const kes = parcalar.find((i, n) => govde.slice(i, parcalar[n + 1] ?? govde.length).includes("<h1"));
       expect(kes, "akışta sayfa içeriği parçası bulunmalı").toBeDefined();
       await route.fulfill({ response: yanit, body: govde.slice(0, kes) });
     },
@@ -209,4 +210,46 @@ export async function toplamlarKolonlaHizali(page: Page) {
     const kolon = await sagKenar(tablo.getByRole("columnheader", { name: baslik, exact: true }));
     expect(Math.abs(deger - kolon), `${baslik} kolonu altında olmalı`).toBeLessThanOrEqual(1);
   }
+}
+
+/** KPI satırındaki kart kutuları — iskelette ve gerçek sayfada aynı seçici. */
+async function kpiKutulari(page: Page) {
+  const satir = page.getByRole("main").locator("[data-kpi-satiri]");
+  await expect(satir).toBeVisible();
+  return satir.locator(":scope > div").evaluateAll((els) =>
+    els.map((e) => {
+      const r = e.getBoundingClientRect();
+      return { x: r.x, y: r.y, genislik: r.width, yukseklik: r.height };
+    })
+  );
+}
+
+/**
+ * KPI satırı iskeleti gerçek satırla kart kart eşleşir (x, y, genişlik, yükseklik ±2 px): iskelet
+ * kartla aynı sınıfları ve aynı metinleri taşır, değer tek satırdır (ADR-010).
+ */
+export async function kpiIskeletiEslesir(page: Page, yol: string) {
+  await iskeletiAc(page, yol);
+  const iskelet = await kpiKutulari(page);
+
+  await page.goto(yol);
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  const gercek = await kpiKutulari(page);
+
+  expect(gercek.length, `${yol} kart sayısı`).toBe(iskelet.length);
+  gercek.forEach((g, i) => {
+    for (const olcu of ["x", "y", "genislik", "yukseklik"] as const) {
+      expect(Math.abs(iskelet[i][olcu] - g[olcu]), `${yol} ${i + 1}. kart ${olcu}`).toBeLessThanOrEqual(2);
+    }
+  });
+}
+
+/** KPI kartlarında değer ve satırlar kartın içinde kalır (tek satırlık değer taşmaz, kesilmez). */
+export async function kpiKartlariTasmaz(page: Page) {
+  const tasan = await page.locator("[data-kpi-satiri] [role=group]").evaluateAll((kartlar) =>
+    kartlar
+      .filter((k) => [...k.querySelectorAll("div, p")].some((e) => e.scrollWidth > e.clientWidth + 1))
+      .map((k) => k.getAttribute("aria-label"))
+  );
+  expect(tasan, "içeriği taşan KPI kartı").toEqual([]);
 }

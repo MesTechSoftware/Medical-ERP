@@ -33,6 +33,14 @@ test("menü raporları ve denetim kaydını göstermez; rol etiketi Operasyon", 
   await expect(page.locator("header").getByText("Operasyon", { exact: true })).toBeVisible();
 });
 
+test("dashboard KPI'ları görünür (bu ay ciro ve tahsilat); prim ve hakediş yok (D-2 §(1))", async ({ page }) => {
+  await page.goto("/dashboard");
+  await expect(page.getByRole("group", { name: "Ciro", exact: true })).toContainText("KDV hariç");
+  await expect(page.getByRole("group", { name: "Tahsilat", exact: true })).toContainText("KDV dahil");
+  await expect(page.getByRole("group", { name: "Bekleyen sipariş" })).toBeVisible();
+  await expect(page.getByRole("main").getByText(/hakediş|prim/i)).toHaveCount(0);
+});
+
 for (const yol of ["/reports", "/audit-logs", "/exports", "/approvals", "/price-lists", "/doctors/new", "/imports", "/products/new", "/users/new"]) {
   test(`${yol} OPERASYON'u Dashboard'a yönlendirir`, async ({ page }) => {
     await page.goto(yol);

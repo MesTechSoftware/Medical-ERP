@@ -156,3 +156,22 @@ export function KpiSatiriIskeleti({ kartlar }: { kartlar: readonly KpiIskeletYap
     </div>
   );
 }
+
+/** Dönem seçici iskeleti: `DonemSecici` ile aynı satırlar (etiket + kontrol yüksekliği, açıklama metni). */
+export function DonemSeciciIskeleti({ aciklama }: { aciklama: string }) {
+  return (
+    <div aria-hidden="true" className="mb-6 flex flex-wrap items-end gap-2">
+      <div>
+        <div className="mb-1 text-xs">
+          <MetinCubugu>Dönem (ay)</MetinCubugu>
+        </div>
+        <span className="block h-(--control-h) w-40 animate-skeleton rounded-lg bg-slate-100" />
+      </div>
+      <span className="block h-(--control-h) w-20 animate-skeleton rounded-lg bg-slate-100" />
+      <span className="block h-(--control-h) w-28 animate-skeleton rounded-lg bg-slate-100" />
+      <p className="w-full text-xs">
+        <MetinCubugu>{aciklama}</MetinCubugu>
+      </p>
+    </div>
+  );
+}

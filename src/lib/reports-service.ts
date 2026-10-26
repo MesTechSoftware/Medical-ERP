@@ -4,6 +4,8 @@ import type { Role } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import { hesaplaSatirTutarlari, type SatirGirdisi } from "@/lib/satir-tutarlari";
 import { sayilanBelgeler } from "@/lib/sayilan-belgeler";
+import type { Ay } from "@/lib/donem";
+import { aylaraBol } from "@/lib/kpi/seri";
 
 /**
  * Raporlar (FR-62, FR-63). Tahsilat oranı C4'te söküldü — kalıcı (X-1 §(1)).
@@ -207,4 +209,143 @@ export async function getCiroTotal(donem: Donem): Promise<Decimal> {
     prisma.returnNoteItem.findMany({ where: donemIadeSatiri(donem), select: SEVK_SATIRI }),
   ]);
   return net(sevk, iade).matrah;
+}
+
+// --- KPI (tasarım 2. tur, ADR-010) -----------------------------------------------------------
+
+/** KPI kapsamı — sorgu düzeyinde (X-1 §(8) deseni): şirket geneli ya da satıcının kendi siparişleri. */
+export type KpiKapsami = { tur: "sirket" } | { tur: "satici"; saticiId: string };
+
+export type CiroToplami = {
+  ciro: Decimal; // matrah, sevk − iade
+  hakedis: Decimal; // matrah × donmuş oran
+  iade: Decimal; // dönemde iade edilen matrah (pozitif)
+};
+
+type ZamanliSatir = SevkSatiri & { an: Date };
+
+const enErken = (tarihler: Date[]) => new Date(Math.min(...tarihler.map((t) => t.getTime())));
+const enGec = (tarihler: Date[]) => new Date(Math.max(...tarihler.map((t) => t.getTime())));
+const icinde = (an: Date, aralik: Donem) => an >= aralik.baslangic && an < aralik.bitis;
+
+/** Aralığın sayılan sevk ve iade satırları, belge anıyla — ciroyla aynı okuma yolu. */
+async function zamanliSatirlar(aralik: Donem, kapsam: KpiKapsami): Promise<{ sevk: ZamanliSatir[]; iade: ZamanliSatir[] }> {
+  const saticiSevk: Prisma.ShipmentItemWhereInput[] =
+    kapsam.tur === "satici" ? [{ shipment: { order: { sellerId: kapsam.saticiId } } }] : [];
+  const saticiIade: Prisma.ReturnNoteItemWhereInput[] =
+    kapsam.tur === "satici" ? [{ orderItem: { order: { sellerId: kapsam.saticiId } } }] : [];
+  const [sevk, iade] = await Promise.all([
+    prisma.shipmentItem.findMany({
+      where: { AND: [donemSevkSatiri(aralik), ...saticiSevk] },
+      select: { ...SEVK_SATIRI, shipment: { select: { shippedAt: true } } },
+    }),
+    prisma.returnNoteItem.findMany({
+      where: { AND: [donemIadeSatiri(aralik), ...saticiIade] },
+      select: { ...SEVK_SATIRI, returnNote: { select: { createdAt: true } } },
+    }),
+  ]);
+  return {
+    sevk: sevk.flatMap((s) => (s.shipment.shippedAt ? [{ ...s, an: s.shipment.shippedAt }] : [])),
+    iade: iade.map((s) => ({ ...s, an: s.returnNote.createdAt })),
+  };
+}
+
+function toplamlar(sevk: SevkSatiri[], iade: SevkSatiri[]): CiroToplami {
+  const n = net(sevk, iade);
+  return { ciro: n.matrah, hakedis: n.hakedis, iade: hesaplaSatirTutarlari(iade.map(girdi)).toplam.matrah };
+}
+
+/**
+ * KPI ciro özeti: aylık ciro serisi ve seçili dönemle karşılaştırma döneminin toplamları.
+ * Satırlar aralıkların birleşiminden BİR KEZ okunur ve bölünür; hesap `getCiroTotal()` ile
+ * aynı yoldur (`hesaplaSatirTutarlari()` — ikinci hesap yolu yok, KARARLAR §0.4).
+ */
+export async function ciroOzeti(
+  g: { aylar: readonly Ay[]; simdi: Donem; onceki: Donem | null },
+  kapsam: KpiKapsami
+): Promise<{ seri: Decimal[]; simdi: CiroToplami; onceki: CiroToplami | null }> {
+  const araliklar = [g.aylar[0].aralik, g.aylar[g.aylar.length - 1].aralik, g.simdi, ...(g.onceki ? [g.onceki] : [])];
+  const { sevk, iade } = await zamanliSatirlar(
+    { baslangic: enErken(araliklar.map((a) => a.baslangic)), bitis: enGec(araliklar.map((a) => a.bitis)) },
+    kapsam
+  );
+  const sevkKova = aylaraBol(sevk, g.aylar, (s) => s.an);
+  const iadeKova = aylaraBol(iade, g.aylar, (s) => s.an);
+  const sec = (aralik: Donem) =>
+    toplamlar(
+      sevk.filter((s) => icinde(s.an, aralik)),
+      iade.filter((s) => icinde(s.an, aralik))
+    );
+  return {
+    seri: g.aylar.map((_, i) => net(sevkKova[i], iadeKova[i]).matrah),
+    simdi: sec(g.simdi),
+    onceki: g.onceki ? sec(g.onceki) : null,
+  };
+}
+
+/** Satıcı başına aylık ciro serisi (rapor tablosunun "Son 6 ay" hücresi) — tek okuma. */
+export async function saticiCiroSerileri(aylar: readonly Ay[], saticiIdleri: string[]): Promise<Map<string, Decimal[]>> {
+  if (saticiIdleri.length === 0) return new Map();
+  const aralik = { baslangic: aylar[0].aralik.baslangic, bitis: aylar[aylar.length - 1].aralik.bitis };
+  const [sevk, iade] = await Promise.all([
+    prisma.shipmentItem.findMany({
+      where: { AND: [donemSevkSatiri(aralik), { shipment: { order: { sellerId: { in: saticiIdleri } } } }] },
+      select: { ...SEVK_SATIRI, shipment: { select: { shippedAt: true, order: { select: { sellerId: true } } } } },
+    }),
+    prisma.returnNoteItem.findMany({
+      where: { AND: [donemIadeSatiri(aralik), { orderItem: { order: { sellerId: { in: saticiIdleri } } } }] },
+      select: {
+        ...SEVK_SATIRI,
+        returnNote: { select: { createdAt: true } },
+        orderItem: { select: { ...SEVK_SATIRI.orderItem.select, order: { select: { sellerId: true } } } },
+      },
+    }),
+  ]);
+  const saticiSevk = grupla(
+    sevk.flatMap((s) => (s.shipment.shippedAt ? [{ ...s, an: s.shipment.shippedAt }] : [])),
+    (s) => s.shipment.order.sellerId!
+  );
+  const saticiIade = grupla(
+    iade.map((s) => ({ ...s, an: s.returnNote.createdAt })),
+    (s) => s.orderItem.order.sellerId!
+  );
+  return new Map(
+    saticiIdleri.map((id) => {
+      const sevkKova = aylaraBol(saticiSevk.get(id) ?? [], aylar, (s) => s.an);
+      const iadeKova = aylaraBol(saticiIade.get(id) ?? [], aylar, (s) => s.an);
+      return [id, aylar.map((_, i) => net(sevkKova[i], iadeKova[i]).matrah)];
+    })
+  );
+}
+
+/** Aralık başına tahsilat toplamı (brüt, AKTIF) — tek sorgu, toplam veritabanında (X-5 §(4)). */
+export async function tahsilatToplamlari(araliklar: readonly Donem[]): Promise<Decimal[]> {
+  if (araliklar.length === 0) return [];
+  const sutunlar = araliklar.map(
+    (a, i) =>
+      Prisma.sql`COALESCE(SUM(CASE WHEN "paidAt" >= ${a.baslangic} AND "paidAt" < ${a.bitis} THEN "amount" END), 0) AS ${Prisma.raw(`"a${i}"`)}`
+  );
+  const [s] = await prisma.$queryRaw<Record<string, Decimal.Value>[]>`
+    SELECT ${Prisma.join(sutunlar)}
+    FROM "DoctorPayment"
+    WHERE "status" = 'AKTIF'
+      AND "paidAt" >= ${enErken(araliklar.map((a) => a.baslangic))}
+      AND "paidAt" < ${enGec(araliklar.map((a) => a.bitis))}`;
+  return araliklar.map((_, i) => new Decimal(s[`a${i}`]));
+}
+
+/** Aralıkta en çok sevk edilen ürünler (adet; sayılan belgeler). Adet tam sayıdır, para değildir. */
+export async function enCokSevkEdilenler(aralik: Donem, adet: number): Promise<{ urunId: string; ad: string; miktar: number }[]> {
+  const satirlar = await prisma.shipmentItem.findMany({
+    where: donemSevkSatiri(aralik),
+    select: { quantity: true, orderItem: { select: { product: { select: { id: true, name: true } } } } },
+  });
+  const urunler = new Map<string, { urunId: string; ad: string; miktar: number }>();
+  for (const s of satirlar) {
+    const p = s.orderItem.product;
+    const u = urunler.get(p.id) ?? { urunId: p.id, ad: p.name, miktar: 0 };
+    u.miktar += s.quantity;
+    urunler.set(p.id, u);
+  }
+  return [...urunler.values()].sort((a, b) => b.miktar - a.miktar || a.ad.localeCompare(b.ad, "tr")).slice(0, adet);
 }
