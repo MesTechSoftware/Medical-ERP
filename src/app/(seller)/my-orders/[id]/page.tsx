@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { requireSeller } from "@/lib/session";
 import { PageHeader } from "@/components/ui";
 import OrderDetail from "@/components/OrderDetail";
+import { buton } from "@/components/stil";
 
 export default async function MyOrderDetailPage({
   params,
@@ -34,7 +35,7 @@ export default async function MyOrderDetailPage({
         action={
           <Link
             href="/my-orders"
-            className="text-sm font-medium text-slate-600 hover:text-slate-900"
+            className={buton("metin")}
           >
             ← Siparişlerim
           </Link>

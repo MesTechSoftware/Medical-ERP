@@ -16,6 +16,7 @@ import { Tutar } from "@/components/Tutar";
 import { SATIR_TABANI, tabanli } from "@/lib/taban";
 import { belgeOnayDurumlari } from "@/lib/onay-blogu";
 import { OnayEtiketi } from "@/components/OnayEtiketi";
+import { buton } from "@/components/stil";
 
 export default async function MyOrdersPage({
   searchParams,
@@ -91,7 +92,7 @@ export default async function MyOrdersPage({
                   <td className="text-right">
                     <Link
                       href={`/my-orders/${o.id}`}
-                      className="text-sm font-medium text-slate-600 hover:text-slate-900"
+                      className={buton("metin")}
                     >
                       Detay
                     </Link>

@@ -3,12 +3,12 @@
 import { startTransition, useActionState, useState } from "react";
 import { SonucGosterimi, type SonucDurumu } from "@/components/Sonuc";
 import { addStockAdjustment } from "./actions";
+import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 
 type Secenek = { value: string; label: string };
 type Satir = { key: number; urunId: string; konumId: string; fark: string; sebepId: string; aciklama: string };
 
-const KUTU =
-  "w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-slate-500";
+const KUTU = `w-full ${KONTROL_TEK_SATIR}`;
 
 /**
  * Stok düzeltme formu (B-7) — yalnız yönetici. Sayım doğası gereği çok satırlı; fark ± tam sayıdır.
@@ -104,13 +104,13 @@ export default function DuzeltmeFormu({
             </div>
           </div>
           {satirlar.length > 1 && (
-            <button type="button" onClick={() => setSatirlar((ss) => ss.filter((x) => x.key !== s.key))} className="text-xs text-slate-400 hover:text-red-600">
+            <button type="button" onClick={() => setSatirlar((ss) => ss.filter((x) => x.key !== s.key))} className="inline-flex items-center justify-center text-xs text-slate-400 hover:text-negative dokunmatik:min-h-11 dokunmatik:min-w-11">
               Satırı sil
             </button>
           )}
         </div>
       ))}
-      <button type="button" onClick={() => setSatirlar((ss) => [...ss, yeni(Math.max(...ss.map((x) => x.key)) + 1)])} className="text-sm font-medium text-slate-600 hover:text-slate-900">
+      <button type="button" onClick={() => setSatirlar((ss) => [...ss, yeni(Math.max(...ss.map((x) => x.key)) + 1)])} className={buton("metin")}>
         + Satır Ekle
       </button>
       <div>
@@ -120,7 +120,7 @@ export default function DuzeltmeFormu({
         <input id="dzl-tutanak" name="externalDocNo" maxLength={64} className={KUTU} />
       </div>
       <SonucGosterimi sonuc={sonuc} basari={(p) => `Stok düzeltme kaydedildi: ${p.documentNo}.`} />
-      <button type="submit" className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
+      <button type="submit" className={buton("birincil", { form: true })}>
         Düzeltmeyi Kaydet
       </button>
     </form>

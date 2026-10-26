@@ -50,9 +50,9 @@ test("menü öğeleri ve Çıkış dokunmatikte en az 44 px", async ({ page }) =
   expect(linkler.length).toBeGreaterThan(0);
   for (const link of linkler) {
     await link.scrollIntoViewIfNeeded();
-    await dokunmaHedefi(page, `menü: ${await link.innerText()}`, await link.boundingBox());
+    await dokunmaHedefi(link, `menü: ${await link.innerText()}`);
   }
-  await dokunmaHedefi(page, "Çıkış", await page.getByRole("button", { name: "Çıkış" }).boundingBox());
+  await dokunmaHedefi(page.getByRole("button", { name: "Çıkış" }), "Çıkış");
 });
 
 test("telefon nav şeridi: aktif sayfa görünür alanda, sayfa kaymaz", async ({ page }) => {

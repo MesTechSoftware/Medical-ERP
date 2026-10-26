@@ -17,6 +17,7 @@ import ConfirmSubmit from "@/components/ConfirmSubmit";
 import { IslemFormu } from "@/components/Sonuc";
 import { deleteProduct } from "./actions";
 import { bugun } from "@/lib/zaman";
+import { buton } from "@/components/stil";
 
 const CRITICAL_STOCK = 10;
 
@@ -99,7 +100,7 @@ export default async function ProductsPage() {
                       <div className="flex items-center justify-end gap-3">
                         <Link
                           href={`/products/${p.id}/edit`}
-                          className="text-sm font-medium text-slate-600 hover:text-slate-900"
+                          className={buton("metin")}
                         >
                           Düzenle
                         </Link>

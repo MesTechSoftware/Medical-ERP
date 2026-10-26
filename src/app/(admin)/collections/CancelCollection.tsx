@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { SonucGosterimi, type SonucDurumu } from "@/components/Sonuc";
 import { cancelCollection } from "./actions";
+import { buton } from "@/components/stil";
 
 export default function CancelCollection({ paymentId }: { paymentId: string }) {
   const [state, formAction] = useActionState<SonucDurumu, FormData>(cancelCollection, null);
@@ -25,7 +26,7 @@ export default function CancelCollection({ paymentId }: { paymentId: string }) {
       <input type="hidden" name="reason" value="Admin iptali" />
       <button
         type="submit"
-        className="text-sm font-medium text-red-600 hover:text-red-800"
+        className={buton("metin-olumsuz")}
       >
         İptal Et
       </button>

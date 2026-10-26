@@ -8,6 +8,7 @@ import { IslemFormu } from "@/components/Sonuc";
 import { prepareOrder, markDelivered, cancelOrder, createReturn } from "../actions";
 import IadeFormu from "./IadeFormu";
 import { formatDateTime } from "@/lib/format";
+import { buton } from "@/components/stil";
 
 export default async function AdminOrderDetailPage({
   params,
@@ -63,7 +64,7 @@ export default async function AdminOrderDetailPage({
         action={
           <Link
             href="/orders"
-            className="text-sm font-medium text-slate-600 hover:text-slate-900"
+            className={buton("metin")}
           >
             ← Siparişler
           </Link>
@@ -79,7 +80,7 @@ export default async function AdminOrderDetailPage({
             <IslemFormu action={prepareOrder.bind(null, id)}>
               <button
                 type="submit"
-                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+                className={buton("birincil")}
               >
                 Hazırlığa Al
               </button>
@@ -89,7 +90,7 @@ export default async function AdminOrderDetailPage({
           {order.status === "HAZIRLANIYOR" && (
             <Link
               href="/shipping"
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+              className={buton("birincil")}
             >
               Kargo Bilgisi Gir
             </Link>
@@ -99,7 +100,7 @@ export default async function AdminOrderDetailPage({
             <IslemFormu action={markDelivered.bind(null, id)}>
               <button
                 type="submit"
-                className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+                className={buton("olumlu")}
               >
                 Teslim Edildi Olarak İşaretle
               </button>
@@ -110,7 +111,7 @@ export default async function AdminOrderDetailPage({
             <IslemFormu action={cancelOrder.bind(null, id)}>
               <ConfirmSubmit
                 confirmText="Sipariş iptal edilecek ve stok geri yüklenecek. Onaylıyor musunuz?"
-                className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                className={buton("olumsuz-cerceve")}
               >
                 Siparişi İptal Et
               </ConfirmSubmit>

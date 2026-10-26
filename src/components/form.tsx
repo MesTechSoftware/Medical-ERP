@@ -2,16 +2,13 @@
 
 import { useFormStatus } from "react-dom";
 import { alanHatasi, type SonucDurumu } from "@/components/Sonuc";
-
-const KUTU = "w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-1";
-const NORMAL = "border-slate-300 focus:border-slate-500 focus:ring-slate-500";
-const HATALI = "border-red-500 focus:border-red-600 focus:ring-red-600";
+import { KONTROL_COK_SATIR, KONTROL_TEK_SATIR, buton } from "@/components/stil";
 
 /** `SERT` bildirimi alanın altında, alan işaretli (X-4 §(4)). */
 function AlanHatasi({ name, hata }: { name: string; hata?: string }) {
   if (!hata) return null;
   return (
-    <p id={`${name}-hata`} className="mt-1 text-xs text-red-600">
+    <p id={`${name}-hata`} className="mt-1 text-xs text-negative">
       {hata}
     </p>
   );
@@ -19,6 +16,40 @@ function AlanHatasi({ name, hata }: { name: string; hata?: string }) {
 
 function hataNitelikleri(name: string, hata?: string) {
   return hata ? { "aria-invalid": true, "aria-describedby": `${name}-hata` } : {};
+}
+
+/**
+ * Etiket + alan satırı (ADR-009). Fareli masaüstünde ve alan kutusu en az 440 px ise etiket
+ * alanın solunda aynı satırdadır (1280 px'te iki kolonlu formun kolonu ~470 px); dar kutuda
+ * ve dokunmatikte üste geçer.
+ */
+function AlanSatiri({
+  name,
+  label,
+  hata,
+  children,
+}: {
+  name: string;
+  label: string;
+  hata?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="@container">
+      <div className="fare:@min-[440px]:grid fare:@min-[440px]:grid-cols-[10rem_minmax(0,1fr)] fare:@min-[440px]:items-start fare:@min-[440px]:gap-x-3">
+        <label
+          htmlFor={name}
+          className="mb-1 block text-sm font-medium text-slate-700 fare:@min-[440px]:mb-0 fare:@min-[440px]:py-1.5"
+        >
+          {label}
+        </label>
+        <div className="min-w-0">
+          {children}
+          <AlanHatasi name={name} hata={hata} />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function Field({
@@ -44,13 +75,7 @@ export function Field({
 }) {
   const hata = alanHatasi(sonuc, name);
   return (
-    <div>
-      <label
-        htmlFor={name}
-        className="mb-1 block text-sm font-medium text-slate-700"
-      >
-        {label}
-      </label>
+    <AlanSatiri name={name} label={label} hata={hata}>
       <input
         id={name}
         name={name}
@@ -61,10 +86,9 @@ export function Field({
         step={step}
         min={min}
         {...hataNitelikleri(name, hata)}
-        className={`${KUTU} ${hata ? HATALI : NORMAL}`}
+        className={`w-full ${KONTROL_TEK_SATIR}`}
       />
-      <AlanHatasi name={name} hata={hata} />
-    </div>
+    </AlanSatiri>
   );
 }
 
@@ -85,20 +109,14 @@ export function SelectField({
 }) {
   const hata = alanHatasi(sonuc, name);
   return (
-    <div>
-      <label
-        htmlFor={name}
-        className="mb-1 block text-sm font-medium text-slate-700"
-      >
-        {label}
-      </label>
+    <AlanSatiri name={name} label={label} hata={hata}>
       <select
         id={name}
         name={name}
         defaultValue={defaultValue}
         required={required}
         {...hataNitelikleri(name, hata)}
-        className={`${KUTU} bg-white ${hata ? HATALI : NORMAL}`}
+        className={`w-full ${KONTROL_TEK_SATIR}`}
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>
@@ -106,8 +124,7 @@ export function SelectField({
           </option>
         ))}
       </select>
-      <AlanHatasi name={name} hata={hata} />
-    </div>
+    </AlanSatiri>
   );
 }
 
@@ -126,13 +143,7 @@ export function TextArea({
 }) {
   const hata = alanHatasi(sonuc, name);
   return (
-    <div>
-      <label
-        htmlFor={name}
-        className="mb-1 block text-sm font-medium text-slate-700"
-      >
-        {label}
-      </label>
+    <AlanSatiri name={name} label={label} hata={hata}>
       <textarea
         id={name}
         name={name}
@@ -140,13 +151,23 @@ export function TextArea({
         placeholder={placeholder}
         rows={2}
         {...hataNitelikleri(name, hata)}
-        className={`${KUTU} ${hata ? HATALI : NORMAL}`}
+        className={`w-full ${KONTROL_COK_SATIR}`}
       />
-      <AlanHatasi name={name} hata={hata} />
-    </div>
+    </AlanSatiri>
   );
 }
 
+/** Buton içi bekleme göstergesi (< 1 sn işlemler). Dönen yükleyici linear döner — tek istisna. */
+export function Donen() {
+  return (
+    <span
+      aria-hidden="true"
+      className="size-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white"
+    />
+  );
+}
+
+/** Birincil form butonu: beklerken pasif ve dönen gösterge (çift gönderim engeli); telefonda tam genişlik. */
 export function SubmitButton({
   children,
   disabled,
@@ -159,8 +180,9 @@ export function SubmitButton({
     <button
       type="submit"
       disabled={pending || disabled}
-      className="inline-flex items-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:opacity-60"
+      className={buton("birincil", { form: true })}
     >
+      {pending && <Donen />}
       {pending ? "Kaydediliyor..." : children}
     </button>
   );

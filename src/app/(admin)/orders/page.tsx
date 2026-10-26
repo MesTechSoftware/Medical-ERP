@@ -8,6 +8,7 @@ import { getPagination, pageCount } from "@/lib/pagination";
 import { OrderStatus } from "@/generated/prisma/enums";
 import { Tutar } from "@/components/Tutar";
 import { SATIR_TABANI, tabanli } from "@/lib/taban";
+import { buton } from "@/components/stil";
 
 const STATUS_FILTERS: { value: string; label: string }[] = [
   { value: "", label: "Tümü" },
@@ -115,7 +116,7 @@ export default async function OrdersPage({
                   <td className="text-right">
                     <Link
                       href={`/orders/${o.id}`}
-                      className="text-sm font-medium text-slate-600 hover:text-slate-900"
+                      className={buton("metin")}
                     >
                       Detay
                     </Link>

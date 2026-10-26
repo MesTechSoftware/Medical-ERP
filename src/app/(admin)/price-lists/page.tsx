@@ -5,8 +5,9 @@ import { policy } from "@/lib/policy";
 import { PageHeader, Card, EmptyRow } from "@/components/ui";
 import { IslemFormu } from "@/components/Sonuc";
 import { createPriceList } from "./actions";
+import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 
-const KUTU = "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500";
+const KUTU = `w-full ${KONTROL_TEK_SATIR}`;
 
 /** Fiyat listeleri (X-10) — yalnız yönetici. Cariye atama cari kartındadır. */
 export default async function PriceListsPage() {
@@ -69,7 +70,7 @@ export default async function PriceListsPage() {
                 </label>
                 <input id="liste-ad" name="name" required className={KUTU} />
               </div>
-              <button type="submit" className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
+              <button type="submit" className={buton("birincil", { form: true })}>
                 Liste Oluştur
               </button>
             </IslemFormu>

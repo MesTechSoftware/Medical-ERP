@@ -7,6 +7,7 @@ import { PageHeader, Card, EmptyRow } from "@/components/ui";
 import { IslemFormu } from "@/components/Sonuc";
 import IceAktarimFormu from "./IceAktarimFormu";
 import { partiyiGeriAl } from "./actions";
+import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 
 const TUR_ADI: Record<ImportDataType, string> = {
   CARI: "Cari (doktor ve bayi)",
@@ -77,8 +78,8 @@ export default async function ImportsPage() {
                         <details>
                           <summary className="cursor-pointer text-xs text-red-600">Geri al</summary>
                           <IslemFormu action={partiyiGeriAl.bind(null, p.id)} className="mt-2 w-56 space-y-2">
-                            <input aria-label="Geri alma gerekçesi" name="reason" required placeholder="Gerekçe" className="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm" />
-                            <button type="submit" className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700">
+                            <input aria-label="Geri alma gerekçesi" name="reason" required placeholder="Gerekçe" className={`w-full ${KONTROL_TEK_SATIR}`} />
+                            <button type="submit" className={buton("olumsuz")}>
                               Partiyi geri al
                             </button>
                           </IslemFormu>

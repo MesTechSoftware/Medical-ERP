@@ -10,6 +10,7 @@ import { SATIR_TABANI } from "@/lib/taban";
 import { takipLinki } from "@/lib/kargo";
 import { belgeOnayDurumlari } from "@/lib/onay-blogu";
 import { OnayEtiketi } from "@/components/OnayEtiketi";
+import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 
 export default async function ShippingPage() {
   const [pending, shipped, carriers] = await Promise.all([
@@ -119,7 +120,7 @@ export default async function ShippingPage() {
                               min={0}
                               max={kalan}
                               defaultValue={kalan}
-                              className="w-20 rounded-lg border border-slate-300 px-2 py-1 text-right text-sm tabular-nums outline-none focus:border-slate-500"
+                              className={`w-20 sayi ${KONTROL_TEK_SATIR}`}
                             />
                           </div>
                         );
@@ -132,7 +133,7 @@ export default async function ShippingPage() {
                       <select
                         name="carrierId"
                         defaultValue=""
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-500"
+                        className={`w-full ${KONTROL_TEK_SATIR}`}
                       >
                         <option value="">Seçiniz...</option>
                         {carriers.map((c) => (
@@ -149,7 +150,7 @@ export default async function ShippingPage() {
                       <input
                         name="trackingNumber"
                         placeholder="Örn: TR123456789"
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
+                        className={`w-full ${KONTROL_TEK_SATIR}`}
                       />
                     </div>
                     <div className="flex-1 min-w-[160px]">
@@ -160,12 +161,12 @@ export default async function ShippingPage() {
                         id={`irsaliye_${o.id}`}
                         name="externalDispatchNo"
                         maxLength={32}
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-500"
+                        className={`w-full ${KONTROL_TEK_SATIR}`}
                       />
                     </div>
                     <button
                       type="submit"
-                      className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+                      className={buton("birincil")}
                     >
                       Kargola
                     </button>

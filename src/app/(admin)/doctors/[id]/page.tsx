@@ -18,6 +18,7 @@ import {
   StatusBadge,
   EmptyRow,
 } from "@/components/ui";
+import { buton } from "@/components/stil";
 
 const BAKIYE_ETIKETI = {
   BORC: "Doktor borçlu",
@@ -80,7 +81,7 @@ export default async function DoctorDetailPage({
         action={
           // Cari düzeltme yalnız yönetici (X-16 §(9)); OPERASYON cariyi görür (D-2 §(1)).
           session.user.role === "YONETICI" ? (
-            <Link href={`/doctors/${id}/edit`} className="text-sm font-medium text-slate-600 hover:text-slate-900">
+            <Link href={`/doctors/${id}/edit`} className={buton("metin")}>
               Düzenle
             </Link>
           ) : undefined
@@ -231,7 +232,7 @@ export default async function DoctorDetailPage({
       <div className="mt-6">
         <Link
           href="/doctors"
-          className="text-sm font-medium text-slate-600 hover:text-slate-900"
+          className={buton("metin")}
         >
           ← Doktor listesi
         </Link>

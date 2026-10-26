@@ -11,6 +11,10 @@
   }
 }
 
+/* Fare + md ve üstü: compact masaüstü. Form etiketi yalnız burada alanın solunda durur;
+   dokunmatikte ve dar ekranda üstte kalır (ADR-009). */
+@custom-variant fare (@media (min-width: 768px) and (pointer: fine));
+
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -221,6 +225,17 @@
 
     .veri-tablosu td {
       white-space: nowrap;
+    }
+  }
+
+  /* Dokunmatikte tablo hücresindeki bağlantı ve butonlar (Detay, Sil, ad bağlantısı) 44 px. */
+  @media (max-width: 767px), (pointer: coarse) {
+    .veri-tablosu td :is(a, button) {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 44px;
+      min-height: 44px;
     }
   }
 

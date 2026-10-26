@@ -4,6 +4,7 @@ import { startTransition, useActionState } from "react";
 import { SonucGosterimi, type SonucDurumu } from "@/components/Sonuc";
 import { TextArea } from "@/components/form";
 import type { IslemSonucu } from "@/lib/sonuc";
+import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 
 /**
  * İade formu (A-1): kalem başına iade miktarı (varsayılan 0) ve zorunlu sebep. Hata sonrası
@@ -44,7 +45,7 @@ export default function IadeFormu({
               min={0}
               max={k.iadeEdilebilir}
               defaultValue={0}
-              className="w-20 rounded-lg border border-slate-300 px-2 py-1 text-right text-sm tabular-nums outline-none focus:border-slate-500"
+              className={`w-20 sayi ${KONTROL_TEK_SATIR}`}
             />
           </div>
         ))}
@@ -52,7 +53,7 @@ export default function IadeFormu({
       <TextArea label="İade sebebi" name="reason" sonuc={sonuc} />
       <button
         type="submit"
-        className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+        className={buton("ikincil")}
       >
         İade Kaydet
       </button>

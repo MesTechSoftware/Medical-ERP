@@ -3,8 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useActionState } from "react";
+import { Donen } from "@/components/form";
 import { SonucGosterimi, type SonucDurumu } from "@/components/Sonuc";
 import { loginAction } from "@/lib/auth-actions";
+import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 
 export default function LoginPage() {
   const [state, formAction, pending] = useActionState<SonucDurumu, FormData>(loginAction, null);
@@ -43,7 +45,7 @@ export default function LoginPage() {
               type="email"
               required
               autoComplete="email"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+              className={`w-full ${KONTROL_TEK_SATIR}`}
               placeholder="ornek@medikal.local"
             />
           </div>
@@ -61,7 +63,7 @@ export default function LoginPage() {
               type="password"
               required
               autoComplete="current-password"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+              className={`w-full ${KONTROL_TEK_SATIR}`}
             />
           </div>
 
@@ -70,8 +72,9 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={pending}
-            className="w-full rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:opacity-60"
+            className={`${buton("birincil")} w-full`}
           >
+            {pending && <Donen />}
             {pending ? "Giriş yapılıyor..." : "Giriş Yap"}
           </button>
         </form>

@@ -6,6 +6,7 @@ import { IslemFormu } from "@/components/Sonuc";
 import { Tutar } from "@/components/Tutar";
 import { changeDueDate } from "../../collections/actions";
 import { addVadeFarki, reverseLedgerEntry } from "../actions";
+import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 
 const TIP: Record<string, string> = {
   SEVKIYAT: "Sevkiyat",
@@ -15,8 +16,8 @@ const TIP: Record<string, string> = {
   VADE_FARKI: "Vade farkı",
   TERS_KAYIT: "Ters kayıt",
 };
-const KUTU = "w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm outline-none focus:border-slate-500";
-const DUGME = "rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800";
+const KUTU = `w-full ${KONTROL_TEK_SATIR}`;
+const DUGME = buton("birincil");
 
 /**
  * Cari hareketler (X-11) — son 50. Yönetici: borç hareketinde vade değişikliği (X-15 §(1)), elle vade
