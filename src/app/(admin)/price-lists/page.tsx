@@ -20,35 +20,37 @@ export default async function PriceListsPage() {
   return (
     <div>
       <PageHeader title="Fiyat Listeleri" description="Liste fiyatı ve barem satırları. Atanmamış cari varsayılan listeyi kullanır." />
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <Card>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
-                  <th className="px-4 py-2 font-medium">Kod</th>
-                  <th className="px-4 py-2 font-medium">Ad</th>
-                  <th className="px-4 py-2 text-right font-medium">Satır</th>
-                  <th className="px-4 py-2 text-right font-medium">Atanmış cari</th>
-                </tr>
-              </thead>
-              <tbody>
-                {listeler.length === 0 && <EmptyRow colSpan={4} text="Liste yok." />}
-                {listeler.map((l) => (
-                  <tr key={l.id} className="border-b border-slate-100 last:border-0">
-                    <td className="px-4 py-3 font-medium">
-                      <Link href={`/price-lists/${l.id}`} className="text-slate-900 hover:underline">
-                        {l.code}
-                      </Link>
-                      {l.code === varsayilan && <span className="ml-2 text-xs text-slate-400">varsayılan</span>}
-                    </td>
-                    <td className="px-4 py-3 text-slate-700">{l.name}</td>
-                    <td className="px-4 py-3 text-right tabular-nums">{l._count.items}</td>
-                    <td className="px-4 py-3 text-right tabular-nums">{l._count.doctors}</td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
+                    <th className="px-4 py-2 font-medium">Kod</th>
+                    <th className="px-4 py-2 font-medium">Ad</th>
+                    <th className="px-4 py-2 text-right font-medium">Satır</th>
+                    <th className="px-4 py-2 text-right font-medium">Atanmış cari</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {listeler.length === 0 && <EmptyRow colSpan={4} text="Liste yok." />}
+                  {listeler.map((l) => (
+                    <tr key={l.id} className="border-b border-slate-100 last:border-0">
+                      <td className="px-4 py-3 font-medium">
+                        <Link href={`/price-lists/${l.id}`} className="text-slate-900 hover:underline">
+                          {l.code}
+                        </Link>
+                        {l.code === varsayilan && <span className="ml-2 text-xs text-slate-400">varsayılan</span>}
+                      </td>
+                      <td className="px-4 py-3 text-slate-700">{l.name}</td>
+                      <td className="px-4 py-3 text-right tabular-nums">{l._count.items}</td>
+                      <td className="px-4 py-3 text-right tabular-nums">{l._count.doctors}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </Card>
         </div>
         <div>

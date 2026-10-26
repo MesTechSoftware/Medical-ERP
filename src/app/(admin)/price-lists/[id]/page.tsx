@@ -46,45 +46,47 @@ export default async function PriceListDetailPage({ params }: { params: Promise<
           </Link>
         }
       />
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <Card>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
-                  <th className="px-4 py-2 font-medium">Ürün</th>
-                  <th className="px-4 py-2 text-right font-medium">Min. adet</th>
-                  <th className="px-4 py-2 text-right font-medium">{tabanli("Liste fiyatı", MATRAH)}</th>
-                  <th className="px-4 py-2 font-medium">Geçerlilik</th>
-                  <th className="px-4 py-2"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {liste.items.length === 0 && <EmptyRow colSpan={5} text="Bu listede satır yok." />}
-                {liste.items.map((i) => (
-                  <tr key={i.id} data-satir-id={i.id} className="border-b border-slate-100 last:border-0">
-                    <td className="px-4 py-3 text-slate-900">
-                      {i.product.name}
-                      <span className="ml-1 text-xs text-slate-400">{i.product.code}</span>
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums">{i.minQuantity}</td>
-                    <td className="px-4 py-3 text-right tabular-nums">
-                      <Tutar deger={i.listPrice} taban={MATRAH} baslikta />
-                    </td>
-                    <td className="px-4 py-3 text-xs text-slate-500">
-                      {i.validFrom || i.validTo
-                        ? `${i.validFrom ? formatDate(i.validFrom) : "…"} – ${i.validTo ? formatDate(i.validTo) : "…"}`
-                        : "Süresiz"}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <IslemFormu action={deletePriceListItem.bind(null, i.id)}>
-                        <ConfirmSubmit confirmText="Satır silinecek. Onaylıyor musunuz?">Sil</ConfirmSubmit>
-                      </IslemFormu>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 text-left text-xs uppercase text-slate-500">
+                    <th className="px-4 py-2 font-medium">Ürün</th>
+                    <th className="px-4 py-2 text-right font-medium">Min. adet</th>
+                    <th className="px-4 py-2 text-right font-medium">{tabanli("Liste fiyatı", MATRAH)}</th>
+                    <th className="px-4 py-2 font-medium">Geçerlilik</th>
+                    <th className="px-4 py-2"></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {liste.items.length === 0 && <EmptyRow colSpan={5} text="Bu listede satır yok." />}
+                  {liste.items.map((i) => (
+                    <tr key={i.id} data-satir-id={i.id} className="border-b border-slate-100 last:border-0">
+                      <td className="px-4 py-3 text-slate-900">
+                        {i.product.name}
+                        <span className="ml-1 text-xs text-slate-400">{i.product.code}</span>
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums">{i.minQuantity}</td>
+                      <td className="px-4 py-3 text-right tabular-nums">
+                        <Tutar deger={i.listPrice} taban={MATRAH} baslikta />
+                      </td>
+                      <td className="px-4 py-3 text-xs text-slate-500">
+                        {i.validFrom || i.validTo
+                          ? `${i.validFrom ? formatDate(i.validFrom) : "…"} – ${i.validTo ? formatDate(i.validTo) : "…"}`
+                          : "Süresiz"}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <IslemFormu action={deletePriceListItem.bind(null, i.id)}>
+                          <ConfirmSubmit confirmText="Satır silinecek. Onaylıyor musunuz?">Sil</ConfirmSubmit>
+                        </IslemFormu>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </Card>
         </div>
         <div>

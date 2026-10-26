@@ -14,7 +14,7 @@ export default async function ParolaDegistirPage() {
   if (!session.user.mustChangePassword) redirect("/");
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
+    <main className="flex min-h-dvh items-center justify-center p-4">
       <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
         <h1 className="text-lg font-semibold text-slate-900">Parolanızı değiştirin</h1>
         <p className="mt-1 mb-6 text-sm text-slate-500">
