@@ -37,6 +37,8 @@ const eslintConfig = defineConfig([
       "src/lib/satir-tutarlari.ts",
       "src/lib/fiyat.ts",
       "src/lib/money.ts",
+      // X-5 eki (26.10.2026): yalnız gösterim ölçeği — boyutsuz değer döndürür, tutar üretmez.
+      "src/lib/kpi/olcek.ts",
       "src/**/*.test.ts",
       "src/**/*.itest.ts",
     ],
