@@ -43,8 +43,11 @@ export function sonAylar(n: number, bitis: { yil: number; ay: number }, an: Date
  * önceki ayın aynı uzunluktaki başı ile kıyaslanır (önceki ay kısaysa ay sonuna kırpılır).
  * Geçmiş ya da gelecek ay: tam ay, önceki tam ayla. "Tüm zamanlar"ın karşılaştırması yoktur.
  */
-export function karsilastirmaAraliklari(donem: Donem, an: Date = simdi()): { simdi: Aralik; onceki: Aralik | null } {
-  if (donem.anahtar === "tum") return { simdi: donem.aralik, onceki: null };
+export function karsilastirmaAraliklari(
+  donem: Donem,
+  an: Date = simdi()
+): { simdi: Aralik; onceki: Aralik | null; devamEdiyor: boolean } {
+  if (donem.anahtar === "tum") return { simdi: donem.aralik, onceki: null, devamEdiyor: false };
   const [yil, ay] = donem.anahtar.split("-").map((x) => parseInt(x, 10));
   const o = oncekiAy(yil, ay);
   const onceki = ayAraligi(o.yil, o.ay);
@@ -52,7 +55,19 @@ export function karsilastirmaAraliklari(donem: Donem, an: Date = simdi()): { sim
   if (an.getTime() >= baslangic.getTime() && an.getTime() < bitis.getTime()) {
     const gecen = an.getTime() - baslangic.getTime();
     const oncekiBitis = new Date(Math.min(onceki.baslangic.getTime() + gecen, onceki.bitis.getTime()));
-    return { simdi: { baslangic, bitis: an }, onceki: { baslangic: onceki.baslangic, bitis: oncekiBitis } };
+    return { simdi: { baslangic, bitis: an }, onceki: { baslangic: onceki.baslangic, bitis: oncekiBitis }, devamEdiyor: true };
   }
-  return { simdi: donem.aralik, onceki };
+  return { simdi: donem.aralik, onceki, devamEdiyor: false };
+}
+
+/** KPI karşılaştırma notu (K-1): devam eden ay geçen ayın aynı günleriyle, geçmiş ay önceki tam ayla. */
+export function karsilastirmaNotu(devamEdiyor: boolean): string {
+  return devamEdiyor ? "geçen ayın aynı günlerine göre" : "önceki aya göre";
+}
+
+/** Dönemin son takvim ayı (KPI trendi bu ayla biter); "tüm zamanlar"da içinde bulunulan ay. */
+export function donemBitisAyi(donem: Donem, an: Date = simdi()): { yil: number; ay: number } {
+  if (donem.anahtar === "tum") return takvimAyi(an);
+  const [yil, ay] = donem.anahtar.split("-").map((x) => parseInt(x, 10));
+  return { yil, ay };
 }

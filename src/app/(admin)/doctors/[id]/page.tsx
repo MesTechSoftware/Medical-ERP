@@ -7,17 +7,23 @@ import { BRUT, SATIR_TABANI, tabanli } from "@/lib/taban";
 import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
 import { formatDate } from "@/lib/format";
 import { formatPhone } from "@/lib/phone";
-import { hesaplaDoktorBakiye, vadesiGecmisUyarisi } from "@/lib/doctor-cari";
+import { bakiyeSerisi, hesaplaDoktorBakiye, vadesiGecmisUyarisi } from "@/lib/doctor-cari";
+import { sonAylar } from "@/lib/donem";
+import { kpiGetir } from "@/lib/kpi/getir";
+import { simdi, takvimAyi } from "@/lib/zaman";
 import { SonucGosterimi } from "@/components/Sonuc";
 import { sonucOlustur } from "@/lib/sonuc";
 import CariHareketleri from "./CariHareketleri";
 import {
   PageHeader,
   Card,
-  StatCard,
   StatusBadge,
+  StatusChip,
   EmptyRow,
 } from "@/components/ui";
+import { AyOzeti } from "@/components/kpi/AyOzeti";
+import { KpiCard } from "@/components/kpi/KpiCard";
+import { KpiSatiri } from "@/components/kpi/KpiSatiri";
 import { buton } from "@/components/stil";
 
 const BAKIYE_ETIKETI = {
@@ -45,8 +51,17 @@ export default async function DoctorDetailPage({
   });
   if (!doctor) notFound();
 
+  const an = simdi();
+  const aylar = sonAylar(6, takvimAyi(an), an);
   const [cari, vadeUyarisi, orders, payments] = await Promise.all([
-    hesaplaDoktorBakiye(id),
+    // Bakiye ve ay sonu trendi tek hata alanıdır: biri düşerse kart referansla düşer (X-3).
+    kpiGetir(
+      async () => ({
+        bakiye: await hesaplaDoktorBakiye(id),
+        seri: await bakiyeSerisi(id, aylar.map((a) => a.aralik.bitis)),
+      }),
+      { yol: `/doctors/${id}`, kullaniciId: session.user.id }
+    ),
     vadesiGecmisUyarisi(id),
     prisma.order.findMany({
       where: { doctorId: id },
@@ -64,6 +79,12 @@ export default async function DoctorDetailPage({
       include: { paymentMethod: { select: { name: true } } },
     }),
   ]);
+
+  // Ölçüm serisi: cari açılmadan önceki ay sonları boşluktur, sıfır değil (enterpolasyon yok).
+  const bakiyeTrendi = cari.tamam
+    ? aylar.map((a, i) => (a.aralik.bitis <= doctor.createdAt ? null : cari.deger.seri[i]))
+    : [];
+  const hataReferansi = cari.tamam ? undefined : cari.referans;
 
   return (
     <div>
@@ -88,11 +109,63 @@ export default async function DoctorDetailPage({
         }
       />
 
+      {/* Cari hareketten okunur (X-11). K-2: çıplak negatif gösterilmez; tutar mutlak değer, yön etikette. */}
+      <KpiSatiri>
+        <KpiCard
+          etiket="Cari Bakiye"
+          varyant="birincil"
+          iyiYon="notr"
+          bosDavranisi="sifir"
+          tutar={cari.tamam ? cari.deger.bakiye.bakiye.abs() : null}
+          taban={BRUT}
+          karsilastirma={cari.tamam ? { anlik: BAKIYE_ETIKETI[cari.deger.bakiye.yon] } : undefined}
+          trend={
+            cari.tamam
+              ? {
+                  seri: bakiyeTrendi,
+                  sonDevamEdiyor: true,
+                  ozet: <AyOzeti baslik="Son 6 ay sonu bakiye" aylar={aylar} seri={bakiyeTrendi} taban={BRUT} />,
+                }
+              : undefined
+          }
+          hataReferansi={hataReferansi}
+        />
+        <KpiCard
+          etiket="Toplam Borç"
+          varyant="baglamsal"
+          iyiYon="notr"
+          bosDavranisi="sifir"
+          tutar={cari.tamam ? cari.deger.bakiye.toplamBorc : null}
+          taban={BRUT}
+          hataReferansi={hataReferansi}
+        />
+        <KpiCard
+          etiket="Toplam Alacak"
+          varyant="baglamsal"
+          iyiYon="notr"
+          bosDavranisi="sifir"
+          tutar={cari.tamam ? cari.deger.bakiye.toplamAlacak : null}
+          taban={BRUT}
+          hataReferansi={hataReferansi}
+        />
+      </KpiSatiri>
+
+      {/* X-6 §(6): vadesi geçmiş hareketin varlığı — BILGI şeridi, tutar yok. */}
+      {vadeUyarisi && (
+        <div className="mb-4">
+          <SonucGosterimi sonuc={sonucOlustur([vadeUyarisi])} />
+        </div>
+      )}
+
       {/* A-13 §(9): Genel ve Fatura bilgileri — kart bilgisi; fiyat listesi (X-10 §(2)). */}
       <div className="mb-6">
         <Card>
           <dl className="grid gap-4 text-sm sm:grid-cols-4">
             {[
+              [
+                "Sorumlu satıcı",
+                doctor.ownerSeller?.name ?? <StatusChip ton="uyari">Sahipsiz</StatusChip>,
+              ],
               ["Fiyat listesi", doctor.priceList ? `${doctor.priceList.code} — ${doctor.priceList.name}` : "Varsayılan"],
               ["Ödeme vadesi", doctor.paymentTermDays !== null ? `${doctor.paymentTermDays} gün` : "Varsayılan"],
               ["Cari tipi", doctor.partyType === "GERCEK_KISI" ? "Gerçek kişi" : "Tüzel kişi"],
@@ -102,38 +175,13 @@ export default async function DoctorDetailPage({
               ["Fatura adresi", [doctor.invoiceAddress, doctor.invoiceDistrict, doctor.invoiceCity].filter(Boolean).join(", ") || "—"],
               ["Muhasebe kodu", doctor.accountingCode ?? "—"],
             ].map(([etiket, deger]) => (
-              <div key={etiket}>
+              <div key={String(etiket)}>
                 <dt className="text-xs uppercase text-slate-500">{etiket}</dt>
                 <dd className="mt-0.5 text-slate-900">{deger}</dd>
               </div>
             ))}
           </dl>
         </Card>
-      </div>
-
-      {/* X-6 §(6): vadesi geçmiş hareketin varlığı — BILGI şeridi, tutar yok. */}
-      {vadeUyarisi && (
-        <div className="mb-4">
-          <SonucGosterimi sonuc={sonucOlustur([vadeUyarisi])} />
-        </div>
-      )}
-
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Sorumlu Satıcı"
-          value={doctor.ownerSeller?.name ?? "Sahipsiz"}
-          tone={doctor.ownerSeller ? "default" : "warning"}
-        />
-        {/* Cari hareketten okunur (X-11); CM → 1B arası boş görünür (FAZ1 R-11). */}
-        <StatCard label="Toplam Borç" value={<Tutar deger={cari.toplamBorc} taban={BRUT} />} />
-        <StatCard label="Toplam Alacak" value={<Tutar deger={cari.toplamAlacak} taban={BRUT} />} />
-        {/* K-2: çıplak negatif gösterilmez; tutar mutlak değer, yön etikette. */}
-        <StatCard
-          label="Cari Bakiye"
-          value={<Tutar deger={cari.bakiye.abs()} taban={BRUT} />}
-          tone={cari.yon === "BORC" ? "danger" : "success"}
-          hint={BAKIYE_ETIKETI[cari.yon]}
-        />
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">

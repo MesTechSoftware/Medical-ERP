@@ -53,6 +53,21 @@ export async function hesaplaDoktorBakiye(doktorId: string, tarih?: Date, db: Db
 }
 
 /**
+ * Sınır anlarındaki işaretli bakiyeler (KPI trendi; K-2: pozitif borç, negatif avans) — her
+ * sınırdan önceki hareketlerin toplamı, tek sorguda. `hesaplaDoktorBakiye` ile aynı ifade.
+ */
+export async function bakiyeSerisi(doktorId: string, sinirlar: readonly Date[], db: Db = prisma): Promise<Decimal[]> {
+  if (sinirlar.length === 0) return [];
+  const sutunlar = sinirlar.map(
+    (sinir, i) =>
+      Prisma.sql`COALESCE(SUM(CASE WHEN "createdAt" < ${sinir} THEN (CASE WHEN "direction" = 'BORC' THEN "amount" ELSE -"amount" END) END), 0) AS ${Prisma.raw(`"b${i}"`)}`
+  );
+  const [s] = await db.$queryRaw<Record<string, Prisma.Decimal>[]>`
+    SELECT ${Prisma.join(sutunlar)} FROM "LedgerEntry" WHERE "doctorId" = ${doktorId}`;
+  return sinirlar.map((_, i) => new Decimal(s[`b${i}`]));
+}
+
+/**
  * `VADESI_GECMIS_HAREKET` — X-6 §(6) ve 20.10.2026 eki. `BILGI` kademesidir; tutar değil varlık:
  * cari borçluyken (bakiye yönü `BORC`) vadesi `gun`den önce olan, ters kayıtla çevrilmemiş bir
  * `BORC` hareketi varsa en eski vadesiyle döner. Tutar gösterilmez (§(7)); tahsilat borçlarla

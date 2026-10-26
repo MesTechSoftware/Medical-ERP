@@ -1,42 +1,46 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import Decimal from "decimal.js";
-import { Tutar } from "@/components/Tutar";
 import { BRUT, MATRAH } from "@/lib/taban";
 import { hesaplaStok } from "@/lib/stok";
 import { CRITICAL_STOCK } from "@/lib/stok-durumu";
-import { getCiroTotal } from "@/lib/reports-service";
-import { gunAraligi, simdi, TUM_ZAMANLAR } from "@/lib/zaman";
-import { PageHeader, Card, StatCard, EmptyRow } from "@/components/ui";
+import { ciroOzeti, enCokSevkEdilenler, tahsilatToplamlari } from "@/lib/reports-service";
+import { donemCoz, karsilastirmaAraliklari, karsilastirmaNotu, sonAylar } from "@/lib/donem";
+import { formatSayi } from "@/lib/format";
+import { kpiGetir } from "@/lib/kpi/getir";
+import { cubukOranlari } from "@/lib/kpi/olcek";
+import { requireStaff } from "@/lib/session";
+import { simdi, takvimAyi } from "@/lib/zaman";
+import { PageHeader, Card, EmptyRow } from "@/components/ui";
+import { AyOzeti } from "@/components/kpi/AyOzeti";
+import { KpiCard } from "@/components/kpi/KpiCard";
+import { KpiSatiri } from "@/components/kpi/KpiSatiri";
+import { BarMicro } from "@/components/grafik/BarMicro";
 import { StokMiktari } from "@/components/StokMiktari";
 import { buton } from "@/components/stil";
 
-
+/**
+ * Dashboard (YONETICI + OPERASYON) — "bu ay" KPI'ları (K-4; ADR-010). Ekran prim/hakediş
+ * taşımaz (D-2). Karşılaştırma geçen ayın aynı günleridir (K-1). Ciro matrahtır, sevk edilen
+ * maldan doğar (A-3); tahsilat brüttür (Ü-3).
+ */
 export default async function DashboardPage() {
-  // "Bugün" İstanbul takvim günüdür (E-1 §(3)).
-  const bugunAraligi = gunAraligi(simdi());
+  const session = await requireStaff();
+  const an = simdi();
+  const aylar = sonAylar(6, takvimAyi(an), an);
+  const k = karsilastirmaAraliklari(donemCoz(undefined, an), an);
+  const baglam = { yol: "/dashboard", kullaniciId: session.user.id };
+  const not = karsilastirmaNotu(true);
 
-  const [
-    products,
-    todayOrders,
-    pendingCount,
-    preparingCount,
-    toplamCiro,
-    collectedAgg,
-  ] = await Promise.all([
+  const [ciro, tahsilat, bekleyen, kargolanacak, enCok, products] = await Promise.all([
+    kpiGetir(() => ciroOzeti({ aylar, ...k }, { tur: "sirket" }), baglam),
+    // Tek sorgu: altı ay + bu dönem + karşılaştırma dönemi.
+    kpiGetir(() => tahsilatToplamlari([...aylar.map((a) => a.aralik), k.simdi, ...(k.onceki ? [k.onceki] : [])]), baglam),
+    kpiGetir(() => prisma.order.count({ where: { status: "BEKLIYOR" } }), baglam),
+    kpiGetir(() => prisma.order.count({ where: { status: "HAZIRLANIYOR" } }), baglam),
+    kpiGetir(() => enCokSevkEdilenler(k.simdi, 5), baglam),
     prisma.product.findMany({
       where: { status: "AKTIF" },
       select: { id: true, name: true, code: true },
-    }),
-    prisma.order.count({
-      where: { orderDate: { gte: bugunAraligi.baslangic, lt: bugunAraligi.bitis } },
-    }),
-    prisma.order.count({ where: { status: "BEKLIYOR" } }),
-    prisma.order.count({ where: { status: "HAZIRLANIYOR" } }),
-    getCiroTotal(TUM_ZAMANLAR), // "Toplam" kartı: tüm zamanlar bilinçli seçimdir (X-1 §(2))
-    prisma.doctorPayment.aggregate({
-      where: { status: "AKTIF" },
-      _sum: { amount: true },
     }),
   ]);
 
@@ -47,37 +51,76 @@ export default async function DashboardPage() {
   const criticalProducts = stoklu
     .filter((p) => p.stock <= CRITICAL_STOCK)
     .sort((a, b) => a.stock - b.stock);
-  const toplamStok = stoklu.reduce((t, p) => t + p.stock, 0);
-  const toplamTahsilat = new Decimal(collectedAgg._sum.amount ?? 0);
+
+  const tahsilatSerisi = tahsilat.tamam ? tahsilat.deger.slice(0, aylar.length) : [];
+  const enCokOranlari = enCok.tamam ? cubukOranlari(enCok.deger.map((u) => u.miktar)) : [];
 
   return (
     <div>
       <PageHeader title="Dashboard" description="Operasyon özeti" />
 
-      {/* Operasyonel metrikler */}
-      <div className="mb-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Toplam Stok" value={String(toplamStok)} hint="adet" />
-        <StatCard label="Bugünkü Sipariş" value={String(todayOrders)} />
-        <StatCard
-          label="Bekleyen Sipariş"
-          value={String(pendingCount)}
-          tone={pendingCount > 0 ? "warning" : "default"}
+      <KpiSatiri>
+        <KpiCard
+          etiket="Ciro"
+          varyant="birincil"
+          iyiYon="yukari-iyi"
+          bosDavranisi="sifir"
+          tutar={ciro.tamam ? ciro.deger.simdi.ciro : null}
+          taban={MATRAH}
+          karsilastirma={ciro.tamam ? { onceki: ciro.deger.onceki?.ciro ?? null, not } : undefined}
+          trend={
+            ciro.tamam
+              ? {
+                  seri: ciro.deger.seri,
+                  sonDevamEdiyor: true,
+                  ozet: <AyOzeti baslik="Son 6 ay ciro" aylar={aylar} seri={ciro.deger.seri} taban={MATRAH} />,
+                }
+              : undefined
+          }
+          donemNotu="Bu ay"
+          hataReferansi={ciro.tamam ? undefined : ciro.referans}
         />
-        <StatCard
-          label="Kargolanacak"
-          value={String(preparingCount)}
-          tone={preparingCount > 0 ? "warning" : "default"}
+        <KpiCard
+          etiket="Tahsilat"
+          varyant="ikincil"
+          iyiYon="yukari-iyi"
+          bosDavranisi="sifir"
+          tutar={tahsilat.tamam ? tahsilat.deger[aylar.length] : null}
+          taban={BRUT}
+          karsilastirma={tahsilat.tamam ? { onceki: tahsilat.deger[aylar.length + 1] ?? null, not } : undefined}
+          trend={
+            tahsilat.tamam
+              ? {
+                  seri: tahsilatSerisi,
+                  sonDevamEdiyor: true,
+                  ozet: <AyOzeti baslik="Son 6 ay tahsilat" aylar={aylar} seri={tahsilatSerisi} taban={BRUT} />,
+                }
+              : undefined
+          }
+          donemNotu="Bu ay"
+          hataReferansi={tahsilat.tamam ? undefined : tahsilat.referans}
         />
-      </div>
-
-      {/* Finansal metrikler (D-01: satıcı borcu kavramı YOK) */}
-      {/* Bayi kanal kartları C5'te söküldü — bayi bir cari tipidir (X-8). */}
-      <div className="mb-4 grid gap-4 sm:grid-cols-2">
-        {/* Ciro matrahtır ve sevk edilen maldan doğar (A-3, Ü-3 §(5)); CM → 1B arası boş (R-11). */}
-        <StatCard label="Toplam Ciro" value={<Tutar deger={toplamCiro} taban={MATRAH} />} hint="tüm zamanlar" />
-        <StatCard label="Toplam Tahsilat" value={<Tutar deger={toplamTahsilat} taban={BRUT} />} />
-      </div>
-
+        <KpiCard
+          etiket="Bekleyen sipariş"
+          varyant="ikincil"
+          iyiYon="asagi-iyi"
+          bosDavranisi="sifir"
+          adet={bekleyen.tamam ? bekleyen.deger : null}
+          karsilastirma={{ anlik: "şu an" }}
+          vurgu={bekleyen.tamam && bekleyen.deger > 0 ? "uyari" : undefined}
+          hataReferansi={bekleyen.tamam ? undefined : bekleyen.referans}
+        />
+        <KpiCard
+          etiket="Kargolanacak"
+          varyant="baglamsal"
+          iyiYon="asagi-iyi"
+          bosDavranisi="sifir"
+          adet={kargolanacak.tamam ? kargolanacak.deger : null}
+          karsilastirma={{ anlik: "şu an" }}
+          vurgu={kargolanacak.tamam && kargolanacak.deger > 0 ? "uyari" : undefined}
+          hataReferansi={kargolanacak.tamam ? undefined : kargolanacak.referans}
+        />
+      </KpiSatiri>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Kritik stok */}
@@ -118,6 +161,25 @@ export default async function DashboardPage() {
               Stok Yönetimi →
             </Link>
           </div>
+        </Card>
+
+        {/* Stok planlaması için: bu ay en çok sevk edilenler (adet, sayılan belgeler). */}
+        <Card>
+          <h2 className="mb-4 text-sm font-semibold text-slate-900">Bu ay en çok sevk edilen ürünler</h2>
+          {enCok.tamam ? (
+            <BarMicro
+              satirlar={enCok.deger.map((u, i) => ({
+                anahtar: u.urunId,
+                etiket: u.ad,
+                deger: `${formatSayi(u.miktar)} adet`,
+                oran: enCokOranlari[i],
+              }))}
+            />
+          ) : (
+            <p className="text-sm text-negative">
+              Yüklenemedi <span className="text-xs text-slate-500">· Hata referansı: <span className="font-mono">{enCok.referans}</span></span>
+            </p>
+          )}
         </Card>
       </div>
     </div>

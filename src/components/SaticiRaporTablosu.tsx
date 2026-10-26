@@ -3,12 +3,24 @@ import { Tutar } from "@/components/Tutar";
 import { BRUT, MATRAH, tabanli } from "@/lib/taban";
 import type { SellerReport } from "@/lib/reports-service";
 import { EmptyRow } from "@/components/ui";
+import { ColumnMicro } from "@/components/grafik/ColumnMicro";
+import { AyOzeti } from "@/components/kpi/AyOzeti";
+import type { Ay } from "@/lib/donem";
+import type Decimal from "decimal.js";
 
 /**
  * Satıcı raporu tablosu (X-1 §(1)): üç mutlak sayı, tabanı başlıkta yazılı; oran yok.
  * Hakediş sevkiyat satırına donmuş oranla hesaplanır (X-14); "ödenebilir prim" değildir (X-1 §(7)).
  */
-export default function SaticiRaporTablosu({ satirlar }: { satirlar: SellerReport[] }) {
+export default function SaticiRaporTablosu({
+  satirlar,
+  seriler,
+}: {
+  satirlar: SellerReport[];
+  /** Satıcı başına son 6 ay cirosu (matrah) — "Son 6 ay" hücresi; verilmezse kolon yok. */
+  seriler?: { aylar: readonly Ay[]; degerler: Map<string, Decimal[]> };
+}) {
+  const kolon = seriler ? 1 : 0;
   return (
     <div className="tablo-kutusu">
       <table className="veri-tablosu">
@@ -20,10 +32,11 @@ export default function SaticiRaporTablosu({ satirlar }: { satirlar: SellerRepor
             <th className="sayi">{tabanli("Tahsilat", BRUT)}</th>
             <th className="sayi oncelik-dusuk">Ort. İskonto</th>
             <th className="sayi oncelik-dusuk">Doktor</th>
+            {seriler && <th className="oncelik-dusuk">Son 6 ay</th>}
           </tr>
         </thead>
         <tbody>
-          {satirlar.length === 0 && <EmptyRow colSpan={6} text="Satıcı yok." />}
+          {satirlar.length === 0 && <EmptyRow colSpan={6 + kolon} text="Satıcı yok." />}
           {satirlar.map((s) => (
             <tr key={s.sellerId}>
               <td className="font-medium text-slate-900">{s.name}</td>
@@ -34,6 +47,22 @@ export default function SaticiRaporTablosu({ satirlar }: { satirlar: SellerRepor
                 {formatla(s.ortalamaIskonto, "oran")}
               </td>
               <td className="sayi oncelik-dusuk">{s.doktorSayisi}</td>
+              {seriler && (
+                <td className="oncelik-dusuk">
+                  <ColumnMicro
+                    seri={seriler.degerler.get(s.sellerId) ?? []}
+                    sonDevamEdiyor={seriler.aylar[seriler.aylar.length - 1]?.devamEdiyor ?? false}
+                    ozet={
+                      <AyOzeti
+                        baslik={`${s.name} son 6 ay ciro`}
+                        aylar={seriler.aylar}
+                        seri={seriler.degerler.get(s.sellerId) ?? []}
+                        taban={MATRAH}
+                      />
+                    }
+                  />
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
