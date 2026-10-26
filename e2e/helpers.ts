@@ -178,3 +178,35 @@ export async function iskeletGercekleEslesir(page: Page, yol: string) {
   expect(Math.abs(i.satir - satirH), "iskelet satırı --row-h").toBeLessThanOrEqual(1);
   expect(g.satir, "gerçek satır --row-h'den kısa olamaz").toBeGreaterThanOrEqual(satirH - 1);
 }
+
+/**
+ * Sipariş detayında her belge toplamı kendi tabanının kolonunun altındadır (Ü-3 §(7)/(8)):
+ * değer hücresinin sağ kenarı, başlık hücresinin sağ kenarıyla ±1 px aynı.
+ */
+export async function toplamlarKolonlaHizali(page: Page) {
+  await page.goto("/orders");
+  await page.getByRole("link", { name: "Detay" }).first().click();
+  await expect(page.getByRole("heading", { level: 1, name: "Sipariş Detayı" })).toBeVisible();
+  const tablo = page.getByRole("table").filter({ has: page.getByRole("columnheader", { name: "Ürün" }) });
+  // Gizli kolon colSpan hesabını kaydırır: altı kolonun hepsi görünür olmalı.
+  await expect(tablo.getByRole("columnheader")).toHaveCount(6);
+  for (const baslik of await tablo.getByRole("columnheader").all()) await expect(baslik).toBeVisible();
+
+  const sagKenar = async (l: import("@playwright/test").Locator) => {
+    const k = (await l.boundingBox())!;
+    return k.x + k.width;
+  };
+  const satirlar = tablo.locator("tfoot tr");
+  const beklenen: [RegExp, string][] = [
+    [/^Ara Toplam/, "Tutar (KDV hariç)"],
+    [/^KDV$/, "KDV"],
+    [/^Genel Toplam/, "Tutar (KDV dahil)"],
+  ];
+  for (const [i, [etiket, baslik]] of beklenen.entries()) {
+    const satir = satirlar.nth(i);
+    await expect(satir.locator("td").first()).toHaveText(etiket);
+    const deger = await sagKenar(satir.locator("td").nth(1));
+    const kolon = await sagKenar(tablo.getByRole("columnheader", { name: baslik, exact: true }));
+    expect(Math.abs(deger - kolon), `${baslik} kolonu altında olmalı`).toBeLessThanOrEqual(1);
+  }
+}

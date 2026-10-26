@@ -3089,7 +3089,7 @@ yetkisiyle gelmez (Odoo'da `Export` hakkı gruptan ayrı verilir). Gerekçe her 
 | **Ü-3** | **Prim / hakediş / ciro ekranlarında toggle konmaz — kalıcı** | X-1 §1, C-6 §6 |
 | **Ü-3** | **Taban etiketi zorunlu** — her tutarın yanında *KDV hariç/dahil*; §0.4'e genel kural olarak işlendi | §0.4, X-1 §1, **kritik** |
 | **Ü-3** | **Karma kolon yasağı**: tek kolonda iki taban gösterilmez | §0.4 |
-| **Ü-3** | A sınıfı belge toplamı **üç satır**: Matrah · KDV · Genel Toplam | C-6 §5/§6, K-2 |
+| **Ü-3** | A sınıfı belge toplamı **üç satır**: Ara Toplam (KDV hariç) · KDV · Genel Toplam (KDV dahil) | C-6 §5/§6, K-2 |
 | **Ü-3** | Barem `min_adet` **alt sınır** satırlarıyla; üst sınır yok; **KDV indirim hesabının girdisi değil** | B-6, A-10 |
 | **Ü-3** | `liste_fiyat` = barem çıktısı; **elle giriş `birim_fiyat`'a yazılır** (X-5); liste üstü satış serbest, türetilen oran negatif | A-10, X-5, kritik |
 | **Ü-3** | **Maliyet / geliş fiyatı kolonu yok — kalıcı**; sistem yalnız sapmayı kaydeder | C-2 §4 |
@@ -3596,10 +3596,13 @@ böyle bir tercih yoktur: tahsil edilen para brüttür, bölünecek bir tabanı 
 > **(7) Karma kolon yasağı.** Tek kolonda iki farklı tabanlı tutar gösterilmez; iki taban da
 > gerekiyorsa **iki ayrı kolon**, her birinin başlığında tabanı yazılı.
 >
-> **(8) A sınıfı ekranlarda belge toplamı üç satırdır: Matrah · KDV · Genel Toplam.**
+> **(8) A sınıfı ekranlarda belge toplamı üç satırdır: Ara Toplam (KDV hariç) · KDV · Genel Toplam (KDV dahil).**
 > Satırlar matrah gösterir. Gerekçe: doktorun ödeyeceği ve cari hesabına düşecek tutar
 > **brüttür** (C-6 §6, K-2); yalnız matrah gösterilirse satıcı doktora **eksik rakam söyler**.
 > Bu bir toggle değildir — **üç sayı da aynı anda görünür** ve her birinin adı tabanıdır.
+> *(Redaksiyon 26.10.2026: ilk satırın adı ekranla aynı yazıldı — "Matrah" yerine "Ara Toplam
+> (KDV hariç)"; tutar aynıdır, karar değişmedi. Her toplam kendi tabanının kolonunun altında
+> durur — §(7).)*
 >
 > **(9) Barem ve iskonto matrah üzerinde çalışır — teyit.** `cozumleBirimFiyat()` matrah
 > döndürür; **KDV hiçbir indirim hesabının girdisi değildir** (B-6, A-10, C-6 §5). *Aksi
