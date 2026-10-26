@@ -346,7 +346,7 @@ Bayi tanımı → Bayi fiyat listesi → Sevkiyat talebi → Admin onayı → Ba
 >   içerir, ikisi de **KDV kırılımı taşımaz** → toggle açılırsa sistem **eksik veriden bir sayı
 >   uydurur**.
 > · **C sınıfı ekranlarda da kalıcı olarak yoktur** (prim, hakediş, dönem cirosu — daima **matrah**).
-> · **A sınıfı belge toplamı üç satırdır: Matrah · KDV · Genel Toplam** — üçü **aynı anda** görünür.
+> · **A sınıfı belge toplamı üç satırdır: Ara Toplam (KDV hariç) · KDV · Genel Toplam (KDV dahil)** — üçü **aynı anda** görünür, her biri kendi tabanının kolonunun altında.
 > · **Dışa aktarım toggle tanımaz**; veri seti kolonlarının tabanı sabittir.
 > · **Tabanı çözülemeyen tutar ekranda boş kalır** — sıfır veya son fiyat gösterilmez (B-5).
 >

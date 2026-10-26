@@ -146,15 +146,19 @@ export default function OrderDetail({
                 </tr>
               ))}
             </tbody>
-            {/* Toplamlar kalemlerin TOPLAMIDIR; yeniden yuvarlanmaz (C-6 §(5)). */}
+            {/* Toplamlar kalemlerin TOPLAMIDIR; yeniden yuvarlanmaz (C-6 §(5)). Her toplam kendi
+                tabanının kolonunun altındadır — karma kolon yasağı (Ü-3 §(7)): Ara Toplam →
+                "Tutar (KDV hariç)", KDV → "KDV", Genel Toplam → "Tutar (KDV dahil)". Bu tabloda
+                .oncelik-dusuk yoktur; gizlenen kolon colSpan hesabını kaydırırdı. */}
             <tfoot className="border-t border-slate-200">
               <tr>
-                <td colSpan={4} className="text-right text-slate-600">
+                <td colSpan={3} className="text-right text-slate-600">
                   {tabanli("Ara Toplam", SATIR_TABANI.matrah)}
                 </td>
                 <td className="sayi text-slate-600">
                   <Tutar deger={hesap.toplam.matrah} taban={SATIR_TABANI.matrah} baslikta />
                 </td>
+                <td colSpan={2} />
               </tr>
               <tr>
                 <td colSpan={4} className="text-right text-slate-600">
@@ -163,9 +167,10 @@ export default function OrderDetail({
                 <td className="sayi text-slate-600">
                   <Tutar deger={hesap.toplam.kdvTutar} taban={SATIR_TABANI.kdvTutar} baslikta />
                 </td>
+                <td />
               </tr>
               <tr>
-                <td colSpan={4} className="text-right font-medium">
+                <td colSpan={5} className="text-right font-medium">
                   {tabanli("Genel Toplam", SATIR_TABANI.toplam)}
                 </td>
                 <td className="sayi text-base font-semibold">
