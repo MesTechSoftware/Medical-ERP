@@ -82,6 +82,30 @@ describe("görsel tasarım sistemi (ADR-009)", () => {
     expect(ihlal).toEqual([]);
   });
 
+  it("KPI kartları kurala uyar: dosya başına ≤ 4; iyiYon ve bosDavranisi yazılı; satırın ilk kartı birincil", () => {
+    const ekranlar = [...dosyalar(join(SRC, "app"), /\.tsx$/), ...dosyalar(join(SRC, "components"), /\.tsx$/)].filter(
+      (y) => !y.includes(join("components", "kpi"))
+    );
+    const ihlal: string[] = [];
+    for (const y of ekranlar) {
+      const k = readFileSync(y, "utf8");
+      const kartlar = [...k.matchAll(/<KpiCard\b[\s\S]*?\/>/g)].map((m) => m[0]);
+      const yer = relative(SRC, y);
+      if (kartlar.length > 4) ihlal.push(`${yer}: ${kartlar.length} KpiCard`);
+      for (const kart of kartlar) {
+        if (!/\biyiYon=/.test(kart) || !/\bbosDavranisi=/.test(kart)) ihlal.push(`${yer}: iyiYon/bosDavranisi eksik`);
+      }
+      for (const satir of k.matchAll(/<KpiSatiri>([\s\S]*?)<\/KpiSatiri>/g)) {
+        const icindekiler = [...satir[1].matchAll(/<KpiCard\b[\s\S]*?\/>/g)].map((m) => m[0]);
+        icindekiler.forEach((kart, i) => {
+          const birincil = /varyant="birincil"/.test(kart);
+          if ((i === 0) !== birincil) ihlal.push(`${yer}: satırın ${i + 1}. kartı ${birincil ? "birincil olmamalı" : "birincil olmalı"}`);
+        });
+      }
+    }
+    expect(ihlal).toEqual([]);
+  });
+
   it("ham palet renk sınıfı yok — renk yalnız semantik token'dan; nötr griler serbest", () => {
     // slate/gray/zinc/neutral/stone, beyaz ve siyah nötrdür; marka ve semantik token'lar ad taşır.
     const PALET =
