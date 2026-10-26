@@ -36,3 +36,15 @@ export function formatGun(d: Date): string {
     year: "numeric",
   }).format(d);
 }
+
+const SAYI = new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 0 });
+
+/** Adet gösterimi, tr-TR binlik ayırıcıyla ("1.250"). Para değildir — tutar `<Tutar>` ile. */
+export function formatSayi(n: number): string {
+  return SAYI.format(n);
+}
+
+/** Takvim ayının kısa adı ("Eki"). Ayın kendisidir, an değildir: dilim dönüşümü yoktur. */
+export function ayEtiketi(yil: number, ay: number): string {
+  return new Intl.DateTimeFormat("tr-TR", { month: "short", timeZone: "UTC" }).format(new Date(Date.UTC(yil, ay - 1, 15)));
+}

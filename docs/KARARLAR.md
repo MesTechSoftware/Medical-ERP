@@ -4140,6 +4140,21 @@ kullanılır — ama ölçeği **koda emanet eder**.
 > iskonto oranının şemada saklanması · iskonto tavanı mekanizması.
 >
 > **Kilitlenme anı:** **Faz 1 migration'ının yazımı.** Sonrası veri taşımadır.
+>
+> **X-5 eki (26.10.2026) — gösterim ölçeği.** KPI kartındaki dönem değişim yüzdesi ve mikro
+> grafik geometrisi (SVG koordinatı, çubuk oranı) **parasal tutar üretmez: yalnız gösterimdir,
+> kayda ve hesaba girmez.** Bu hesap (4)'ün iki fonksiyonuna eklenmez; tek bir dosyada,
+> `src/lib/kpi/olcek.ts` içinde durur ve şu koşullara bağlıdır:
+> · Dosya yalnız **boyutsuz** değer döndürür (yüzde, oran, koordinat); `Decimal` döndürmez.
+> · Yuvarlama açıktır ve **tek fonksiyondadır** (yarım yukarı); taban 0, negatif taban ve çok
+>   büyük tutar sınırları testlidir.
+> · `Decimal` bölmesinin ve `number`'a çevirmenin bu dosya ve (4)'ün dosyaları dışında
+>   geçmediği **kaynak taramasıyla** zorlanır (`kpi/olcek.test.ts`); (5)'in lint istisnası
+>   yalnız bu dosyaya verilir.
+> · Ekranda görünen her tutar yine `<Tutar>` ile, `formatla()` üzerinden gösterilir; yüzde
+>   `formatla(…, "oran")` ile. Grafikten ekrana sayı sızmaz.
+> Gerekçe: (4) parasal hesabın tek yolda kalmasını korur. Gösterim ölçeği bir tutar hesabı
+> değildir, ama aynı `Decimal` kaçışlarını kullandığı için tek dosyaya kapatılır.
 
 ---
 

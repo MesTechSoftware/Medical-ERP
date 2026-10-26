@@ -6,7 +6,7 @@
 > Kod yeri, kriter metninde anılan fonksiyonun tanımlandığı dosyadır. Eski PRD matrisi (8 Ağustos 2026)
 > `docs/arsiv/TRACEABILITY_PRD_V2.md`'dedir.
 
-**Özet:** 118 KANITLI · 0 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.0** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
+**Özet:** 119 KANITLI · 0 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.0** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
 
 | Kriter | Karar | Durum | Kod yeri | Test | Kriter metni |
 |---|---|---|---|---|---|
@@ -115,6 +115,7 @@
 | X-4-3 | X-4 | KANITLI | — | `src/lib/sonuc.test.ts`<br>`src/app/(seller)/my-orders/orders.itest.ts` | Bildirim yutulmaz: bir işlemin bütün bildirimleri kademeye göre sıralı döner ve gösterilir. Sipariş girişinde kalem hataları (fiyat çözüm… |
 | X-4-4 | X-4 | KANITLI | — | `e2e/admin/is-sonucu.spec.ts`<br>`src/lib/sonuc.test.ts` | Gösterim kademe başına tek desendir ve tek bileşendedir (`Sonuc.tsx`): `SERT` bildirim alanı olan formda alanın altında, alan işaretli (`… |
 | X-5-1 | X-5 | KANITLI | `src/lib/money.ts` | `src/lib/money.test.ts`<br>`src/lib/satir-tutarlari.test.ts`<br>`src/app/(seller)/my-orders/orders.itest.ts` | Parasal alanlar `Decimal`'dir (birim fiyat 18,4 · tutar 18,2 · oran 5,2); `Decimal` üzerinde ham aritmetik yalnız `satir-tutarlari.ts` ve… |
+| X-5-2 | X-5 | KANITLI | — | `src/lib/kpi/olcek.test.ts` | KPI dönem değişim yüzdesi ve mikro grafik geometrisi yalnız `kpi/olcek.ts`'te hesaplanır; dosya yalnız boyutsuz değer (yüzde, oran, koord… |
 | X-6-1 | X-6 | KANITLI | `src/lib/doctor-cari.ts` | `src/lib/bakiye.itest.ts`<br>`src/app/(admin)/collections/collections.itest.ts` | Vade görünürlüğü tutar değil varlıktır: cari borçluyken (`hesaplaDoktorBakiye()` yönü `BORC`) vadesi bugünden (İstanbul günü) önce olan,… |
 | X-7-1 | X-7 | KANITLI | — | `src/lib/izlenebilirlik.test.ts` | `TRACEABILITY.md` bu dosyadan üretilir (kriter · karar · durum · kod yeri · test); elle düzenlenmez (`npm run izlenebilirlik`). CI dosyan… |
 | X-8-1 | X-8 | KANITLI | — | `src/lib/kapsam.itest.ts`<br>`src/lib/yetki.test.ts` | `SATICI` `BAYI` carisini görmez (X-13-1) ve açamaz: satıcı ekranından açılan cari daima `DOKTOR`'dur. `BAYI`'yi yalnız `YONETICI` açar; `… |
