@@ -5,12 +5,12 @@ import { prisma } from "@/lib/db";
 import { requireAdmin, requireStaff } from "@/lib/session";
 import { quantitySchema } from "@/lib/validation";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
-import { hesaplaStok, stokHareketiYaz, varsayilanDepoId } from "@/lib/stok";
 import { basarili, engel, type IslemSonucu } from "@/lib/sonuc";
 import type { Prisma } from "@/generated/prisma/client";
 import { IsHatasi } from "@/lib/hata";
 import { konsinyeCikisYaz, stokTransferYaz } from "@/lib/stok-transfer";
 import { stokDuzeltmeYaz, type DuzeltmeKalemi } from "@/lib/stok-duzeltme";
+import { stokGirisiYaz } from "@/lib/stok-giris";
 
 export async function addStockEntry(
   _prev: unknown,
@@ -28,22 +28,8 @@ export async function addStockEntry(
   const product = await prisma.product.findUnique({ where: { id: productId } });
   if (!product) return engel("URUN_BULUNAMADI", {}, "productId");
 
-  // Stok miktarı saklanmaz; giriş yalnız hareket yazar (ADR-005).
-  await prisma.$transaction(async (tx) => {
-    await stokHareketiYaz(tx, [
-      { productId, locationId: await varsayilanDepoId(tx), type: "GIRIS", quantity, note: note ?? "Stok girişi" },
-    ]);
-    await createAuditLog(
-      {
-        actorId: session.user.id,
-        action: AUDIT_ACTIONS.STOCK_ENTRY,
-        entityType: "Product",
-        entityId: productId,
-        after: { quantity, newStock: await hesaplaStok(productId, undefined, undefined, tx), note },
-      },
-      tx
-    );
-  });
+  // Stok miktarı saklanmaz; giriş yalnız hareket yazar (ADR-005) — tek yol lib/stok-giris.ts.
+  await prisma.$transaction((tx) => stokGirisiYaz(tx, { urunId: productId, miktar: quantity, not: note, yapanId: session.user.id }));
 
   revalidatePath("/stock");
   revalidatePath("/products");

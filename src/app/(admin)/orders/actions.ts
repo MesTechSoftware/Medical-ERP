@@ -10,6 +10,7 @@ import { stokHareketiYaz, stokKilitle } from "@/lib/stok";
 import { IsHatasi } from "@/lib/hata";
 import { iadeYaz } from "@/lib/iade";
 import { siparisAc, siparisSatirlariniOku } from "@/lib/siparis-giris";
+import { siparisiHazirla, teslimEdildiIsaretle } from "@/lib/siparis-durum";
 import { basarili, engel, type IslemSonucu } from "@/lib/sonuc";
 
 function revalidateOrders() {
@@ -24,27 +25,8 @@ function revalidateOrders() {
 /** BEKLIYOR -> HAZIRLANIYOR */
 export async function prepareOrder(id: string): Promise<IslemSonucu> {
   const session = await requireStaff();
-  const res = await prisma.$transaction(async (tx) => {
-    const res = await tx.order.updateMany({
-      where: { id, status: "BEKLIYOR" },
-      data: { status: OrderStatus.HAZIRLANIYOR },
-    });
-    if (res.count > 0) {
-      await createAuditLog(
-        {
-          actorId: session.user.id,
-          action: AUDIT_ACTIONS.ORDER_STATUS_CHANGE,
-          entityType: "Order",
-          entityId: id,
-          before: { status: "BEKLIYOR" },
-          after: { status: "HAZIRLANIYOR" },
-        },
-        tx
-      );
-    }
-    return res;
-  });
-  if (res.count === 0) return engel("SIPARIS_DURUMU_UYGUN_DEGIL");
+  const gecti = await prisma.$transaction((tx) => siparisiHazirla(tx, { siparisId: id, yapanId: session.user.id }));
+  if (!gecti) return engel("SIPARIS_DURUMU_UYGUN_DEGIL");
   revalidateOrders();
   redirect(`/orders/${id}`);
 }
@@ -52,31 +34,8 @@ export async function prepareOrder(id: string): Promise<IslemSonucu> {
 /** KARGOLANDI -> TESLIM_EDILDI */
 export async function markDelivered(id: string): Promise<IslemSonucu> {
   const session = await requireStaff();
-  const updated = await prisma.$transaction(async (tx) => {
-    const updated = await tx.order.updateMany({
-      where: { id, status: "KARGOLANDI" },
-      data: { status: OrderStatus.TESLIM_EDILDI },
-    });
-    if (updated.count > 0) {
-      await tx.shipment.updateMany({
-        where: { orderId: id },
-        data: { status: OrderStatus.TESLIM_EDILDI },
-      });
-      await createAuditLog(
-        {
-          actorId: session.user.id,
-          action: AUDIT_ACTIONS.ORDER_STATUS_CHANGE,
-          entityType: "Order",
-          entityId: id,
-          before: { status: "KARGOLANDI" },
-          after: { status: "TESLIM_EDILDI" },
-        },
-        tx
-      );
-    }
-    return updated;
-  });
-  if (updated.count === 0) return engel("SIPARIS_DURUMU_UYGUN_DEGIL");
+  const gecti = await prisma.$transaction((tx) => teslimEdildiIsaretle(tx, { siparisId: id, yapanId: session.user.id }));
+  if (!gecti) return engel("SIPARIS_DURUMU_UYGUN_DEGIL");
   revalidateOrders();
   redirect(`/orders/${id}`);
 }

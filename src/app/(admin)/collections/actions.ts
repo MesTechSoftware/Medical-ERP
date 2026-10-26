@@ -5,14 +5,13 @@ import { prisma } from "@/lib/db";
 import { requireAdmin, requireStaff } from "@/lib/session";
 import { amountSchema } from "@/lib/validation";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
-import { uretBelgeNo } from "@/lib/belge-no";
-import { hesaplaKomisyonTutari } from "@/lib/satir-tutarlari";
 import { simdi } from "@/lib/zaman";
 import { IsHatasi } from "@/lib/hata";
-import { basarili, engel, sert, sonucOlustur, type Bildirim, type IslemSonucu } from "@/lib/sonuc";
+import { basarili, engel, sonucOlustur, type Bildirim, type IslemSonucu } from "@/lib/sonuc";
 import { nakitTevsikUyarisi } from "@/lib/tevsik";
 import { vadesiGecmisUyarisi } from "@/lib/doctor-cari";
-import { tahsilatHareketiYaz, tersKayitYaz } from "@/lib/cari-hareket";
+import { tersKayitYaz } from "@/lib/cari-hareket";
+import { tahsilatYaz } from "@/lib/tahsilat";
 
 /**
  * 🔴 Tahsilat kaydı — sistemin MERKEZÎ olayı (RULE-12).
@@ -43,45 +42,16 @@ export async function recordCollection(
   let uyarilar: Bildirim[];
   try {
     uyarilar = await prisma.$transaction(async (tx) => {
-      const yontem = await tx.paymentMethod.findUnique({ where: { id: paymentMethodId } });
-      if (!yontem || !yontem.isActive) throw new IsHatasi([sert("ODEME_YONTEMI_BULUNAMADI", {}, "paymentMethodId")]);
-      const documentNo = await uretBelgeNo("THS", tx);
-      const payment = await tx.doctorPayment.create({
-        data: {
-          documentNo,
-          doctorId,
-          amount,
-          paymentMethodId,
-          commissionRate: yontem.commissionRate,
-          commissionAmount: hesaplaKomisyonTutari(amount, yontem.commissionRate),
-          paidAt: formData.get("paidAt")
-            ? new Date(String(formData.get("paidAt")))
-            : simdi(),
-          referenceNo:
-            ((formData.get("referenceNo") as string) || "").trim() || null,
-          note: ((formData.get("note") as string) || "").trim() || null,
-          recordedBy: session.user.id,
-        },
-      });
-      // A-11, X-11 §(5): tahsilat cari hareketi belgeyle aynı transaction'da.
-      await tahsilatHareketiYaz(tx, {
-        doctorId,
-        tutar: payment.amount,
-        yon: payment.direction,
-        documentNo,
-        paymentId: payment.id,
+      // Numara, kayıt, cari hareket ve denetim kaydı tek yazım yolundan (lib/tahsilat.ts).
+      const payment = await tahsilatYaz(tx, {
+        doktorId: doctorId,
+        odemeYontemiId: paymentMethodId,
+        tutar: amount,
+        odemeAni: formData.get("paidAt") ? new Date(String(formData.get("paidAt"))) : simdi(),
+        referansNo: ((formData.get("referenceNo") as string) || "").trim() || null,
+        not: ((formData.get("note") as string) || "").trim() || null,
         yapanId: session.user.id,
       });
-      await createAuditLog(
-        {
-          actorId: session.user.id,
-          action: AUDIT_ACTIONS.COLLECTION_CREATE,
-          entityType: "DoctorPayment",
-          entityId: payment.id,
-          after: { documentNo, doctorId, amount },
-        },
-        tx
-      );
       // A-15: nakit tevsik uyarısı BILGI'dir — kayıt tamamlanır, uyarı sonuçla döner.
       const tevsik = await nakitTevsikUyarisi(tx, { doctorId, an: payment.paidAt, yon: payment.direction });
       // X-6 §(6): tahsilat ekranında vadesi geçmiş hareketin varlığı (BILGI). Bütün uyarılar döner (X-4 §(7)).
