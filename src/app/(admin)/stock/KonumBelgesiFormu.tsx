@@ -4,6 +4,7 @@ import { startTransition, useActionState } from "react";
 import { SonucGosterimi, type SonucDurumu } from "@/components/Sonuc";
 import type { IslemSonucu } from "@/lib/sonuc";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 type Secenek = { value: string; label: string };
 
@@ -73,6 +74,7 @@ export default function KonumBelgesiFormu({
         type="submit"
         className={buton("birincil", { form: true })}
       >
+        <Ikon ad="kaydet" />
         {dugme}
       </button>
     </form>

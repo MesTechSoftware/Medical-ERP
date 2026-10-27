@@ -13,6 +13,7 @@ import {
 import Pagination from "@/components/Pagination";
 import { getPagination, pageCount } from "@/lib/pagination";
 import { buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 export default async function DoctorsPage({
   searchParams,
@@ -41,7 +42,7 @@ export default async function DoctorsPage({
       <PageHeader
         title="Doktorlarım"
         description="Portföyünüzdeki doktorlar"
-        action={<LinkButton href="/my-doctors/new">Yeni Doktor</LinkButton>}
+        action={<LinkButton href="/my-doctors/new" ikon="yeni">Yeni Doktor</LinkButton>}
       />
 
       <Card>
@@ -84,6 +85,7 @@ export default async function DoctorsPage({
                       href={`/my-doctors/${d.id}/edit`}
                       className={buton("metin")}
                     >
+                      <Ikon ad="duzenle" />
                       Düzenle
                     </Link>
                   </td>

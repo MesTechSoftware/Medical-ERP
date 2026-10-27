@@ -11,6 +11,7 @@ import { takipLinki } from "@/lib/kargo";
 import { belgeOnayDurumlari } from "@/lib/onay-blogu";
 import { OnayEtiketi } from "@/components/OnayEtiketi";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 export default async function ShippingPage() {
   const [pending, shipped, carriers] = await Promise.all([
@@ -168,6 +169,7 @@ export default async function ShippingPage() {
                       type="submit"
                       className={buton("birincil")}
                     >
+                      <Ikon ad="kargola" />
                       Kargola
                     </button>
                   </IslemFormu>

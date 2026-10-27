@@ -47,15 +47,34 @@ Görünüm kararı kimseye ait değildi; her yeni ekran bir öncekini kopyalıyo
    - `100vh` / `*-screen` yoktur; `dvh` kullanılır.
    - Telefonda menü iki satırlı başlığın altında tam genişlik kayan şerittir; aktif sayfa şeridin
      görünür alanına alınır — **yalnız şeridin `scrollLeft`'i** ayarlanır, sayfa kaymaz.
+   - Telefonda sayfa başlığı (`PageHeader`, md altı): başlık satırı kontrol yüksekliğindedir ve
+     aksiyonla paylaşılır, açıklama tam genişliktedir. Aksiyon açıklamayı daraltmaz; başlık
+     yüksekliği aksiyonun varlığından bağımsızdır, iskelet aynı ölçüyü kullanır (27.10.2026).
 6. **Hareket "productive"tir.** Süreler kısa, eğri asla linear değil (dönen yükleme hariç), giren
    yavaşlayarak durur, çıkan hızlanarak çıkar. `prefers-reduced-motion` desteklenir; uygulama
    animasyonsuz da tam çalışır.
 7. **Zorlama — testler:**
    - `src/lib/tasarim.test.ts`: kontrast, `data-density`, `100vh` yasağı; semantik renk adımında
-     ham palet sınıfı yasağı (`red-…`, `blue-…` vb.; `slate`/`gray` nötrleri serbest).
+     ham palet sınıfı yasağı (`red-…`, `blue-…` vb.; `slate`/`gray` nötrleri serbest); her
+     `<button>` ve `buton()` sınıflı bağlantı `<Ikon>` taşır; `.tsx`'te emoji ve düz metin ok yoktur
+     (madde 8).
    - Playwright mobil projeleri (`mobil-iphone`, `mobil-android`, `mobil-ipad`): kritik akışlar,
      yatay kayma yok, dokunma hedefi ölçümü.
    - E2E seçicileri stil sınıfına bağlanmaz (`data-*`, rol, etiket).
+8. **Buton ikonları: ikon + metin, her yerde** (27.10.2026, kullanıcı kararı). Her eylem butonu ve
+   buton görünümlü bağlantı bir ikon ve metin taşır.
+   - İkon seti menüyle aynıdır (lucide). Emoji ve düz metin ok/çarpı (`←`, `→`, `✕`, baştaki "+ ")
+     kullanılmaz.
+   - Tek eşleme `src/components/Ikon.tsx`: anlamsal ad → ikon. Aynı eylem her ekranda aynı ikonu
+     taşır (Düzenle kalem, Sil çöp kutusu, formu kaydeden buton disket).
+   - İkon dekoratiftir (`aria-hidden`), erişilebilir ad metindir; boyut yazıya göredir (1,15 em).
+   - İkon metnin önündedir; ileri yönü gösteren ok (`ileri`, `sonraki`) metnin ardındadır.
+   - `SubmitButton`, `LinkButton` ve `ConfirmSubmit` ikon adını zorunlu prop olarak alır. Beklerken
+     dönen gösterge ikonun yerine geçer.
+   - `<details>` içinde eylem açan `<summary>` (ör. "Ters kayıt") aynı kurala uyar (`ACILIR_EYLEM`):
+     tarayıcının üçgen işaretinin yerini ikon alır.
+   - Yalnız ikon iki yerde görünür, erişilebilir ad yine metindir: satır içi "Kalemi sil"
+     (`aria-label`) ve telefonda sayfalama (metin `sr-only`).
 
 ## Sonuçlar
 

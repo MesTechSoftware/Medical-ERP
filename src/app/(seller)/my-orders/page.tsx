@@ -17,6 +17,7 @@ import { SATIR_TABANI, tabanli } from "@/lib/taban";
 import { belgeOnayDurumlari } from "@/lib/onay-blogu";
 import { OnayEtiketi } from "@/components/OnayEtiketi";
 import { buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 export default async function MyOrdersPage({
   searchParams,
@@ -47,7 +48,7 @@ export default async function MyOrdersPage({
       <PageHeader
         title="Siparişlerim"
         description="Oluşturduğunuz siparişler"
-        action={<LinkButton href="/my-orders/new">Yeni Sipariş</LinkButton>}
+        action={<LinkButton href="/my-orders/new" ikon="yeni">Yeni Sipariş</LinkButton>}
       />
 
       <Card>
@@ -94,6 +95,7 @@ export default async function MyOrdersPage({
                       href={`/my-orders/${o.id}`}
                       className={buton("metin")}
                     >
+                      <Ikon ad="detay" />
                       Detay
                     </Link>
                   </td>

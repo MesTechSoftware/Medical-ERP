@@ -4,6 +4,7 @@ import { startTransition, useActionState, useState } from "react";
 import { SonucGosterimi, type SonucDurumu } from "@/components/Sonuc";
 import { addStockAdjustment } from "./actions";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 type Secenek = { value: string; label: string };
 type Satir = { key: number; urunId: string; konumId: string; fark: string; sebepId: string; aciklama: string };
@@ -104,14 +105,16 @@ export default function DuzeltmeFormu({
             </div>
           </div>
           {satirlar.length > 1 && (
-            <button type="button" onClick={() => setSatirlar((ss) => ss.filter((x) => x.key !== s.key))} className="inline-flex items-center justify-center text-xs text-slate-400 hover:text-negative dokunmatik:min-h-11 dokunmatik:min-w-11">
+            <button type="button" onClick={() => setSatirlar((ss) => ss.filter((x) => x.key !== s.key))} className="inline-flex items-center justify-center gap-1 text-xs text-slate-400 hover:text-negative dokunmatik:min-h-11 dokunmatik:min-w-11">
+              <Ikon ad="sil" />
               Satırı sil
             </button>
           )}
         </div>
       ))}
       <button type="button" onClick={() => setSatirlar((ss) => [...ss, yeni(Math.max(...ss.map((x) => x.key)) + 1)])} className={buton("metin")}>
-        + Satır Ekle
+        <Ikon ad="yeni" />
+        Satır Ekle
       </button>
       <div>
         <label htmlFor="dzl-tutanak" className="mb-1 block text-xs text-slate-500">
@@ -121,6 +124,7 @@ export default function DuzeltmeFormu({
       </div>
       <SonucGosterimi sonuc={sonuc} basari={(p) => `Stok düzeltme kaydedildi: ${p.documentNo}.`} />
       <button type="submit" className={buton("birincil", { form: true })}>
+        <Ikon ad="kaydet" />
         Düzeltmeyi Kaydet
       </button>
     </form>

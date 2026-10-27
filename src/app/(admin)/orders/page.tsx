@@ -9,6 +9,7 @@ import { OrderStatus } from "@/generated/prisma/enums";
 import { Tutar } from "@/components/Tutar";
 import { SATIR_TABANI, tabanli } from "@/lib/taban";
 import { buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 const STATUS_FILTERS: { value: string; label: string }[] = [
   { value: "", label: "Tümü" },
@@ -54,7 +55,7 @@ export default async function OrdersPage({
       <PageHeader
         title="Siparişler"
         description="Doktor ve bayi siparişleri, durum yönetimi"
-        action={<LinkButton href="/orders/new">Yeni Sipariş</LinkButton>}
+        action={<LinkButton href="/orders/new" ikon="yeni">Yeni Sipariş</LinkButton>}
       />
 
       <div className="mb-4 flex flex-wrap gap-2">
@@ -118,6 +119,7 @@ export default async function OrdersPage({
                       href={`/orders/${o.id}`}
                       className={buton("metin")}
                     >
+                      <Ikon ad="detay" />
                       Detay
                     </Link>
                   </td>

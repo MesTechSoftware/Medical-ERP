@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 export default function NotFound() {
   return (
@@ -16,6 +17,7 @@ export default function NotFound() {
           href="/"
           className={`mt-4 ${buton("birincil")}`}
         >
+          <Ikon ad="anaSayfa" />
           Ana sayfaya dön
         </Link>
       </div>

@@ -5,6 +5,7 @@ import { SonucGosterimi, type SonucDurumu } from "@/components/Sonuc";
 import { TextArea } from "@/components/form";
 import type { IslemSonucu } from "@/lib/sonuc";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 /**
  * İade formu (A-1): kalem başına iade miktarı (varsayılan 0) ve zorunlu sebep. Hata sonrası
@@ -55,6 +56,7 @@ export default function IadeFormu({
         type="submit"
         className={buton("ikincil")}
       >
+        <Ikon ad="kaydet" />
         İade Kaydet
       </button>
       <SonucGosterimi sonuc={sonuc} alanlar={["reason"]} basari={(p) => `İade kaydedildi: ${p.documentNo}.`} />

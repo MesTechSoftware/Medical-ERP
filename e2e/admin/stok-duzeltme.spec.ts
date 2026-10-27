@@ -12,7 +12,7 @@ test("yönetici iki satırlı düzeltme kaydeder; stok ve belge yazılır (B-7-1
   await form.getByLabel("Fark (±)").fill("-2");
   await form.getByLabel("Sebep").selectOption({ label: "Hasar" });
   await form.getByLabel("Açıklama").fill("Kırık kutu");
-  await form.getByRole("button", { name: "+ Satır Ekle" }).click();
+  await form.getByRole("button", { name: "Satır Ekle" }).click();
   await form.locator("#dzl-urun-1").selectOption({ label: urun });
   await form.locator("#dzl-fark-1").fill("1");
   await form.locator("#dzl-sebep-1").selectOption({ label: "Sayım farkı" });

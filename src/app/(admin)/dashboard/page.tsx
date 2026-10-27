@@ -17,6 +17,7 @@ import { KpiSatiri } from "@/components/kpi/KpiSatiri";
 import { BarMicro } from "@/components/grafik/BarMicro";
 import { StokMiktari } from "@/components/StokMiktari";
 import { buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 /**
  * Dashboard (YONETICI + OPERASYON) — "bu ay" KPI'ları (K-4; ADR-010). Ekran prim/hakediş
@@ -158,7 +159,8 @@ export default async function DashboardPage() {
               href="/stock"
               className={buton("metin")}
             >
-              Stok Yönetimi →
+              Stok Yönetimi
+              <Ikon ad="ileri" />
             </Link>
           </div>
         </Card>

@@ -8,6 +8,7 @@ import { PageHeader, Card, StatusBadge } from "@/components/ui";
 import { IslemFormu } from "@/components/Sonuc";
 import { blokKarari } from "./actions";
 import { KONTROL_COK_SATIR, buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 /**
  * Onay bekleyenler (A-8): karar verilmemiş bloklar, en eskisi önce. Bugün tek kural
@@ -87,6 +88,7 @@ export default async function ApprovalsPage() {
                         value="ONAY"
                         className={buton("birincil")}
                       >
+                        <Ikon ad="onayla" />
                         Onayla
                       </button>
                       <button
@@ -95,6 +97,7 @@ export default async function ApprovalsPage() {
                         value="RED"
                         className={buton("olumsuz-cerceve")}
                       >
+                        <Ikon ad="reddet" />
                         Reddet
                       </button>
                     </div>

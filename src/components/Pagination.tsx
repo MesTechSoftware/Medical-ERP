@@ -1,9 +1,10 @@
 import Link from "next/link";
+import { Ikon } from "@/components/Ikon";
 
 /**
  * Sunucu bileşeni sayfalama kontrolü. Mevcut arama parametrelerini korur
  * (ör. `?status=BEKLIYOR` filtresi sayfa değiştirince kaybolmaz).
- * Telefonda kısa biçim (‹ 3 / 12 ›); çubuk yüksekliği tablo araç çubuğuyla aynı.
+ * Telefonda kısa biçim (yalnız ikonlar ve 3 / 12); çubuk yüksekliği tablo araç çubuğuyla aynı.
  */
 export default function Pagination({
   page,
@@ -30,17 +31,22 @@ export default function Pagination({
   };
 
   const kutu =
-    "inline-flex h-(--toolbar-h) min-w-11 items-center justify-center rounded-md border px-3 text-sm";
+    "inline-flex h-(--toolbar-h) min-w-11 items-center justify-center gap-1 rounded-md border px-3 text-sm";
   const linkClass = `${kutu} border-slate-200 text-slate-700 hover:bg-slate-50`;
   const disabledClass = `${kutu} border-slate-100 text-slate-300`;
 
-  // Erişilebilir ad her genişlikte "Önceki"/"Sonraki"; telefonda yalnız ok görünür.
-  const etiket = (ok: string, metin: string) => (
+  // Erişilebilir ad her genişlikte "Önceki"/"Sonraki"; telefonda yalnız ikon görünür.
+  const metin = (m: string) => <span className="sr-only md:not-sr-only">{m}</span>;
+  const onceki = (
     <>
-      <span aria-hidden="true" className="md:hidden">
-        {ok}
-      </span>
-      <span className="sr-only md:not-sr-only">{metin}</span>
+      <Ikon ad="onceki" />
+      {metin("Önceki")}
+    </>
+  );
+  const sonraki = (
+    <>
+      {metin("Sonraki")}
+      <Ikon ad="sonraki" />
     </>
   );
 
@@ -59,17 +65,17 @@ export default function Pagination({
       </p>
       {page > 1 ? (
         <Link href={href(page - 1)} className={`${linkClass} order-1 md:order-2`} rel="prev">
-          {etiket("‹", "Önceki")}
+          {onceki}
         </Link>
       ) : (
-        <span className={`${disabledClass} order-1 md:order-2`}>{etiket("‹", "Önceki")}</span>
+        <span className={`${disabledClass} order-1 md:order-2`}>{onceki}</span>
       )}
       {page < totalPages ? (
         <Link href={href(page + 1)} className={`${linkClass} order-3`} rel="next">
-          {etiket("›", "Sonraki")}
+          {sonraki}
         </Link>
       ) : (
-        <span className={`${disabledClass} order-3`}>{etiket("›", "Sonraki")}</span>
+        <span className={`${disabledClass} order-3`}>{sonraki}</span>
       )}
     </nav>
   );

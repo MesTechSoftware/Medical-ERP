@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 /**
  * Beklenmeyen hatanın TEK ekranı — X-3 §(2). Üç şey gösterir: sabit açıklama, hata referansı,
@@ -30,6 +31,7 @@ export default function HataEkrani({ referans }: { referans?: string }) {
           href="/"
           className={`mt-4 ${buton("birincil")}`}
         >
+          <Ikon ad="anaSayfa" />
           Ana sayfaya dön
         </Link>
       </div>

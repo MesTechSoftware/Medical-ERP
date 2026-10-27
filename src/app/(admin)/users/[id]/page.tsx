@@ -14,6 +14,7 @@ import {
   EmptyRow,
 } from "@/components/ui";
 import { buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 export default async function SellerDetailPage({
   params,
@@ -51,6 +52,7 @@ export default async function SellerDetailPage({
               href={`/users/${id}/edit`}
               className={buton("metin")}
             >
+              <Ikon ad="duzenle" />
               Düzenle
             </Link>
           )

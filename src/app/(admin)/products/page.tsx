@@ -13,6 +13,7 @@ import { IslemFormu } from "@/components/Sonuc";
 import { deleteProduct } from "./actions";
 import { bugun } from "@/lib/zaman";
 import { buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 
 export default async function ProductsPage() {
@@ -40,7 +41,7 @@ export default async function ProductsPage() {
       <PageHeader
         title="Ürünler"
         description="Ürün kataloğu ve güncel stok durumu"
-        action={yonetici && <LinkButton href="/products/new">Yeni Ürün</LinkButton>}
+        action={yonetici && <LinkButton href="/products/new" ikon="yeni">Yeni Ürün</LinkButton>}
       />
 
       <Card>
@@ -88,10 +89,11 @@ export default async function ProductsPage() {
                           href={`/products/${p.id}/edit`}
                           className={buton("metin")}
                         >
+                          <Ikon ad="duzenle" />
                           Düzenle
                         </Link>
                         <IslemFormu action={deleteProduct.bind(null, p.id)}>
-                          <ConfirmSubmit confirmText={`"${p.name}" silinsin mi?`}>
+                          <ConfirmSubmit confirmText={`"${p.name}" silinsin mi?`} ikon="sil">
                             Sil
                           </ConfirmSubmit>
                         </IslemFormu>

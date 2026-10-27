@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 export const metadata: Metadata = {
   title: "Gizlilik Politikası — Medikal Satış Operasyon",
@@ -119,7 +120,8 @@ export default function PrivacyPage() {
             href="/login"
             className={buton("metin")}
           >
-            ← Girişe dön
+            <Ikon ad="geri" />
+            Girişe dön
           </Link>
         </div>
       </div>

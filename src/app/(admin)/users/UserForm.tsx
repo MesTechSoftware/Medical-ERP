@@ -6,6 +6,7 @@ import { Field, SelectField, SubmitButton } from "@/components/form";
 import { SonucGosterimi } from "@/components/Sonuc";
 import type { UserFormState } from "./actions";
 import { buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 type Action = (prev: unknown, formData: FormData) => Promise<UserFormState>;
 
@@ -134,11 +135,12 @@ export default function UserForm({
       />
 
       <div className="flex flex-wrap items-center gap-3 pt-2">
-        <SubmitButton>{submitLabel}</SubmitButton>
+        <SubmitButton ikon="kaydet">{submitLabel}</SubmitButton>
         <Link
           href="/users"
           className={buton("metin")}
         >
+          <Ikon ad="vazgec" />
           İptal
         </Link>
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
+import { Ikon, type IkonAdi } from "@/components/Ikon";
 import { alanHatasi, type SonucDurumu } from "@/components/Sonuc";
 import { KONTROL_COK_SATIR, KONTROL_TEK_SATIR, buton } from "@/components/stil";
 
@@ -167,12 +168,17 @@ export function Donen() {
   );
 }
 
-/** Birincil form butonu: beklerken pasif ve dönen gösterge (çift gönderim engeli); telefonda tam genişlik. */
+/**
+ * Birincil form butonu: beklerken pasif ve dönen gösterge ikonun yerinde (çift gönderim engeli);
+ * telefonda tam genişlik.
+ */
 export function SubmitButton({
   children,
+  ikon,
   disabled,
 }: {
   children: React.ReactNode;
+  ikon: IkonAdi;
   disabled?: boolean;
 }) {
   const { pending } = useFormStatus();
@@ -182,7 +188,7 @@ export function SubmitButton({
       disabled={pending || disabled}
       className={buton("birincil", { form: true })}
     >
-      {pending && <Donen />}
+      {pending ? <Donen /> : <Ikon ad={ikon} />}
       {pending ? "Kaydediliyor..." : children}
     </button>
   );

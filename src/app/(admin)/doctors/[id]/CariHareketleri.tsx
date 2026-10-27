@@ -6,7 +6,8 @@ import { IslemFormu } from "@/components/Sonuc";
 import { Tutar } from "@/components/Tutar";
 import { changeDueDate } from "../../collections/actions";
 import { addVadeFarki, reverseLedgerEntry } from "../actions";
-import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
+import { ACILIR_EYLEM, KONTROL_TEK_SATIR, buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 const TIP: Record<string, string> = {
   SEVKIYAT: "Sevkiyat",
@@ -67,12 +68,16 @@ export default async function CariHareketleri({ doktorId, yonetici }: { doktorId
                   <td>
                     {h.direction === "BORC" && h.type !== "TERS_KAYIT" && (
                       <details>
-                        <summary className="cursor-pointer text-xs text-slate-600">Vade değiştir</summary>
+                        <summary className={`${ACILIR_EYLEM} text-xs text-slate-600`}>
+                          <Ikon ad="vade" />
+                          Vade değiştir
+                        </summary>
                         <IslemFormu action={changeDueDate} className="mt-2 w-48 space-y-2" basariMetni="Vade değişti.">
                           <input type="hidden" name="ledgerEntryId" value={h.id} />
                           <input aria-label="Yeni vade" type="date" name="newDueDate" required className={KUTU} />
                           <input aria-label="Vade gerekçesi" name="reason" required placeholder="Gerekçe" className={KUTU} />
                           <button type="submit" className={DUGME}>
+                            <Ikon ad="kaydet" />
                             Kaydet
                           </button>
                         </IslemFormu>
@@ -80,10 +85,14 @@ export default async function CariHareketleri({ doktorId, yonetici }: { doktorId
                     )}
                     {(h.type === "ACILIS" || h.type === "VADE_FARKI") && !h.reversal && (
                       <details>
-                        <summary className="cursor-pointer text-xs text-negative">Ters kayıt</summary>
+                        <summary className={`${ACILIR_EYLEM} text-xs text-negative`}>
+                          <Ikon ad="cevir" />
+                          Ters kayıt
+                        </summary>
                         <IslemFormu action={reverseLedgerEntry.bind(null, h.id)} className="mt-2 w-48 space-y-2">
                           <input aria-label="Ters kayıt gerekçesi" name="reason" required placeholder="Gerekçe" className={KUTU} />
                           <button type="submit" className={DUGME}>
+                            <Ikon ad="cevir" />
                             Çevir
                           </button>
                         </IslemFormu>
@@ -99,7 +108,10 @@ export default async function CariHareketleri({ doktorId, yonetici }: { doktorId
 
       {yonetici && (
         <details className="mt-4 rounded-lg border border-slate-200 p-3">
-          <summary className="cursor-pointer text-sm font-medium text-slate-700">Vade farkı ekle</summary>
+          <summary className={`${ACILIR_EYLEM} text-sm font-medium text-slate-700`}>
+            <Ikon ad="yeni" />
+            Vade farkı ekle
+          </summary>
           <p className="mt-2 text-xs text-slate-500">Elle girilir, otomatik hesaplanmaz; KDV kırılımı yoktur. Satış sayılmaz.</p>
           <IslemFormu action={addVadeFarki.bind(null, doktorId)} className="mt-3 grid gap-3 sm:grid-cols-4" basariMetni="Vade farkı kaydedildi.">
             <div>
@@ -122,6 +134,7 @@ export default async function CariHareketleri({ doktorId, yonetici }: { doktorId
             </div>
             <div className="flex items-end">
               <button type="submit" className={DUGME}>
+                <Ikon ad="kaydet" />
                 Kaydet
               </button>
             </div>

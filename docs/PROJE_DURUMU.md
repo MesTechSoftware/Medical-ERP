@@ -66,6 +66,7 @@ Prisma client `src/generated/prisma/` altına üretilir (gitignored — taze klo
 - **Ortak bileşenler ve sınıflar:**
   - tablolar `.tablo-kutusu` + `.veri-tablosu` (sabit başlık ve ilk sütun, `.sayi`, telefonda `.oncelik-dusuk` gizli);
   - kontrol ve butonlar `src/components/stil.ts` (`KONTROL*`, `buton()`);
+  - buton ikonları `src/components/Ikon.tsx` (27.10.2026): her eylem ikon + metin, lucide; emoji ve düz metin ok yok (ADR-009 madde 8);
   - form alanları `form.tsx` (masaüstünde etiket solda);
   - durum etiketi `StatusChip`, iki seviyeli kritik stok `stokDurumu()`;
   - yükleme iskeleti `Iskelet.tsx` + grup `loading.tsx`.
@@ -75,7 +76,7 @@ Prisma client `src/generated/prisma/` altına üretilir (gitignored — taze klo
   - `dvh` ve güvenli alan;
   - 390 / 412 / 810 px'te sayfa yatay kaymaz.
 - **Zorlama:**
-  - `src/lib/tasarim.test.ts`: kontrast, `data-density`, `100vh` yasağı, ham palet sınıfı yasağı;
+  - `src/lib/tasarim.test.ts`: kontrast, `data-density`, `100vh` yasağı, ham palet sınıfı yasağı, ikonsuz buton ve emoji yasağı;
   - Playwright `mobil-iphone` / `mobil-android` / `mobil-ipad` projeleri;
   - masaüstü ritim ve iskelet eşleşmesi: `e2e/admin/tasarim.spec.ts`;
   - E2E seçicileri stil sınıfına bağlanmaz.

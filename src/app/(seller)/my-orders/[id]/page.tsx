@@ -5,6 +5,7 @@ import { requireSeller } from "@/lib/session";
 import { PageHeader } from "@/components/ui";
 import OrderDetail from "@/components/OrderDetail";
 import { buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 export default async function MyOrderDetailPage({
   params,
@@ -37,7 +38,8 @@ export default async function MyOrderDetailPage({
             href="/my-orders"
             className={buton("metin")}
           >
-            ← Siparişlerim
+            <Ikon ad="geri" />
+            Siparişlerim
           </Link>
         }
       />
