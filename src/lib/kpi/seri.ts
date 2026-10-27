@@ -1,14 +1,17 @@
-import type { Ay } from "@/lib/donem";
+import type { Ay, Kova } from "@/lib/donem";
 
-/** Kayıtları ay aralıklarına böler (yarı açık [başlangıç, bitiş)); hiçbir aya düşmeyen kayıt atılır. */
-export function aylaraBol<T>(kayitlar: readonly T[], aylar: readonly Ay[], tarih: (kayit: T) => Date): T[][] {
-  const kovalar: T[][] = aylar.map(() => []);
+/**
+ * Kayıtları kova aralıklarına (gün, hafta ya da ay) böler (yarı açık [başlangıç, bitiş)); hiçbir
+ * kovaya düşmeyen kayıt atılır.
+ */
+export function kovalaraBol<T>(kayitlar: readonly T[], kovalar: readonly Kova[], tarih: (kayit: T) => Date): T[][] {
+  const bolum: T[][] = kovalar.map(() => []);
   for (const kayit of kayitlar) {
     const t = tarih(kayit).getTime();
-    const i = aylar.findIndex((a) => t >= a.aralik.baslangic.getTime() && t < a.aralik.bitis.getTime());
-    if (i >= 0) kovalar[i].push(kayit);
+    const i = kovalar.findIndex((k) => t >= k.aralik.baslangic.getTime() && t < k.aralik.bitis.getTime());
+    if (i >= 0) bolum[i].push(kayit);
   }
-  return kovalar;
+  return bolum;
 }
 
 /**

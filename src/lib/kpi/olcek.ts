@@ -81,6 +81,44 @@ export function olcekle(seri: readonly OlcekGirdisi[], alan: Alan): { noktalar: 
   };
 }
 
+/** Medyan hazırlama süresinin en az örneği (brief §4.2): birkaç değerin ortası tipik süre değildir. */
+export const MEDYAN_EN_AZ_ORNEK = 5;
+
+const GUN_MS = 86_400_000;
+
+/**
+ * Sürelerin (ms) medyanı, gün cinsinden 1 ondalık (yarım yukarı); çift sayıda örnekte ortadaki
+ * ikisinin ortalaması. Örnek `MEDYAN_EN_AZ_ORNEK`ten azsa `null` (ekranda "Yetersiz veri").
+ */
+export function medyanGun(sureler: readonly number[]): number | null {
+  if (sureler.length < MEDYAN_EN_AZ_ORNEK) return null;
+  const s = [...sureler].sort((a, b) => a - b);
+  const orta = Math.floor(s.length / 2);
+  const medyan = s.length % 2 === 1 ? new Decimal(s[orta]) : new Decimal(s[orta - 1]).plus(s[orta]).div(2);
+  return yuvarla(medyan.div(GUN_MS), 1);
+}
+
+/**
+ * Yığılmış oran çubuğunun oranları (brief §3.3): her adetin toplama oranı, 0,001'e yuvarlı ve
+ * toplamı tam 1 — yuvarlama kalanı en büyük kesirlere dağıtılır (eşitlikte öndekine), çubukta boşluk
+ * ya da taşma kalmaz. Adetler tam sayıdır; bölme kalanlı tam sayı bölmesidir. Toplam 0 ise hepsi 0.
+ */
+export function yigilmisOranlar(adetler: readonly number[]): number[] {
+  const toplam = adetler.reduce((a, b) => a + b, 0);
+  if (toplam <= 0) return adetler.map(() => 0);
+  const binde = adetler.map((a) => Math.floor((a * 1000) / toplam));
+  let kalan = 1000 - binde.reduce((a, b) => a + b, 0);
+  const sira = adetler
+    .map((a, i) => ({ i, kesir: (a * 1000) % toplam }))
+    .sort((x, y) => y.kesir - x.kesir || x.i - y.i);
+  for (const { i } of sira) {
+    if (kalan <= 0) break;
+    binde[i] += 1;
+    kalan -= 1;
+  }
+  return binde.map((b) => b / 1000);
+}
+
 /** Çubuk oranları [0, 1]: her değerin en büyük değere oranı, 0,001'e yuvarlı. Sıfır ve negatif 0, boşluk `null`. */
 export function cubukOranlari(degerler: readonly OlcekGirdisi[]): (number | null)[] {
   const d = degerler.map((x) => (x === null ? null : ondalik(x)));
