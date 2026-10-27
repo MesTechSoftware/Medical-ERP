@@ -39,6 +39,14 @@ soru doğuyor:
 
    Kilit iş kilitlerinin hepsinden sonra alınır (sıra ADR-012'dedir). Geri alınan transaction'ın
    ertelenmiş tetikleyicisi hiç çalışmaz: ne kayıt ne mühür kalır.
+
+   READ COMMITTED'da son mühür kilitten sonra okunduğu için kesindir. `SERIALIZABLE` transaction'ın
+   (yönetici pasifleştirme, `kullanici.ts`) anlık görüntüsü ise transaction başındadır; sonradan
+   commit edilen mührü göremezse aynı sıra numarası benzersizlikte çakışır. PostgreSQL bunu
+   benzersizlik ihlali (23505) olarak bildirir. Tetikleyici yalnız bu yalıtım düzeylerinde ihlali
+   serileştirme hatasına (40001) çevirir: zincir bozulmaz, kullanıcı mevcut "tekrar deneyin"
+   mesajını görür. READ COMMITTED'da istisna bloğu açılmaz; çok kayıtlı commit alt transaction
+   taşımaz.
 4. **Kanonik biçim** — `denetim_kanonik(r)`; TS ikizi `src/lib/denetim/zincir.ts`:
    - Alanlar sabit sırayla dizilir: `id, seq, createdAt, actorId, actorRole, action, actionType,
      module, entityType, entityId, beforeData, afterData, changes, reason, ipAddress, sessionId,
