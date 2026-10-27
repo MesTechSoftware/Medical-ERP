@@ -60,7 +60,7 @@ export default async function AdminDoctorsPage({
       <PageHeader
         title="Doktorlar"
         description="Doktor ve bayi carileri, satıcı devirleri"
-        action={devirYetkisi ? <LinkButton href="/doctors/new">Yeni Cari</LinkButton> : undefined}
+        action={devirYetkisi ? <LinkButton href="/doctors/new" ikon="yeni">Yeni Cari</LinkButton> : undefined}
       />
 
       {unowned > 0 && (

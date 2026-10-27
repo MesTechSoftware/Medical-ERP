@@ -18,6 +18,13 @@ export const KONTROL_TEK_SATIR = `${KONTROL} h-(--control-h)`;
 /** Textarea ve çoklu seçim: sabit yükseklik yok, en az kontrol yüksekliği; içerik büyüdükçe uzar. */
 export const KONTROL_COK_SATIR = `${KONTROL} min-h-(--control-h) py-2`;
 
+/**
+ * `<details>` içinde eylem açan `<summary>` (ör. "Ters kayıt"): ikon + metin; tarayıcının
+ * üçgen işaretinin yerini ikon alır. Renk ve yazı boyu çağırandadır.
+ */
+export const ACILIR_EYLEM =
+  "flex cursor-pointer list-none items-center gap-1 [&::-webkit-details-marker]:hidden";
+
 export type ButonTuru =
   | "birincil"
   | "ikincil"
@@ -47,7 +54,7 @@ const TURLER: Record<ButonTuru, string> = {
 export function buton(tur: ButonTuru = "birincil", { form = false }: { form?: boolean } = {}): string {
   const metin = tur === "metin" || tur === "metin-olumsuz";
   const kutu = metin
-    ? "inline-flex items-center gap-1 whitespace-nowrap text-sm font-medium transition dokunmatik:min-h-11 dokunmatik:min-w-11 dokunmatik:justify-center"
+    ? "inline-flex items-center gap-1.5 whitespace-nowrap text-sm font-medium transition dokunmatik:min-h-11 dokunmatik:min-w-11 dokunmatik:justify-center"
     : "inline-flex h-(--control-h) items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 text-sm font-medium transition disabled:opacity-60";
   return `${kutu} ${TURLER[tur]}${form ? " w-full md:w-auto" : ""}`;
 }

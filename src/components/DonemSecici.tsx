@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 /** Seçicinin altındaki açıklama — iskelet (`DonemSeciciIskeleti`) aynı metni kullanır. */
 export function donemAciklamasi(anahtar: string): string {
@@ -31,12 +32,14 @@ export default function DonemSecici({ anahtar, yol }: { anahtar: string; yol: st
         type="submit"
         className={buton("ikincil")}
       >
+        <Ikon ad="filtrele" />
         Göster
       </button>
       <Link
         href={`${yol}?donem=tum`}
         className={buton(tum ? "birincil" : "ikincil")}
       >
+        <Ikon ad="tumZamanlar" />
         Tüm zamanlar
       </Link>
       <p className="w-full text-xs text-slate-500">{donemAciklamasi(anahtar)}</p>

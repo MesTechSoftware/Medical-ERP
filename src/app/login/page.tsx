@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useActionState } from "react";
 import { Donen } from "@/components/form";
+import { Ikon } from "@/components/Ikon";
 import { SonucGosterimi, type SonucDurumu } from "@/components/Sonuc";
 import { loginAction } from "@/lib/auth-actions";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
@@ -74,7 +75,7 @@ export default function LoginPage() {
             disabled={pending}
             className={`${buton("birincil")} w-full`}
           >
-            {pending && <Donen />}
+            {pending ? <Donen /> : <Ikon ad="giris" />}
             {pending ? "Giriş yapılıyor..." : "Giriş Yap"}
           </button>
         </form>

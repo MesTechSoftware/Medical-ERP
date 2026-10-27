@@ -13,11 +13,14 @@ function Cubuk({ className }: { className: string }) {
   return <span aria-hidden="true" className={`block animate-skeleton rounded bg-slate-100 ${className}`} />;
 }
 
-/** PageHeader ile aynı ölçü: mb-6, başlık satırı 28 px (text-xl), açıklama mt-1 + 20 px (text-sm). */
+/**
+ * PageHeader ile aynı ölçü: mb-6, başlık satırı telefonda kontrol yüksekliği, md ve üstünde 28 px
+ * (text-xl); açıklama mt-1 + 20 px (text-sm).
+ */
 export function SayfaBasligiIskeleti() {
   return (
     <div className="mb-6">
-      <div className="flex h-7 items-center">
+      <div className="flex h-(--control-h) items-center md:h-7">
         <Cubuk className="h-5 w-48" />
       </div>
       <div className="mt-1 flex h-5 items-center">

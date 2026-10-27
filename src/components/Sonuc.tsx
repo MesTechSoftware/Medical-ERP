@@ -4,6 +4,7 @@ import { startTransition, useActionState, useEffect, useRef, useState } from "re
 import type { IslemSonucu, Parametreler } from "@/lib/sonuc";
 import { bildirimMetni } from "@/lib/sozluk";
 import { KONTROL_COK_SATIR, buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 /**
  * İş sonucunun TEK gösterimi — X-4 §(4) kapalı liste, kademe başına bir desen:
@@ -87,6 +88,7 @@ export function SonucGosterimi({
             className={buton("uyari")}
           >
             Gerekçeyle devam et
+            <Ikon ad="ileri" />
           </button>
         </div>
       )}
@@ -108,8 +110,9 @@ export function SonucGosterimi({
           <button
             type="button"
             onClick={() => setKapatilan(sonuc)}
-            className="shrink-0 text-xs font-medium text-information hover:underline dokunmatik:min-h-11 dokunmatik:min-w-11"
+            className="inline-flex shrink-0 items-center justify-center gap-1 text-xs font-medium text-information hover:underline dokunmatik:min-h-11 dokunmatik:min-w-11"
           >
+            <Ikon ad="vazgec" />
             Kapat
           </button>
         </div>

@@ -7,6 +7,7 @@ import { SonucGosterimi, type SonucDurumu } from "@/components/Sonuc";
 import type { IslemSonucu } from "@/lib/sonuc";
 import { MATRAH, TABAN_ETIKETI } from "@/lib/taban";
 import { buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 type Action = (prev: SonucDurumu, formData: FormData) => Promise<IslemSonucu>;
 
@@ -77,11 +78,12 @@ export default function ProductForm({
       <SonucGosterimi sonuc={state} alanlar={ALANLAR} />
 
       <div className="flex flex-wrap items-center gap-3 pt-2">
-        <SubmitButton>{submitLabel}</SubmitButton>
+        <SubmitButton ikon="kaydet">{submitLabel}</SubmitButton>
         <Link
           href="/products"
           className={buton("metin")}
         >
+          <Ikon ad="vazgec" />
           İptal
         </Link>
       </div>

@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { SonucGosterimi, type SonucDurumu } from "@/components/Sonuc";
 import { cancelCollection } from "./actions";
 import { buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 export default function CancelCollection({ paymentId }: { paymentId: string }) {
   const [state, formAction] = useActionState<SonucDurumu, FormData>(cancelCollection, null);
@@ -28,6 +29,7 @@ export default function CancelCollection({ paymentId }: { paymentId: string }) {
         type="submit"
         className={buton("metin-olumsuz")}
       >
+        <Ikon ad="iptalEt" />
         İptal Et
       </button>
       <SonucGosterimi sonuc={state} />

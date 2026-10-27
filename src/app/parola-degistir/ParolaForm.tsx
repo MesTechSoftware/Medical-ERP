@@ -16,7 +16,7 @@ export default function ParolaForm({ asgari }: { asgari: number }) {
       <Field label="Yeni parola (tekrar)" name="tekrar" type="password" required sonuc={state} />
       <p className="text-xs text-slate-500">En az {asgari} karakter. Yaygın parolalar kabul edilmez.</p>
       <SonucGosterimi sonuc={state} alanlar={ALANLAR} />
-      <SubmitButton>Parolayı Değiştir</SubmitButton>
+      <SubmitButton ikon="parola">Parolayı Değiştir</SubmitButton>
     </form>
   );
 }

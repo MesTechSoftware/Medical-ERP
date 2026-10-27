@@ -36,7 +36,7 @@ export default function StockEntryForm({
 
       <SonucGosterimi sonuc={state} alanlar={ALANLAR} basari={() => "Stok girişi kaydedildi."} />
 
-      <SubmitButton>Stok Girişi Ekle</SubmitButton>
+      <SubmitButton ikon="stokGirisi">Stok Girişi Ekle</SubmitButton>
     </form>
   );
 }

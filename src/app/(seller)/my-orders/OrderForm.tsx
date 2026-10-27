@@ -12,6 +12,7 @@ import { hesaplaSatirTutarlari } from "@/lib/satir-tutarlari";
 import { BEDELSIZ_SEBEP_ADI } from "@/lib/sozluk";
 import type { FreeReason } from "@/generated/prisma/enums";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 type Product = {
   id: string;
@@ -182,7 +183,8 @@ export default function OrderForm({
               onClick={addRow}
               className={buton("metin")}
             >
-              + Kalem Ekle
+              <Ikon ad="yeni" />
+              Kalem Ekle
             </button>
           </div>
         </div>
@@ -331,7 +333,7 @@ export default function OrderForm({
                 className="inline-flex items-center justify-center px-2 py-2 text-sm text-slate-400 hover:text-negative dokunmatik:min-h-11 dokunmatik:min-w-11"
                 aria-label="Kalemi sil"
               >
-                ✕
+                <Ikon ad="sil" />
               </button>
 
             </div>
@@ -366,13 +368,14 @@ export default function OrderForm({
       <SonucGosterimi sonuc={state} />
 
       <div className="flex flex-wrap items-center gap-3">
-        <SubmitButton disabled={items.length === 0 || gonderiliyor}>
+        <SubmitButton ikon="kaydet" disabled={items.length === 0 || gonderiliyor}>
           Siparişi Oluştur
         </SubmitButton>
         <Link
           href={iptalHref}
           className={buton("metin")}
         >
+          <Ikon ad="vazgec" />
           İptal
         </Link>
       </div>

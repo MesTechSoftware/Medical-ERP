@@ -9,6 +9,7 @@ import { prepareOrder, markDelivered, cancelOrder, createReturn } from "../actio
 import IadeFormu from "./IadeFormu";
 import { formatDateTime } from "@/lib/format";
 import { buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 export default async function AdminOrderDetailPage({
   params,
@@ -66,7 +67,8 @@ export default async function AdminOrderDetailPage({
             href="/orders"
             className={buton("metin")}
           >
-            ← Siparişler
+            <Ikon ad="geri" />
+            Siparişler
           </Link>
         }
       />
@@ -82,6 +84,7 @@ export default async function AdminOrderDetailPage({
                 type="submit"
                 className={buton("birincil")}
               >
+                <Ikon ad="hazirla" />
                 Hazırlığa Al
               </button>
             </IslemFormu>
@@ -92,6 +95,7 @@ export default async function AdminOrderDetailPage({
               href="/shipping"
               className={buton("birincil")}
             >
+              <Ikon ad="kargola" />
               Kargo Bilgisi Gir
             </Link>
           )}
@@ -102,6 +106,7 @@ export default async function AdminOrderDetailPage({
                 type="submit"
                 className={buton("olumlu")}
               >
+                <Ikon ad="teslim" />
                 Teslim Edildi Olarak İşaretle
               </button>
             </IslemFormu>
@@ -112,6 +117,7 @@ export default async function AdminOrderDetailPage({
               <ConfirmSubmit
                 confirmText="Sipariş iptal edilecek ve stok geri yüklenecek. Onaylıyor musunuz?"
                 className={buton("olumsuz-cerceve")}
+                ikon="iptalEt"
               >
                 Siparişi İptal Et
               </ConfirmSubmit>

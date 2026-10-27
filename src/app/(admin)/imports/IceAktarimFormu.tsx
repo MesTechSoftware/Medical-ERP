@@ -6,6 +6,7 @@ import { SatirHatalari, SonucGosterimi } from "@/components/Sonuc";
 import type { IceAktarimSonucu } from "@/lib/ice-aktarim";
 import { iceAktar, sablonIndir } from "./actions";
 import { KONTROL_COK_SATIR, KONTROL_TEK_SATIR, buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 const KUTU = `w-full ${KONTROL_TEK_SATIR}`;
 
@@ -63,9 +64,11 @@ export default function IceAktarimFormu({ turler }: { turler: { kod: ImportDataT
       </div>
       <div className="flex flex-wrap gap-2">
         <button type="button" onClick={sablon} className={buton("ikincil")}>
+          <Ikon ad="indir" />
           Şablonu indir
         </button>
         <button type="submit" name="asama" value="onizle" disabled={gonderiliyor} className={buton("birincil", { form: true })}>
+          <Ikon ad="dogrula" />
           Doğrula ve önizle
         </button>
       </div>
@@ -95,6 +98,7 @@ export default function IceAktarimFormu({ turler }: { turler: { kod: ImportDataT
           </dl>
           {yazilabilir && (
             <button type="submit" name="asama" value="yaz" disabled={gonderiliyor} className={`mt-4 ${buton("olumlu")}`}>
+              <Ikon ad="kaydet" />
               Yaz ({sonuc.acilacak} kayıt)
             </button>
           )}

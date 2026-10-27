@@ -7,6 +7,7 @@ import { SonucGosterimi, type SonucDurumu } from "@/components/Sonuc";
 import type { IslemSonucu } from "@/lib/sonuc";
 import { BRUT, tabanli } from "@/lib/taban";
 import { buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 type Secenek = { value: string; label: string };
 export type CariDegerleri = Partial<Record<string, string>> & { accountClass?: "DOKTOR" | "BAYI" };
@@ -109,8 +110,9 @@ export default function CariFormu({
 
       <SonucGosterimi sonuc={sonuc} alanlar={ALANLAR} />
       <div className="flex flex-wrap items-center gap-3">
-        <SubmitButton disabled={gonderiliyor}>{acilis ? "Cariyi Aç" : "Kaydet"}</SubmitButton>
+        <SubmitButton ikon="kaydet" disabled={gonderiliyor}>{acilis ? "Cariyi Aç" : "Kaydet"}</SubmitButton>
         <Link href={iptalHref} className={buton("metin")}>
+          <Ikon ad="vazgec" />
           İptal
         </Link>
       </div>

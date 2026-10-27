@@ -55,7 +55,7 @@ export default function CollectionForm({
         <div className="mb-2">
           <SonucGosterimi sonuc={state} alanlar={ALANLAR} basari={() => "Tahsilat kaydedildi."} />
         </div>
-        <SubmitButton>Tahsilat Kaydet</SubmitButton>
+        <SubmitButton ikon="kaydet">Tahsilat Kaydet</SubmitButton>
       </div>
     </form>
   );

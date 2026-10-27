@@ -93,7 +93,7 @@ export default function DisaAktarimFormu() {
       />
 
       <SonucGosterimi sonuc={state} alanlar={ALANLAR} basari={(p) => `Dosya hazırlandı: ${p.satir} satır.`} />
-      <SubmitButton>Dosyayı İndir</SubmitButton>
+      <SubmitButton ikon="indir">Dosyayı İndir</SubmitButton>
     </form>
   );
 }

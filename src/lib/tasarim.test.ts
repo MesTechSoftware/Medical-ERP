@@ -36,6 +36,28 @@ function renk(ad: string): string {
 
 const SEMANTIK = ["neutral", "positive", "critical", "negative", "information"];
 
+/** Yorumlar atılır (satır sayısı korunur); URL'lerdeki `//` yorum sayılmaz. */
+function yorumsuz(kaynak: string): string {
+  const bosalt = (y: string) => y.replace(/[^\n]/g, " ");
+  return kaynak.replace(/\/\*[\s\S]*?\*\//g, bosalt).replace(/(^|[^:"'`])(\/\/.*)$/gm, (_, on, y) => on + bosalt(y));
+}
+
+/** JSX açılış etiketi: süslü parantez ve tırnak içindeki `>` (ör. `() =>`) etiketi bitirmez. */
+function acilisEtiketi(kaynak: string, bas: number): string {
+  let derinlik = 0;
+  let tirnak = "";
+  for (let i = bas + 1; i < kaynak.length; i++) {
+    const c = kaynak[i];
+    if (tirnak) {
+      if (c === tirnak) tirnak = "";
+    } else if (c === '"' || c === "'" || c === "`") tirnak = c;
+    else if (c === "{") derinlik++;
+    else if (c === "}") derinlik--;
+    else if (c === ">" && derinlik === 0) return kaynak.slice(bas, i + 1);
+  }
+  return kaynak.slice(bas);
+}
+
 describe("görsel tasarım sistemi (ADR-009)", () => {
   it("kontrast hesabı WCAG formülüne uyar", () => {
     expect(kontrast("#000000", "#ffffff")).toBeCloseTo(21, 5);
@@ -103,6 +125,33 @@ describe("görsel tasarım sistemi (ADR-009)", () => {
         });
       }
     }
+    expect(ihlal).toEqual([]);
+  });
+
+  it("her <button> ve buton() sınıflı <Link> bir <Ikon> taşır — ikon + metin", () => {
+    const ihlal: string[] = [];
+    for (const y of dosyalar(SRC, /\.tsx$/)) {
+      const k = yorumsuz(readFileSync(y, "utf8"));
+      for (const m of k.matchAll(/<(button|Link)\b/g)) {
+        const acilis = acilisEtiketi(k, m.index);
+        if (m[1] === "Link" && !acilis.includes("buton(")) continue;
+        const kapanis = k.indexOf(`</${m[1]}>`, m.index);
+        const icerik = acilis.endsWith("/>") || kapanis < 0 ? "" : k.slice(m.index + acilis.length, kapanis);
+        if (!icerik.includes("<Ikon ")) ihlal.push(`${relative(SRC, y)}:${k.slice(0, m.index).split("\n").length}`);
+      }
+    }
+    expect(ihlal).toEqual([]);
+  });
+
+  it("arayüzde emoji ve düz metin ok/çarpı yok — ikon yalnız <Ikon> ile", () => {
+    const ihlal = dosyalar(SRC, /\.tsx$/)
+      .flatMap((y) =>
+        yorumsuz(readFileSync(y, "utf8"))
+          .split("\n")
+          .map((satir, i) => ({ yer: `${relative(SRC, y)}:${i + 1}`, satir }))
+      )
+      .filter(({ satir }) => /\p{Extended_Pictographic}|[←→‹›✕✓]|(?:^|>)\s*\+ [A-ZÇĞİÖŞÜ]/u.test(satir))
+      .map(({ yer, satir }) => `${yer}: ${satir.trim()}`);
     expect(ihlal).toEqual([]);
   });
 

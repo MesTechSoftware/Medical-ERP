@@ -10,6 +10,7 @@ import {
   EmptyRow,
 } from "@/components/ui";
 import { buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 export default async function UsersPage() {
   const session = await requireStaff();
@@ -35,7 +36,7 @@ export default async function UsersPage() {
       <PageHeader
         title="Kullanıcılar"
         description={yonetici ? "Hesaplar yalnız buradan açılır" : "Satıcılar"}
-        action={yonetici && <LinkButton href="/users/new">Yeni Kullanıcı</LinkButton>}
+        action={yonetici && <LinkButton href="/users/new" ikon="yeni">Yeni Kullanıcı</LinkButton>}
       />
 
       <Card>
@@ -91,6 +92,7 @@ export default async function UsersPage() {
                             href={`/users/${u.id}/edit`}
                             className={buton("metin")}
                           >
+                            <Ikon ad="duzenle" />
                             Düzenle
                           </Link>
                         </div>

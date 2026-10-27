@@ -1,7 +1,12 @@
 import Link from "next/link";
+import { Ikon, type IkonAdi } from "@/components/Ikon";
 import { buton } from "@/components/stil";
 
-/** Sayfa başlığı + opsiyonel sağ aksiyon alanı. */
+/**
+ * Sayfa başlığı + opsiyonel sağ aksiyon alanı. Telefonda (md altı) başlık satırı kontrol
+ * yüksekliğindedir ve aksiyonla paylaşılır, açıklama tam genişliktedir: ikonlu aksiyon açıklamayı
+ * daraltıp sardırmaz, başlık yüksekliği aksiyonun varlığından bağımsızdır (iskelet eşleşmesi).
+ */
 export function PageHeader({
   title,
   description,
@@ -12,16 +17,18 @@ export function PageHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="mb-6 flex items-start justify-between gap-4">
-      <div className="min-w-0">
-        <h1 className="text-xl font-semibold text-slate-900">{title}</h1>
+    <div className="mb-6 grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 md:flex md:items-start md:justify-between md:gap-4">
+      <div className="contents md:block md:min-w-0">
+        <h1 className="flex min-h-(--control-h) items-center text-xl font-semibold text-slate-900 md:block md:min-h-0">
+          {title}
+        </h1>
         {description && (
-          <p className="mt-1 text-sm text-slate-500">{description}</p>
+          <p className="col-span-2 mt-1 text-sm text-slate-500">{description}</p>
         )}
       </div>
       {/* Aksiyon daralmaz, başlık sarar: dokunmatikteki min-w-11 esnek öğenin içerik
           genişliği korumasını kaldırır, tek satırlık buton metni taşardı. */}
-      {action && <div className="shrink-0">{action}</div>}
+      {action && <div className="col-start-2 row-start-1 shrink-0">{action}</div>}
     </div>
   );
 }
@@ -29,9 +36,11 @@ export function PageHeader({
 /** Birincil buton görünümlü Link. */
 export function LinkButton({
   href,
+  ikon,
   children,
 }: {
   href: string;
+  ikon: IkonAdi;
   children: React.ReactNode;
 }) {
   return (
@@ -39,6 +48,7 @@ export function LinkButton({
       href={href}
       className={buton("birincil")}
     >
+      <Ikon ad={ikon} />
       {children}
     </Link>
   );

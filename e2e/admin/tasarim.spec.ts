@@ -52,6 +52,17 @@ test("masaüstünde form etiketi alanın solunda, kontrol ve buton 32 px", async
   expect(buton.width, "masaüstünde tam genişlik değil").toBeLessThan(300);
 });
 
+test("Düzenle ve Sil ikon + metin: ikon dekoratif, erişilebilir ad metin", async ({ page }) => {
+  await page.goto("/products");
+  const satir = page.getByRole("row").filter({ has: page.getByRole("link", { name: "Düzenle" }) }).first();
+  for (const dugme of [satir.getByRole("link", { name: "Düzenle", exact: true }), satir.getByRole("button", { name: "Sil", exact: true })]) {
+    await expect(dugme.locator('svg[aria-hidden="true"]')).toHaveCount(1);
+    const [ikon, kutu] = [(await dugme.locator("svg").boundingBox())!, (await dugme.boundingBox())!];
+    expect(ikon.width, "ikon yazıyla orantılı").toBeGreaterThanOrEqual(14);
+    expect(Math.abs(ikon.y + ikon.height / 2 - (kutu.y + kutu.height / 2)), "ikon dikeyde ortalı").toBeLessThanOrEqual(1.5);
+  }
+});
+
 test.describe("yükleme iskeleti ve hareket", () => {
   test("1280 px: iskelet gerçek yerleşimle eşleşir", async ({ page }) => {
     await iskeletGercekleEslesir(page, "/products");

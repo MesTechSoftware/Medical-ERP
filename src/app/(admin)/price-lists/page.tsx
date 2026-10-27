@@ -6,6 +6,7 @@ import { PageHeader, Card, EmptyRow } from "@/components/ui";
 import { IslemFormu } from "@/components/Sonuc";
 import { createPriceList } from "./actions";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 const KUTU = `w-full ${KONTROL_TEK_SATIR}`;
 
@@ -71,6 +72,7 @@ export default async function PriceListsPage() {
                 <input id="liste-ad" name="name" required className={KUTU} />
               </div>
               <button type="submit" className={buton("birincil", { form: true })}>
+                <Ikon ad="yeni" />
                 Liste Oluştur
               </button>
             </IslemFormu>

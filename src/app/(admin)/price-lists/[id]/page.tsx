@@ -10,6 +10,7 @@ import { Tutar } from "@/components/Tutar";
 import ConfirmSubmit from "@/components/ConfirmSubmit";
 import { deletePriceListItem, setPriceListItem } from "../actions";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 const KUTU = `w-full ${KONTROL_TEK_SATIR}`;
 
@@ -43,7 +44,8 @@ export default async function PriceListDetailPage({ params }: { params: Promise<
         description="Satır aynı ürün ve min. adet için tektir; fiyat yeniden girilirse güncellenir."
         action={
           <Link href="/price-lists" className={buton("metin")}>
-            ← Fiyat Listeleri
+            <Ikon ad="geri" />
+            Fiyat Listeleri
           </Link>
         }
       />
@@ -80,7 +82,7 @@ export default async function PriceListDetailPage({ params }: { params: Promise<
                       </td>
                       <td className="text-right">
                         <IslemFormu action={deletePriceListItem.bind(null, i.id)}>
-                          <ConfirmSubmit confirmText="Satır silinecek. Onaylıyor musunuz?">Sil</ConfirmSubmit>
+                          <ConfirmSubmit confirmText="Satır silinecek. Onaylıyor musunuz?" ikon="sil">Sil</ConfirmSubmit>
                         </IslemFormu>
                       </td>
                     </tr>
@@ -122,6 +124,7 @@ export default async function PriceListDetailPage({ params }: { params: Promise<
                 <input id="satir-fiyat" name="listPrice" type="number" step="0.0001" min={0} required className={KUTU} />
               </div>
               <button type="submit" className={buton("birincil", { form: true })}>
+                <Ikon ad="kaydet" />
                 Kaydet
               </button>
             </IslemFormu>

@@ -25,6 +25,7 @@ import { AyOzeti } from "@/components/kpi/AyOzeti";
 import { KpiCard } from "@/components/kpi/KpiCard";
 import { KpiSatiri } from "@/components/kpi/KpiSatiri";
 import { buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 const BAKIYE_ETIKETI = {
   BORC: "Doktor borçlu",
@@ -103,6 +104,7 @@ export default async function DoctorDetailPage({
           // Cari düzeltme yalnız yönetici (X-16 §(9)); OPERASYON cariyi görür (D-2 §(1)).
           session.user.role === "YONETICI" ? (
             <Link href={`/doctors/${id}/edit`} className={buton("metin")}>
+              <Ikon ad="duzenle" />
               Düzenle
             </Link>
           ) : undefined
@@ -282,7 +284,8 @@ export default async function DoctorDetailPage({
           href="/doctors"
           className={buton("metin")}
         >
-          ← Doktor listesi
+          <Ikon ad="geri" />
+          Doktor listesi
         </Link>
       </div>
     </div>

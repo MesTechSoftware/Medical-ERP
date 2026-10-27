@@ -4,6 +4,7 @@ import { AUDIT_ACTION_LABELS } from "@/lib/audit";
 import { formatDateTime } from "@/lib/format";
 import { PageHeader, Card, EmptyRow } from "@/components/ui";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
 
 const ENTITY_TYPES = ["Product", "Order", "Payment", "Seller", "Auth"] as const;
 
@@ -74,6 +75,7 @@ export default async function AuditLogsPage({
           type="submit"
           className={buton("birincil", { form: true })}
         >
+          <Ikon ad="filtrele" />
           Filtrele
         </button>
         <a

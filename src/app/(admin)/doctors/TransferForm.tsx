@@ -52,7 +52,7 @@ export default function TransferForm({
         />
       </div>
 
-      <SubmitButton>Devret</SubmitButton>
+      <SubmitButton ikon="devret">Devret</SubmitButton>
 
       <div className="w-full">
         <SonucGosterimi sonuc={state} basari={(p) => `Devir tamamlandı: ${p.degisen} doktor.`} />
