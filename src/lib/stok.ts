@@ -35,6 +35,19 @@ export async function hesaplaStok(
 }
 
 /**
+ * Aktif ürünler ve stokları (dashboard: kritik stok listesi ve istisna bandı tek okumayı paylaşır).
+ * Ürün başına `hesaplaStok()`; ad sırasıyla.
+ */
+export async function aktifUrunStoklari(): Promise<{ id: string; name: string; code: string; stok: number }[]> {
+  const urunler = await prisma.product.findMany({
+    where: { status: "AKTIF" },
+    select: { id: true, name: true, code: true },
+    orderBy: { name: "asc" },
+  });
+  return Promise.all(urunler.map(async (u) => ({ ...u, stok: await hesaplaStok(u.id) })));
+}
+
+/**
  * Ürün satırlarını id sırasıyla kilitler (ADR-005 §3, ADR-008 §(1)/(3)). Kilit transaction
  * sonuna kadar tutulur; aynı ürüne yazan ikinci transaction bekler. Belge numarası alan
  * akış bunu `uretBelgeNo()`'dan ÖNCE çağırır — sayaç en son alınır (ADR-008 §(2)).

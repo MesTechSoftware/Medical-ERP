@@ -4,6 +4,7 @@ import { requireStaff } from "@/lib/session";
 import { formatPhone } from "@/lib/phone";
 import { PageHeader, Card, StatusBadge, EmptyRow, LinkButton } from "@/components/ui";
 import { EKSIK_FATURA_BILGISI } from "@/lib/cari";
+import { SAHIPSIZ_DOKTOR } from "@/lib/sahiplik";
 import type { Prisma } from "@/generated/prisma/client";
 import Pagination from "@/components/Pagination";
 import { getPagination, pageCount } from "@/lib/pagination";
@@ -20,15 +21,13 @@ export default async function AdminDoctorsPage({
   const params = await searchParams;
   const { page, perPage, skip, take } = getPagination(params);
 
-  // "Sahipsiz" süzgeci (X-17 §(6)): bayinin sahibi hiç olmaz, sahipsiz sayılmaz (X-8 §(3)).
-  const SAHIPSIZ = { ownerSellerId: null, accountClass: "DOKTOR" } as const;
   const sahipsizSuzgec = params.sahip === "yok";
   // X-8 §(5): liste hesap sınıfıyla süzülür; A-13 §(5): eksik fatura bilgisi süzgeci (bilgi kademesi).
   const sinif = params.sinif === "BAYI" || params.sinif === "DOKTOR" ? params.sinif : null;
   const eksikFatura = params.fatura === "eksik";
   const where: Prisma.DoctorWhereInput = {
     AND: [
-      sahipsizSuzgec ? SAHIPSIZ : {},
+      sahipsizSuzgec ? SAHIPSIZ_DOKTOR : {},
       sinif ? { accountClass: sinif } : {},
       eksikFatura ? EKSIK_FATURA_BILGISI : {},
     ],
@@ -47,7 +46,7 @@ export default async function AdminDoctorsPage({
       },
     }),
     prisma.doctor.count({ where }),
-    prisma.doctor.count({ where: SAHIPSIZ }),
+    prisma.doctor.count({ where: SAHIPSIZ_DOKTOR }),
     prisma.user.findMany({
       where: { role: "SATICI", isActive: true },
       orderBy: { name: "asc" },

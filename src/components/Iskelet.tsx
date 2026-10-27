@@ -89,6 +89,8 @@ export type KpiIskeletYapisi = {
   /** Değişim satırı ("▲ %12,4") ya da anlık not (karttaki metin). */
   degisim: boolean | { anlik: string };
   trend: boolean;
+  /** İkincil metrik satırı: karttakiyle aynı uzunlukta temsilî metin ("…: 0,0 gün"). */
+  ikincilMetrik?: string;
   /** Alt satır: `kpiAltNotu()` ile kurulur, karttaki metnin aynısıdır. */
   altNot?: string;
 };
@@ -140,6 +142,11 @@ export function KpiSatiriIskeleti({ kartlar }: { kartlar: readonly KpiIskeletYap
               {k.degisim && (
                 <p className="mt-1 text-xs">
                   <MetinCubugu>{typeof k.degisim === "object" ? k.degisim.anlik : "▲ %00,0"}</MetinCubugu>
+                </p>
+              )}
+              {k.ikincilMetrik && (
+                <p className="mt-1 text-xs">
+                  <MetinCubugu>{k.ikincilMetrik}</MetinCubugu>
                 </p>
               )}
               {k.trend && (

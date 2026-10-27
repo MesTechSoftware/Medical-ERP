@@ -16,6 +16,7 @@ import {
   KeyRound,
   LogIn,
   LogOut,
+  OctagonAlert,
   PackageCheck,
   PackageOpen,
   PackagePlus,
@@ -23,6 +24,7 @@ import {
   Plus,
   RotateCcw,
   Save,
+  TriangleAlert,
   Trash2,
   Truck,
   Undo2,
@@ -31,7 +33,7 @@ import {
 } from "lucide-react";
 
 /**
- * Buton ikonları (ADR-009): ikon + metin, emoji ve düz metin ok yok. Tek eşleme: aynı eylem her
+ * Buton ve durum ikonları (ADR-009): ikon + metin, emoji ve düz metin ok yok. Tek eşleme: aynı eylem her
  * ekranda aynı ikonu taşır; ikon menüyle aynı settendir (lucide). Direktifsiz modül: sunucu
  * sayfaları ve istemci formları birlikte kullanır.
  */
@@ -65,6 +67,8 @@ const IKONLAR = {
   anaSayfa: House,
   onceki: ChevronLeft,
   sonraki: ChevronRight,
+  uyari: TriangleAlert,
+  hata: OctagonAlert,
 } as const satisfies Record<string, LucideIcon>;
 
 export type IkonAdi = keyof typeof IKONLAR;
