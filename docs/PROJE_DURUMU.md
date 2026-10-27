@@ -91,6 +91,17 @@ Prisma client `src/generated/prisma/` altına üretilir (gitignored — taze klo
   - Tarih aralığı indeksleri: `Shipment(shippedAt)`, `ReturnNote(createdAt)`,
     `DoctorPayment(status, paidAt)`.
   - Demo geçmişi: `npm run db:seed:gecmis` (aşağıda, "Çalıştırma").
+- **2. tur eki — dashboard** *(27.10.2026, `docs/adr/ADR-010` madde 10, PR #73–#76)*:
+  - Zaman filtresi Bugün / Bu Hafta / Bu Ay / Bu Yıl (varsayılan Bu Ay, `?aralik=`); dönem KPI'ları
+    ve blokları aralığa göre, anlık sayılar ("şu an") etkilenmez. Aralıklar `dashboardAraligi()`.
+  - İstisna bandı (yalnız istisna varken, en çok 3 madde) ve "Dikkat gerektirenler" tek listeden
+    (`istisnalar()`, rol parametreli): tükenen, kritik stok, 24 saatten eski onay (yönetici), fatura
+    bilgisi eksik, sahipsiz doktor.
+  - Bloklar: sipariş durum dağılımı (yığılmış çubuk), kritik stok (stok girişine ürün önseçili hızlı
+    bağlantı), dikkat gerektirenler, en çok sevk edilen 5 ürün; yöneticide aktivite akışı (insan
+    diliyle son 15 olay, 60 sn'de bir tazelenir). Bekleyen sipariş kartında medyan hazırlama süresi.
+  - En altta sayfa şeridi: menüdeki her sayfa için ikon, ad ve tek sayı; rolün görebildiği kadar.
+  - `AuditLog(createdAt)` indeksi (akış).
 
 ## Veri Modeli (`prisma/schema.prisma`)
 
@@ -127,7 +138,7 @@ kongre tabloları · e-belge ve kargo modül tabloları (KARARLAR §1.3 §(10): 
 İki route grubu: `(admin)`, `(seller)`. `(dealer)` grubu C5'te söküldü.
 
 **Yönetici** (`src/app/(admin)/`)
-- ✅ Gösterge paneli — özet kartlar, kritik stok *(alacak tablosu, yaşlandırma, bayi kartları söküldü)*
+- ✅ Gösterge paneli — "bu ay" KPI'ları ve bütün sayfaların özeti (rolün gördüğü sayfalar; kritik stok Stok kartında) *(alacak tablosu, yaşlandırma, bayi kartları söküldü)*
 - ✅ İçe Aktarım (`/imports`, yalnız yönetici — D-6, X-16, 1B-7f1): Excel şablonu sistemden üretilir; doğrula → önizle (özet) → yaz; hatalı satır varken hiçbir kayıt yazılmaz; parti listesi ve geri alma. Türler: **cari**, **ürün**, **fiyat listesi**, **açılış bakiyesi** (ACL hareketi; geri alınmaz, ters kayıtla düzeltilir), **açılış stoğu** (konum bazında; geri alınmaz, stok düzeltmesiyle düzeltilir). Şablon ekrandan ya da `npm run sablon:uret` ile.
 - ✅ Fiyat Listeleri (`/price-lists`, yalnız yönetici — X-10, 1B-7e1): liste oluşturma; satır (ürün, min. adet barem, liste fiyatı) ekleme/güncelleme/silme; denetim kaydı. Tarihli satırlar salt okunur.
 - ✅ Ürünler — liste / yeni / düzenle: ad, kod, **KDV oranı tanım tablosundan** (`taxRateId`), liste fiyatı (varsayılan fiyat listesine yazılır), başlangıç stoğu. *Taban fiyat alanı yok.*

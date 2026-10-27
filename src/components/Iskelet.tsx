@@ -2,6 +2,7 @@ import { Card } from "@/components/ui";
 import { BOYUT_SINIFI, type GrafikBoyutu } from "@/components/grafik/ortak";
 import { KPI_YERLESIMI } from "@/components/kpi/KpiSatiri";
 import { DEGER_BOYU, DEGER_SATIRI, type KpiVaryanti } from "@/components/kpi/KpiCard";
+import { ALAN, YERLESIM } from "@/components/dashboard/yerlesim";
 
 /*
  * Yükleme iskeletleri (ADR-009). Ölçü tahmin edilmez: gerçek bileşenlerin sınıfları ve token'ları
@@ -182,6 +183,61 @@ export function DonemSeciciIskeleti({ aciklama }: { aciklama: string }) {
       <p className="w-full text-xs">
         <MetinCubugu>{aciklama}</MetinCubugu>
       </p>
+    </div>
+  );
+}
+
+/** Telefonda KPI'ların üstündeki zaman filtresinin yeri (md ve üstünde filtre başlıktadır). */
+export function ZamanFiltresiIskeleti() {
+  return <span aria-hidden="true" className="mb-4 block h-[calc(var(--toolbar-h)+0.25rem)] animate-skeleton rounded-lg bg-slate-100 md:hidden" />;
+}
+
+/**
+ * Dashboard blokları iskeleti: sayfayla aynı alanlar (`YERLESIM`). Rol iskelet anında bilinmez;
+ * yönetici yerleşimi çizilir.
+ */
+export function DashboardBloklariIskeleti() {
+  const blok = (alan: string, satir: number) => (
+    <div className={`min-w-0 ${alan}`}>
+      <Card>
+        <div className="mb-3 flex h-5 items-center">
+          <Cubuk className="h-3.5 w-32" />
+        </div>
+        <div className="space-y-2">
+          {Array.from({ length: satir }, (_, i) => (
+            <Cubuk key={i} className="h-4 w-full" />
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+  return (
+    <div aria-hidden="true" className="@container">
+      <div className={`grid items-start gap-6 ${YERLESIM.yonetici}`}>
+        {blok(ALAN.dagilim, 3)}
+        {blok(ALAN.kritik, 3)}
+        {blok(ALAN.dikkat, 2)}
+        {blok(ALAN.akis, 8)}
+        {blok(ALAN.encok, 3)}
+      </div>
+    </div>
+  );
+}
+
+/** Sayfa şeridi iskeleti: aynı ızgara; kutu yüksekliği gerçekle aynı (dokunmatikte 44 px). */
+export function SayfaSeridiIskeleti({ adet = 8 }: { adet?: number }) {
+  return (
+    <div aria-hidden="true" className="mt-8">
+      <div className="mb-3 flex h-5 items-center">
+        <Cubuk className="h-3.5 w-20" />
+      </div>
+      <div className="@container">
+        <div className="grid grid-cols-1 gap-2 @min-[480px]:grid-cols-2 @min-[784px]:grid-cols-3 @min-[1200px]:grid-cols-4">
+          {Array.from({ length: adet }, (_, i) => (
+            <span key={i} className="block h-[38px] animate-skeleton rounded-lg bg-slate-100 dokunmatik:h-11" />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

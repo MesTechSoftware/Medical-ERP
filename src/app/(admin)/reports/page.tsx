@@ -15,7 +15,7 @@ import {
   tahsilatToplamlari,
 } from "@/lib/reports-service";
 import { PageHeader, Card, EmptyRow } from "@/components/ui";
-import { AyOzeti } from "@/components/kpi/AyOzeti";
+import { KovaOzeti } from "@/components/kpi/KovaOzeti";
 import { KpiCard } from "@/components/kpi/KpiCard";
 import { KpiSatiri } from "@/components/kpi/KpiSatiri";
 import { OranCubugu } from "@/components/grafik/BarMicro";
@@ -73,7 +73,7 @@ export default async function ReportsPage({
               ? {
                   seri: ozet.deger.seri,
                   sonDevamEdiyor: aylar[aylar.length - 1].devamEdiyor,
-                  ozet: <AyOzeti baslik="Son 6 ay ciro" aylar={aylar} seri={ozet.deger.seri} taban={MATRAH} />,
+                  ozet: <KovaOzeti baslik="Son 6 ay ciro" kovalar={aylar} tur="ay" seri={ozet.deger.seri} taban={MATRAH} />,
                 }
               : undefined
           }

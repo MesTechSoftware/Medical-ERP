@@ -1,9 +1,14 @@
 import { performance } from "node:perf_hooks";
 
+import { aktiviteAkisi } from "../src/lib/aktivite";
+import { hazirlamaSureleri, siparisDagilimi } from "../src/lib/dashboard";
 import { prisma } from "../src/lib/db";
 import { bakiyeSerisi } from "../src/lib/doctor-cari";
-import { donemCoz, karsilastirmaAraliklari, sonAylar } from "../src/lib/donem";
+import { ARALIKLAR, dashboardAraligi, donemCoz, karsilastirmaAraliklari, sonAylar } from "../src/lib/donem";
+import { istisnalar } from "../src/lib/istisnalar";
 import { ciroOzeti, enCokSevkEdilenler, saticiCiroSerileri, tahsilatToplamlari } from "../src/lib/reports-service";
+import { seritKutulari } from "../src/lib/sayfa-ozetleri";
+import { aktifUrunStoklari } from "../src/lib/stok";
 import { simdi, takvimAyi } from "../src/lib/zaman";
 
 /**
@@ -50,6 +55,25 @@ async function main() {
     Promise.all([prisma.order.count({ where: { status: "BEKLIYOR" } }), prisma.order.count({ where: { status: "HAZIRLANIYOR" } })])
   );
   if (doktor) await olc("bakiyeSerisi — tek doktor, 6 ay sonu", () => bakiyeSerisi(doktor.id, aylar.map((a) => a.aralik.bitis)));
+
+  // Dashboard blokları (2. tur eki, ADR-010 madde 10): aralık başına dönem okumaları, sonra anlık okumalar.
+  for (const anahtar of ARALIKLAR) {
+    const r = dashboardAraligi(anahtar, an);
+    await olc(`dashboard ${anahtar} — ciroOzeti, ${r.kovalar.length} kova + karşılaştırma`, () => ciroOzeti(r, { tur: "sirket" }));
+    await olc(`dashboard ${anahtar} — tahsilatToplamlari`, () =>
+      tahsilatToplamlari([...r.kovalar.map((kova) => kova.aralik), r.simdi, r.onceki])
+    );
+    await olc(`dashboard ${anahtar} — durum dağılımı + hazırlama süreleri`, () =>
+      Promise.all([siparisDagilimi(r.simdi), hazirlamaSureleri(r.simdi)])
+    );
+  }
+  const stoklar = await aktifUrunStoklari();
+  await olc(`aktifUrunStoklari — ${stoklar.length} aktif ürün`, () => aktifUrunStoklari());
+  await olc("istisnalar — yönetici", () => istisnalar("YONETICI", stoklar, an));
+  await olc("aktiviteAkisi — son 15", () => aktiviteAkisi("YONETICI", 15));
+  await olc("seritKutulari — yönetici, 13 kutu", () =>
+    seritKutulari("YONETICI", { aralik: k.simdi, an, stoklar }, { yol: "kpi-olc", kullaniciId: null })
+  );
 }
 
 main().finally(() => prisma.$disconnect());

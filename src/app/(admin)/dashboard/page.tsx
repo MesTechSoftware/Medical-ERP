@@ -1,64 +1,117 @@
-import Link from "next/link";
 import { prisma } from "@/lib/db";
+import type { OrderStatus } from "@/generated/prisma/enums";
 import { BRUT, MATRAH } from "@/lib/taban";
-import { hesaplaStok } from "@/lib/stok";
-import { CRITICAL_STOCK } from "@/lib/stok-durumu";
-import { ciroOzeti, enCokSevkEdilenler, tahsilatToplamlari } from "@/lib/reports-service";
-import { donemCoz, karsilastirmaAraliklari, karsilastirmaNotu, sonAylar } from "@/lib/donem";
-import { formatSayi } from "@/lib/format";
+import { aktiviteAkisi } from "@/lib/aktivite";
+import { hazirlamaSureleri, siparisDagilimi } from "@/lib/dashboard";
+import { aralikCoz, dashboardAraligi } from "@/lib/donem";
+import { formatGunSuresi, formatSayi } from "@/lib/format";
+import { istisnalar } from "@/lib/istisnalar";
 import { kpiGetir } from "@/lib/kpi/getir";
-import { cubukOranlari } from "@/lib/kpi/olcek";
+import { cubukOranlari, medyanGun } from "@/lib/kpi/olcek";
+import { ciroOzeti, enCokSevkEdilenler, tahsilatToplamlari } from "@/lib/reports-service";
+import { seritKutulari } from "@/lib/sayfa-ozetleri";
 import { requireStaff } from "@/lib/session";
-import { simdi, takvimAyi } from "@/lib/zaman";
-import { PageHeader, Card, EmptyRow } from "@/components/ui";
-import { AyOzeti } from "@/components/kpi/AyOzeti";
+import { aktifUrunStoklari } from "@/lib/stok";
+import { simdi } from "@/lib/zaman";
+import { PageHeader, Card, durumEtiketi } from "@/components/ui";
+import { SayfaSeridi } from "@/components/SayfaSeridi";
+import { BarMicro } from "@/components/grafik/BarMicro";
+import { YigilmisOranCubugu, type DilimTonu } from "@/components/grafik/YigilmisOranCubugu";
+import { KovaOzeti } from "@/components/kpi/KovaOzeti";
 import { KpiCard } from "@/components/kpi/KpiCard";
 import { KpiSatiri } from "@/components/kpi/KpiSatiri";
-import { BarMicro } from "@/components/grafik/BarMicro";
-import { StokMiktari } from "@/components/StokMiktari";
-import { buton } from "@/components/stil";
-import { Ikon } from "@/components/Ikon";
+import { AktiviteAkisi } from "@/components/dashboard/AktiviteAkisi";
+import { AkisYenileyici } from "@/components/dashboard/AkisYenileyici";
+import { DikkatListesi } from "@/components/dashboard/DikkatListesi";
+import { IstisnaBandi } from "@/components/dashboard/IstisnaBandi";
+import { KritikStokListesi } from "@/components/dashboard/KritikStokListesi";
+import { ZamanFiltresi } from "@/components/dashboard/ZamanFiltresi";
+import { ALAN, YERLESIM } from "@/components/dashboard/yerlesim";
+
+/** Durum dağılımının tonları: anlam taşıyan durum semantik renkte, süreç adımları nötr (ADR-009). */
+const DILIM_TONU: Record<OrderStatus, DilimTonu> = {
+  BEKLIYOR: "uyari",
+  HAZIRLANIYOR: "notr",
+  KARGOLANDI: "notrAcik",
+  TESLIM_EDILDI: "olumlu",
+  IPTAL: "hata",
+};
+
+function Yuklenemedi({ referans }: { referans: string }) {
+  return (
+    <div>
+      <p className="text-sm font-medium text-negative">Yüklenemedi</p>
+      <p className="text-xs text-slate-500">
+        Hata referansı: <span className="font-mono">{referans}</span>
+      </p>
+    </div>
+  );
+}
+
+function Blok({ alan, baslik, not, children }: { alan: string; baslik: string; not?: string; children: React.ReactNode }) {
+  return (
+    <div className={`min-w-0 ${alan}`}>
+      <Card>
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3">
+          <h2 className="text-sm font-semibold text-slate-900">{baslik}</h2>
+          {not && <p className="text-xs text-slate-500">{not}</p>}
+        </div>
+        {children}
+      </Card>
+    </div>
+  );
+}
 
 /**
- * Dashboard (YONETICI + OPERASYON) — "bu ay" KPI'ları (K-4; ADR-010). Ekran prim/hakediş
- * taşımaz (D-2). Karşılaştırma geçen ayın aynı günleridir (K-1). Ciro matrahtır, sevk edilen
- * maldan doğar (A-3); tahsilat brüttür (Ü-3).
+ * Dashboard (YONETICI + OPERASYON; brief "Tasarım 2. Tur Eki", ADR-010). Zaman filtresi URL'dedir
+ * (K-D2, varsayılan bu ay): ciro, tahsilat, durum dağılımı, en çok sevk edilenler ve medyan hazırlama
+ * süresi seçili aralıktan; bekleyen, kargolanacak, kritik stok ve istisnalar anlıktır. Her blok kendi
+ * hata alanında (X-3). Ekran prim/hakediş taşımaz; aktivite akışı yalnız yöneticinin (D-2).
  */
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ aralik?: string }> }) {
   const session = await requireStaff();
+  const rol = session.user.role;
+  const yonetici = rol === "YONETICI";
   const an = simdi();
-  const aylar = sonAylar(6, takvimAyi(an), an);
-  const k = karsilastirmaAraliklari(donemCoz(undefined, an), an);
+  const r = dashboardAraligi(aralikCoz((await searchParams).aralik), an);
   const baglam = { yol: "/dashboard", kullaniciId: session.user.id };
-  const not = karsilastirmaNotu(true);
 
-  const [ciro, tahsilat, bekleyen, kargolanacak, enCok, products] = await Promise.all([
-    kpiGetir(() => ciroOzeti({ kovalar: aylar, ...k }, { tur: "sirket" }), baglam),
-    // Tek sorgu: altı ay + bu dönem + karşılaştırma dönemi.
-    kpiGetir(() => tahsilatToplamlari([...aylar.map((a) => a.aralik), k.simdi, ...(k.onceki ? [k.onceki] : [])]), baglam),
+  // Stok bir kez okunur: kritik stok listesi, istisnalar ve sayfa şeridi aynı okumayı paylaşır.
+  const stoklar = await kpiGetir(() => aktifUrunStoklari(), baglam);
+  const [ciro, tahsilat, bekleyen, kargolanacak, sureler, dagilim, enCok, istisna, akis, kutular] = await Promise.all([
+    kpiGetir(() => ciroOzeti(r, { tur: "sirket" }), baglam),
+    // Tek sorgu: kovalar + bu dönem + karşılaştırma dönemi.
+    kpiGetir(() => tahsilatToplamlari([...r.kovalar.map((k) => k.aralik), r.simdi, r.onceki]), baglam),
     kpiGetir(() => prisma.order.count({ where: { status: "BEKLIYOR" } }), baglam),
     kpiGetir(() => prisma.order.count({ where: { status: "HAZIRLANIYOR" } }), baglam),
-    kpiGetir(() => enCokSevkEdilenler(k.simdi, 5), baglam),
-    prisma.product.findMany({
-      where: { status: "AKTIF" },
-      select: { id: true, name: true, code: true },
-    }),
+    kpiGetir(() => hazirlamaSureleri(r.simdi), baglam),
+    kpiGetir(() => siparisDagilimi(r.simdi), baglam),
+    kpiGetir(() => enCokSevkEdilenler(r.simdi, 5), baglam),
+    stoklar.tamam ? kpiGetir(() => istisnalar(rol, stoklar.deger, an), baglam) : stoklar,
+    yonetici ? kpiGetir(() => aktiviteAkisi(rol, 15), baglam) : null,
+    seritKutulari(rol, { aralik: r.simdi, an, stoklar: stoklar.tamam ? stoklar.deger : null }, baglam),
   ]);
 
-  // Stok hareketlerden türer; tek okuma yolu hesaplaStok() (B-4, ADR-005).
-  const stoklu = await Promise.all(
-    products.map(async (p) => ({ ...p, stock: await hesaplaStok(p.id) }))
-  );
-  const criticalProducts = stoklu
-    .filter((p) => p.stock <= CRITICAL_STOCK)
-    .sort((a, b) => a.stock - b.stock);
-
-  const tahsilatSerisi = tahsilat.tamam ? tahsilat.deger.slice(0, aylar.length) : [];
+  const n = r.kovalar.length;
+  const tahsilatSerisi = tahsilat.tamam ? tahsilat.deger.slice(0, n) : [];
+  const medyan = sureler.tamam ? medyanGun(sureler.deger) : null;
+  const hazirlama = `Medyan hazırlama (${r.donemNotu.toLocaleLowerCase("tr-TR")}): ${
+    !sureler.tamam ? "yüklenemedi" : medyan === null ? "yetersiz veri" : formatGunSuresi(medyan)
+  }`;
   const enCokOranlari = enCok.tamam ? cubukOranlari(enCok.deger.map((u) => u.miktar)) : [];
 
   return (
     <div>
-      <PageHeader title="Dashboard" description="Operasyon özeti" />
+      <PageHeader
+        title="Dashboard"
+        description="Operasyon özeti"
+        action={<ZamanFiltresi secili={r.anahtar} className="hidden md:block" />}
+      />
+
+      {istisna.tamam && <IstisnaBandi istisnalar={istisna.deger} />}
+
+      {/* Telefonda filtre KPI'ların hemen üstünde, tam genişlik (brief §2). */}
+      <ZamanFiltresi secili={r.anahtar} className="mb-4 md:hidden" />
 
       <KpiSatiri>
         <KpiCard
@@ -68,17 +121,17 @@ export default async function DashboardPage() {
           bosDavranisi="sifir"
           tutar={ciro.tamam ? ciro.deger.simdi.ciro : null}
           taban={MATRAH}
-          karsilastirma={ciro.tamam ? { onceki: ciro.deger.onceki?.ciro ?? null, not } : undefined}
+          karsilastirma={ciro.tamam ? { onceki: ciro.deger.onceki?.ciro ?? null, not: r.karsilastirmaNotu } : undefined}
           trend={
             ciro.tamam
               ? {
                   seri: ciro.deger.seri,
                   sonDevamEdiyor: true,
-                  ozet: <AyOzeti baslik="Son 6 ay ciro" aylar={aylar} seri={ciro.deger.seri} taban={MATRAH} />,
+                  ozet: <KovaOzeti baslik={`${r.seriBasligi} ciro`} kovalar={r.kovalar} tur={r.kovaTuru} seri={ciro.deger.seri} taban={MATRAH} />,
                 }
               : undefined
           }
-          donemNotu="Bu ay"
+          donemNotu={r.donemNotu}
           hataReferansi={ciro.tamam ? undefined : ciro.referans}
         />
         <KpiCard
@@ -86,19 +139,19 @@ export default async function DashboardPage() {
           varyant="ikincil"
           iyiYon="yukari-iyi"
           bosDavranisi="sifir"
-          tutar={tahsilat.tamam ? tahsilat.deger[aylar.length] : null}
+          tutar={tahsilat.tamam ? tahsilat.deger[n] : null}
           taban={BRUT}
-          karsilastirma={tahsilat.tamam ? { onceki: tahsilat.deger[aylar.length + 1] ?? null, not } : undefined}
+          karsilastirma={tahsilat.tamam ? { onceki: tahsilat.deger[n + 1] ?? null, not: r.karsilastirmaNotu } : undefined}
           trend={
             tahsilat.tamam
               ? {
                   seri: tahsilatSerisi,
                   sonDevamEdiyor: true,
-                  ozet: <AyOzeti baslik="Son 6 ay tahsilat" aylar={aylar} seri={tahsilatSerisi} taban={BRUT} />,
+                  ozet: <KovaOzeti baslik={`${r.seriBasligi} tahsilat`} kovalar={r.kovalar} tur={r.kovaTuru} seri={tahsilatSerisi} taban={BRUT} />,
                 }
               : undefined
           }
-          donemNotu="Bu ay"
+          donemNotu={r.donemNotu}
           hataReferansi={tahsilat.tamam ? undefined : tahsilat.referans}
         />
         <KpiCard
@@ -108,6 +161,7 @@ export default async function DashboardPage() {
           bosDavranisi="sifir"
           adet={bekleyen.tamam ? bekleyen.deger : null}
           karsilastirma={{ anlik: "şu an" }}
+          ikincilMetrik={hazirlama}
           vurgu={bekleyen.tamam && bekleyen.deger > 0 ? "uyari" : undefined}
           hataReferansi={bekleyen.tamam ? undefined : bekleyen.referans}
         />
@@ -123,67 +177,74 @@ export default async function DashboardPage() {
         />
       </KpiSatiri>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Kritik stok */}
-        <Card>
-          <h2 className="mb-4 text-sm font-semibold text-slate-900">
-            Kritik Stok ({criticalProducts.length})
-          </h2>
-          <div className="tablo-kutusu">
-            <table className="veri-tablosu">
-              <thead>
-                <tr>
-                  <th>Ürün</th>
-                  <th className="oncelik-dusuk">Kod</th>
-                  <th className="sayi">Stok</th>
-                </tr>
-              </thead>
-              <tbody>
-                {criticalProducts.length === 0 && (
-                  <EmptyRow colSpan={3} text="Kritik stokta ürün yok." />
-                )}
-                {criticalProducts.map((p) => (
-                  <tr key={p.id}>
-                    <td className="text-slate-900">{p.name}</td>
-                    <td className="text-slate-500 oncelik-dusuk">{p.code}</td>
-                    <td className="sayi">
-                      <StokMiktari miktar={p.stock} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="mt-3 text-right">
-            <Link
-              href="/stock"
-              className={buton("metin")}
-            >
-              Stok Yönetimi
-              <Ikon ad="ileri" />
-            </Link>
-          </div>
-        </Card>
+      <div className="@container">
+        <div className={`grid items-start gap-6 ${yonetici ? YERLESIM.yonetici : YERLESIM.operasyon}`}>
+          <Blok alan={ALAN.dagilim} baslik="Sipariş durumları" not={`${r.donemNotu} açılan siparişler`}>
+            {dagilim.tamam ? (
+              <YigilmisOranCubugu
+                dilimler={(Object.keys(DILIM_TONU) as OrderStatus[]).map((s) => ({
+                  anahtar: s,
+                  etiket: durumEtiketi(s),
+                  adet: dagilim.deger[s],
+                  ton: DILIM_TONU[s],
+                  href: `/orders?status=${s}`,
+                }))}
+                bosMetin="Bu aralıkta sipariş yok"
+              />
+            ) : (
+              <Yuklenemedi referans={dagilim.referans} />
+            )}
+          </Blok>
 
-        {/* Stok planlaması için: bu ay en çok sevk edilenler (adet, sayılan belgeler). */}
-        <Card>
-          <h2 className="mb-4 text-sm font-semibold text-slate-900">Bu ay en çok sevk edilen ürünler</h2>
-          {enCok.tamam ? (
-            <BarMicro
-              satirlar={enCok.deger.map((u, i) => ({
-                anahtar: u.urunId,
-                etiket: u.ad,
-                deger: `${formatSayi(u.miktar)} adet`,
-                oran: enCokOranlari[i],
-              }))}
-            />
-          ) : (
-            <p className="text-sm text-negative">
-              Yüklenemedi <span className="text-xs text-slate-500">· Hata referansı: <span className="font-mono">{enCok.referans}</span></span>
-            </p>
+          <Blok alan={ALAN.kritik} baslik="Kritik stok" not="şu an">
+            {stoklar.tamam ? <KritikStokListesi stoklar={stoklar.deger} /> : <Yuklenemedi referans={stoklar.referans} />}
+          </Blok>
+
+          <div className={`min-w-0 ${ALAN.dikkat}`}>
+            {istisna.tamam ? (
+              <DikkatListesi istisnalar={istisna.deger} />
+            ) : (
+              <Card>
+                <h2 className="mb-3 text-sm font-semibold text-slate-900">Dikkat gerektirenler</h2>
+                <Yuklenemedi referans={istisna.referans} />
+              </Card>
+            )}
+          </div>
+
+          {akis && (
+            <div className={`min-w-0 ${ALAN.akis} @min-[984px]:relative @min-[984px]:min-h-96 @min-[984px]:self-stretch`}>
+              {akis.tamam ? (
+                <AktiviteAkisi satirlar={akis.deger} simdi={an} />
+              ) : (
+                <Card>
+                  <h2 className="mb-3 text-sm font-semibold text-slate-900">Son hareketler</h2>
+                  <Yuklenemedi referans={akis.referans} />
+                </Card>
+              )}
+            </div>
           )}
-        </Card>
+
+          <Blok alan={ALAN.encok} baslik="En çok sevk edilen ürünler" not={r.donemNotu}>
+            {enCok.tamam ? (
+              <BarMicro
+                satirlar={enCok.deger.map((u, i) => ({
+                  anahtar: u.urunId,
+                  etiket: u.ad,
+                  deger: `${formatSayi(u.miktar)} adet`,
+                  oran: enCokOranlari[i],
+                }))}
+              />
+            ) : (
+              <Yuklenemedi referans={enCok.referans} />
+            )}
+          </Blok>
+        </div>
       </div>
+
+      <SayfaSeridi kutular={kutular} donemNotu={r.donemNotu} />
+
+      {/* K-D3: akış sekme görünürken dakikada bir tazelenir; akış yalnız yöneticinin. */}
+      {yonetici && <AkisYenileyici />}
     </div>
   );
 }

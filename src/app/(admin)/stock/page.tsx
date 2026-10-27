@@ -8,8 +8,9 @@ import { hesaplaStok } from "@/lib/stok";
 import { requireStaff } from "@/lib/session";
 import DuzeltmeFormu from "./DuzeltmeFormu";
 
-export default async function StockPage() {
+export default async function StockPage({ searchParams }: { searchParams: Promise<{ urun?: string }> }) {
   const session = await requireStaff();
+  const { urun } = await searchParams;
   const yonetici = session.user.role === "YONETICI";
   const [products, movements, konumlar, doktorlar, sebepler] = await Promise.all([
     prisma.product.findMany({
@@ -67,7 +68,8 @@ export default async function StockPage() {
             <h2 className="mb-4 text-sm font-semibold text-slate-900">
               Stok Girişi
             </h2>
-            <StockEntryForm products={products} />
+            {/* Dashboard'un kritik stok hızlı işlemi ürünü önseçer (`?urun=`); yalnız aktif ürün. */}
+            <StockEntryForm products={products} seciliUrunId={products.some((p) => p.id === urun) ? urun : undefined} />
           </Card>
 
           {/* B-7 · D-2 §(2): stok düzeltme yalnız yöneticinin; sunucuda da requireAdmin. */}

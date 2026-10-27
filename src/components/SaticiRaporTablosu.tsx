@@ -4,7 +4,7 @@ import { BRUT, MATRAH, tabanli } from "@/lib/taban";
 import type { SellerReport } from "@/lib/reports-service";
 import { EmptyRow } from "@/components/ui";
 import { ColumnMicro } from "@/components/grafik/ColumnMicro";
-import { AyOzeti } from "@/components/kpi/AyOzeti";
+import { KovaOzeti } from "@/components/kpi/KovaOzeti";
 import type { Ay } from "@/lib/donem";
 import type Decimal from "decimal.js";
 
@@ -53,9 +53,9 @@ export default function SaticiRaporTablosu({
                     seri={seriler.degerler.get(s.sellerId) ?? []}
                     sonDevamEdiyor={seriler.aylar[seriler.aylar.length - 1]?.devamEdiyor ?? false}
                     ozet={
-                      <AyOzeti
+                      <KovaOzeti
                         baslik={`${s.name} son 6 ay ciro`}
-                        aylar={seriler.aylar}
+                        kovalar={seriler.aylar} tur="ay"
                         seri={seriler.degerler.get(s.sellerId) ?? []}
                         taban={MATRAH}
                       />

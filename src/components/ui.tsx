@@ -95,6 +95,11 @@ const DURUMLAR: Record<string, { ton: Ton; etiket: string }> = {
   PASIF: { ton: "notr", etiket: "Pasif" },
 };
 
+/** Durumun ekrandaki adı — etiketle aynı metin (ör. dashboard'un durum dağılımı lejantı). */
+export function durumEtiketi(status: string): string {
+  return DURUMLAR[status]?.etiket ?? status;
+}
+
 export function StatusBadge({ status }: { status: string }) {
   const durum = DURUMLAR[status];
   return <StatusChip ton={durum?.ton ?? "notr"}>{durum?.etiket ?? status}</StatusChip>;

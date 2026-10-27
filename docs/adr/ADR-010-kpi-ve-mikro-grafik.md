@@ -2,7 +2,7 @@
 
 - **Durum:** ✅ Kabul edildi
 - **Tarih:** 26.10.2026
-- **Kaynak soru:** Görsel tasarım 2. tur brief'i (kullanıcı, 26.10.2026) — kararlar K-1…K-5 ve X-5 dar istisnası
+- **Kaynak soru:** Görsel tasarım 2. tur brief'i (kullanıcı, 26.10.2026) — kararlar K-1…K-5 ve X-5 dar istisnası; "Dashboard Geliştirme – Tasarım 2. Tur Eki" brief'i (27.10.2026) — kararlar K-D1…K-D5 (madde 10)
 - **Bağlı KARARLAR maddeleri:**
   - **X-5 eki (26.10.2026):** gösterim ölçeği
   - **§0.4:** oran kuralı; ikinci hesap yolu yasak
@@ -14,7 +14,7 @@
   - **K-2:** bakiye mutlak tutar + yön
   - **Ü-3:** taban etiketi
 - **İlgili ADR:** `ADR-009` (görsel tasarım sistemi)
-- **Uygulandığı commit:** tasarım 2-1 (hesap katmanı) · 2-2 (grafikler) · 2-3 (KPI kartı) · 2-4 (yönetici ekranları)
+- **Uygulandığı commit:** tasarım 2-1 (hesap katmanı) · 2-2 (grafikler) · 2-3 (KPI kartı) · 2-4 (yönetici ekranları) · 2. tur eki D-1 (aralıklar), D-2 (bant, yığılmış çubuk), D-3 (akış), D-4 (dashboard yerleşimi)
 
 ## Bağlam
 
@@ -74,6 +74,26 @@
    - Uzunluğu değişebilen metinler (etiket, anlık not, alt not) iskelette saydam yazılır; satır kırılımı gerçekle aynıdır.
    - Değer tek satırdır; taban etiketi kendi satırındadır. Bu yüzden kartın yüksekliği veriye bağlı değildir.
    - E2e kart kart ölçer: x, y, genişlik ve yükseklik ±2 px.
+10. **Dashboard düzeni ve zaman filtresi (2. tur eki, 27.10.2026).** 2. turun "dashboard sabit bu ay" kararının (K-4) yerini **K-D2** alır.
+    - **Zaman filtresi:** Bugün / Bu Hafta / Bu Ay / Bu Yıl; varsayılan Bu Ay; seçim URL'dedir (`?aralik=`), sunucu yeniden çizer. Aralıklar `donem.ts`'teki `dashboardAraligi()`'ndedir. Karşılaştırma, önceki dönemin şimdiki döneme kadar geçen süre kadarlık başıdır:
+
+      | Aralık | Şimdi | Karşılaştırma | Mikro grafik kovası |
+      |---|---|---|---|
+      | Bugün | gün başı → şu an | dün aynı saate kadar | 14 gün |
+      | Bu Hafta | Pazartesi 00:00 → şu an | geçen hafta aynı gün ve saate kadar | 14 gün |
+      | Bu Ay | K-1 | K-1 | 12 hafta (Pazartesi–Pazar) |
+      | Bu Yıl | 1 Ocak → şu an | geçen yıl aynı gün ve saate kadar (29 Şubat → 28 Şubat) | 12 ay |
+
+      Son kova "devam ediyor" olarak çizilir. Anlık KPI'lar (bekleyen, kargolanacak), kritik stok ve istisnalar filtreden etkilenmez; "şu an" notunu taşır.
+    - **İstisna bandı:** Yalnız istisna varken çizilir; sabittir (kayan yazı, hareket, kapatma, `aria-live` yok); en çok 3 madde. Tek kaynak `istisnalar()`'dır (rol parametreli); "Dikkat gerektirenler" bölümü aynı listenin tamamını gösterir. Kaynaklar mevcut tanımlardır: `stokDurumu()`, `EKSIK_FATURA_BILGISI`, `SAHIPSIZ_DOKTOR`, 24 saatten eski karar bekleyen onay (yalnız yönetici).
+    - **Yerleşim:** İçerik satırı ≥ 984 px'te yönetici için sol 2/3 bloklar (durum dağılımı, kritik stok, dikkat, en çok sevk edilenler), sağ 1/3 aktivite akışı; OPERASYON'da iki eşit kolon. Akış paneli geniş yerleşimde sol kolonun yüksekliğini alır, listesi kendi içinde kayar (klavyeyle de). Daha darda tek kolon, brief §2'nin öncelik sırasıyla. Sınıflar statiktir (`components/dashboard/yerlesim.ts`). Brief 1024 px ekran diyordu; kenar çubuğu yüzünden eşik KPI satırıyla aynı içerik genişliğine bağlandı.
+    - **Durum dağılımı:** Aralıkta açılan onaylı siparişlerin bugünkü durumları, tek yığılmış çubukta (`YigilmisOranCubugu`); oranların toplamı tam 1'dir (`yigilmisOranlar()`, en büyük kalan yöntemi).
+    - **Medyan hazırlama süresi (K-D4):** Sipariş oluşturma (`orderDate`) → ilk sevk (`min(Shipment.shippedAt)`); ilk sevki aralıkta olan onaylı siparişler. Gün cinsinden, 1 ondalık; 5'ten az örnekte "yetersiz veri" (`medyanGun()`, X-5 eki uygulama notu). Bekleyen sipariş kartının ikincil metriğidir.
+    - **Aktivite akışı (K-D3):** Denetim kaydından insan diliyle cümleler; şablonu olmayan olay gösterilmez (`aktivite-sablonlari.ts`, test tarar). Rol tablosu tek yerdedir: yalnız yönetici görür (D-2). Sekme görünürken 60 sn'de bir `router.refresh()` çalışır, gizliyken durur; WebSocket yoktur.
+    - **Hızlı işlem (K-D5):** Yalnız mevcut akışlara bağlantıdır: kritik stokta stok giriş ekranı ürün önseçili (`/stock?urun=`); süzülmüş doktor listeleri; onaylar. Tedarikçiye sipariş akışı olmadığı için "Sipariş Ver" yoktur. Yetkisi olmayan rolün bağlantısı çizilmez.
+    - **Hedef çubuğu (K-D1):** Bu turda yoktur; D-4 (hedef/kota kalıcı kapsam dışı) aynen geçerlidir.
+    - **Sayfa şeridi:** Menüdeki her sayfa için ikon, ad ve tek sayı (kullanıcı kararı); rolün görebildiği sayfalar kadar. Her kutu kendi hata alanındadır.
+    - **Stok bir kez okunur:** Kritik stok listesi, istisnalar ve şerit `aktifUrunStoklari()` okumasını paylaşır. Okuma düşerse stoğa dayanan her yer "Yüklenemedi" der, sıfır göstermez (X-3).
 
 ## Sonuçlar
 

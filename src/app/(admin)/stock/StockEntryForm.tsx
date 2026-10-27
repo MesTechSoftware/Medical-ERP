@@ -9,8 +9,10 @@ const ALANLAR = ["productId", "quantity"] as const;
 
 export default function StockEntryForm({
   products,
+  seciliUrunId,
 }: {
   products: { id: string; name: string; code: string }[];
+  seciliUrunId?: string;
 }) {
   const [state, formAction] = useActionState<SonucDurumu, FormData>(addStockEntry, null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -24,6 +26,7 @@ export default function StockEntryForm({
       <SelectField
         label="Ürün"
         name="productId"
+        defaultValue={seciliUrunId}
         required
         sonuc={state}
         options={products.map((p) => ({

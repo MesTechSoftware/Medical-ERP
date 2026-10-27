@@ -1,7 +1,6 @@
 import type { Role } from "@/generated/prisma/enums";
 import { EKSIK_FATURA_BILGISI } from "@/lib/cari";
 import { prisma } from "@/lib/db";
-import { formatSayi } from "@/lib/format";
 import { SAHIPSIZ_DOKTOR } from "@/lib/sahiplik";
 import { stokDurumu } from "@/lib/stok-durumu";
 
@@ -14,6 +13,7 @@ export type Istisna = {
   kod: IstisnaKodu;
   ton: "hata" | "uyari";
   adet: number;
+  /** Sayısız açıklama ("ürün kritik stokta"); sayıyı gösteren bileşen `adet`'ten yazar. */
   metin: string;
   href: string;
   eylem: string;
@@ -36,13 +36,13 @@ export async function istisnalar(rol: Role, stoklar: readonly { stok: number }[]
   const tukenen = stoklar.filter((s) => stokDurumu(s.stok)?.ton === "hata").length;
   const kritik = stoklar.filter((s) => stokDurumu(s.stok)?.ton === "uyari").length;
   const liste: Istisna[] = [
-    { kod: "tukenen", ton: "hata", adet: tukenen, metin: `${formatSayi(tukenen)} ürün tükendi`, href: "/stock", eylem: "Stok girişi" },
-    { kod: "kritik", ton: "uyari", adet: kritik, metin: `${formatSayi(kritik)} ürün kritik stokta`, href: "/stock", eylem: "Stok girişi" },
+    { kod: "tukenen", ton: "hata", adet: tukenen, metin: "ürün tükendi", href: "/stock", eylem: "Stok girişi" },
+    { kod: "kritik", ton: "uyari", adet: kritik, metin: "ürün kritik stokta", href: "/stock", eylem: "Stok girişi" },
     {
       kod: "eskiOnay",
       ton: "uyari",
       adet: eskiOnay,
-      metin: `${formatSayi(eskiOnay)} onay ${ESKI_ONAY_SAATI} saatten uzun süredir bekliyor`,
+      metin: `onay ${ESKI_ONAY_SAATI} saatten uzun süredir bekliyor`,
       href: "/approvals",
       eylem: "Onaylara git",
     },
@@ -50,7 +50,7 @@ export async function istisnalar(rol: Role, stoklar: readonly { stok: number }[]
       kod: "faturaEksik",
       ton: "uyari",
       adet: faturaEksik,
-      metin: `${formatSayi(faturaEksik)} carinin fatura bilgisi eksik`,
+      metin: "carinin fatura bilgisi eksik",
       href: "/doctors?fatura=eksik",
       eylem: "Listeyi aç",
     },
@@ -58,7 +58,7 @@ export async function istisnalar(rol: Role, stoklar: readonly { stok: number }[]
       kod: "sahipsiz",
       ton: "uyari",
       adet: sahipsiz,
-      metin: `${formatSayi(sahipsiz)} doktorun satıcısı yok`,
+      metin: "doktorun satıcısı yok",
       href: "/doctors?sahip=yok",
       eylem: "Listeyi aç",
     },

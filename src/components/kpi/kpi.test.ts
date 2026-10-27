@@ -5,7 +5,9 @@ import { describe, expect, it } from "vitest";
 
 import { KpiSatiriIskeleti } from "@/components/Iskelet";
 import { KpiCard, degisimTonu, kpiAltNotu, type KpiCardProps } from "@/components/kpi/KpiCard";
+import { KovaOzeti } from "@/components/kpi/KovaOzeti";
 import { KpiSatiri } from "@/components/kpi/KpiSatiri";
+import { dashboardAraligi } from "@/lib/donem";
 import { MATRAH } from "@/lib/taban";
 
 const kart = (p: Partial<KpiCardProps> & Record<string, unknown>) =>
@@ -158,5 +160,17 @@ describe("KpiSatiri — statik grid, ilk kart birincil", () => {
       })
     );
     expect(h).toContain('<p class="mt-1 text-xs"><span data-metin="Medyan hazırlama süresi: 0,0 gün"');
+  });
+});
+
+describe("KovaOzeti — mikro grafiğin ekran okuyucu özeti", () => {
+  it("kova kova değer, kovanın adıyla; devam eden kova işaretli; boşluk 'veri yok'", () => {
+    const kovalar = dashboardAraligi("ay", new Date("2026-10-27T11:00:00Z")).kovalar.slice(-2);
+    const h = renderToStaticMarkup(createElement(KovaOzeti, { baslik: "Son 12 hafta ciro", kovalar, tur: "hafta", seri: ["100", null], taban: MATRAH }));
+    expect(h).toContain("Son 12 hafta ciro:");
+    expect(h).toContain("19–25 Eki");
+    expect(h).toContain("26 Eki – 1 Kas (devam ediyor)");
+    expect(h).toContain("₺100,00");
+    expect(h).toContain("veri yok");
   });
 });

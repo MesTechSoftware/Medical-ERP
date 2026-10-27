@@ -41,6 +41,24 @@ test("dashboard KPI'ları görünür (bu ay ciro ve tahsilat); prim ve hakediş 
   await expect(page.getByRole("main").getByText(/hakediş|prim/i)).toHaveCount(0);
 });
 
+test("dashboard: sayfa şeridi yalnız OPERASYON'un sayfaları (7); aktivite akışı ve onay istisnası yok (D-2)", async ({ page }) => {
+  await page.goto("/dashboard");
+  const kutular = page.locator("[data-sayfa-seridi] a");
+  await expect(kutular).toHaveCount(7);
+  expect(await kutular.evaluateAll((a) => a.map((e) => e.getAttribute("href")))).toEqual([
+    "/orders",
+    "/shipping",
+    "/stock",
+    "/products",
+    "/doctors",
+    "/collections",
+    "/users",
+  ]);
+  await expect(page.getByRole("region", { name: "Son hareketler" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Onaylara git" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Kritik stok" })).toBeVisible();
+});
+
 for (const yol of ["/reports", "/audit-logs", "/exports", "/approvals", "/price-lists", "/doctors/new", "/imports", "/products/new", "/users/new"]) {
   test(`${yol} OPERASYON'u Dashboard'a yönlendirir`, async ({ page }) => {
     await page.goto(yol);

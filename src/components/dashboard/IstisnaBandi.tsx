@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Ikon } from "@/components/Ikon";
+import { formatSayi } from "@/lib/format";
 import type { Istisna } from "@/lib/istisnalar";
 
 /** Bantta en çok bu kadar madde; fazlası sayfadaki "Dikkat gerektirenler" bölümündedir. */
@@ -27,7 +28,9 @@ export function IstisnaBandi({ istisnalar }: { istisnalar: readonly Istisna[] })
             <span className={`flex ${IKON_RENGI[i.ton]}`}>
               <Ikon ad={i.ton} />
             </span>
-            <span className="text-slate-900">{i.metin}</span>
+            <span className="text-slate-900">
+              {formatSayi(i.adet)} {i.metin}
+            </span>
             <Link href={i.href} className={BAGLANTI}>
               {i.eylem}
             </Link>

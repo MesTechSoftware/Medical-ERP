@@ -10,7 +10,7 @@ const istisna = (kod: Istisna["kod"], ton: Istisna["ton"], adet: number): Istisn
   kod,
   ton,
   adet,
-  metin: `${adet} ${kod}`,
+  metin: kod,
   href: `/${kod}`,
   eylem: `${kod} eylemi`,
 });

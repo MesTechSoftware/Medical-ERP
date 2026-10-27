@@ -7,7 +7,7 @@ import { ciroOzeti, getSellerReports, saticiTahsilatOzeti } from "@/lib/reports-
 import DonemSecici from "@/components/DonemSecici";
 import SaticiRaporTablosu from "@/components/SaticiRaporTablosu";
 import { PageHeader, Card } from "@/components/ui";
-import { AyOzeti } from "@/components/kpi/AyOzeti";
+import { KovaOzeti } from "@/components/kpi/KovaOzeti";
 import { KpiCard } from "@/components/kpi/KpiCard";
 import { KpiSatiri } from "@/components/kpi/KpiSatiri";
 
@@ -55,7 +55,7 @@ export default async function MyReportPage({
               ? {
                   seri: ozet.deger.seri,
                   sonDevamEdiyor: aylar[aylar.length - 1].devamEdiyor,
-                  ozet: <AyOzeti baslik="Son 6 ay cirom" aylar={aylar} seri={ozet.deger.seri} taban={MATRAH} />,
+                  ozet: <KovaOzeti baslik="Son 6 ay cirom" kovalar={aylar} tur="ay" seri={ozet.deger.seri} taban={MATRAH} />,
                 }
               : undefined
           }
