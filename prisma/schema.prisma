@@ -797,4 +797,5 @@ model AuditLog {
 
   @@index([entityType, createdAt])
   @@index([actorId])
+  @@index([createdAt]) // ADR-010: dashboard aktivite akışı en yeniden okur
 }
