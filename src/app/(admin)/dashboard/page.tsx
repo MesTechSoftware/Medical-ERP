@@ -33,7 +33,7 @@ export default async function DashboardPage() {
   const not = karsilastirmaNotu(true);
 
   const [ciro, tahsilat, bekleyen, kargolanacak, enCok, products] = await Promise.all([
-    kpiGetir(() => ciroOzeti({ aylar, ...k }, { tur: "sirket" }), baglam),
+    kpiGetir(() => ciroOzeti({ kovalar: aylar, ...k }, { tur: "sirket" }), baglam),
     // Tek sorgu: altı ay + bu dönem + karşılaştırma dönemi.
     kpiGetir(() => tahsilatToplamlari([...aylar.map((a) => a.aralik), k.simdi, ...(k.onceki ? [k.onceki] : [])]), baglam),
     kpiGetir(() => prisma.order.count({ where: { status: "BEKLIYOR" } }), baglam),

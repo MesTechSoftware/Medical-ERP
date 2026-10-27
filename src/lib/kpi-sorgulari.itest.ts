@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { prisma } from "@/lib/db";
 import { bakiyeSerisi } from "@/lib/doctor-cari";
-import { donemCoz, karsilastirmaAraliklari, sonAylar } from "@/lib/donem";
+import { dashboardAraligi, donemCoz, karsilastirmaAraliklari, sonAylar } from "@/lib/donem";
 import { ciroOzeti, enCokSevkEdilenler, saticiCiroSerileri, saticiTahsilatOzeti, tahsilatToplamlari } from "@/lib/reports-service";
 import { referansVeri, yeniDoktorVerisi } from "../../test/integration/referans";
 
@@ -118,7 +118,7 @@ const metin = (degerler: { toFixed(dp: number): string }[]) => degerler.map((d) 
 
 describe("ciroOzeti — aylık seri ve aynı gün aralığı karşılaştırması", () => {
   it("boş veritabanında ciro gerçek sıfırdır: seri sıfır, dönem ve önceki dönem sıfır", async () => {
-    const o = await ciroOzeti({ aylar: AYLAR, ...K }, SIRKET);
+    const o = await ciroOzeti({ kovalar: AYLAR, ...K }, SIRKET);
     expect(metin(o.seri)).toEqual(["0.00", "0.00", "0.00", "0.00", "0.00", "0.00"]);
     expect(o.simdi.ciro.toFixed(2)).toBe("0.00");
     expect(o.onceki?.ciro.toFixed(2)).toBe("0.00");
@@ -132,7 +132,7 @@ describe("ciroOzeti — aylık seri ve aynı gün aralığı karşılaştırmas�
     await sevkliSiparis(ali.id, d.id, new Date("2026-09-27T09:00:00Z"), [{ unitPrice: "50", quantity: 1 }]); // 27 Eylül — aralık dışı
     await sevkliSiparis(ali.id, d.id, new Date("2026-10-26T12:00:00Z"), [{ unitPrice: "70", quantity: 1 }]); // AN'dan sonra
 
-    const o = await ciroOzeti({ aylar: AYLAR, ...K }, SIRKET);
+    const o = await ciroOzeti({ kovalar: AYLAR, ...K }, SIRKET);
     expect(metin(o.seri).slice(4)).toEqual(["150.00", "270.00"]); // Eylül: 100 + 50, Ekim: 200 + 70
     expect(o.simdi.ciro.toFixed(2)).toBe("200.00"); // 1–26 Ekim 14:00
     expect(o.onceki?.ciro.toFixed(2)).toBe("0.00"); // 1–26 Eylül 14:00: 27 ve 30 Eylül dışarıda
@@ -144,7 +144,7 @@ describe("ciroOzeti — aylık seri ve aynı gün aralığı karşılaştırmas�
     const s = await sevkliSiparis(ali.id, d.id, new Date("2026-10-05T09:00:00Z"), [{ unitPrice: "100", quantity: 3, primOrani: "10" }]);
     await iadeEt(s, 1, new Date("2026-10-10T09:00:00Z"));
 
-    const o = await ciroOzeti({ aylar: AYLAR, ...K }, SIRKET);
+    const o = await ciroOzeti({ kovalar: AYLAR, ...K }, SIRKET);
     expect(o.simdi.ciro.toFixed(2)).toBe("200.00");
     expect(o.simdi.iade.toFixed(2)).toBe("100.00");
     expect(o.simdi.hakedis.toFixed(2)).toBe("30.00"); // iade satırının oranı boş: prim düşmez
@@ -157,12 +157,25 @@ describe("ciroOzeti — aylık seri ve aynı gün aralığı karşılaştırmas�
     await sevkliSiparis(ali.id, d.id, new Date("2026-10-05T09:00:00Z"), [{ unitPrice: "100", quantity: 1 }]);
     await sevkliSiparis(veli.id, d.id, new Date("2026-10-06T09:00:00Z"), [{ unitPrice: "900", quantity: 1 }]);
 
-    const aliOzeti = await ciroOzeti({ aylar: AYLAR, ...K }, { tur: "satici", saticiId: ali.id });
+    const aliOzeti = await ciroOzeti({ kovalar: AYLAR, ...K }, { tur: "satici", saticiId: ali.id });
     expect(aliOzeti.simdi.ciro.toFixed(2)).toBe("100.00");
-    expect((await ciroOzeti({ aylar: AYLAR, ...K }, SIRKET)).simdi.ciro.toFixed(2)).toBe("1000.00");
+    expect((await ciroOzeti({ kovalar: AYLAR, ...K }, SIRKET)).simdi.ciro.toFixed(2)).toBe("1000.00");
     const seriler = await saticiCiroSerileri(AYLAR, [ali.id, veli.id]);
     expect(seriler.get(veli.id)![5].toFixed(2)).toBe("900.00");
     expect(seriler.get(ali.id)![5].toFixed(2)).toBe("100.00");
+  });
+
+  it("hafta kovası (dashboard 'bu ay'): sevk İstanbul haftasına düşer; dönem toplamı aynı yoldan", async () => {
+    const r = dashboardAraligi("ay", new Date("2026-10-27T11:00:00Z")); // Salı 27 Ekim 14:00
+    const ali = await kullanici("Ali");
+    const d = await doktor();
+    await sevkliSiparis(ali.id, d.id, new Date("2026-10-25T20:30:00Z"), [{ unitPrice: "100", quantity: 1 }]); // Pazar 25 Ekim 23:30
+    await sevkliSiparis(ali.id, d.id, new Date("2026-10-25T21:30:00Z"), [{ unitPrice: "40", quantity: 1 }]); // Pazartesi 26 Ekim 00:30
+
+    const o = await ciroOzeti(r, SIRKET);
+    expect(o.seri).toHaveLength(12);
+    expect(metin(o.seri).slice(-2)).toEqual(["100.00", "40.00"]);
+    expect(o.simdi.ciro.toFixed(2)).toBe("140.00"); // 1–27 Ekim 14:00
   });
 });
 

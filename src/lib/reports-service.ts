@@ -4,8 +4,8 @@ import type { Role } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import { hesaplaSatirTutarlari, type SatirGirdisi } from "@/lib/satir-tutarlari";
 import { sayilanBelgeler } from "@/lib/sayilan-belgeler";
-import type { Ay } from "@/lib/donem";
-import { aylaraBol } from "@/lib/kpi/seri";
+import type { Ay, Kova } from "@/lib/donem";
+import { kovalaraBol } from "@/lib/kpi/seri";
 
 /**
  * Raporlar (FR-62, FR-63). Tahsilat oranı C4'te söküldü — kalıcı (X-1 §(1)).
@@ -256,28 +256,29 @@ function toplamlar(sevk: SevkSatiri[], iade: SevkSatiri[]): CiroToplami {
 }
 
 /**
- * KPI ciro özeti: aylık ciro serisi ve seçili dönemle karşılaştırma döneminin toplamları.
+ * KPI ciro özeti: kova (gün, hafta ya da ay) ciro serisi ve seçili dönemle karşılaştırma döneminin
+ * toplamları.
  * Satırlar aralıkların birleşiminden BİR KEZ okunur ve bölünür; hesap `getCiroTotal()` ile
  * aynı yoldur (`hesaplaSatirTutarlari()` — ikinci hesap yolu yok, KARARLAR §0.4).
  */
 export async function ciroOzeti(
-  g: { aylar: readonly Ay[]; simdi: Donem; onceki: Donem | null },
+  g: { kovalar: readonly Kova[]; simdi: Donem; onceki: Donem | null },
   kapsam: KpiKapsami
 ): Promise<{ seri: Decimal[]; simdi: CiroToplami; onceki: CiroToplami | null }> {
-  const araliklar = [g.aylar[0].aralik, g.aylar[g.aylar.length - 1].aralik, g.simdi, ...(g.onceki ? [g.onceki] : [])];
+  const araliklar = [g.kovalar[0].aralik, g.kovalar[g.kovalar.length - 1].aralik, g.simdi, ...(g.onceki ? [g.onceki] : [])];
   const { sevk, iade } = await zamanliSatirlar(
     { baslangic: enErken(araliklar.map((a) => a.baslangic)), bitis: enGec(araliklar.map((a) => a.bitis)) },
     kapsam
   );
-  const sevkKova = aylaraBol(sevk, g.aylar, (s) => s.an);
-  const iadeKova = aylaraBol(iade, g.aylar, (s) => s.an);
+  const sevkKova = kovalaraBol(sevk, g.kovalar, (s) => s.an);
+  const iadeKova = kovalaraBol(iade, g.kovalar, (s) => s.an);
   const sec = (aralik: Donem) =>
     toplamlar(
       sevk.filter((s) => icinde(s.an, aralik)),
       iade.filter((s) => icinde(s.an, aralik))
     );
   return {
-    seri: g.aylar.map((_, i) => net(sevkKova[i], iadeKova[i]).matrah),
+    seri: g.kovalar.map((_, i) => net(sevkKova[i], iadeKova[i]).matrah),
     simdi: sec(g.simdi),
     onceki: g.onceki ? sec(g.onceki) : null,
   };
@@ -311,8 +312,8 @@ export async function saticiCiroSerileri(aylar: readonly Ay[], saticiIdleri: str
   );
   return new Map(
     saticiIdleri.map((id) => {
-      const sevkKova = aylaraBol(saticiSevk.get(id) ?? [], aylar, (s) => s.an);
-      const iadeKova = aylaraBol(saticiIade.get(id) ?? [], aylar, (s) => s.an);
+      const sevkKova = kovalaraBol(saticiSevk.get(id) ?? [], aylar, (s) => s.an);
+      const iadeKova = kovalaraBol(saticiIade.get(id) ?? [], aylar, (s) => s.an);
       return [id, aylar.map((_, i) => net(sevkKova[i], iadeKova[i]).matrah)];
     })
   );

@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { donemBitisAyi, donemCoz, karsilastirmaNotu, sonAylar, karsilastirmaAraliklari } from "@/lib/donem";
+import {
+  ARALIKLAR,
+  aralikCoz,
+  dashboardAraligi,
+  donemBitisAyi,
+  donemCoz,
+  karsilastirmaNotu,
+  sonAylar,
+  karsilastirmaAraliklari,
+  type Aralik,
+} from "@/lib/donem";
 import { TUM_ZAMANLAR } from "@/lib/zaman";
 
 // X-1 §(2): ekranın varsayılan dönemi içinde bulunulan aydır; "tüm zamanlar" bilinçli seçimdir.
@@ -104,5 +114,84 @@ describe("donemBitisAyi — KPI trendinin son ayı", () => {
     const an = new Date("2026-10-26T11:00:00Z");
     expect(donemBitisAyi(donemCoz("2026-07", an), an)).toEqual({ yil: 2026, ay: 7 });
     expect(donemBitisAyi(donemCoz("tum"), an)).toEqual({ yil: 2026, ay: 10 });
+  });
+});
+
+describe("dashboardAraligi — zaman filtresi (K-D2, brief §4.1)", () => {
+  const an = new Date("2026-10-27T11:00:00Z"); // Salı 27 Ekim 14:00 İstanbul
+  const iso = (a: Aralik) => [a.baslangic.toISOString(), a.bitis.toISOString()];
+
+  it("bugün: gün başından ana kadar, dünün aynı saatine kadarla kıyaslanır; 14 günlük kova", () => {
+    const r = dashboardAraligi("bugun", an);
+    expect(iso(r.simdi)).toEqual(["2026-10-26T21:00:00.000Z", "2026-10-27T11:00:00.000Z"]);
+    expect(iso(r.onceki)).toEqual(["2026-10-25T21:00:00.000Z", "2026-10-26T11:00:00.000Z"]);
+    expect(r.kovaTuru).toBe("gun");
+    expect(r.kovalar).toHaveLength(14);
+    expect(iso(r.kovalar[0].aralik)).toEqual(["2026-10-13T21:00:00.000Z", "2026-10-14T21:00:00.000Z"]);
+    expect(iso(r.kovalar[13].aralik)).toEqual(["2026-10-26T21:00:00.000Z", "2026-10-27T21:00:00.000Z"]);
+    expect(r.kovalar.map((k) => k.devamEdiyor)).toEqual([...Array<boolean>(13).fill(false), true]);
+  });
+
+  it("bu hafta: Pazartesi 00:00'dan, geçen haftanın aynı gün ve saatine kadarla; 14 günlük kova", () => {
+    const r = dashboardAraligi("hafta", an);
+    expect(iso(r.simdi)).toEqual(["2026-10-25T21:00:00.000Z", "2026-10-27T11:00:00.000Z"]);
+    expect(iso(r.onceki)).toEqual(["2026-10-18T21:00:00.000Z", "2026-10-20T11:00:00.000Z"]);
+    expect(r.kovaTuru).toBe("gun");
+    expect(r.kovalar).toEqual(dashboardAraligi("bugun", an).kovalar);
+  });
+
+  it("hafta Pazartesi başlar: Pazar 23:59 aynı haftadadır; hafta yıl sınırını aşar", () => {
+    const basi = (t: string) => dashboardAraligi("hafta", new Date(t)).simdi.baslangic.toISOString();
+    expect(basi("2026-11-01T20:59:59Z")).toBe("2026-10-25T21:00:00.000Z"); // Pazar 1 Kasım 23:59:59
+    expect(basi("2026-11-01T21:00:00Z")).toBe("2026-11-01T21:00:00.000Z"); // Pazartesi 2 Kasım 00:00
+    expect(basi("2027-01-01T09:00:00Z")).toBe("2026-12-27T21:00:00.000Z"); // Cuma 1 Ocak → 28 Aralık
+  });
+
+  it("bu ay: K-1 aynı gün aralığı; 12 haftalık kova, yalnız son hafta devam ediyor", () => {
+    const r = dashboardAraligi("ay", an);
+    const k = karsilastirmaAraliklari(donemCoz(undefined, an), an);
+    expect(r.simdi).toEqual(k.simdi);
+    expect(r.onceki).toEqual(k.onceki);
+    expect(r.kovaTuru).toBe("hafta");
+    expect(r.kovalar).toHaveLength(12);
+    expect(iso(r.kovalar[0].aralik)).toEqual(["2026-08-09T21:00:00.000Z", "2026-08-16T21:00:00.000Z"]);
+    expect(iso(r.kovalar[11].aralik)).toEqual(["2026-10-25T21:00:00.000Z", "2026-11-01T21:00:00.000Z"]);
+    expect(r.kovalar.map((k) => k.devamEdiyor)).toEqual([...Array<boolean>(11).fill(false), true]);
+  });
+
+  it("bu yıl: 1 Ocak'tan, geçen yılın aynı gün ve saatine kadarla; 12 aylık kova", () => {
+    const r = dashboardAraligi("yil", an);
+    expect(iso(r.simdi)).toEqual(["2025-12-31T21:00:00.000Z", "2026-10-27T11:00:00.000Z"]);
+    expect(iso(r.onceki)).toEqual(["2024-12-31T21:00:00.000Z", "2025-10-27T11:00:00.000Z"]);
+    expect(r.kovaTuru).toBe("ay");
+    expect(r.kovalar).toEqual(sonAylar(12, { yil: 2026, ay: 10 }, an));
+  });
+
+  it("29 Şubat geçen yılın 28 Şubat'ıyla; artık yıldan sonra 1 Mart, 1 Mart'la kıyaslanır", () => {
+    const bitis = (t: string) => dashboardAraligi("yil", new Date(t)).onceki.bitis.toISOString();
+    expect(bitis("2028-02-29T12:00:00Z")).toBe("2027-02-28T12:00:00.000Z");
+    expect(bitis("2029-03-01T12:00:00Z")).toBe("2028-03-01T12:00:00.000Z");
+  });
+
+  it("gün sınırı İstanbul gece yarısıdır", () => {
+    const basi = (t: string) => dashboardAraligi("bugun", new Date(t)).simdi.baslangic.toISOString();
+    expect(basi("2026-10-26T21:00:00Z")).toBe("2026-10-26T21:00:00.000Z"); // 27 Ekim 00:00
+    expect(basi("2026-10-26T20:59:59Z")).toBe("2026-10-25T21:00:00.000Z"); // 26 Ekim 23:59:59
+  });
+
+  it("dönem notu, karşılaştırma notu ve seri başlığı aralığa göre", () => {
+    expect(ARALIKLAR.map((a) => dashboardAraligi(a, an)).map((r) => [r.donemNotu, r.karsilastirmaNotu, r.seriBasligi])).toEqual([
+      ["Bugün", "dünün aynı saatine göre", "Son 14 gün"],
+      ["Bu hafta", "geçen haftanın aynı günlerine göre", "Son 14 gün"],
+      ["Bu ay", "geçen ayın aynı günlerine göre", "Son 12 hafta"],
+      ["Bu yıl", "geçen yılın aynı günlerine göre", "Son 12 ay"],
+    ]);
+  });
+});
+
+describe("aralikCoz — dashboard ?aralik= parametresi", () => {
+  it("geçerli anahtar aynen; yoksa ya da geçersizse 'ay' (varsayılan bu ay)", () => {
+    for (const a of ARALIKLAR) expect(aralikCoz(a)).toBe(a);
+    for (const p of [undefined, "", "gun", "AY", "tum", "2026-10"]) expect(aralikCoz(p)).toBe("ay");
   });
 });

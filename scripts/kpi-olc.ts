@@ -37,9 +37,9 @@ async function main() {
 
   console.log(`Veri: ${siparis} sipariş · ${sevkSatiri} sevk satırı · ${tahsilat} tahsilat · ${saticilar.length} satıcı\n`);
   console.log("| KPI sorgusu | medyan ms |\n|---|---|");
-  await olc("ciroOzeti — şirket, 6 ay + karşılaştırma", () => ciroOzeti({ aylar, ...k }, { tur: "sirket" }));
+  await olc("ciroOzeti — şirket, 6 ay + karşılaştırma", () => ciroOzeti({ kovalar: aylar, ...k }, { tur: "sirket" }));
   if (saticilar[0]) {
-    await olc("ciroOzeti — tek satıcı", () => ciroOzeti({ aylar, ...k }, { tur: "satici", saticiId: saticilar[0] }));
+    await olc("ciroOzeti — tek satıcı", () => ciroOzeti({ kovalar: aylar, ...k }, { tur: "satici", saticiId: saticilar[0] }));
   }
   await olc("tahsilatToplamlari — 6 ay + 2 dönem, tek sorgu", () =>
     tahsilatToplamlari([...aylar.map((a) => a.aralik), k.simdi, ...(k.onceki ? [k.onceki] : [])])

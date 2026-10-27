@@ -4153,6 +4153,9 @@ kullanılır — ama ölçeği **koda emanet eder**.
 >   yalnız bu dosyaya verilir.
 > · Ekranda görünen her tutar yine `<Tutar>` ile, `formatla()` üzerinden gösterilir; yüzde
 >   `formatla(…, "oran")` ile. Grafikten ekrana sayı sızmaz.
+> · *Uygulama notu (27.10.2026, "Tasarım 2. Tur Eki" brief'i):* yığılmış oran çubuğunun oranları
+>   (§3.3) ve dashboard'un medyan hazırlama süresi (gün, 1 ondalık; §4.2) da bu dosyadadır. İkisi
+>   de parasal değildir, gösterimdir; koşullar aynen geçerlidir.
 > Gerekçe: (4) parasal hesabın tek yolda kalmasını korur. Gösterim ölçeği bir tutar hesabı
 > değildir, ama aynı `Decimal` kaçışlarını kullandığı için tek dosyaya kapatılır.
 

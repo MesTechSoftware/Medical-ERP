@@ -32,7 +32,7 @@ export default async function MyReportPage({
 
   const [satirlar, ozet, tahsilat] = await Promise.all([
     getSellerReports(session.user, donem.aralik),
-    kpiGetir(() => ciroOzeti({ aylar, ...k }, { tur: "satici", saticiId: session.user.id }), baglam),
+    kpiGetir(() => ciroOzeti({ kovalar: aylar, ...k }, { tur: "satici", saticiId: session.user.id }), baglam),
     kpiGetir(() => saticiTahsilatOzeti(k, session.user.id), baglam),
   ]);
   const karsilastir = <T,>(onceki: T | null | undefined) => (k.onceki ? { onceki: onceki ?? null, not } : undefined);

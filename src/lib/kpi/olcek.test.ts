@@ -4,7 +4,15 @@ import Decimal from "decimal.js";
 
 import { describe, expect, it } from "vitest";
 
-import { cubukOranlari, degisimYuzdesi, olcekle, yon } from "@/lib/kpi/olcek";
+import {
+  MEDYAN_EN_AZ_ORNEK,
+  cubukOranlari,
+  degisimYuzdesi,
+  medyanGun,
+  olcekle,
+  yigilmisOranlar,
+  yon,
+} from "@/lib/kpi/olcek";
 
 // X-5 eki (26.10.2026): gösterim ölçeği yalnız bu dosyadadır, boyutsuz değer döndürür.
 const SRC = join(__dirname, "..", "..");
@@ -105,6 +113,49 @@ describe("cubukOranlari — en büyüğe oran", () => {
 
   it("hepsi sıfırsa oranlar 0", () => {
     expect(cubukOranlari(["0", "0"])).toEqual([0, 0]);
+  });
+});
+
+describe("medyanGun — medyan hazırlama süresi (K-D4, brief §4.2)", () => {
+  const GUN = 86_400_000;
+
+  it("tek sayıda örnekte ortadaki; sırasız girdi sıralanır", () => {
+    expect(medyanGun([5, 1, 4, 2, 3].map((g) => g * GUN))).toBe(3);
+  });
+
+  it("çift sayıda örnekte ortadaki ikisinin ortalaması", () => {
+    expect(medyanGun([6, 1, 5, 2, 4, 3].map((g) => g * GUN))).toBe(3.5);
+  });
+
+  it("gün, 1 ondalık, yarım yukarı", () => {
+    expect(medyanGun(Array<number>(5).fill(1.25 * GUN))).toBe(1.3);
+    expect(medyanGun(Array<number>(5).fill(0.04 * GUN))).toBe(0);
+  });
+
+  it(`${MEDYAN_EN_AZ_ORNEK}'ten az örnekte null — ekranda "Yetersiz veri"`, () => {
+    expect(MEDYAN_EN_AZ_ORNEK).toBe(5);
+    expect(medyanGun([])).toBeNull();
+    expect(medyanGun([1, 2, 3, 4].map((g) => g * GUN))).toBeNull();
+  });
+});
+
+describe("yigilmisOranlar — yığılmış oran çubuğu (brief §3.3)", () => {
+  const binde = (o: number[]) => o.map((x) => Math.round(x * 1000)).reduce((a, b) => a + b, 0);
+
+  it("her adetin toplama oranı, 0,001'e yuvarlı; toplam tam 1", () => {
+    expect(yigilmisOranlar([3, 1])).toEqual([0.75, 0.25]);
+    expect(binde(yigilmisOranlar([1, 1, 1]))).toBe(1000);
+    expect(binde(yigilmisOranlar([7, 5, 3, 2, 1]))).toBe(1000);
+  });
+
+  it("yuvarlama kalanı en büyük kesire gider; eşitlikte öndekine", () => {
+    expect(yigilmisOranlar([2, 0, 1])).toEqual([0.667, 0, 0.333]);
+    expect(yigilmisOranlar([1, 1, 1])).toEqual([0.334, 0.333, 0.333]);
+  });
+
+  it("toplam 0 ise hepsi 0", () => {
+    expect(yigilmisOranlar([0, 0, 0])).toEqual([0, 0, 0]);
+    expect(yigilmisOranlar([])).toEqual([]);
   });
 });
 

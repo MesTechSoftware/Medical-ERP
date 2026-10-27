@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { sonAylar } from "@/lib/donem";
-import { aylaraBol, doldur } from "@/lib/kpi/seri";
+import { dashboardAraligi, sonAylar } from "@/lib/donem";
+import { doldur, kovalaraBol } from "@/lib/kpi/seri";
 
-describe("aylaraBol — İstanbul ayı sınırları", () => {
+describe("kovalaraBol — İstanbul ay ve hafta sınırları", () => {
   const aylar = sonAylar(2, { yil: 2026, ay: 10 }, new Date("2026-10-26T12:00:00Z")); // Eylül, Ekim
 
   it("ay sonu 23:30 o aya, ay başı 00:30 sonraki aya düşer", () => {
@@ -11,14 +11,25 @@ describe("aylaraBol — İstanbul ayı sınırları", () => {
       { ad: "eylül-son", t: new Date("2026-09-30T20:30:00Z") }, // 30 Eylül 23:30 İstanbul
       { ad: "ekim-ilk", t: new Date("2026-09-30T21:30:00Z") }, // 1 Ekim 00:30 İstanbul
     ];
-    const [eylul, ekim] = aylaraBol(kayitlar, aylar, (k) => k.t);
+    const [eylul, ekim] = kovalaraBol(kayitlar, aylar, (k) => k.t);
     expect(eylul.map((k) => k.ad)).toEqual(["eylül-son"]);
     expect(ekim.map((k) => k.ad)).toEqual(["ekim-ilk"]);
   });
 
   it("hiçbir aya düşmeyen kayıt atılır", () => {
-    const [eylul, ekim] = aylaraBol([{ t: new Date("2026-08-15T00:00:00Z") }], aylar, (k) => k.t);
+    const [eylul, ekim] = kovalaraBol([{ t: new Date("2026-08-15T00:00:00Z") }], aylar, (k) => k.t);
     expect(eylul.length + ekim.length).toBe(0);
+  });
+
+  it("hafta kovası: Pazar 23:30 o haftaya, Pazartesi 00:30 sonraki haftaya düşer", () => {
+    const haftalar = dashboardAraligi("ay", new Date("2026-10-27T11:00:00Z")).kovalar.slice(-2);
+    const kayitlar = [
+      { ad: "pazar", t: new Date("2026-10-25T20:30:00Z") }, // Pazar 25 Ekim 23:30 İstanbul
+      { ad: "pazartesi", t: new Date("2026-10-25T21:30:00Z") }, // Pazartesi 26 Ekim 00:30 İstanbul
+    ];
+    const [gecen, bu] = kovalaraBol(kayitlar, haftalar, (k) => k.t);
+    expect(gecen.map((k) => k.ad)).toEqual(["pazar"]);
+    expect(bu.map((k) => k.ad)).toEqual(["pazartesi"]);
   });
 });
 

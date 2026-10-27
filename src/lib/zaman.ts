@@ -11,7 +11,7 @@ import { policy } from "@/lib/policy";
 const DILIM = policy.zaman.saatDilimi;
 
 /** `an`ın dilimdeki takvim günü: { yil, ay, gun }. */
-function takvimGunu(an: Date): { yil: number; ay: number; gun: number } {
+export function takvimGunu(an: Date): { yil: number; ay: number; gun: number } {
   const parcalar = new Intl.DateTimeFormat("en-CA", {
     timeZone: DILIM,
     year: "numeric",
@@ -22,8 +22,11 @@ function takvimGunu(an: Date): { yil: number; ay: number; gun: number } {
   return { yil: al("year"), ay: al("month"), gun: al("day") };
 }
 
-/** Dilimdeki yerel gece yarısının UTC anı. Ofset sabiti yazılmaz (E-1 §(2)). */
-function geceYarisi(yil: number, ay: number, gun: number): Date {
+/**
+ * Dilimdeki yerel gece yarısının UTC anı. Ofset sabiti yazılmaz (E-1 §(2)). `gun` taşarsa ay ve
+ * yıl kayar (`Date.UTC` gibi): (2026, 3, 0) 28 Şubat'tır.
+ */
+export function geceYarisi(yil: number, ay: number, gun: number): Date {
   const utcTahmin = Date.UTC(yil, ay - 1, gun);
   const yerel = new Intl.DateTimeFormat("en-US", {
     timeZone: DILIM,
