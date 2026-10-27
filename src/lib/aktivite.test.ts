@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { AKIS_DISI, AKIS_GORUNURLUGU, SABLONLAR, aktiviteCumlesi } from "@/lib/aktivite-sablonlari";
-import { AUDIT_ACTIONS } from "@/lib/audit";
+import { AUDIT_ACTIONS } from "@/lib/denetim/olaylar";
 
 // Aktivite akışı (brief §3.6): denetim kaydından insan diliyle cümle; şablonu olmayan olay gösterilmez.
 

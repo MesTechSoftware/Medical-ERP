@@ -108,13 +108,14 @@ export async function addStockAdjustment(_prev: unknown, formData: FormData): Pr
     throw e;
   }
 
+  const gerekce = (formData.get("gerekce") as string) || null;
   try {
     const r = await prisma.$transaction(async (tx) => {
       const belge = await stokDuzeltmeYaz(tx, {
         kalemler,
         hariciBelgeNo: (formData.get("externalDocNo") as string) || null,
         yapan: { id: session.user.id, rol: session.user.role },
-        gerekce: (formData.get("gerekce") as string) || null,
+        gerekce,
       });
       await createAuditLog(
         {
@@ -123,6 +124,7 @@ export async function addStockAdjustment(_prev: unknown, formData: FormData): Pr
           entityType: "StockAdjustment",
           entityId: belge.belgeId,
           after: { documentNo: belge.documentNo, kalemler },
+          gerekce,
         },
         tx
       );

@@ -91,14 +91,14 @@ describe("degistirDoktorSahibi (X-17)", () => {
     await degistir([d1.id, d2.id], veli, yonetici, "Bölge değişti");
 
     const loglar = await prisma.auditLog.findMany({
-      where: { action: "DOCTOR_TRANSFER", afterData: { contains: "Bölge değişti" } },
+      where: { action: "DOCTOR_TRANSFER", reason: "Bölge değişti" },
       orderBy: { entityId: "asc" },
     });
     expect(loglar.map((l) => l.entityId).sort()).toEqual([d1.id, d2.id].sort());
     const d1Log = loglar.find((l) => l.entityId === d1.id)!;
     expect(d1Log.actorId).toBe(yonetici);
     expect(JSON.parse(d1Log.beforeData!)).toEqual({ ownerSellerId: ali });
-    expect(JSON.parse(d1Log.afterData!)).toEqual({ ownerSellerId: veli, reason: "Bölge değişti" });
+    expect(JSON.parse(d1Log.afterData!)).toEqual({ ownerSellerId: veli });
   });
 
   it("transaction geri alınırsa ne sahip ne iz ne denetim kaydı kalır (X-17-1)", async () => {

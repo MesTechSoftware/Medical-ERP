@@ -36,7 +36,7 @@ describe("tek çağrı noktası — stok yazımı ve kilit (B-4-2)", () => {
     expect(ihlaller(desen, join("lib", "stok.ts"))).toEqual([]);
   });
 
-  it("FOR UPDATE yalnız sayılı kilit dosyalarında geçer (ADR-008 §(6))", () => {
+  it("FOR UPDATE yalnız sayılı kilit dosyalarında geçer (ADR-012 §(4))", () => {
     // Sayılı liste: ürün satırı (stok.ts) · doktor satırı (sahiplik.ts, X-17 §(8)).
     expect(ihlaller(/FOR\s+UPDATE/i, "").sort()).toEqual([join("lib", "sahiplik.ts"), join("lib", "stok.ts")]);
   });

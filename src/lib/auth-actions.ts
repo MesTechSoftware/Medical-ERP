@@ -43,9 +43,9 @@ export async function loginAction(
 
   reset(email);
   logAttempt(user.id, "basarili");
-  await startSession(user.id, (tx) =>
+  await startSession(user.id, (tx, oturumId) =>
     createAuditLog(
-      { actorId: user.id, action: AUDIT_ACTIONS.AUTH_LOGIN_SUCCESS, entityType: "Auth", entityId: user.id },
+      { actorId: user.id, action: AUDIT_ACTIONS.AUTH_LOGIN_SUCCESS, entityType: "Auth", entityId: user.id, oturumId },
       tx
     )
   );

@@ -34,7 +34,12 @@ beforeEach(async () => {
     truncateSql = `TRUNCATE TABLE ${quoted} RESTART IDENTITY CASCADE`;
   }
 
-  await prisma.$executeRawUnsafe(truncateSql);
+  // Denetim kaydı değişmezdir (KARARLAR X-18 §(1)); test başına boşaltma bakım yolundan, tetikleyiciler
+  // yalnız bu transaction'da kapalıyken yapılır (ADR-011 §11). Süper kullanıcı ister.
+  await prisma.$transaction([
+    prisma.$executeRawUnsafe("SET LOCAL session_replication_role = replica"),
+    prisma.$executeRawUnsafe(truncateSql),
+  ]);
 });
 
 afterAll(async () => {

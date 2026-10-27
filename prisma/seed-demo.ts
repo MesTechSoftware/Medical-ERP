@@ -29,9 +29,12 @@ async function main() {
     SELECT tablename FROM pg_tables
     WHERE schemaname = 'public' AND tablename <> '_prisma_migrations'`;
   if (tablolar.length > 0) {
-    await prisma.$executeRawUnsafe(
-      `TRUNCATE ${tablolar.map((t) => `"${t.tablename}"`).join(", ")} CASCADE`
-    );
+    // Denetim kaydı değişmezdir (KARARLAR X-18 §(1)); demo öncesi boşaltma bakım yolundan, tetikleyiciler
+    // yalnız bu transaction'da kapalıyken yapılır (ADR-011 §11, süper kullanıcı ister).
+    await prisma.$transaction([
+      prisma.$executeRawUnsafe("SET LOCAL session_replication_role = replica"),
+      prisma.$executeRawUnsafe(`TRUNCATE ${tablolar.map((t) => `"${t.tablename}"`).join(", ")} CASCADE`),
+    ]);
   }
 
   // Demo yöneticisi referans veriden ÖNCE açılır: referans seed bir YONETICI gördüğünde

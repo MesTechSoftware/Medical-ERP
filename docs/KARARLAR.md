@@ -7,7 +7,7 @@
 > "Karar bekleyenler" bölümlerindeki soru metinleri **buraya taşındı**. O bölümler
 > bundan sonra yalnız "bkz. `KARARLAR.md`" der.
 >
-> Son güncelleme: 20 Ekim 2026 (**B-7 eki — stok veri setinde düzeltme satırları yıl başından seçilen güne** · **A-4 eki — konsinye konumu doktor başına, satış transfer + sevkiyatla, konum belgelerinde negatif stokta yalnız yönetici** · **A-2 eki — bedelsiz sebebi kapalı liste; numune onaysız, diğerleri yönetici onayı ister** · **A-1 eki — iadede prim oranı en son sevkiyattan, ciro iade tarihinde düşer, iadeyi yönetici ve operasyon girer** · **A-8 eki — negatif stok sevkiyatta denetlenir; blok siparişe bağlanır ve sevkiyatı durdurur**) · 17 Ekim 2026 (**D-2 eki — `OPERASYON` ekran matrisi: cari açmaz, ürün kartını yalnız görür, rapor ve denetim kaydı görmez; Dashboard'u görür, Satıcılar ekranını salt okur · X-1 eki — dönem tahsilatı tahsilat anındaki sahibe sayılır**) · 16 Ekim 2026 (**A-8 eki — `RED`'in sonucu: her kural için son blok geçerli**) · 13 Ekim 2026 (**X-16 kararı — içe aktarım elle girişin toplu hâli, şablon tek tanımdan (ADR-006), kısmi yazma yok · X-15 §(5) kişisel telefon varsayımı 🟦**) · 12 Ekim 2026 (**C-1 revizyon 3 — modül sınırı §1.3 §F, zamanlayıcı altyapısı, e-belge durum makinesi, cari uzantısı, istisna/tevkifat çekirdek kararı · K-8 kontör 🟦 · K-9 §B kargo anahtarı**) · 10 Ekim 2026 (**C-1 revizyon 2 — e-belge modülü çekirdek sonrası ilk modül, ilk adaptör müşterinin entegratörü, tek çatı partnerlikle · D-3 kargo e-belgeden sonra, BYOI · 🟦 tarama: X-11/X-12/A-4/A-8 ✅, K-10 yeni kilit, K-4 ayrıştı**) · 9 Ekim 2026 (**C-1 iç karar olarak ✅ — 🟦 varsayılan kaydı ve kilitlenme anı kaldırıldı; §0.6'nın otomatik ✅ kuralı kaldırıldı — tarih tek başına hiçbir kaydı kapatmaz**) · 1 Ekim 2026 (**X-17 kararı — sahipliğin tek yazma noktası, toplu devir; tek çağrı noktası listesi 11 → 12; `CM`'in önündeki son açık kalem kapandı**) · 24 Eylül 2026 (**D-6 ekleri — açılış bakiyesi import'u**) · 16 Eylül 2026 (**X-11…X-15 kararı + PRD taraması**) · **Faz 0'ın karar adımları tamamlandı · Faz 1A'da açılan X-8…X-17 kapandı (X-16: 13.10.2026) · PRD taraması kapandı — açık (⬜) madde yok.**
+> Son güncelleme: 27 Ekim 2026 (**X-18 kararı — denetim kaydı modülü: değişmez kayıt, veritabanında zincirli SHA-256 mührü, IP/oturum/gerekçe, alan bazlı değişiklik, üç katmanlı ekran**) · 20 Ekim 2026 (**B-7 eki — stok veri setinde düzeltme satırları yıl başından seçilen güne** · **A-4 eki — konsinye konumu doktor başına, satış transfer + sevkiyatla, konum belgelerinde negatif stokta yalnız yönetici** · **A-2 eki — bedelsiz sebebi kapalı liste; numune onaysız, diğerleri yönetici onayı ister** · **A-1 eki — iadede prim oranı en son sevkiyattan, ciro iade tarihinde düşer, iadeyi yönetici ve operasyon girer** · **A-8 eki — negatif stok sevkiyatta denetlenir; blok siparişe bağlanır ve sevkiyatı durdurur**) · 17 Ekim 2026 (**D-2 eki — `OPERASYON` ekran matrisi: cari açmaz, ürün kartını yalnız görür, rapor ve denetim kaydı görmez; Dashboard'u görür, Satıcılar ekranını salt okur · X-1 eki — dönem tahsilatı tahsilat anındaki sahibe sayılır**) · 16 Ekim 2026 (**A-8 eki — `RED`'in sonucu: her kural için son blok geçerli**) · 13 Ekim 2026 (**X-16 kararı — içe aktarım elle girişin toplu hâli, şablon tek tanımdan (ADR-006), kısmi yazma yok · X-15 §(5) kişisel telefon varsayımı 🟦**) · 12 Ekim 2026 (**C-1 revizyon 3 — modül sınırı §1.3 §F, zamanlayıcı altyapısı, e-belge durum makinesi, cari uzantısı, istisna/tevkifat çekirdek kararı · K-8 kontör 🟦 · K-9 §B kargo anahtarı**) · 10 Ekim 2026 (**C-1 revizyon 2 — e-belge modülü çekirdek sonrası ilk modül, ilk adaptör müşterinin entegratörü, tek çatı partnerlikle · D-3 kargo e-belgeden sonra, BYOI · 🟦 tarama: X-11/X-12/A-4/A-8 ✅, K-10 yeni kilit, K-4 ayrıştı**) · 9 Ekim 2026 (**C-1 iç karar olarak ✅ — 🟦 varsayılan kaydı ve kilitlenme anı kaldırıldı; §0.6'nın otomatik ✅ kuralı kaldırıldı — tarih tek başına hiçbir kaydı kapatmaz**) · 1 Ekim 2026 (**X-17 kararı — sahipliğin tek yazma noktası, toplu devir; tek çağrı noktası listesi 11 → 12; `CM`'in önündeki son açık kalem kapandı**) · 24 Eylül 2026 (**D-6 ekleri — açılış bakiyesi import'u**) · 16 Eylül 2026 (**X-11…X-15 kararı + PRD taraması**) · **Faz 0'ın karar adımları tamamlandı · Faz 1A'da açılan X-8…X-17 kapandı (X-16: 13.10.2026) · PRD taraması kapandı — açık (⬜) madde yok.**
 > **24.09.2026 — D-6 ekleri (şema değişmedi):** açılış bakiyesi import'unda **işaret kuralı** ve
 > **önizleme özeti** yazıldı. Boşluğun kaynağı 19.09 incelemesinin 4. bulgusudur; D-6 üç aşamayı
 > (doğrula → önizle → yaz) koyuyor ama hiçbirinin içeriğini yazmıyordu. Yeni kural kodu: `TUTAR_NEGATIF`.
@@ -1878,7 +1878,7 @@ kesiliyor; klinik yoksa **doktora şahıs olarak** kesilebiliyor.
 > **(6) Belgeye kimlik dondurulmaz.** Dışa aktarım kimliği **güncel karttan** okur.
 > **Kilitlenme anı:** fatura kesme veya e-Fatura entegrasyon modülü.
 >
-> **(7) Kimlik ve adres değişikliği loglanır.**
+> **(7) Kimlik ve adres değişikliği loglanır.** *(27.10.2026 — X-18 §(6): hassas değer kayda `***` olarak yazılır, değişen alanın adı görünür; bkz. §5.21.)*
 >
 > **(8) Teslimat adresi belge üstündedir.** `Sevkiyat.teslimat_adresi` (text, nullable) —
 > boşsa doktorun adresi kullanılır, doluysa **belgede donar**.
@@ -2156,7 +2156,8 @@ ve** yıllık mali bilanço toplamı **100 milyon TL'den az** olma şartı birli
 > mekanizması, rıza tablosu veya onay kutusu konmaz** — kalıcı karar.
 >
 > **(4)** Değişiklik logu (A-13 §7) KVKK md.12 teknik tedbir gereksiniminin karşılığıdır.
-> **Görüntüleme/erişim logu kapsam dışı.**
+> **Görüntüleme/erişim logu kapsam dışı.** *(27.10.2026 — X-18: değişiklik logu değişmezdir, zincirle
+> mühürlenir, IP ve oturum numarası taşır; bkz. §5.21.)*
 >
 > **(5) Sorumluluk sınırı sözleşmeye geçer:** *"Veri sorumlusu sıfatı müşteriye aittir.
 > Saklama ve imha politikası, VERBİS kaydı, aydınlatma metni ve ilgili kişi başvurularının
@@ -3228,6 +3229,11 @@ yetkisiyle gelmez (Odoo'da `Export` hakkı gruptan ayrı verilir). Gerekçe her 
 | **X-16** | Import, elle girişin toplu hâlidir · şablon tek tanımdan üretilir (ADR-006) · **kısmi yazma yok** · `CARI` import'unu yalnız `YONETICI` çalıştırır · import kayıt güncellemez, kısmi geri alma yok | D-6, K-7, 1B madde 7 |
 | **X-16** | `CARI` tanımında sorumlu satıcı (X-17 §(7)) ve fiyat listesi kodu · `FIYAT_LISTESI` şablonunda Faz 1'de tarih kolonu yok · `CARI` listesi de yazılı teyit ister | X-10, X-13, K-7 §(4) |
 | **X-15 §(5)** | `DOKTOR` kişiye ait telefonla açılır (🟦, kilit: doktor listesi teslimi; `BAYI`'de etiket "Telefon", firma numarası) · `TELEFON_KAYITLI` · import'ta aynı numaralı bütün satırlar reddedilir | A-9, X-16, devreye alma |
+| **X-18** | **Denetim kaydı değişmezdir** — `AuditLog` ve mühür tablosunda `UPDATE`/`DELETE`/`TRUNCATE` veritabanı tetikleyicisiyle reddedilir · ekranda düzenleme/silme yok · bakım yolu yalnız test ve seed (süper kullanıcı) | C-3 §(1)/(4), ADR-011, **kritik** |
+| **X-18** | Her kayıt **zincirli SHA-256 mührü** taşır (commit anında, veritabanında) · doğrulama kayıt başına ekranda, zincir için `npm run denetim:dogrula` · zincir kilidi commit anında, iş kilitlerinden sonra | ADR-011, ADR-012 |
+| **X-18** | Kayıt alanları: UUID · ms UTC zaman · o anki rol · IP · oturum no · istek yöntemi + sayfa yolu · işlem türü (4) · modül (7) · alan bazlı değişiklik · gerekçe (yalnız gerekçe soran akışlarda) | şema, A-13 §(7) |
+| **X-18** | Hassas alan değeri **yazım anında `***`** — alan adı ve değişiklik sinyali kalır · rol bazlı maskeleme değildir (C-3 kapsam dışı maddesi aynen) | C-3, A-13 §(7) |
+| **X-18** | `/audit-logs` üç katman: liste + süzgeç (tarih, kullanıcı, modül, işlem türü, olay) · sağdan detay paneli · alan bazlı fark · yalnız `YONETICI` | D-2, ADR-009 |
 
 > 📐 **Ad rejimi — redaksiyon 15.09.2026 (`docs/adr/ADR-001`).** Aşağıdaki özetteki ve bu kitabın
 > genelindeki **tablo ve kolon adları kavramsaldır**: şemada İngilizce `camelCase` karşılıkları
@@ -3362,6 +3368,7 @@ doldurulur.)*
 | **X-15** | **Bugün çalışan iki davranışın bu kitapta karşılığı yok** *(FR-22, FR-09, FR-01, FR-39)*. **(i) Vade değişikliği.** Müşteri kararı D-02 *"vade esneyebilir"*. Bugün siparişe bağlı `DueDateChange` tablosu ve `changeDueDate` var (ekranı yok). A-7 `vade_tarihi`'ni koyuyor ama sonradan değişip değişmeyeceğini yazmıyor; X-11 §(5) hareketin tutar, yön ve tipini donduruyor. **(ii) Mükerrer cari engeli.** Bugün `Doctor.phoneNormalized` **NOT NULL + UNIQUE**; `clinic` ve `region` NOT NULL. A-13 ayrıca bir `telefon` alanı sayıyor. X-8 ile bayi de bu tabloda ve bayinin kliniği ya da bölgesi yok. PRD bayi için *kod* ve *yetkili* de istiyordu | **(a) İkisi de korunur:** **(i)** `vade_tarihi` sonradan değiştirilebilir. Yalnız `YONETICI` değiştirir; gerekçe zorunludur. Her değişiklik eski ve yeni tarih, kişi ve zamanla **ayrı iz tablosuna** yazılır (bugünkü `DueDateChange`); iz **cari harekete** bağlanır. Tutar değişmediği için hiçbir hesap etkilenmez (A-7: vade farkı otomatik değildir). **(ii)** Telefon **zorunlu ve normalize hâliyle benzersiz** kalır; A-13'ün `telefon`'u bu alandır, ikinci alan açılmaz. Klinik ve bölge `DOKTOR` için zorunlu, `BAYI` için boş olabilir. Bayiye ayrı *kod* ya da *yetkili* alanı konmaz (`muhasebe_kodu` ve `fatura_unvani` yeter). Ad + klinik benzerlik uyarısı Faz 2'dir (Ü-10). · **(b)** Maddeler tek tek karara bağlanır | ✅ **KARAR (16.09.2026) — bkz. §5.18.** **(a) seçildi:** vade değişikliği izli (yalnız `YONETICI`) · telefon zorunlu ve benzersiz · `BAYI`'de klinik/bölge boş olabilir |
 | **X-17** | **Sahipliği altı yol yazacak, devir tek tek, pasif satıcının portföyü sahipsiz düşüyor** *(19.09 incelemesi, bulgu 3)*. X-13 sahipliğin ne olduğunu yazdı, nasıl değiştiğini yazmadı; bugünkü devir izi dönem kaydı tutuyor ve sahipsizliğe geçiş izsiz. `BAYI` sahipsizliği DB'de kısıt değil | **(a)** Tek yazma noktası + toplu devir + pasifleştirmede zorunlu portföy seçimi · **(b)** bugünkü davranış (sahipsiz düşer, tek tek atanır) | ✅ **KARAR (01.10.2026) — bkz. §5.19.** **(a) seçildi:** `degistirDoktorSahibi()` 12. tek çağrı noktası · `BAYI`'de sahip boş (`CHECK`) · iz olay kaydı · pasifleştirmede devret ya da sahipsiz bırak |
 | **X-16** | **Cari şablonunun kararlarla bağı yok** *(19.09 incelemesi, bulgu 1 + genişletme)*. K-7 §(2) şablonu *"D-6'daki A-13 alanları"* diye tarif ediyor; sonra X-8 §(6) `hesap_sinifi`'yi, X-15 §(3) klinik ve bölgeyi zorunlu yaptı, ikisi de şablona yansımadı. Fiyat listesi ataması ve import yetkisi yazılı değil. Ayrıca telefon UNIQUE (X-15 §(2)) ile aynı klinikte çok doktor (A-9) arasında yazılmamış varsayım *(bulgu 2)* | **(a)** Import elle girişin toplu hâli, şablon tek tanımdan · **(b)** K-7'ye açık kolon tablosu | ✅ **KARAR (13.10.2026) — bkz. §5.20.** **(a) seçildi:** import'a özgü doğrulama yok · kısmi yazma yok · `CARI` yalnız `YONETICI` · import kayıt güncellemez · kısmi geri alma yok · mekanizma `docs/adr/ADR-006`. Telefon varsayımı **X-15 §(5) 🟦** |
+| **X-18** | **Denetim kaydı korunmuyor ve içi okunamıyor** *(kullanıcı talebi, 27.10.2026)*. `AuditLog` güncellenip silinebiliyor (demo geçmiş seed'i bugün iki `UPDATE` atıyor); bütünlük imzası yok; IP, oturum ve gerekçe kaydedilmiyor; temizleyici hassas anahtarı attığı için VKN değişikliği bile görünmüyor; ekran son 100 satırı detaysız gösteriyor | **(a)** Değişmez tablo + veritabanında zincirli SHA-256 + istek bağlamı + üç katmanlı ekran · **(b)** kayıt başına SHA-256 · **(c)** gizli anahtarlı zincir (HMAC) | ✅ **KARAR (27.10.2026) — bkz. §5.21.** **(a) seçildi:** `UPDATE`/`DELETE`/`TRUNCATE` tetikleyiciyle reddedilir · zincir commit anında, anahtarsız · gerekçe yalnız soran akışlarda · rozet renkleri ADR-009 · detay sağdan panel |
 
 > **Serinin kapsamı genişledi (13.09.2026).** `X-*` bugüne kadar *"kod denetiminde çıkmış ama
 > hiçbir listede olmayan"* maddeleri taşıyordu. **X-5…X-7 belge uyum denetiminden** doğdu:
@@ -5008,6 +5015,99 @@ Sonuçları:
 - **`FAZ1_UYGULAMA_KAPSAMI.md`** — §B.4 kural kodları · §B.5 satırları · §C-y · §C-aa · §D.3 madde 7.
 - **`KABUL_KRITERLERI.md`** — `X-16-1` ve `X-15-5-1` iskelet satırları (metin 1B madde 7'de, testten önce — X-7 §(6)).
 - **`YOL_HARITASI.md`** §7.1 — geri not kuralı (öneri §8).
+
+### 5.21 X-18 · Denetim kaydı modülü — karar metni *(27.10.2026)*
+
+*Kullanıcı talebi 27.10.2026: "kurumsal standartlarda, katmanlı denetim günlüğü". Dört seçim aynı gün
+kullanıcı kararıyla kapandı (gerekçe kapsamı, rozet rengi, zincir, detay paneli). Mekanizma
+`docs/adr/ADR-011`, kilit sırası `docs/adr/ADR-012`.*
+
+**Boşluğun kaynağı:** C-3 §(4) değişiklik logunu KVKK md.12 teknik tedbirinin karşılığı saydı; RULE-13
+merkezî ve temizlenmiş kaydı kurdu. Kaydın **kendisini** koruyan bir hüküm ise yoktu. Sonuçları:
+- `AuditLog` satırı uygulamadan güncellenebilir ve silinebilir; demo geçmiş seed'i bugün bunu yapıyor.
+- Kaydın sonradan değiştirildiğini gösterecek bir iz yok.
+- *Kim* kaydediliyor; *nereden*, *hangi oturumla* ve *neden* kaydedilmiyor.
+- A-13 §(7) değişikliğin loglanmasını istiyor; temizleyici hassas anahtarı tamamen attığı için vergi
+  kimliğinin değiştiği bile görünmüyor.
+- Ekran son 100 satırı gösteriyor; kaydın içi (önceki ve sonraki hâl) okunamıyor.
+
+> **KARAR (X-18):** **Denetim kaydı yazıldığı anda donar, zincirle mühürlenir ve üç katmanda okunur.**
+> *(Değerlendirilen (b) kayıt başına SHA-256 silinen kaydı yakalamaz; (c) gizli anahtarlı zincir
+> denetim yazımını her işlemin sonuna taşır ve anahtar kaybolursa eski kayıt doğrulanamaz. İkisi de
+> reddedildi.)*
+>
+> **(1) Değişmezlik.** Denetim kaydı ve mührü **hiçbir koşulda güncellenmez, silinmez, boşaltılmaz.**
+> - Ekranda düzenleme ve silme kontrolü yoktur.
+> - Veritabanı `UPDATE`, `DELETE` ve `TRUNCATE`'i tetikleyiciyle reddeder; uygulama kodu bu yolu açamaz.
+> - Tek bakım yolu test kurulumu ve demo seed'idir; süper kullanıcı ister (ADR-011). **Canlıda
+>   uygulamanın veritabanı kullanıcısı süper kullanıcı değildir** — Faz 3 kurulum şartı.
+>
+> **(2) Bütünlük zinciri — SHA-256, veritabanında** *(kullanıcı kararı)*.
+> - Her mühür, kaydın içeriğinin ve bir önceki mührün özetidir. Değiştirilen, silinen ya da sırası
+>   bozulan kayıt doğrulamada **adıyla** görünür.
+> - Mühür commit anında yazılır; geri alınan işin ne kaydı ne mührü kalır (X-3 §(4) aynen).
+> - Doğrulama ekranda kayıt başına, bütün zincir için komutla yapılır (`npm run denetim:dogrula`).
+> - **Sınır, yazılıdır:** zincir anahtarsızdır. Veritabanında süper kullanıcı yetkisi olan biri
+>   tetikleyicileri kapatıp zinciri yeniden hesaplayabilir; bunu ancak dışarıda saklanan son özet
+>   (çapa) yakalar. Komut son özeti yazar; çapanın saklanması süreç maddesidir.
+>
+> **(3) Kayıt alanları.** Her kayıt şunları taşır:
+> - kimlik (UUID) ve milisaniye hassasiyetli UTC zaman;
+> - aktör, aktörün **o anki rolü**, IP adresi, oturum numarası;
+> - istek yöntemi ve sayfa yolu (sorgu dizesi yazılmaz);
+> - olay, **işlem türü** (Ekleme · Güncelleme · Silme · Oturum) ve **modül** (Satış · Stok · Finans ·
+>   Cari · Ürün ve fiyat · İçe aktarım · Kullanıcı ve oturum);
+> - varlık türü ve numarası, önceki ve sonraki hâl, **alan bazlı değişiklik listesi**;
+> - gerekçe (§(5)).
+>
+> İptal ve ters kayıt **Silme değildir** (C-3 §(1): sistemde `DELETE` yok); Güncelleme ya da Ekleme
+> sayılır. Silme yalnız gerçekten silen akışlardadır: fiyat satırı silme ve içe aktarım geri alma.
+>
+> **(4) Türev istisnası.** İşlem türü ve modül olaydan türer; §0.1.a ve X-5 eki türevi saklamaz.
+> **Burada saklanır:** milyonlarca satırda süzgeç indeksi gerekir, kayıt değişmez olduğu için türev
+> bayatlayamaz ve saklanan değer yazım anının sınıflandırmasıdır. İstisna bu iki kolonla sınırlıdır.
+>
+> **(5) Gerekçe — yalnız zaten soran akışlarda** *(kullanıcı kararı)*. Bugün gerekçe isteyen akışların
+> gerekçesi kayıtta kendi alanındadır. Diğer kayıtlarda ekran *"Bu işlem gerekçe istemez"* der.
+> **Yeni form alanı açılmaz.**
+>
+> **(6) Maskeleme — yazım anında, rol bağımsız.** Hassas alanın değeri kayda **`***`** olarak yazılır;
+> alan adı kalır. Hassas alan: parola ve özeti, token, sır, vergi kimliği ve `fatura_` seti, adı kart
+> ya da IBAN olan alan. Değişiklik listesi maskelemeden önce kurulur: *"vergi kimliği değişti"*
+> görünür, değer görünmez — A-13 §(7) böylece tam karşılanır. Değerin içeriğine bakan desen (TCKN,
+> kart numarası) kullanılmaz; barkod ve parti numarasında yanlış pozitif üretir. **C-3'ün "rol bazlı
+> alan maskeleme" kapsam dışı maddesi değişmez**: bu, herkese aynı uygulanan bir yazım kuralıdır.
+>
+> **(7) KVKK.** IP adresi ve oturum numarası kişisel veridir; C-3 §(4) teknik tedbir kapsamındadır.
+> Saklama süresi denetim kaydınınkidir (`kvkk.saklamaSuresiYil`). **Görüntüleme/erişim logu yine
+> kapsam dışıdır** (C-3). Faz 2 anonimleştirme ya da Faz 3 imha paketi denetim kaydına dokunacaksa
+> **kendi kararını açar**; değişmezlik ancak o kararla ve tek bir veritabanı yoluyla aşılır.
+>
+> **(8) IP'nin güvenilirliği ters vekile bağlıdır.** Kaydedilen IP, en yakın atlamanın eklediği
+> adrestir. Canlıda uygulama ters vekil arkasında çalışır (Faz 3 kurulum şartı); vekilsiz kurulumda
+> istemci adresini taklit edebilir.
+>
+> **(9) Ekran — üç katman, yalnız `YONETICI`** (D-2 aynen).
+> - **Liste:** zaman, kullanıcı (ad + rol), işlem türü rozeti, modül ve varlık, kısa özet. Süzgeçler:
+>   tarih aralığı, kullanıcı, modül, işlem türü, olay. Sayfalama imleçlidir; toplam sayı gösterilmez.
+> - **Detay:** sağdan açılan panel, telefonda tam ekran *(kullanıcı kararı)*. IP, oturum, yöntem ve
+>   sayfa, gerekçe ve bütünlük durumu gösterilir. Adres çubuğunda kayıt numarası durur.
+> - **Fark:** alan başına eski değer (kırmızı, üstü çizili) ve yeni değer (yeşil).
+> - **Rozet renkleri ADR-009'a uyar** *(kullanıcı kararı)*: Ekleme olumlu, Silme hata, Güncelleme ve
+>   Oturum nötr; her rozet ikon ve metin taşır. Mavi bağlantıya ayrılmıştır.
+>
+> **Kapsam dışı, kalıcı:** görüntüleme/erişim logu (C-3) · rol bazlı alan maskeleme (C-3) · denetim
+> kaydına sonradan not ekleme · kayıt düzeltme ekranı.
+> **Şemaya etki:** `AuditLog`'a on kolon, iki enum (`AuditActionType`, `AuditModule`) ve mühür tablosu
+> `AuditLogSeal`. Tetikleyiciler migration'dadır (ADR-011).
+> **Kilit sırası:** zincir kilidi yeni bir kilit kaynağıdır; `docs/adr/ADR-012` ADR-008'in yerini alır.
+> **Geri not:** C-3 §(4) · A-13 §(7) (bu turda düşüldü).
+
+**Bu kararla güncellenen yerler (27.10.2026)** — eski hükümlerin gövdesi değişmez, tarihli not düşülür:
+- **KARARLAR** C-3 §(4) · A-13 §(7) · §4 etki satırları · §5 tablosu.
+- **`docs/adr/ADR-011`** ve **`ADR-012`** yazıldı; ADR-008'in Durum satırı ve `docs/adr/README.md` dizini.
+- **`KABUL_KRITERLERI.md`** — `X-18-1` … `X-18-7`.
+- **`YOL_HARITASI.md`** §7-5 kapsam satırı.
 
 ## 6. Faz 0 çıkış kontrol listesi
 

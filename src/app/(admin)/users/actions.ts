@@ -65,7 +65,8 @@ export async function createUser(_prev: unknown, formData: FormData): Promise<Us
           action: AUDIT_ACTIONS.USER_CREATE,
           entityType: "User",
           entityId: user.id,
-          after: { ...user, gerekce }, // passwordHash sanitize ile çıkarılır
+          after: user, // passwordHash maskelenir (X-18 §(6))
+          gerekce,
         },
         tx
       );
@@ -163,8 +164,9 @@ export async function updateUser(
           action: AUDIT_ACTIONS.USER_UPDATE,
           entityType: "User",
           entityId: id,
-          before, // passwordHash sanitize ile çıkarılır
-          after: gerekce ? { ...u, gerekce } : u,
+          before, // passwordHash maskelenir (X-18 §(6))
+          after: u,
+          gerekce,
         },
         tx
       );
@@ -175,7 +177,7 @@ export async function updateUser(
             action: AUDIT_ACTIONS.USER_PASSWORD_RESET,
             entityType: "User",
             entityId: id,
-            after: { gerekce },
+            gerekce,
           },
           tx
         );

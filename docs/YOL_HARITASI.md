@@ -355,6 +355,7 @@ Bu turdaki hatalar tam olarak "test yokken sessizce yanlış çalışan" sınıf
 | **Ü-13** | **B-5 fiyat listesi tarih/dönem ekranı** | "1 Ocak'tan geçerli yeni liste" — KARARLAR §3.2 |
 | **Ü-14** | **C-2 tarihli rapor ekranları** | Bakiye fonksiyonu `tarih?` parametreli (K-2/C-2); geçmiş tarihli mutabakat ekranları §0.8 |
 | **Ü-16** | **Alacak yaşlandırma / DSO raporu** *(13.09'da eklendi)* | **X-6 §(5)** ile Faz 1'den çıkarıldı. **X-1:** *"ayrı rapordur, oran değildir"*. ⚠️ Veri kaynağı yeniden tanımlanmalı — **eşleştirme yasak** (X-6 §(1)/(2)); rapor açıldığında yöntemi KARARLAR'a yazılır |
+| **Ü-17** | **Denetim kaydı modülü** ✅ *(27.10.2026 — kullanıcı talebi; §7-5 gereği buraya yazıldı, aynı gün tasarım 3. turunda yapıldı)* | Değişmez kayıt, veritabanında zincirli SHA-256 mührü, IP/oturum/gerekçe, alan bazlı değişiklik, üç katmanlı ekran — KARARLAR **X-18** (§5.21) · ADR-011 · ADR-012 |
 | ~~**Ü-15**~~ | ~~Bayi paneli (opsiyonel modül olarak paketleme)~~ → **Faz 3+'a taşındı** | ⚠️ **13.09 düzeltmesi:** D-2 §(6) ve §1.3 §D-14 bayi panelini **Faz 3+ opsiyonel modül, yalnız Sınıf 1** olarak konumluyor — dış kullanıcı, internete açık hesap, parola sıfırlama ve destek yükü getirdiği için. Faz 2'de değil. Bkz. §5.3 |
 
 **Ü-7 — invariant kontrolcüsü ne doğrular** *(13.09'da KARARLAR'a göre güncellendi)*:

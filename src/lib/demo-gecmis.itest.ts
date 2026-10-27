@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { prisma } from "@/lib/db";
+import { zinciriDogrula } from "@/lib/denetim/dogrulama";
 import { degistirDoktorSahibi } from "@/lib/sahiplik";
 import { stokGirisiYaz } from "@/lib/stok-giris";
 import { gunAraligi, simdi, takvimYili } from "@/lib/zaman";
@@ -59,6 +60,8 @@ describe("demoGecmisUret — servislerden yazılır, geçmişe kayar, tutarlıd�
     expect(doktor.createdAt < o.baslangic).toBe(true);
     expect(await prisma.doctorAssignment.count({ where: { changedAt: { gte: o.baslangic } } })).toBe(0);
     expect(await tutarlilikDenetle(prisma, simdi())).toEqual([]);
+    // Kaydırılan denetim kayıtlarının zinciri yeniden kuruldu (X-18-2): sorunsuz ve mühürsüz kayıt yok.
+    expect(await zinciriDogrula()).toMatchObject({ sorunlar: [], muhursuz: [] });
 
     await expect(demoGecmisUret({ ay: 1, tohum: 11 })).rejects.toThrow(/iki günden eski sevkiyat/);
   }, 120_000);
@@ -93,7 +96,11 @@ describe("tutarlilikDenetle — bozulmayı yakalar", () => {
     const sevk = await prisma.shipment.findFirstOrThrow({ include: { order: true } });
     await prisma.shipment.update({ where: { id: sevk.id }, data: { shippedAt: new Date(sevk.order.orderDate.getTime() - 3_600_000) } });
     const kayit = await prisma.auditLog.findFirstOrThrow();
-    await prisma.auditLog.update({ where: { id: kayit.id }, data: { createdAt: new Date(Date.now() + 86_400_000) } });
+    // Denetim kaydı değişmezdir (X-18-1); bozulma bakım yoluyla yazılır.
+    await prisma.$transaction([
+      prisma.$executeRawUnsafe("SET LOCAL session_replication_role = replica"),
+      prisma.$executeRaw`UPDATE "AuditLog" SET "createdAt" = ${new Date(Date.now() + 86_400_000)} WHERE "id" = ${kayit.id}`,
+    ]);
     const hareket = await prisma.ledgerEntry.findFirstOrThrow({ where: { type: "SEVKIYAT" } });
     await prisma.ledgerEntry.update({ where: { id: hareket.id }, data: { amount: "1.00" } });
 

@@ -73,7 +73,7 @@ describe("SAYFA_SAYILARI — dashboard sayfa şeridi", () => {
       prisma.importBatch.create({ data: { batchNo: `IMP-S-${++no}`, dataType: "URUN", userId: k.id, createdAt } });
     await parti(new Date("2026-10-10T09:00:00Z"));
     await parti(new Date("2026-08-10T09:00:00Z"));
-    const kayit = (createdAt: Date) => prisma.auditLog.create({ data: { action: "PRODUCT_UPDATE", entityType: "Product", createdAt } });
+    const kayit = (createdAt: Date) => prisma.auditLog.create({ data: { action: "PRODUCT_UPDATE", actionType: "GUNCELLEME", module: "URUN_FIYAT", entityType: "Product", createdAt } });
     await kayit(new Date("2026-10-26T06:00:00Z")); // 26 Ekim 09:00
     await kayit(new Date("2026-10-25T20:00:00Z")); // 25 Ekim 23:00
     expect(await say("/collections")).toBe(1);

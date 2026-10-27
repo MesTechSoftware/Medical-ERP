@@ -115,7 +115,8 @@ export async function cancelCollection(
         entityType: "DoctorPayment",
         entityId: paymentId,
         before,
-        after: { status: "IPTAL", reason },
+        after: { status: "IPTAL" },
+        gerekce: reason,
       },
       tx
     );
@@ -175,7 +176,8 @@ export async function changeDueDate(
         entityType: "LedgerEntry",
         entityId: ledgerEntryId,
         before: { dueDate: oldDueDate },
-        after: { dueDate: newDueDate, reason },
+        after: { dueDate: newDueDate },
+        gerekce: reason,
       },
       tx
     );

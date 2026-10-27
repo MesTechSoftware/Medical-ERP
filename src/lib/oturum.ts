@@ -63,11 +63,17 @@ type Db = Prisma.TransactionClient | typeof prisma;
 
 /** Yeni oturum açar; çereze yazılacak ham token'ı döner. */
 export async function oturumOlustur(userId: string, now = new Date(), db: Db = prisma): Promise<string> {
+  return (await oturumAc(userId, now, db)).token;
+}
+
+/** `oturumOlustur` ile aynı; oturum satırının numarasını da döner (giriş denetim kaydı, X-18 §(3)). */
+export async function oturumAc(userId: string, now: Date, db: Db): Promise<{ token: string; oturumId: string }> {
   const token = randomBytes(32).toString("base64url");
-  await db.session.create({
+  const oturum = await db.session.create({
     data: { userId, tokenHash: tokenHash(token), createdAt: now, lastSeenAt: now },
+    select: { id: true },
   });
-  return token;
+  return { token, oturumId: oturum.id };
 }
 
 /**
@@ -79,6 +85,15 @@ export async function oturumDogrula(
   now = new Date(),
   ayar = sureAyari()
 ): Promise<OturumKullanicisi | null> {
+  return (await gecerliOturum(token, now, ayar))?.kullanici ?? null;
+}
+
+/** `oturumDogrula` ile aynı kural; oturum satırının numarasını da döner (denetim kaydı, X-18 §(3)). */
+export async function gecerliOturum(
+  token: string,
+  now = new Date(),
+  ayar = sureAyari()
+): Promise<{ oturumId: string; kullanici: OturumKullanicisi } | null> {
   const oturum = await prisma.session.findUnique({
     where: { tokenHash: tokenHash(token) },
     select: {
@@ -99,7 +114,7 @@ export async function oturumDogrula(
   }
 
   const { id, name, email, role, mustChangePassword } = oturum.user;
-  return { id, name, email, role, mustChangePassword };
+  return { oturumId: oturum.id, kullanici: { id, name, email, role, mustChangePassword } };
 }
 
 /** Çıkış: yalnız bu token'ın oturumunu iptal eder. */

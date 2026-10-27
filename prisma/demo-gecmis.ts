@@ -241,7 +241,10 @@ async function kaydir(tx: Tx, kolonlar: ZamanKolonlari[], t0: Date, hedef: Date)
   const ileri = (k: string) => `"${k}" + ${fark} * interval '1 millisecond'`;
   for (const t of kolonlar) {
     const atamalar = [...t.zaman.map((k) => `"${k}" = ${ileri(k)}`), ...t.gun.map((k) => `"${k}" = "${k}" + ${gunFarki}`)];
+    const denetim = t.tablo === "AuditLog";
+    if (denetim) await bakimYolu(tx, true);
     await tx.$executeRawUnsafe(`UPDATE "${t.tablo}" SET ${atamalar.join(", ")} WHERE "${t.isaret}" >= $1`, t0);
+    if (denetim) await bakimYolu(tx, false);
     const diger = t.zaman.filter((k) => k !== t.isaret);
     if (diger.length === 0) continue;
     await tx.$executeRawUnsafe(
@@ -261,10 +264,13 @@ async function yenidenNumarala(tx: Tx, belge: Belge, hedef: Date): Promise<boole
   await tx.$executeRawUnsafe(`UPDATE "${belge.tablo}" SET "documentNo" = $1 WHERE "id" = $2`, yeni, belge.id);
   await tx.$executeRaw`UPDATE "LedgerEntry" SET "documentNo" = ${yeni} WHERE "documentNo" = ${belge.no}`;
   const desen = `%${belge.no}%`;
+  await bakimYolu(tx, true);
   await tx.$executeRaw`
     UPDATE "AuditLog"
-    SET "afterData" = replace("afterData", ${belge.no}, ${yeni}), "beforeData" = replace("beforeData", ${belge.no}, ${yeni})
+    SET "afterData" = replace("afterData", ${belge.no}, ${yeni}), "beforeData" = replace("beforeData", ${belge.no}, ${yeni}),
+        "changes" = replace("changes", ${belge.no}, ${yeni})
     WHERE "afterData" LIKE ${desen} OR "beforeData" LIKE ${desen}`;
+  await bakimYolu(tx, false);
   return true;
 }
 
@@ -289,9 +295,33 @@ async function anaVeriyiGeriAl(tx: Tx, an: Date): Promise<void> {
     WHERE "type" = 'GIRIS' AND "createdAt" > ${an}
       AND "orderId" IS NULL AND "shipmentId" IS NULL AND "returnNoteId" IS NULL AND "consignmentIssueId" IS NULL
       AND "stockTransferId" IS NULL AND "stockAdjustmentId" IS NULL AND "importBatchId" IS NULL`;
+  await bakimYolu(tx, true);
   await tx.$executeRaw`
     UPDATE "AuditLog" SET "createdAt" = ${an}
     WHERE "createdAt" > ${an} AND "entityType" IN ('User', 'Doctor', 'Product', 'PriceList', 'PriceListItem', 'DoctorAssignment')`;
+  await bakimYolu(tx, false);
+}
+
+/**
+ * Denetim kaydı değişmezdir (KARARLAR X-18 §(1)); geçmişe kaydırma onu bakım yoluyla günceller:
+ * tetikleyiciler yalnız o cümle için kapanır (ADR-011 §11, süper kullanıcı ister). Değişen kayıtların
+ * zinciri üretim commit'lendikten sonra `denetimZinciriniYenidenKur()` ile baştan kurulur.
+ */
+async function bakimYolu(tx: Tx, acik: boolean): Promise<void> {
+  await tx.$executeRawUnsafe(`SET LOCAL session_replication_role = ${acik ? "replica" : "DEFAULT"}`);
+}
+
+/**
+ * Commit anında yazılan mühürler kaydırılmadan önceki içeriği özetler; zincir kaydırılmış hâliyle
+ * baştan kurulur. Ayrı transaction'dadır: üretim transaction'ının içinde kurulan mühürle commit'teki
+ * mühürler çakışırdı.
+ */
+async function denetimZinciriniYenidenKur(): Promise<void> {
+  await prisma.$transaction([
+    prisma.$executeRawUnsafe("SET LOCAL session_replication_role = replica"),
+    prisma.$executeRawUnsafe('DELETE FROM "AuditLogSeal"'),
+    prisma.$executeRawUnsafe("SELECT denetim_zinciri_kur()"),
+  ]);
 }
 
 // --- Olaylar ---------------------------------------------------------------------------------------
@@ -481,7 +511,7 @@ export async function tutarlilikDenetle(tx: Tx, an: Date, seedBasi?: Date): Prom
 /** Geçmişi tek transaction'da üretir; tutarlılık denetimi başarısızsa hepsi geri alınır. */
 export async function demoGecmisUret(secenek: DemoGecmisSecenekleri): Promise<DemoGecmisOzeti> {
   const seedBasi = simdi();
-  return prisma.$transaction(
+  const ozet = await prisma.$transaction(
     async (tx) => {
       const veri = await demoVerisi(tx);
       await gecmisYokMu(tx, seedBasi);
@@ -500,4 +530,6 @@ export async function demoGecmisUret(secenek: DemoGecmisSecenekleri): Promise<De
     },
     { timeout: 30 * 60_000, maxWait: 30_000 }
   );
+  await denetimZinciriniYenidenKur();
+  return ozet;
 }
