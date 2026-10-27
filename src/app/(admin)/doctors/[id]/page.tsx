@@ -21,7 +21,7 @@ import {
   StatusChip,
   EmptyRow,
 } from "@/components/ui";
-import { AyOzeti } from "@/components/kpi/AyOzeti";
+import { KovaOzeti } from "@/components/kpi/KovaOzeti";
 import { KpiCard } from "@/components/kpi/KpiCard";
 import { KpiSatiri } from "@/components/kpi/KpiSatiri";
 import { buton } from "@/components/stil";
@@ -126,7 +126,7 @@ export default async function DoctorDetailPage({
               ? {
                   seri: bakiyeTrendi,
                   sonDevamEdiyor: true,
-                  ozet: <AyOzeti baslik="Son 6 ay sonu bakiye" aylar={aylar} seri={bakiyeTrendi} taban={BRUT} />,
+                  ozet: <KovaOzeti baslik="Son 6 ay sonu bakiye" kovalar={aylar} tur="ay" seri={bakiyeTrendi} taban={BRUT} />,
                 }
               : undefined
           }

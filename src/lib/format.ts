@@ -45,9 +45,11 @@ export function formatSayi(n: number): string {
   return SAYI.format(n);
 }
 
-/** Takvim ayının kısa adı ("Eki"). Ayın kendisidir, an değildir: dilim dönüşümü yoktur. */
-export function ayEtiketi(yil: number, ay: number): string {
-  return new Intl.DateTimeFormat("tr-TR", { month: "short", timeZone: "UTC" }).format(new Date(Date.UTC(yil, ay - 1, 15)));
+const GUN_SURESI = new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+/** Gün cinsinden süre, 1 ondalık ("1,4 gün"); değer `medyanGun()`'den yuvarlanmış gelir. */
+export function formatGunSuresi(gun: number): string {
+  return `${GUN_SURESI.format(gun)} gün`;
 }
 
 const GUN_AY = new Intl.DateTimeFormat("tr-TR", { timeZone, day: "numeric", month: "short" });

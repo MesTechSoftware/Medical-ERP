@@ -27,19 +27,25 @@ test("dashboard KPI iskeleti gerçek yerleşimle kart kart eşleşir", async ({ 
   await kpiIskeletiEslesir(page, "/dashboard");
 });
 
-test("dashboard sayfa özetleri dokunmatikte tek kolon; her kart satırın içinde", async ({ page }) => {
+test("dashboard dokunmatikte öncelik sırası (brief §2): bloklar alt alta, akış en çok sevk edilenlerden önce; sayfa kaymaz", async ({ page }) => {
   await page.goto("/dashboard");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-  const izgara = (await page.locator("[data-sayfa-ozetleri]").boundingBox())!;
-  const kartlar = await page.locator("[data-sayfa-ozetleri] > [role=group]").evaluateAll((k) =>
-    k.slice(0, 3).map((e) => {
-      const r = e.getBoundingClientRect();
-      return { x: r.x + window.scrollX, y: r.y + window.scrollY, genislik: r.width };
-    })
-  );
-  for (const k of kartlar) {
-    expect(Math.abs(k.genislik - izgara.width), "tam genişlik").toBeLessThanOrEqual(1);
-    expect(Math.abs(k.x - izgara.x), "aynı kolon").toBeLessThanOrEqual(1);
-  }
-  expect(kartlar[1].y, "alt alta").toBeGreaterThan(kartlar[0].y);
+  const y = async (l: import("@playwright/test").Locator) => (await l.boundingBox())!.y;
+  const baslik = (ad: string) => page.getByRole("heading", { name: ad, exact: true });
+  const telefon = page.viewportSize()!.width < 768;
+  const sira = [
+    ...(telefon ? [page.getByRole("region", { name: "Dikkat gerektirenler" }), page.getByRole("navigation", { name: "Zaman aralığı" })] : []),
+    page.locator("[data-kpi-satiri]"),
+    baslik("Sipariş durumları"),
+    baslik("Kritik stok"),
+    baslik("Dikkat gerektirenler"),
+    baslik("Son hareketler"),
+    baslik("En çok sevk edilen ürünler"),
+    baslik("Sayfalar"),
+  ];
+  const ys: number[] = [];
+  for (const l of sira) ys.push(await y(l));
+  expect(ys).toEqual([...ys].sort((a, b) => a - b));
+  const { sw, cw } = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
+  expect(sw).toBeLessThanOrEqual(cw);
 });

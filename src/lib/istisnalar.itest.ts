@@ -72,8 +72,8 @@ describe("istisnalar — dashboard istisna listesi (brief §3.1)", () => {
       ["sahipsiz", "uyari", 1],
     ]);
     expect(liste.map((i) => i.href)).toEqual(["/stock", "/stock", "/approvals", "/doctors?fatura=eksik", "/doctors?sahip=yok"]);
-    expect(liste[0].metin).toBe("1 ürün tükendi");
-    expect(liste[2].metin).toBe("1 onay 24 saatten uzun süredir bekliyor");
+    expect(liste[0].metin).toBe("ürün tükendi");
+    expect(liste[2].metin).toBe("onay 24 saatten uzun süredir bekliyor");
   });
 
   it("OPERASYON onay istisnasını görmez (onay ekranı yöneticinindir); geri kalanı aynı", async () => {

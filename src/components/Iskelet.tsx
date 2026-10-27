@@ -2,7 +2,7 @@ import { Card } from "@/components/ui";
 import { BOYUT_SINIFI, type GrafikBoyutu } from "@/components/grafik/ortak";
 import { KPI_YERLESIMI } from "@/components/kpi/KpiSatiri";
 import { DEGER_BOYU, DEGER_SATIRI, type KpiVaryanti } from "@/components/kpi/KpiCard";
-import { OZET_IZGARASI } from "@/components/SayfaOzeti";
+import { ALAN, YERLESIM } from "@/components/dashboard/yerlesim";
 
 /*
  * Yükleme iskeletleri (ADR-009). Ölçü tahmin edilmez: gerçek bileşenlerin sınıfları ve token'ları
@@ -187,26 +187,56 @@ export function DonemSeciciIskeleti({ aciklama }: { aciklama: string }) {
   );
 }
 
-/** Sayfa özetleri iskeleti: aynı ızgara; kart başlığı ve üç satır. Rol bilinmediği için kart sayısı sabittir. */
-export function SayfaOzetleriIskeleti({ adet = 6 }: { adet?: number }) {
+/** Telefonda KPI'ların üstündeki zaman filtresinin yeri (md ve üstünde filtre başlıktadır). */
+export function ZamanFiltresiIskeleti() {
+  return <span aria-hidden="true" className="mb-4 block h-[calc(var(--toolbar-h)+0.25rem)] animate-skeleton rounded-lg bg-slate-100 md:hidden" />;
+}
+
+/**
+ * Dashboard blokları iskeleti: sayfayla aynı alanlar (`YERLESIM`). Rol iskelet anında bilinmez;
+ * yönetici yerleşimi çizilir.
+ */
+export function DashboardBloklariIskeleti() {
+  const blok = (alan: string, satir: number) => (
+    <div className={`min-w-0 ${alan}`}>
+      <Card>
+        <div className="mb-3 flex h-5 items-center">
+          <Cubuk className="h-3.5 w-32" />
+        </div>
+        <div className="space-y-2">
+          {Array.from({ length: satir }, (_, i) => (
+            <Cubuk key={i} className="h-4 w-full" />
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
   return (
     <div aria-hidden="true" className="@container">
-      <div className={OZET_IZGARASI}>
-        {Array.from({ length: adet }, (_, i) => (
-          <div key={i} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="flex h-5 items-center">
-              <Cubuk className="h-3.5 w-28" />
-            </div>
-            <div className="mt-2 space-y-1">
-              {[0, 1, 2].map((j) => (
-                <div key={j} className="flex h-5 items-center justify-between">
-                  <Cubuk className="h-3 w-20" />
-                  <Cubuk className="h-3 w-8" />
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
+      <div className={`grid items-start gap-6 ${YERLESIM.yonetici}`}>
+        {blok(ALAN.dagilim, 3)}
+        {blok(ALAN.kritik, 3)}
+        {blok(ALAN.dikkat, 2)}
+        {blok(ALAN.akis, 8)}
+        {blok(ALAN.encok, 3)}
+      </div>
+    </div>
+  );
+}
+
+/** Sayfa şeridi iskeleti: aynı ızgara; kutu yüksekliği gerçekle aynı (dokunmatikte 44 px). */
+export function SayfaSeridiIskeleti({ adet = 8 }: { adet?: number }) {
+  return (
+    <div aria-hidden="true" className="mt-8">
+      <div className="mb-3 flex h-5 items-center">
+        <Cubuk className="h-3.5 w-20" />
+      </div>
+      <div className="@container">
+        <div className="grid grid-cols-1 gap-2 @min-[480px]:grid-cols-2 @min-[784px]:grid-cols-3 @min-[1200px]:grid-cols-4">
+          {Array.from({ length: adet }, (_, i) => (
+            <span key={i} className="block h-[38px] animate-skeleton rounded-lg bg-slate-100 dokunmatik:h-11" />
+          ))}
+        </div>
       </div>
     </div>
   );

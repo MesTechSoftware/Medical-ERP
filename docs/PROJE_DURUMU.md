@@ -88,13 +88,20 @@ Prisma client `src/generated/prisma/` altına üretilir (gitignored — taze klo
     OranCubugu; istemciye JS yok. Geometri ve yüzde yalnız `src/lib/kpi/olcek.ts` (X-5 eki).
   - Ekranlar: dashboard ("bu ay"), raporlar ve Raporum (seçili dönem), doktor detayı (cari bakiye
     trendi). KPI sorguları mevcut tek hesap yollarından; her KPI kendi hata alanında (`kpiGetir`).
-  - Dashboard'da KPI satırının altında **bütün sayfaların özeti** *(27.10.2026)*: menüdeki her sayfa
-    için bir kart (birkaç sayı ve sayfaya bağlantı; kritik stok Stok kartında, en çok sevk edilenler
-    Kargo kartında). Rolün göremediği sayfalar OPERASYON'da hiç okunmaz (`gorunurOzetler`,
-    `src/components/menu.ts`); her kart kendi hata alanında; Raporlar kartı hakediş taşımaz (D-2).
   - Tarih aralığı indeksleri: `Shipment(shippedAt)`, `ReturnNote(createdAt)`,
     `DoctorPayment(status, paidAt)`.
   - Demo geçmişi: `npm run db:seed:gecmis` (aşağıda, "Çalıştırma").
+- **2. tur eki — dashboard** *(27.10.2026, `docs/adr/ADR-010` madde 10, PR #73–#76)*:
+  - Zaman filtresi Bugün / Bu Hafta / Bu Ay / Bu Yıl (varsayılan Bu Ay, `?aralik=`); dönem KPI'ları
+    ve blokları aralığa göre, anlık sayılar ("şu an") etkilenmez. Aralıklar `dashboardAraligi()`.
+  - İstisna bandı (yalnız istisna varken, en çok 3 madde) ve "Dikkat gerektirenler" tek listeden
+    (`istisnalar()`, rol parametreli): tükenen, kritik stok, 24 saatten eski onay (yönetici), fatura
+    bilgisi eksik, sahipsiz doktor.
+  - Bloklar: sipariş durum dağılımı (yığılmış çubuk), kritik stok (stok girişine ürün önseçili hızlı
+    bağlantı), dikkat gerektirenler, en çok sevk edilen 5 ürün; yöneticide aktivite akışı (insan
+    diliyle son 15 olay, 60 sn'de bir tazelenir). Bekleyen sipariş kartında medyan hazırlama süresi.
+  - En altta sayfa şeridi: menüdeki her sayfa için ikon, ad ve tek sayı; rolün görebildiği kadar.
+  - `AuditLog(createdAt)` indeksi (akış).
 
 ## Veri Modeli (`prisma/schema.prisma`)
 

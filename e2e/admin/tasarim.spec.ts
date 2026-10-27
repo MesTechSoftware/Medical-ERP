@@ -26,7 +26,7 @@ test("masaüstünde kutucuk alanı büyümez", async ({ page }) => {
   expect((await alan.boundingBox())!.height).toBeLessThan(32);
 });
 
-for (const yol of ["/orders", "/doctors", "/stock", "/audit-logs", "/collections", "/imports"]) {
+for (const yol of ["/dashboard", "/orders", "/doctors", "/stock", "/audit-logs", "/collections", "/imports"]) {
   test(`masaüstünde ${yol} yatay kaymaz`, async ({ page }) => {
     await page.goto(yol);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();

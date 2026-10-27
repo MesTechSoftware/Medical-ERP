@@ -226,7 +226,9 @@ async function kpiKutulari(page: Page) {
 
 /**
  * KPI satırı iskeleti gerçek satırla kart kart eşleşir (x, y, genişlik, yükseklik ±2 px): iskelet
- * kartla aynı sınıfları ve aynı metinleri taşır, değer tek satırdır (ADR-010).
+ * kartla aynı sınıfları ve aynı metinleri taşır, değer tek satırdır (ADR-010). Dashboard'un istisna
+ * bandı veriye bağlıdır (yalnız istisna varken çizilir, brief §3.1) ve iskelette yoktur: kartlar
+ * tam bant yüksekliği (ve alt boşluğu) kadar aşağıda başlar — başka kayma yoktur.
  */
 export async function kpiIskeletiEslesir(page: Page, yol: string) {
   await iskeletiAc(page, yol);
@@ -235,11 +237,16 @@ export async function kpiIskeletiEslesir(page: Page, yol: string) {
   await page.goto(yol);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   const gercek = await kpiKutulari(page);
+  const bant = await page.evaluate(() => {
+    const b = document.querySelector('main [role="region"][aria-label="Dikkat gerektirenler"]');
+    return b ? b.getBoundingClientRect().height + parseFloat(getComputedStyle(b).marginBottom) : 0;
+  });
 
   expect(gercek.length, `${yol} kart sayısı`).toBe(iskelet.length);
   gercek.forEach((g, i) => {
     for (const olcu of ["x", "y", "genislik", "yukseklik"] as const) {
-      expect(Math.abs(iskelet[i][olcu] - g[olcu]), `${yol} ${i + 1}. kart ${olcu}`).toBeLessThanOrEqual(2);
+      const beklenen = olcu === "y" ? iskelet[i].y + bant : iskelet[i][olcu];
+      expect(Math.abs(beklenen - g[olcu]), `${yol} ${i + 1}. kart ${olcu}`).toBeLessThanOrEqual(2);
     }
   });
 }
