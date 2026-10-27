@@ -90,6 +90,7 @@
     - Prisma, sayılan belge süzgecini ve tarih süzgecini `Shipment`'a iki ayrı JOIN yoluyla bağlıyor; sipariş yolu tam taranıyor.
     - İlişkiler ayrı sorgularda, büyük `IN` listeleriyle yükleniyor; toplama JS'te yapılıyor.
   - Bu hacmin (ayda ~1000 sipariş) üstüne çıkılırsa iyileştirme sorgu biçiminde yapılır: tek ilişki yolu ve ilişki yükleme stratejisi. Bu ayrı bir iştir ve ölçümle yapılır.
+- **Denetim kaydı tarih indeksi (2. tur eki, D-3):** `AuditLog(createdAt)` eklendi. Dashboard aktivite akışı son 15 olayı tür süzgeciyle en yeniden okur; mevcut `(entityType, createdAt)` indeksi tür süzgeci olmadan bu sıralamayı karşılamaz.
 
 ## Değerlendirilen alternatifler
 
