@@ -6,7 +6,7 @@
 > Kod yeri, kriter metninde anılan fonksiyonun tanımlandığı dosyadır. Eski PRD matrisi (8 Ağustos 2026)
 > `docs/arsiv/TRACEABILITY_PRD_V2.md`'dedir.
 
-**Özet:** 119 KANITLI · 0 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.0** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
+**Özet:** 124 KANITLI · 0 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.0** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
 
 | Kriter | Karar | Durum | Kod yeri | Test | Kriter metni |
 |---|---|---|---|---|---|
@@ -81,7 +81,7 @@
 | B-7-2 | B-7 | KANITLI | — | `src/lib/disa-aktarim.itest.ts` | Stok veri seti, miktar satırlarına ("Bakiye") ek olarak seçilen günün takvim yılı başından gün sonuna kadarki her `DZL` satırını "Düzeltm… |
 | C-1-1 | C-1 | KANITLI | — | `src/lib/sevkiyat.itest.ts`<br>`e2e/admin/sevkiyat.spec.ts` | Sevkiyat müşterinin irsaliye numarasını isteğe bağlı salt kayıt olarak taşır (en çok 32 karakter; doğrulanmaz, hiçbir hesaba girmez) ve s… |
 | C-2-1 | C-2 | KANITLI | — | `src/lib/disa-aktarim.itest.ts` | Müşavir verisi dışa aktarımla verilir: cari hareket, tahsilat ve stok veri setleri tarih parametresi alır; stok veri seti gün sonu itibar… |
-| C-3-1 | C-3 | KANITLI | — | `src/lib/audit.test.ts`<br>`src/lib/cari.itest.ts`<br>`src/lib/ice-aktarim/ice-aktarim.itest.ts` | Denetim kaydı vergi kimliği ve fatura alanlarının değerini yazmaz (yalnız değişen alan adı, A-13 §(7)). Belgeye bağlı olmayan cari yalnız… |
+| C-3-1 | C-3 | KANITLI | — | `src/lib/denetim/maske.test.ts`<br>`src/lib/cari.itest.ts`<br>`src/lib/ice-aktarim/ice-aktarim.itest.ts` | Denetim kaydı vergi kimliği ve fatura alanlarının değerini yazmaz (yalnız değişen alan adı, A-13 §(7)). Belgeye bağlı olmayan cari yalnız… |
 | C-4-1 | C-4 | KAPSAM DIŞI | — | — | — |
 | C-5-1 | C-5 | KAPSAM DIŞI | — | — | — |
 | C-6-1 | C-6 | KANITLI | `src/lib/satir-tutarlari.ts` | `src/lib/satir-tutarlari.test.ts`<br>`src/app/(seller)/my-orders/orders.itest.ts` | Satır hesabı ve yuvarlama tek fonksiyondadır (`hesaplaSatirTutarlari()`): matrah = birim fiyat × miktar ve KDV = matrah × oran, her ikisi… |
@@ -141,4 +141,9 @@
 | X-17-3 | X-17 | KANITLI | — | `e2e/admin/doctor-transfer.spec.ts` | Devir cari listesinden **çoklu seçimle** yapılır; gerekçe bir kez girilir, her doktora ayrı iz satırı düşer. Seçimsiz ya da gerekçesiz de… |
 | X-17-4 | X-17 | KANITLI | — | `src/lib/sahiplik.itest.ts`<br>`e2e/admin/seller-deactivation.spec.ts` | Doktoru olan bir `SATICI` pasifleştirilirken portföy seçimi (**tek bir aktif satıcıya devret** ya da **sahipsiz bırak**) ve gerekçe zorun… |
 | X-17-5 | X-17 | KANITLI | — | `e2e/admin/doctor-transfer.spec.ts` | Cari listesinde **"Sahipsiz" süzgeci** yalnız sahipsiz `DOKTOR` carilerini listeler. Sahipsiz uyarısındaki sayı bütün sahipsiz `DOKTOR`'l… |
+| X-18-1 | X-18 | KANITLI | — | `src/lib/denetim/zincir.itest.ts`<br>`src/lib/denetim/degismezlik.test.ts` | Denetim kaydı ve mührü değiştirilemez: `AuditLog` ve `AuditLogSeal` üzerinde `UPDATE`, `DELETE` ve `TRUNCATE` veritabanında reddedilir ("… |
+| X-18-2 | X-18 | KANITLI | — | `src/lib/denetim/zincir.itest.ts`<br>`src/lib/denetim/zincir.test.ts` | Her denetim kaydı commit anında, kaydın içeriğinin ve bir önceki mührün SHA-256 özetiyle mühürlenir; zincir sırası boşluksuzdur ve verita… |
+| X-18-3 | X-18 | KANITLI | — | `src/lib/audit.itest.ts`<br>`src/lib/denetim/olaylar.test.ts`<br>`src/lib/denetim/baglam-ayristir.test.ts`<br>`e2e/admin/users.spec.ts` | Her kayıt UUID kimlik, milisaniye hassasiyetli UTC zaman, aktörün o anki rolünü, işlem türünü (Ekleme · Güncelleme · Silme · Oturum) ve m… |
+| X-18-4 | X-18 | KANITLI | — | `src/lib/denetim/maske.test.ts`<br>`src/lib/denetim/fark.test.ts`<br>`src/lib/audit.itest.ts` | Hassas alanın değeri kayda `***` olarak yazılır, alan adı kalır; iç içe nesnede ve dizide de. Değişiklik listesi maskelemeden önce kurulu… |
+| X-18-5 | X-18 | KANITLI | — | `src/lib/audit.itest.ts`<br>`src/app/(admin)/collections/collections.itest.ts`<br>`e2e/admin/users.spec.ts` | Gerekçe isteyen akışların gerekçesi kaydın gerekçe alanındadır ve önceki/sonraki hâlde tekrarlanmaz: tahsilat iptali, vade değişikliği, v… |
 | Ü-3-1 | Ü-3 | KANITLI | — | `src/lib/taban.test.ts`<br>`e2e/admin/reports.spec.ts`<br>`e2e/admin/siparis-toplam.spec.ts`<br>`e2e/mobil/toplam-hizasi.spec.ts` | Ekranda gösterilen her para tutarının yanında vergi tabanı yazılıdır (*KDV hariç* / *KDV dahil*); tabloda etiket kolon başlığındadır ve b… |

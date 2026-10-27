@@ -38,7 +38,9 @@ describe("vade farkı elle (A-7-2)", () => {
     expect((await hesaplaDoktorBakiye(doktorId)).bakiye.toFixed(2)).toBe("150.25");
     expect(await prisma.ledgerEntry.count({ where: sayilanBelgeler.cariHareket })).toBe(0);
     const log = await prisma.auditLog.findFirstOrThrow({ where: { action: "LATE_FEE_CREATE" } });
-    expect(String(log.afterData)).toContain("Gecikme");
+    // Gerekçe kendi alanındadır, sonraki hâlde tekrarlanmaz (X-18-5).
+    expect(log.reason).toBe("Gecikme");
+    expect(String(log.afterData)).not.toContain("Gecikme");
   });
 
   it("tutar, vade ve gerekçe alan altında doğrulanır; hiçbir şey ve numara yazılmaz", async () => {

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { aktiviteAkisi } from "@/lib/aktivite";
 import { prisma } from "@/lib/db";
+import { ISLEM_SINIFI, type AuditAction } from "@/lib/denetim/olaylar";
 import { referansVeri, yeniDoktorVerisi } from "../../test/integration/referans";
 
 // Aktivite akışı (brief §3.6): son kayıtlar, en yeniden; rol süzgeci sunucuda, tek tablodan.
@@ -22,6 +23,8 @@ async function kurulum() {
       data: {
         actorId: selin.id,
         action,
+        actionType: ISLEM_SINIFI[action as AuditAction].tur,
+        module: ISLEM_SINIFI[action as AuditAction].modul,
         entityType,
         entityId,
         afterData: afterData === undefined ? null : typeof afterData === "string" ? afterData : JSON.stringify(afterData),

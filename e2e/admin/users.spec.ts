@@ -39,11 +39,26 @@ test("yönetici rol seçerek hesap açar; parola geçicidir, gerekçe denetim ka
     [id]
   );
   expect(u).toEqual({ role: "OPERASYON", mustChangePassword: true });
-  const [log] = await query<{ afterData: string }>(
-    `SELECT "afterData" FROM "AuditLog" WHERE action = 'USER_CREATE' AND "entityId" = $1`,
+  // X-18-5: gerekçe kaydın kendi alanında. X-18-3: gerçek istekte bağlam dolu — IP, yöneticinin açık
+  // oturumu, server action yöntemi ve formun sayfa yolu; kayıt mühürlü.
+  const [log] = await query<{
+    reason: string;
+    ipAddress: string | null;
+    requestMethod: string | null;
+    endpoint: string | null;
+    actorRole: string | null;
+    oturumVar: boolean;
+    muhurlu: boolean;
+  }>(
+    `SELECT a."reason", a."ipAddress", a."requestMethod", a."endpoint", a."actorRole",
+            EXISTS (SELECT 1 FROM "Session" s WHERE s."id" = a."sessionId" AND s."userId" = a."actorId") AS "oturumVar",
+            EXISTS (SELECT 1 FROM "AuditLogSeal" m WHERE m."logId" = a."id") AS "muhurlu"
+     FROM "AuditLog" a WHERE a.action = 'USER_CREATE' AND a."entityId" = $1`,
     [id]
   );
-  expect(JSON.parse(log.afterData).gerekce).toBe("E2E hesap açılışı");
+  expect(log).toMatchObject({ reason: "E2E hesap açılışı", requestMethod: "POST", actorRole: "YONETICI", oturumVar: true, muhurlu: true });
+  expect(log.ipAddress).toMatch(/^[0-9a-f:.]+$/i);
+  expect(log.endpoint).toMatch(/^\/users/);
 
   // Rol düzenleme formunda alan değildir.
   await page.goto(`/users/${id}/edit`);
@@ -93,6 +108,13 @@ test("parola sıfırlama açık oturumları kapatır ve değişimi yeniden zorun
   const kullanici = await ctx.newPage();
   await ilkGiris(kullanici, email);
   await expect(kullanici).toHaveURL(/\/my-orders/);
+  // X-18-3: giriş kaydı, aynı transaction'da açılan oturumun numarasını ve giriş sayfasını taşır.
+  const [giris] = await query<{ oturumVar: boolean; endpoint: string | null }>(
+    `SELECT EXISTS (SELECT 1 FROM "Session" s WHERE s."id" = a."sessionId" AND s."userId" = $1) AS "oturumVar", a."endpoint"
+     FROM "AuditLog" a WHERE a.action = 'AUTH_LOGIN_SUCCESS' AND a."actorId" = $1 ORDER BY a."seq" LIMIT 1`,
+    [id]
+  );
+  expect(giris).toEqual({ oturumVar: true, endpoint: "/login" });
 
   // Gerekçesiz sıfırlama kaydedilmez.
   await page.goto(`/users/${id}/edit`);

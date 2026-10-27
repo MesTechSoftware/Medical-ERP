@@ -2,7 +2,7 @@
 
 <!-- Belge sınıfı: 4 · Kayıt (YOL_HARITASI.md §7.1-A) · Tetikleyici: mimari "nasıl" kararı verildiğinde -->
 
-> Açılış: **15 Eylül 2026.** *(16.09.2026: ADR-005 eklendi. 24.09.2026: **ADR-008** eklendi — `006` ve `007` numaraları `docs/KARAR ONERISI.md` içindeki taslaklara ayrılmıştır, §5 gereği yeniden kullanılmaz. **13.10.2026: ADR-006 eklendi** (X-16). **26.10.2026: ADR-009 eklendi** (görsel tasarım sistemi); **ADR-010** (KPI ve mikro grafik). **`007` boş kalır:** X-17 01.10.2026'da revize hâliyle doğrudan KARARLAR §5.19'a işlendi, ADR-007 taslağı yazılmadı; numara §5 gereği başka ADR'ye verilmez. Öneri belgesi `docs/arsiv/KARAR_ONERISI_2026-09-19.md`'dedir.)* Konum: **`docs/adr/`** — bütün atıflar bu yola göre yazılıdır *(redaksiyon 18.09.2026: klasör kök dizinden `docs/` altına alındı, atıflar toplu güncellendi)*; Faz 1A **C0**'da git'e eklendi. Klasör `YOL_HARITASI.md` §1'de *"açılacak"* olarak duruyordu.
+> Açılış: **15 Eylül 2026.** *(16.09.2026: ADR-005 eklendi. 24.09.2026: **ADR-008** eklendi — `006` ve `007` numaraları `docs/KARAR ONERISI.md` içindeki taslaklara ayrılmıştır, §5 gereği yeniden kullanılmaz. **13.10.2026: ADR-006 eklendi** (X-16). **26.10.2026: ADR-009 eklendi** (görsel tasarım sistemi); **ADR-010** (KPI ve mikro grafik). **27.10.2026: ADR-011** (denetim kaydı zinciri) ve **ADR-012** (kilit sırası — ADR-008'in yerine; X-18). **`007` boş kalır:** X-17 01.10.2026'da revize hâliyle doğrudan KARARLAR §5.19'a işlendi, ADR-007 taslağı yazılmadı; numara §5 gereği başka ADR'ye verilmez. Öneri belgesi `docs/arsiv/KARAR_ONERISI_2026-09-19.md`'dedir.)* Konum: **`docs/adr/`** — bütün atıflar bu yola göre yazılıdır *(redaksiyon 18.09.2026: klasör kök dizinden `docs/` altına alındı, atıflar toplu güncellendi)*; Faz 1A **C0**'da git'e eklendi. Klasör `YOL_HARITASI.md` §1'de *"açılacak"* olarak duruyordu.
 > Açılmasının sebebi, `FAZ1_UYGULAMA_KAPSAMI.md` §D.0'ın üç mimari karar üretmiş olmasıdır.
 > Belge rejimi bunu iki yerde yasaklar:
 > - §7.1-A: *plan bir karar üretemez.*
@@ -90,6 +90,8 @@ Uygulamada soruları **sırayla** sor. İlk "evet" cevabı yeri belirler.
 | [ADR-004](./ADR-004-giris-deneme-sayaci.md) | Giriş denemesi sınırı — bellek içi sayaç | ✅ Kabul edildi | 15.09.2026 | §C-p · KARARLAR X-9 |
 | [ADR-005](./ADR-005-stok-miktari-turetilir.md) | Stok miktarı — saklanmaz, hareketlerden türetilir | ✅ Kabul edildi | 16.09.2026 | §C-x · KARARLAR B-4 |
 | [ADR-006](./ADR-006-ice-aktarim-tek-tanim.md) | İçe aktarım — tek tanım, şablon şemadan üretilir | ✅ Kabul edildi | 13.10.2026 | §C-y · KARARLAR X-16 |
-| [ADR-008](./ADR-008-kilit-sirasi.md) | Kilit sırası — tek küresel sıra | ✅ Kabul edildi | 24.09.2026 | §C-bb · KARARLAR A-14 §(3) |
+| [ADR-008](./ADR-008-kilit-sirasi.md) | Kilit sırası — tek küresel sıra | Yerini aldı → ADR-012 | 24.09.2026 | §C-bb · KARARLAR A-14 §(3) |
 | [ADR-009](./ADR-009-gorsel-tasarim-sistemi.md) | Görsel tasarım sistemi — tek token kaynağı, uygulama düzeyinde yoğunluk, mobil web | ✅ Kabul edildi | 26.10.2026 | Faz 1→2 revize · KARARLAR X-4, §3.5 |
 | [ADR-010](./ADR-010-kpi-ve-mikro-grafik.md) | KPI kartları ve mikro grafikler — sunucu SVG, tek hesap yolu, kart düzeyinde hata | ✅ Kabul edildi | 26.10.2026 | Tasarım 2. tur · KARARLAR X-5 eki, X-3, E-1 |
+| [ADR-011](./ADR-011-denetim-kaydi-zinciri.md) | Denetim kaydı — değişmez tablo, commit anında SHA-256 zinciri, istek bağlamı | ✅ Kabul edildi | 27.10.2026 | Tasarım 3 · KARARLAR X-18 |
+| [ADR-012](./ADR-012-kilit-sirasi-denetim-zinciri.md) | Kilit sırası — tek küresel sıra, denetim zinciri commit anında (ADR-008'in yerine) | ✅ Kabul edildi | 27.10.2026 | KARARLAR X-18 §(2) · A-14 §(3) |

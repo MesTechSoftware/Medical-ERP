@@ -84,7 +84,8 @@ export async function degistirDoktorSahibi(
         entityType: "Doctor",
         entityId: d.id,
         before: { ownerSellerId: d.ownerSellerId },
-        after: { ownerSellerId: yeniSahipId, reason: gerekce.metin },
+        after: { ownerSellerId: yeniSahipId },
+        gerekce: gerekce.metin,
       },
       tx
     );

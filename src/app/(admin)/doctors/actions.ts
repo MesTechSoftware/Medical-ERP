@@ -142,7 +142,8 @@ export async function addVadeFarki(doctorId: string, _prev: unknown, formData: F
         action: AUDIT_ACTIONS.LATE_FEE_CREATE,
         entityType: "LedgerEntry",
         entityId: h.id,
-        after: { documentNo: h.documentNo, doctorId, amount: tutar.data, dueDate: vade, reason: gerekce },
+        after: { documentNo: h.documentNo, doctorId, amount: tutar.data, dueDate: vade },
+        gerekce,
       },
       tx
     );
@@ -173,7 +174,8 @@ export async function reverseLedgerEntry(entryId: string, _prev: unknown, formDa
           action: AUDIT_ACTIONS.LEDGER_REVERSAL,
           entityType: "LedgerEntry",
           entityId: entryId,
-          after: { tersKayitId: ters.id, documentNo: h.documentNo, reason: gerekce },
+          after: { tersKayitId: ters.id, documentNo: h.documentNo },
+          gerekce,
         },
         tx
       );

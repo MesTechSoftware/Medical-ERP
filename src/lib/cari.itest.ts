@@ -81,7 +81,9 @@ describe("cari düzeltme (A-13-1, X-10-3)", () => {
     const after = JSON.parse(String(log.afterData)) as Record<string, unknown>;
     expect(after.degisenAlanlar).toEqual(["priceListId", "partyType", "taxId"]);
     expect(JSON.stringify(log.afterData)).not.toContain("10000000146");
-    expect(JSON.stringify(log.beforeData)).not.toMatch(/taxId/);
+    // X-18-4: alan görünür, değeri `***`; değişiklik listesi değiştiğini söyler.
+    expect(JSON.stringify(log.beforeData)).not.toContain("10000000146");
+    expect(JSON.parse(String(log.changes))).toContainEqual({ alan: "taxId", eski: null, yeni: "***" });
 
     // Değişiklik yoksa log yazılmaz.
     await prisma.$transaction((tx) =>

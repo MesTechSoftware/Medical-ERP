@@ -126,6 +126,24 @@ enum ApprovalDecision {
   RED
 }
 
+// X-18 §(3) — denetim kaydının işlem türü ve modülü; olaydan tek tabloyla türer (`denetim/olaylar.ts`).
+enum AuditActionType {
+  EKLEME
+  GUNCELLEME
+  SILME
+  OTURUM
+}
+
+enum AuditModule {
+  SATIS
+  STOK
+  FINANS
+  CARI
+  URUN_FIYAT
+  ICE_AKTARIM
+  KULLANICI
+}
+
 // ─── Kullanıcı ve oturum ─────────────────────────────────────────────────────
 
 model User {
@@ -784,18 +802,47 @@ model ExportLog {
   @@index([createdAt])
 }
 
+// X-18: kayıt değişmezdir — UPDATE/DELETE/TRUNCATE veritabanı tetikleyicisiyle reddedilir; mühür
+// (`AuditLogSeal`) commit anında yazılır. Tetikleyiciler ve kanonik biçim migration'dadır (ADR-011).
 model AuditLog {
-  id         String   @id @default(cuid())
-  actor      User?    @relation(fields: [actorId], references: [id])
-  actorId    String?
-  action     String
-  entityType String
-  entityId   String?
-  beforeData String?
-  afterData  String?
-  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  id            String          @id @default(uuid(7))
+  // ADR-011 §6: yazım sırası ve listenin imleç anahtarı (zincir sırası commit'tir).
+  seq           Int             @unique @default(autoincrement())
+  actor         User?           @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  actorId       String?
+  actorRole     Role?
+  action        String
+  actionType    AuditActionType
+  module        AuditModule
+  entityType    String
+  entityId      String?
+  beforeData    String?
+  afterData     String?
+  // Alan bazlı değişiklik listesi (JSON, maskelenmiş). Boş = modül öncesi kayıt.
+  changes       String?
+  reason        String?
+  ipAddress     String?
+  sessionId     String?
+  requestMethod String?
+  endpoint      String?
+  // Uygulamanın saati (Prisma `now()`), diğer tablolarla aynı (ADR-011 §6).
+  createdAt     DateTime        @default(now()) @db.Timestamptz(3)
+  seal          AuditLogSeal?
 
   @@index([entityType, createdAt])
-  @@index([actorId])
-  @@index([createdAt]) // ADR-010: dashboard aktivite akışı en yeniden okur
+  // ADR-011 §6: liste (createdAt, seq) sırasıyla keyset sayfalanır; her süzgeç kendi indeksine iner.
+  @@index([actorId, createdAt, seq])
+  @@index([module, createdAt, seq])
+  @@index([actionType, createdAt, seq])
+  @@index([action, createdAt, seq])
+  @@index([createdAt, seq]) // ADR-010: dashboard aktivite akışı da en yeniden okur
+}
+
+// X-18 §(2): zincir mührü — SHA-256(önceki mühür ‖ kanonik kayıt); yalnız `denetim_muhurle()` yazar.
+model AuditLogSeal {
+  logId      String   @id
+  log        AuditLog @relation(fields: [logId], references: [id], onDelete: Restrict)
+  chainIndex Int      @unique
+  prevHash   String?
+  hash       String
 }

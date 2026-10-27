@@ -5,9 +5,9 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { homeFor } from "@/lib/roles";
 import {
-  oturumDogrula,
+  gecerliOturum,
+  oturumAc,
   oturumIptal,
-  oturumOlustur,
   sureAyari,
   OTURUM_CEREZI,
   type OturumKullanicisi,
@@ -26,13 +26,14 @@ import {
 
 const CEREZ = OTURUM_CEREZI;
 
-export type Session = { user: OturumKullanicisi };
+/** `oturumId`: oturum satırının numarası — denetim kaydı bağlamı (KARARLAR X-18 §(3)). */
+export type Session = { user: OturumKullanicisi; oturumId: string };
 
 const loadSession = cache(async (): Promise<Session | null> => {
   const token = (await cookies()).get(CEREZ)?.value;
   if (!token) return null;
-  const user = await oturumDogrula(token);
-  return user ? { user } : null;
+  const gecerli = await gecerliOturum(token);
+  return gecerli ? { user: gecerli.kullanici, oturumId: gecerli.oturumId } : null;
 });
 
 /** Oturum varsa döner, yoksa `null`. Yönlendirmez. */
@@ -42,16 +43,18 @@ export async function getSession(): Promise<Session | null> {
 
 /** Oturum yazımıyla aynı transaction'da koşan adım — denetim kaydı (X-3 §(4)). */
 type EkAdim = (tx: Prisma.TransactionClient) => Promise<void>;
+/** Giriş adımı açılan oturumun numarasını alır: giriş kaydı kendi oturumunu taşır (X-18 §(3)). */
+type GirisAdimi = (tx: Prisma.TransactionClient, oturumId: string) => Promise<void>;
 
 /**
  * Oturum açar ve çerezi yazar. Yalnız server action'dan çağrılır (render'da çerez yazılamaz).
  * Çerez, oturum ve `ek` adımı commit olduktan sonra yazılır.
  * Çerez bayrakları FAZ1 §D.4 madde 7: `Secure` canlıda TLS'e bağlıdır (G-3).
  */
-export async function startSession(userId: string, ek: EkAdim): Promise<void> {
+export async function startSession(userId: string, ek: GirisAdimi): Promise<void> {
   const token = await prisma.$transaction(async (tx) => {
-    const t = await oturumOlustur(userId, new Date(), tx);
-    await ek(tx);
+    const { token: t, oturumId } = await oturumAc(userId, new Date(), tx);
+    await ek(tx, oturumId);
     return t;
   });
   (await cookies()).set(CEREZ, token, {

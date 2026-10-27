@@ -1,6 +1,6 @@
 # ADR-008 — Kilit sırası: tek küresel sıra
 
-- **Durum:** ✅ Kabul edildi
+- **Durum:** Yerini aldı → [ADR-012](./ADR-012-kilit-sirasi-denetim-zinciri.md) *(27.10.2026 — denetim zinciri yeni kilit kaynağı, KARARLAR X-18)*
 - **Tarih:** 24.09.2026
 - **Kaynak soru:** `FAZ1_UYGULAMA_KAPSAMI.md` §C-bb *(19.09 incelemesi, bulgu 5)*
 - **Bağlı KARARLAR maddeleri:** **A-14 §(3)** (`BelgeSayac` satır kilidi, `MAX+1` yasağı) · **B-4** (negatif stok yumuşak kısıt) · **A-8** (`OnayBlogu`) · **X-3** (sessiz hata yasağı) · **X-4** (iş hatası sözleşmesi) · **§0.6** (en dar varsayılan)

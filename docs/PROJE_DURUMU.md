@@ -118,7 +118,7 @@ tablo/kolon İngilizce `camelCase`, enum değerleri Türkçe. Prisma'nın ifade 
 | Stok | `StockMovement` · `StockTransfer` (+ satır) · `StockAdjustment` (+ satır) · `ConsignmentIssue` (+ satır) |
 | Satış | `Order` (`stage` TEKLIF/SIPARIS, `paymentTermDays`) · `OrderItem` (fiyat ve KDV oranı donar) · `Shipment` (+ `ShipmentItem` — kısmi sevkiyat şeması; `externalDispatchNo`, `deliveryAddress`) · `ReturnNote` (+ satır) |
 | Tahsilat | `DoctorPayment` (`paymentMethodId`, komisyon) |
-| Denetim ve iz | `ApprovalBlock` (onay bloğu — A-8) · `ImportBatch` · `ExportLog` · `AuditLog` |
+| Denetim ve iz | `ApprovalBlock` (onay bloğu — A-8) · `ImportBatch` · `ExportLog` · `AuditLog` · `AuditLogSeal` (mühür zinciri — X-18) |
 
 **Şemada var, davranışı 1B'de:** cari hareket, belge numarası sayacı, oturum, onay bloğu,
 iade/konsinye/transfer/stok düzeltme belgeleri, kısmi sevkiyat, fiyat listesi ekranı, dışa
@@ -199,7 +199,11 @@ sonucunda `BILGI` (en eski vade; tutar yok).
 - **Satıcı raporu** tek `getSellerReports(kullanici, { baslangic, bitis })` (X-1 + D-2 — 1B madde 3c, 17.10.2026): dönem zorunlu; ciro sevkiyat tarihiyle siparişin satıcısına, hakediş = satır matrahı × donmuş oran (`hesaplaSatirTutarlari()`), tahsilat tahsilat tarihiyle **tahsilat anındaki sahibe** (iz kaydından). `SATICI` yalnız kendi satırını alır, `OPERASYON` alamaz.
 - **Ekran matrisi** sunucuda (D-2 — 1B madde 3c): yönetim grubu `requireStaff()` (YONETICI + OPERASYON), yalnız yöneticinin işleri `requireAdmin()`; her action'ın guard'ı `yetki.test.ts`'teki matrise karşı birim testte denetlenir.
 - **Bir doktorun tek sahibi satıcı**; sahibi olmayan satıcı sipariş açamaz (RULE-02).
-- **Denetim izi** merkezî ve sanitize'lı (RULE-13).
+- **Denetim izi** merkezî (RULE-13) ve **değişmez** (X-18, tasarım 3 D1 — 27.10.2026):
+  - `AuditLog` ve `AuditLogSeal` üzerinde `UPDATE`/`DELETE`/`TRUNCATE` veritabanı tetikleyicisiyle reddedilir; bakım yolu (`session_replication_role = replica`) yalnız test kurulumu ve seed'lerde.
+  - Her kayıt commit anında zincirli SHA-256 mührü alır (`denetim_muhurle()`, ADR-011); zincir kilidi commit anında (ADR-012, ADR-008'in yerine). Doğrulama: `npm run denetim:dogrula`.
+  - Kayıt UUIDv7, ms UTC zaman, aktörün o anki rolü, işlem türü (Ekleme/Güncelleme/Silme/Oturum), modül, alan bazlı değişiklik listesi, gerekçe (yalnız gerekçe soran akışlarda), IP, oturum numarası, yöntem ve sayfa yolu taşır.
+  - Hassas alanın değeri `***` yazılır, alan adı ve değişiklik sinyali kalır (`src/lib/denetim/maske.ts`).
 - **Giriş deneme sınırı** bellek içi sayaç — eşikler `policy.auth` (ADR-004, X-9).
 - **Config** `src/lib/policy.ts`'te, kodda; admin ayar ekranı yok (§0.1.1).
 - **Vade:** sipariş vade gün sayısı taşır, varsayılan `policy.finance.odemeVadesiGunVarsayilan` (30); üst sınır yok.

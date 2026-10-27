@@ -160,7 +160,7 @@ export async function partiGeriAl(partiId: string, yapanId: string, gerekce: str
     const engel = await tanim.geriAl(tx, partiId);
     if (engel) throw new GeriAlmaEngeli(engel);
     await createAuditLog(
-      { actorId: yapanId, action: AUDIT_ACTIONS.IMPORT_REVERT, entityType: "ImportBatch", entityId: partiId, after: { batchNo: parti.batchNo, reason: gerekce } },
+      { actorId: yapanId, action: AUDIT_ACTIONS.IMPORT_REVERT, entityType: "ImportBatch", entityId: partiId, after: { batchNo: parti.batchNo }, gerekce },
       tx
     );
     return sonucOlustur([]);
