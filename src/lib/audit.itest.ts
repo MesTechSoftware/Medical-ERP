@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/db";
@@ -101,6 +101,18 @@ describe("createAuditLog — kayıt alanları (X-18)", () => {
     const [ilk, ikinci] = await prisma.auditLog.findMany({ orderBy: { seq: "asc" } });
     expect(ilk.reason).toBe("Yanlış dosya");
     expect(ikinci.reason).toBeNull();
+  });
+
+  it("zaman damgası uygulamanın saatidir (E-1): diğer tablolarla aynı saat", async () => {
+    // Veritabanı saati uygulamanınkinden geride olabilir; demo geçmişi kaydırması `simdi()`'yle karşılaştırır.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2020-01-02T03:04:05.678Z"));
+    try {
+      await yaz({ action: AUDIT_ACTIONS.AUTH_LOGIN_FAILURE, entityType: "Auth", entityId: "saat@m.local" });
+    } finally {
+      vi.useRealTimers();
+    }
+    expect((await tek()).createdAt.toISOString()).toBe("2020-01-02T03:04:05.678Z");
   });
 
   it("verilen oturum numarası kayda yazılır (giriş kaydı açılan oturumu taşır)", async () => {

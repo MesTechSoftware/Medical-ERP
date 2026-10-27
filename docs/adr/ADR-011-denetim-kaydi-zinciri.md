@@ -57,7 +57,9 @@ soru doğuyor:
      konumu ve sayfanın derinliği maliyeti değiştirmez. *(Yalnız `seq` ile sıralama 1 milyon satırda
      en eski aya 104 ms harcıyordu: planlayıcı aralıktan yeni satırları tek tek atlıyordu.)*
    - Toplam sayı okunmaz.
-   - `createdAt` varsayılanı `clock_timestamp()`'tır: transaction başlangıcı değil, yazım anı.
+   - `createdAt` uygulamanın saatiyle yazılır (Prisma `now()`, satır başına), diğer tablolarla aynı
+     saat. *(Veritabanı saati — `clock_timestamp()` — uygulamanınkinden geride kalabiliyor; demo geçmişi
+     kaydırması `simdi()`'yle karşılaştırdığı için satır kaçırıyordu.)*
    - Zincir sırası (`chainIndex`) commit sırasıdır; liste sırasıyla aynı olmak zorunda değildir.
 7. **Kimlik** Prisma tarafında `uuid(7)`'dir (zaman sıralı UUID). Eski kayıtların kimliği yeniden
    yazılmaz.

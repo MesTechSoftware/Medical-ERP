@@ -825,7 +825,8 @@ model AuditLog {
   sessionId     String?
   requestMethod String?
   endpoint      String?
-  createdAt     DateTime        @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(3)
+  // Uygulamanın saati (Prisma `now()`), diğer tablolarla aynı (ADR-011 §6).
+  createdAt     DateTime        @default(now()) @db.Timestamptz(3)
   seal          AuditLogSeal?
 
   @@index([entityType, createdAt])
