@@ -225,14 +225,17 @@ toplama Decimal ile JS'te yapılır. İki yol da 2 basamaklı tam sayılarda ayn
 
 ## 6. Testler
 
-**Kabul kriterleri `KABUL_KRITERLERI.md`'ye testten önce yazılır** — ilgili karar satırlarının
-altına yeni numaralar (öneri):
+**Kabul kriterleri `KABUL_KRITERLERI.md`'ye testten önce yazılır.** Numara mevcut karar kimliğinden
+türer (dosyanın Kurallar bölümü); Ü-18 numarası açılmaz:
 
-- A-12-5: listede ve panelde limit rozeti `hesaplaDoktorRisk` ile aynı sonucu verir
-- A-13-3: eksik fatura satır vurgusu ve rozeti A-13-2 tanımını kullanır
-- X-13 satırına: panel `requireStaff` ile görülür, Düzenle yalnız `YONETICI`'ye
+- **A-5-7:** son sipariş sütunu ve süzgeçleri yalnız sayılan siparişi okur
+- **A-12-5:** toplu risk tekliyle aynıdır; listede ve panelde limit rozeti `limitAsildi`'dir
+- **A-13-3:** eksik fatura satır vurgusu, rozeti ve KPI'ı A-13-2 tanımını kullanır
+- **X-8-4:** hesap sınıfı süzgeci diğer süzgeçlerle birleşir; eski adresler çalışır
+- **X-13-2:** `OPERASYON` paneli açar; Düzenle, Yeni Cari ve toplu devir görmez
 
-Ek olarak Ü-18 başlığı altında: süzgeç, son sipariş, sütun seçici, boş durum davranış cümleleri.
+Karara dayanmayan davranışlar (bölge/satıcı süzgeci, sütun seçici, boş durum) kriter almaz; testleri
+aşağıdaki tablodadır.
 
 | Katman | Dosya | Neyi doğrular |
 |---|---|---|
