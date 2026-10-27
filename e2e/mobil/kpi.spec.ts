@@ -26,3 +26,20 @@ test("dashboard KPI: birincil tam satır, diğerleri 2'li; değerler kartında",
 test("dashboard KPI iskeleti gerçek yerleşimle kart kart eşleşir", async ({ page }) => {
   await kpiIskeletiEslesir(page, "/dashboard");
 });
+
+test("dashboard sayfa özetleri dokunmatikte tek kolon; her kart satırın içinde", async ({ page }) => {
+  await page.goto("/dashboard");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  const izgara = (await page.locator("[data-sayfa-ozetleri]").boundingBox())!;
+  const kartlar = await page.locator("[data-sayfa-ozetleri] > [role=group]").evaluateAll((k) =>
+    k.slice(0, 3).map((e) => {
+      const r = e.getBoundingClientRect();
+      return { x: r.x + window.scrollX, y: r.y + window.scrollY, genislik: r.width };
+    })
+  );
+  for (const k of kartlar) {
+    expect(Math.abs(k.genislik - izgara.width), "tam genişlik").toBeLessThanOrEqual(1);
+    expect(Math.abs(k.x - izgara.x), "aynı kolon").toBeLessThanOrEqual(1);
+  }
+  expect(kartlar[1].y, "alt alta").toBeGreaterThan(kartlar[0].y);
+});

@@ -88,6 +88,10 @@ Prisma client `src/generated/prisma/` altına üretilir (gitignored — taze klo
     OranCubugu; istemciye JS yok. Geometri ve yüzde yalnız `src/lib/kpi/olcek.ts` (X-5 eki).
   - Ekranlar: dashboard ("bu ay"), raporlar ve Raporum (seçili dönem), doktor detayı (cari bakiye
     trendi). KPI sorguları mevcut tek hesap yollarından; her KPI kendi hata alanında (`kpiGetir`).
+  - Dashboard'da KPI satırının altında **bütün sayfaların özeti** *(27.10.2026)*: menüdeki her sayfa
+    için bir kart (birkaç sayı ve sayfaya bağlantı; kritik stok Stok kartında, en çok sevk edilenler
+    Kargo kartında). Rolün göremediği sayfalar OPERASYON'da hiç okunmaz (`gorunurOzetler`,
+    `src/components/menu.ts`); her kart kendi hata alanında; Raporlar kartı hakediş taşımaz (D-2).
   - Tarih aralığı indeksleri: `Shipment(shippedAt)`, `ReturnNote(createdAt)`,
     `DoctorPayment(status, paidAt)`.
   - Demo geçmişi: `npm run db:seed:gecmis` (aşağıda, "Çalıştırma").
@@ -127,7 +131,7 @@ kongre tabloları · e-belge ve kargo modül tabloları (KARARLAR §1.3 §(10): 
 İki route grubu: `(admin)`, `(seller)`. `(dealer)` grubu C5'te söküldü.
 
 **Yönetici** (`src/app/(admin)/`)
-- ✅ Gösterge paneli — özet kartlar, kritik stok *(alacak tablosu, yaşlandırma, bayi kartları söküldü)*
+- ✅ Gösterge paneli — "bu ay" KPI'ları ve bütün sayfaların özeti (rolün gördüğü sayfalar; kritik stok Stok kartında) *(alacak tablosu, yaşlandırma, bayi kartları söküldü)*
 - ✅ İçe Aktarım (`/imports`, yalnız yönetici — D-6, X-16, 1B-7f1): Excel şablonu sistemden üretilir; doğrula → önizle (özet) → yaz; hatalı satır varken hiçbir kayıt yazılmaz; parti listesi ve geri alma. Türler: **cari**, **ürün**, **fiyat listesi**, **açılış bakiyesi** (ACL hareketi; geri alınmaz, ters kayıtla düzeltilir), **açılış stoğu** (konum bazında; geri alınmaz, stok düzeltmesiyle düzeltilir). Şablon ekrandan ya da `npm run sablon:uret` ile.
 - ✅ Fiyat Listeleri (`/price-lists`, yalnız yönetici — X-10, 1B-7e1): liste oluşturma; satır (ürün, min. adet barem, liste fiyatı) ekleme/güncelleme/silme; denetim kaydı. Tarihli satırlar salt okunur.
 - ✅ Ürünler — liste / yeni / düzenle: ad, kod, **KDV oranı tanım tablosundan** (`taxRateId`), liste fiyatı (varsayılan fiyat listesine yazılır), başlangıç stoğu. *Taban fiyat alanı yok.*

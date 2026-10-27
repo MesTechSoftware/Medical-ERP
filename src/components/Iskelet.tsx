@@ -2,6 +2,7 @@ import { Card } from "@/components/ui";
 import { BOYUT_SINIFI, type GrafikBoyutu } from "@/components/grafik/ortak";
 import { KPI_YERLESIMI } from "@/components/kpi/KpiSatiri";
 import { DEGER_BOYU, DEGER_SATIRI, type KpiVaryanti } from "@/components/kpi/KpiCard";
+import { OZET_IZGARASI } from "@/components/SayfaOzeti";
 
 /*
  * Yükleme iskeletleri (ADR-009). Ölçü tahmin edilmez: gerçek bileşenlerin sınıfları ve token'ları
@@ -182,6 +183,31 @@ export function DonemSeciciIskeleti({ aciklama }: { aciklama: string }) {
       <p className="w-full text-xs">
         <MetinCubugu>{aciklama}</MetinCubugu>
       </p>
+    </div>
+  );
+}
+
+/** Sayfa özetleri iskeleti: aynı ızgara; kart başlığı ve üç satır. Rol bilinmediği için kart sayısı sabittir. */
+export function SayfaOzetleriIskeleti({ adet = 6 }: { adet?: number }) {
+  return (
+    <div aria-hidden="true" className="@container">
+      <div className={OZET_IZGARASI}>
+        {Array.from({ length: adet }, (_, i) => (
+          <div key={i} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex h-5 items-center">
+              <Cubuk className="h-3.5 w-28" />
+            </div>
+            <div className="mt-2 space-y-1">
+              {[0, 1, 2].map((j) => (
+                <div key={j} className="flex h-5 items-center justify-between">
+                  <Cubuk className="h-3 w-20" />
+                  <Cubuk className="h-3 w-8" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

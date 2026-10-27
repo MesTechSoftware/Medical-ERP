@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { formatDateTime } from "@/lib/format";
-import { TANIMLAR } from "@/lib/ice-aktarim";
+import { TANIMLAR, VERI_TIPI_ADI } from "@/lib/ice-aktarim";
 import type { ImportDataType } from "@/generated/prisma/enums";
 import { PageHeader, Card, EmptyRow } from "@/components/ui";
 import { IslemFormu } from "@/components/Sonuc";
@@ -9,14 +9,6 @@ import IceAktarimFormu from "./IceAktarimFormu";
 import { partiyiGeriAl } from "./actions";
 import { ACILIR_EYLEM, KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import { Ikon } from "@/components/Ikon";
-
-const TUR_ADI: Record<ImportDataType, string> = {
-  CARI: "Cari (doktor ve bayi)",
-  URUN: "Ürün",
-  FIYAT_LISTESI: "Fiyat listesi",
-  ACILIS_BAKIYESI: "Açılış bakiyesi",
-  ACILIS_STOGU: "Açılış stoğu",
-};
 
 /** İçe aktarım (D-6, X-16) — yalnız yönetici; devreye alma aracı. Partiler ve geri alma (X-12). */
 export default async function ImportsPage() {
@@ -30,7 +22,7 @@ export default async function ImportsPage() {
       _count: { select: { doctors: true, products: true, priceListItems: true, ledgerEntries: true, stockMovements: true } },
     },
   });
-  const turler = (Object.keys(TANIMLAR) as ImportDataType[]).map((kod) => ({ kod, ad: TUR_ADI[kod] }));
+  const turler = (Object.keys(TANIMLAR) as ImportDataType[]).map((kod) => ({ kod, ad: VERI_TIPI_ADI[kod] }));
 
   return (
     <div>
@@ -64,7 +56,7 @@ export default async function ImportsPage() {
                 return (
                   <tr key={p.id} data-parti={p.batchNo} className="align-top">
                     <td className="whitespace-nowrap font-medium text-slate-900">{p.batchNo}</td>
-                    <td>{TUR_ADI[p.dataType]}</td>
+                    <td>{VERI_TIPI_ADI[p.dataType]}</td>
                     <td className="text-slate-500 oncelik-dusuk">{p.fileName ?? "—"}</td>
                     <td className="text-slate-500 oncelik-dusuk">
                       {p.user.name} · {formatDateTime(p.createdAt)}

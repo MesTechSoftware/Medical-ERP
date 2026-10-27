@@ -20,11 +20,6 @@ test("dashboard 1280 px: dört KPI tek sırada, birincil iki birim; taban etiket
   await kpiKartlariTasmaz(page);
 });
 
-test("dashboard: bu ay en çok sevk edilen ürünler listesi görünür", async ({ page }) => {
-  await page.goto("/dashboard");
-  await expect(page.getByRole("heading", { name: "Bu ay en çok sevk edilen ürünler" })).toBeVisible();
-});
-
 test.describe("1024 px (orta düzen)", () => {
   test.use({ viewport: { width: 1024, height: 768 } });
 
