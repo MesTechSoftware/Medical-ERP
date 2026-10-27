@@ -50,10 +50,15 @@ soru doğuyor:
 5. **Doğrulama uygulamadadır** (`zincir.ts`): kayıt başına (özet + önceki mühürle bağ) ve zincir
    boyunca. `npm run denetim:dogrula` (`scripts/denetim-dogrula.ts`) zinciri 1000'lik partilerle
    okur; bozulmada çıkış kodu 1 verir ve son özeti yazdırır (dış çapa için, X-18 §(2)).
-6. **Sıra ve sayfalama.** `seq` (`autoincrement`, benzersiz) yazım sırasıdır; liste `seq` ile keyset
-   sayfalanır. `createdAt` varsayılanı `clock_timestamp()`'tır: transaction başlangıcı değil, yazım
-   anı. Böylece `seq` ile aynı yönde ilerler. Zincir sırası (`chainIndex`) commit sırasıdır; ikisi
-   aynı olmak zorunda değildir.
+6. **Sıra ve sayfalama.** Liste en yeni üstte, `(createdAt, seq)` sırasıyla keyset sayfalanır:
+   - `seq` (`autoincrement`, benzersiz) yazım sırasıdır ve adresteki imleçtir; imleç satırının zamanı
+     benzersiz `seq` indeksinden okunur. Aynı milisaniyedeki satırları `seq` ayırır.
+   - Her süzgeç `(kolon, createdAt, seq)` indeksine iner; tarih aralığı indeksin sınırıdır. Aralığın
+     konumu ve sayfanın derinliği maliyeti değiştirmez. *(Yalnız `seq` ile sıralama 1 milyon satırda
+     en eski aya 104 ms harcıyordu: planlayıcı aralıktan yeni satırları tek tek atlıyordu.)*
+   - Toplam sayı okunmaz.
+   - `createdAt` varsayılanı `clock_timestamp()`'tır: transaction başlangıcı değil, yazım anı.
+   - Zincir sırası (`chainIndex`) commit sırasıdır; liste sırasıyla aynı olmak zorunda değildir.
 7. **Kimlik** Prisma tarafında `uuid(7)`'dir (zaman sıralı UUID). Eski kayıtların kimliği yeniden
    yazılmaz.
 8. **Bağlam** (`src/lib/denetim/baglam.ts`):
@@ -102,8 +107,9 @@ soru doğuyor:
   alınır (ADR-008 döngüsü); önlemek için denetim yazımını her işlemin sonuna taşımak gerekir
   (X-18, seçenek (c)).
 - **Kayıt başına özet, zincirsiz.** Reddedildi (X-18, seçenek (b)): silinen kaydı yakalamaz.
-- **`OFFSET` ya da `(createdAt, id)` ile sayfalama.** Reddedildi: `OFFSET` derinlikte doğrusaldır; iki
-  kolonlu imleç Prisma'da `OR` ile yazılır ve indekse sınır olarak inmez.
+- **`OFFSET` ile sayfalama.** Reddedildi: derinlikte doğrusaldır.
+- **Yalnız `seq` ile sıralama.** Reddedildi: tarih süzgecinde planlayıcı `seq` indeksinde aralıktan
+  yeni satırları tek tek atlar; maliyet aralığın eskiliğiyle doğrusal büyür (ölçüm §6).
 - **IP için soldaki girdi.** Reddedildi: istemcinin kendi gönderdiği başlık da soldadır.
 
 ## Açık uygulama kalemleri (atıf)

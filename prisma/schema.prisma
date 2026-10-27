@@ -806,7 +806,7 @@ model ExportLog {
 // (`AuditLogSeal`) commit anında yazılır. Tetikleyiciler ve kanonik biçim migration'dadır (ADR-011).
 model AuditLog {
   id            String          @id @default(uuid(7))
-  // ADR-011 §6: liste sırası ve imleç; yazım sırasıdır (zincir sırası commit'tir).
+  // ADR-011 §6: yazım sırası ve listenin imleç anahtarı (zincir sırası commit'tir).
   seq           Int             @unique @default(autoincrement())
   actor         User?           @relation(fields: [actorId], references: [id], onDelete: Restrict)
   actorId       String?
@@ -829,11 +829,12 @@ model AuditLog {
   seal          AuditLogSeal?
 
   @@index([entityType, createdAt])
-  @@index([actorId, seq])
-  @@index([module, seq])
-  @@index([actionType, seq])
-  @@index([action, seq])
-  @@index([createdAt]) // ADR-010: dashboard aktivite akışı en yeniden okur
+  // ADR-011 §6: liste (createdAt, seq) sırasıyla keyset sayfalanır; her süzgeç kendi indeksine iner.
+  @@index([actorId, createdAt, seq])
+  @@index([module, createdAt, seq])
+  @@index([actionType, createdAt, seq])
+  @@index([action, createdAt, seq])
+  @@index([createdAt, seq]) // ADR-010: dashboard aktivite akışı da en yeniden okur
 }
 
 // X-18 §(2): zincir mührü — SHA-256(önceki mühür ‖ kanonik kayıt); yalnız `denetim_muhurle()` yazar.
