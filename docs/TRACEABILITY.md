@@ -6,7 +6,7 @@
 > Kod yeri, kriter metninde anılan fonksiyonun tanımlandığı dosyadır. Eski PRD matrisi (8 Ağustos 2026)
 > `docs/arsiv/TRACEABILITY_PRD_V2.md`'dedir.
 
-**Özet:** 126 KANITLI · 0 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.0** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
+**Özet:** 131 KANITLI · 0 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.0** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
 
 | Kriter | Karar | Durum | Kod yeri | Test | Kriter metni |
 |---|---|---|---|---|---|
@@ -38,6 +38,7 @@
 | A-5-4 | A-5 | KANITLI | — | `src/lib/sayilan-belgeler.itest.ts` | `ACILIS` ve `VADE_FARKI` cari hareketleri sayılan cari hareket kümesine girmez; bakiye hesabı bu filtreyi kullanmaz (A-6, A-7, X-11 §(6)). |
 | A-5-5 | A-5 | KANITLI | — | `src/lib/sayilan-belgeler.itest.ts` | Konsinye çıkış, stok transferi ve stok düzeltmesinden doğan stok hareketi sayılan stok hareketi değildir (A-4, B-7). |
 | A-5-6 | A-5 | KANITLI | — | `src/lib/reports-service.itest.ts` | Ciro raporları sevk satırlarını yalnız bu filtreyle okur (K-4 §(2), X-1 §(5)); `TEKLIF`, iptal ve bedelsiz satır ciroya yansımaz. |
+| A-5-7 | A-5 | KANITLI | — | `src/lib/doktor-listesi/sorgu.itest.ts` | Cari listesinde "Son sipariş" sütunu ve son sipariş süzgeçleri yalnız sayılan siparişi okur (`ONAYLI`, iptal edilmemiş); `TEKLIF` ve `IPT… |
 | A-6-1 | A-6 | KANITLI | — | `src/lib/ice-aktarim/acilis.itest.ts`<br>`e2e/admin/ice-aktarim.spec.ts` | Açılış bakiyesi carinin **tek** `ACILIS` hareketidir; yalnız içe aktarımla yazılır, `ACL` numarası alır, iki yön de olabilir, vade yalnız… |
 | A-7-1 | A-7 | KANITLI | — | `src/lib/sevkiyat.itest.ts` | Borç doğuran cari harekette vade tarihi vardır ve sevk gününden işler: vade = sevk günü (İstanbul takvim günü) + siparişin `odeme_vadesi_… |
 | A-7-2 | A-7 | KANITLI | — | `src/app/(admin)/doctors/cari-hareket.itest.ts`<br>`e2e/admin/vade-farki.spec.ts` | Vade farkı yalnız elle ve yalnız `YONETICI` tarafından girilir (cari detayı): tutar (> 0, KDV kırılımsız), vade ve gerekçe zorunlu (alanı… |
@@ -58,8 +59,10 @@
 | A-12-2 | A-12 | KANITLI | — | `src/lib/risk.itest.ts` | Açık sipariş tutarı yalnız **sevk edilmemiş miktarı** sayar: satır miktarı − sevk satırlarındaki miktar. Tamamen sevk edilmiş satır riske… |
 | A-12-3 | A-12 | KANITLI | `src/lib/satir-tutarlari.ts` | `src/lib/risk.itest.ts` | Risk tabanı brüttür: açık satır tutarı `hesaplaSatirTutarlari()` toplamıdır (KDV dahil, satır bazında yuvarlanmış — C-6 §(5)). Bedelsiz s… |
 | A-12-4 | A-12 | KANITLI | — | `src/lib/risk.itest.ts` | `kredi_limiti` boşsa doktor limitsizdir, aşım yoktur. Limit doluysa risk limitten **büyükse** aşım vardır; eşitlik aşım değildir. Fonksiy… |
+| A-12-5 | A-12 | KANITLI | `src/lib/doctor-cari.ts` | `src/lib/risk.itest.ts` | `hesaplaDoktorRiskleri(idler)` her doktor için `hesaplaDoktorRisk` ile birebir aynı sonucu verir. Cari listesindeki ve yan paneldeki "Lim… |
 | A-13-1 | A-13 | KANITLI | — | `src/lib/cari.test.ts`<br>`src/lib/cari.itest.ts`<br>`e2e/admin/cari.spec.ts` | Vergi kimliği hane sayısından doğrulanır: 10 hane VKN, 11 hane TCKN kontrol algoritması; başka uzunluk ya da tutmayan kontrol hanesi `SER… |
 | A-13-2 | A-13 | KANITLI | `src/lib/cari.ts` | `src/lib/cari.itest.ts`<br>`src/lib/disa-aktarim.itest.ts` | Eksik fatura bilgisi bilgi kademesidir: VKN/TCKN boş, fatura adresi ya da ili boş, ya da tüzel kişide vergi dairesi boş. Cari listesinde… |
+| A-13-3 | A-13 | KANITLI | — | `src/lib/doktor-listesi/sorgu.itest.ts` | Cari listesinde A-13-2'ye göre fatura bilgisi eksik olan satır "Eksik fatura" rozeti ve uyarı arka planı taşır; "Eksik fatura bilgisi" KP… |
 | A-14-1 | A-14 | KANITLI | — | `src/lib/kisitlar.itest.ts` | `uretBelgeNo(onek, tx)` `{ÖNEK}-{YIL}-{SIRA}` biçiminde, sırası 6 hane sıfır dolgulu numara üretir; her önek ayrı sayılır (A-14 §(1)/(2)). |
 | A-14-2 | A-14 | KANITLI | — | `src/lib/kisitlar.itest.ts` | Eşzamanlı transaction'lar aynı numarayı alamaz; numara sayaç satırının kilidi altında alınır (A-14 §(3)). |
 | A-14-3 | A-14 | KANITLI | `src/lib/belge-no.ts` | `src/lib/kisitlar.itest.ts` | Numara belgeyi yazan transaction'ın içinde alınır: transaction geri alınırsa sayaç ilerlemez, boşluk oluşmaz (A-14 §(3)). `uretBelgeNo` t… |
@@ -121,6 +124,7 @@
 | X-8-1 | X-8 | KANITLI | — | `src/lib/kapsam.itest.ts`<br>`src/lib/yetki.test.ts` | `SATICI` `BAYI` carisini görmez (X-13-1) ve açamaz: satıcı ekranından açılan cari daima `DOKTOR`'dur. `BAYI`'yi yalnız `YONETICI` açar; `… |
 | X-8-2 | X-8 | KANITLI | `src/lib/cari.ts`<br>`src/lib/sahiplik.ts` | `src/lib/cari.itest.ts`<br>`src/lib/yetki.test.ts`<br>`e2e/admin/cari.spec.ts` | `YONETICI` cari açma akışı (`cariAc`, tek tanım — X-16 §(1)): hesap sınıfı seçili gelmez ve seçilmeden kayıt yapılmaz (`ALAN_ZORUNLU` `ac… |
 | X-8-3 | X-8 | KANITLI | `src/lib/siparis-giris.ts` | `src/app/(admin)/orders/personel-siparis.itest.ts`<br>`e2e/operasyon/operasyon.spec.ts`<br>`src/lib/yetki.test.ts` | Personel (`YONETICI`, `OPERASYON`) her aktif cariye sipariş girer (`siparisAc` — satıcı ekranıyla aynı kurallar). Doktor siparişinin satı… |
+| X-8-4 | X-8 | KANITLI | — | `src/lib/doktor-listesi/suzgec.test.ts`<br>`src/lib/doktor-listesi/sorgu.itest.ts` | Cari listesinin hesap sınıfı süzgeci bölge, sorumlu satıcı, durum, eksik fatura ve son sipariş süzgeçleriyle birleşir. Eski `?sinif=`, `?… |
 | X-9-1 | X-9 | KANITLI | — | `src/lib/rate-limit.test.ts` | Giriş denemesi sayacı bellek içidir (tablo yok): `auth.girisDenemeSiniri` (5) başarısız denemede hesap `auth.girisKilitDakika` (10) dakik… |
 | X-10-1 | X-10 | KANITLI | — | `src/lib/fiyat.itest.ts`<br>`src/app/(seller)/my-orders/orders.itest.ts` | Fiyat listesi carinin atanmış listesidir, atanmamışsa `pricing.varsayilanFiyatListesiKodu` listesidir. Atanmış listede ürünün uygun satır… |
 | X-10-2 | X-10 | KANITLI | — | `src/app/(admin)/price-lists/price-lists.itest.ts`<br>`e2e/admin/fiyat-listesi.spec.ts`<br>`src/lib/yetki.test.ts` | Fiyat listesi ekranı yalnız `YONETICI`'dedir: liste başlığı (kod — 2–32 karakter, büyük harfe çevrilir, `UNIQUE` — ve ad) ve satırlar (ür… |
@@ -129,6 +133,7 @@
 | X-11-2 | X-11 | KANITLI | — | `src/app/(admin)/doctors/cari-hareket.itest.ts`<br>`e2e/admin/vade-farki.spec.ts` | Elle ters kayıt yalnız `ACILIS` ve `VADE_FARKI` hareketinde, yalnız `YONETICI` ve gerekçeyle yapılır: `TERS_KAYIT` ters yönde, aynı tutar… |
 | X-12-1 | X-12 | KANITLI | — | `src/lib/ice-aktarim/ice-aktarim.itest.ts`<br>`e2e/admin/ice-aktarim.spec.ts` | Parti geri alma yalnız `YONETICI`, gerekçe zorunlu, tek transaction; koşul partinin **tamamına** bakar (C-3 §(6)): bir kayıt bile belgeye… |
 | X-13-1 | X-13 | KANITLI | — | `src/lib/kapsam.itest.ts`<br>`src/lib/tek-cagri.test.ts` | `kapsamliDoktorlariGetir(kullanici)` doktor okumasının kapsamını **sorgu süzgeci** olarak döner. `SATICI`'ya yalnız sahibi olduğu `DOKTOR… |
+| X-13-2 | X-13 | KANITLI | — | `e2e/operasyon/operasyon.spec.ts` | `OPERASYON` cari listesinde yan paneli açar; panelde Düzenle, listede Yeni Cari ve toplu devir yoktur. |
 | X-14-1 | X-14 | KANITLI | `src/lib/satir-tutarlari.ts` | `src/lib/satir-tutarlari.test.ts`<br>`src/lib/reports-service.itest.ts` | Hakediş = sevkiyat satırının matrahı × satıra donmuş oran (`hesaplaSatirTutarlari()`, X-5 §(4)); tutar saklanmaz, raporda hesaplanır. Sat… |
 | X-14-2 | X-14 | KANITLI | — | `src/lib/sevkiyat.itest.ts` | Uygulanan prim oranı sevkiyat anında sevkiyat satırına donar: satıcının özel oranı, yoksa `finance.primOraniVarsayilan`; `BAYI` carinin s… |
 | X-15-1 | X-15 | KANITLI | — | `src/app/(admin)/collections/collections.itest.ts`<br>`src/lib/yetki.test.ts` | Vade değişikliği yalnız `YONETICI`, gerekçe zorunlu, yalnız borç hareketinde (`VADE_YALNIZ_BORC`); eski/yeni vade, kişi, zaman ve gerekçe… |
