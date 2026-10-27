@@ -62,7 +62,7 @@ export const AKIS_GORUNURLUGU: Record<Role, readonly SablonluOlay[]> = {
   SATICI: [],
 };
 
-function veriOku(json: string | null): Record<string, unknown> {
+export function veriOku(json: string | null): Record<string, unknown> {
   try {
     const v: unknown = JSON.parse(json ?? "null");
     return v !== null && typeof v === "object" ? (v as Record<string, unknown>) : {};

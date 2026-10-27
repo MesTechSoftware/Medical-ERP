@@ -72,6 +72,23 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
 
 export type IslemSinifi = { tur: AuditActionType; modul: AuditModule };
 
+export const ISLEM_TURU_ETIKETI: Record<AuditActionType, string> = {
+  EKLEME: "Ekleme",
+  GUNCELLEME: "Güncelleme",
+  SILME: "Silme",
+  OTURUM: "Oturum",
+};
+
+export const MODUL_ETIKETI: Record<AuditModule, string> = {
+  SATIS: "Satış",
+  STOK: "Stok",
+  FINANS: "Finans",
+  CARI: "Cari",
+  URUN_FIYAT: "Ürün ve fiyat",
+  ICE_AKTARIM: "İçe aktarım",
+  KULLANICI: "Kullanıcı ve oturum",
+};
+
 /**
  * Olay → işlem türü ve modül; tek tablo. İptal ve ters kayıt Silme değildir (C-3 §(1): sistemde
  * `DELETE` yok); Silme yalnız gerçekten silen akışlardadır. Eski satırlar migration'daki `CASE` ile

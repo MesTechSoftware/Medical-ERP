@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { type KanonikKayit, kanonikMetin, muhurHesapla, zinciriDenetle, type MuhurSatiri } from "@/lib/denetim/zincir";
+import { type KanonikKayit, kaydiDogrula, kanonikMetin, muhurHesapla, zinciriDenetle, type MuhurSatiri } from "@/lib/denetim/zincir";
 
 // X-18-2: mühür = SHA-256(önceki mühür ‖ kanonik kayıt). Biçim veritabanındaki `denetim_kanonik()`
 // ile birebir aynıdır (eşitlik `zincir.itest.ts`'te); bu dosya biçimi sabit vektörle dondurur.
@@ -102,5 +102,29 @@ describe("zinciriDenetle", () => {
     const z = zincir(4);
     const ilk = zinciriDenetle(z.slice(0, 2), BAS);
     expect(zinciriDenetle(z.slice(2), ilk.durum)).toEqual({ sorunlar: [], durum: { sonIndeks: 4, sonHash: z[3].hash } });
+  });
+});
+
+describe("kaydiDogrula — detay panelindeki bütünlük durumu (X-18-7)", () => {
+  const ilk = { chainIndex: 1, prevHash: null, hash: ILK_MUHUR };
+  const ikinciKayit = { ...KAYIT, id: "log-2", seq: 8 };
+  const ikinci = { chainIndex: 2, prevHash: ILK_MUHUR, hash: muhurHesapla(ILK_MUHUR, ikinciKayit) };
+
+  it("içerik ve önceki mühürle bağ tutuyorsa doğrulandı", () => {
+    expect(kaydiDogrula(KAYIT, ilk, null)).toBe("DOGRULANDI");
+    expect(kaydiDogrula(ikinciKayit, ikinci, { hash: ILK_MUHUR })).toBe("DOGRULANDI");
+  });
+
+  it("içeriği değişen kayıt", () => {
+    expect(kaydiDogrula({ ...KAYIT, reason: "sonradan" }, ilk, null)).toBe("ICERIK_UYUSMUYOR");
+  });
+
+  it("önceki mühür yoksa ya da tutmuyorsa bağ kopuk", () => {
+    expect(kaydiDogrula(ikinciKayit, ikinci, null)).toBe("BAG_KOPUK");
+    expect(kaydiDogrula(ikinciKayit, ikinci, { hash: "baska" })).toBe("BAG_KOPUK");
+  });
+
+  it("mührü olmayan kayıt", () => {
+    expect(kaydiDogrula(KAYIT, null, null)).toBe("MUHURSUZ");
   });
 });

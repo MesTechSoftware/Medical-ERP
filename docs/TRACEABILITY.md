@@ -6,7 +6,7 @@
 > Kod yeri, kriter metninde anılan fonksiyonun tanımlandığı dosyadır. Eski PRD matrisi (8 Ağustos 2026)
 > `docs/arsiv/TRACEABILITY_PRD_V2.md`'dedir.
 
-**Özet:** 124 KANITLI · 0 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.0** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
+**Özet:** 126 KANITLI · 0 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.0** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
 
 | Kriter | Karar | Durum | Kod yeri | Test | Kriter metni |
 |---|---|---|---|---|---|
@@ -146,4 +146,6 @@
 | X-18-3 | X-18 | KANITLI | — | `src/lib/audit.itest.ts`<br>`src/lib/denetim/olaylar.test.ts`<br>`src/lib/denetim/baglam-ayristir.test.ts`<br>`e2e/admin/users.spec.ts` | Her kayıt UUID kimlik, milisaniye hassasiyetli UTC zaman, aktörün o anki rolünü, işlem türünü (Ekleme · Güncelleme · Silme · Oturum) ve m… |
 | X-18-4 | X-18 | KANITLI | — | `src/lib/denetim/maske.test.ts`<br>`src/lib/denetim/fark.test.ts`<br>`src/lib/audit.itest.ts` | Hassas alanın değeri kayda `***` olarak yazılır, alan adı kalır; iç içe nesnede ve dizide de. Değişiklik listesi maskelemeden önce kurulu… |
 | X-18-5 | X-18 | KANITLI | — | `src/lib/audit.itest.ts`<br>`src/app/(admin)/collections/collections.itest.ts`<br>`e2e/admin/users.spec.ts` | Gerekçe isteyen akışların gerekçesi kaydın gerekçe alanındadır ve önceki/sonraki hâlde tekrarlanmaz: tahsilat iptali, vade değişikliği, v… |
+| X-18-6 | X-18 | KANITLI | — | `src/lib/denetim/sorgu.itest.ts`<br>`src/lib/denetim/suzgec.test.ts`<br>`e2e/admin/denetim.spec.ts` | `/audit-logs` yalnız `YONETICI` açar. Liste zaman, kullanıcı (ad + rol), işlem türü rozeti (ikon + metin), modül ve varlık, kısa özet gös… |
+| X-18-7 | X-18 | KANITLI | — | `e2e/admin/denetim.spec.ts`<br>`e2e/mobil/denetim.spec.ts`<br>`src/lib/denetim/ozet.test.ts` | Satırdaki Detay bağlantısı detay panelini açar (`?kayit=<id>`; geniş ekranda sağdan, telefonda tam ekran; Esc ve Kapat listeye döner, yen… |
 | Ü-3-1 | Ü-3 | KANITLI | — | `src/lib/taban.test.ts`<br>`e2e/admin/reports.spec.ts`<br>`e2e/admin/siparis-toplam.spec.ts`<br>`e2e/mobil/toplam-hizasi.spec.ts` | Ekranda gösterilen her para tutarının yanında vergi tabanı yazılıdır (*KDV hariç* / *KDV dahil*); tabloda etiket kolon başlığındadır ve b… |

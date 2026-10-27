@@ -77,7 +77,7 @@ const TON_SINIFI: Record<Ton, string> = {
 export function StatusChip({ ton, children }: { ton: Ton; children: React.ReactNode }) {
   return (
     <span
-      className={`inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${TON_SINIFI[ton]}`}
+      className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${TON_SINIFI[ton]}`}
     >
       {children}
     </span>
