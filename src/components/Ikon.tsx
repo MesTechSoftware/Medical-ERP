@@ -16,6 +16,7 @@ import {
   KeyRound,
   LogIn,
   LogOut,
+  Minus,
   OctagonAlert,
   PackageCheck,
   PackageOpen,
@@ -69,6 +70,8 @@ const IKONLAR = {
   sonraki: ChevronRight,
   uyari: TriangleAlert,
   hata: OctagonAlert,
+  // Fark görünümü (denetim kaydı): eski değer eksi, yeni değer `yeni` (artı).
+  eksi: Minus,
 } as const satisfies Record<string, LucideIcon>;
 
 export type IkonAdi = keyof typeof IKONLAR;

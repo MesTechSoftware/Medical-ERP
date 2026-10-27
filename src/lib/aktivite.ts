@@ -23,7 +23,7 @@ const ETIKETLER: Record<string, (idler: string[]) => Promise<Etiket[]>> = {
 };
 
 /** Kayıtların nesne etiketleri, varlık türü başına tek sorgu; anahtar `tür:kimlik`. */
-async function nesneEtiketleri(kayitlar: readonly { entityType: string; entityId: string | null }[]): Promise<Map<string, string>> {
+export async function nesneEtiketleri(kayitlar: readonly { entityType: string; entityId: string | null }[]): Promise<Map<string, string>> {
   const turler = new Map<string, string[]>();
   for (const k of kayitlar) {
     if (!k.entityId || !Object.hasOwn(ETIKETLER, k.entityType)) continue;

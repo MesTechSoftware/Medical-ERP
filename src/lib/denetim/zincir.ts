@@ -84,3 +84,20 @@ export function zinciriDenetle(satirlar: readonly MuhurSatiri[], baslangic: Zinc
   }
   return { sorunlar, durum };
 }
+
+export type KayitDurumu = "DOGRULANDI" | "ICERIK_UYUSMUYOR" | "BAG_KOPUK" | "MUHURSUZ";
+
+/**
+ * Tek kaydın bütünlüğü (detay paneli): mühür kaydın içeriğini özetliyor mu, önceki mühre bağlı mı?
+ * İlk mührün önceki özeti yoktur; önceki mühür silinmişse bağ kopuktur.
+ */
+export function kaydiDogrula(
+  k: KanonikKayit,
+  muhur: { chainIndex: number; prevHash: string | null; hash: string } | null,
+  oncekiMuhur: { hash: string } | null
+): KayitDurumu {
+  if (muhur === null) return "MUHURSUZ";
+  if (muhurHesapla(muhur.prevHash, k) !== muhur.hash) return "ICERIK_UYUSMUYOR";
+  const beklenen = muhur.chainIndex === 1 ? null : (oncekiMuhur?.hash ?? undefined);
+  return muhur.prevHash === beklenen ? "DOGRULANDI" : "BAG_KOPUK";
+}

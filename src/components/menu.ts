@@ -30,7 +30,7 @@ export const ANA_MENU: readonly NavItem[] = [
   { href: "/approvals", label: "Onay Bekleyenler", icon: ClipboardCheck },
   { href: "/collections", label: "Tahsilatlar", icon: CreditCard },
   { href: "/reports", label: "Raporlar", icon: BarChart3 },
-  { href: "/audit-logs", label: "Audit Log", icon: ShieldCheck },
+  { href: "/audit-logs", label: "Denetim Kaydı", icon: ShieldCheck },
   { href: "/exports", label: "Dışa Aktarım", icon: Download },
   { href: "/imports", label: "İçe Aktarım", icon: Upload },
 ];

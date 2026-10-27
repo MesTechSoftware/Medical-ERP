@@ -151,7 +151,11 @@ kongre tabloları · e-belge ve kargo modül tabloları (KARARLAR §1.3 §(10): 
 - ✅ Onay Bekleyenler (`/approvals`, yalnız yönetici — A-8, 1B-7c/7d2): **bedelsiz satır** (numune dışı sebep, sipariş girişinde) ve **negatif stok** (sevkiyatta). Onaylanmamış sipariş sevk edilemez. Negatif stok sevkiyatta denetlenir. Yönetici gerekçeyle sevk eder (blok anında onaylı); operasyonun gerekçesi siparişi onaya gönderir, karar verilene kadar sipariş sevk edilemez. Karar (onay/red) notla verilir.
 - ✅ Tahsilatlar — tutar, tarih, **ödeme yöntemi** (tanım tablosu), referans no; siparişe eşlenmez
 - ✅ Raporlar — **dönem seçimli** (varsayılan içinde bulunulan ay, "tüm zamanlar" ayrı seçim — X-1): satıcı başına ciro, **hakediş**, tahsilat; doktor ciro sıralaması; dönem cirosu. Ciro **KDV hariç**, tahsilat **KDV dahil**, taban kolon başlığında *(tahsilat oranı, kanal ve yaşlandırma raporları söküldü)*. Yalnız `YONETICI`
-- ✅ Denetim kaydı — salt okunur, filtreli
+- ✅ Denetim kaydı (`/audit-logs`, yalnız yönetici — X-18, tasarım 3 D2, 27.10.2026): salt okunur, üç katman.
+  - **Liste:** zaman, kullanıcı (ad + rol), işlem türü rozeti, modül, kısa özet. Süzgeçler: tarih aralığı (İstanbul günü), kullanıcı ya da sistem, modül, işlem türü, olay. Sayfalama `(createdAt, seq)` imleciyle, sayfa başına 50 satır; toplam sayı okunmaz.
+  - **Detay:** sağdan panel, telefonda tam ekran (`?kayit=`, yerel `<dialog>`). IP, oturum, yöntem ve sayfa, gerekçe ve bütünlük durumu gösterilir.
+  - **Fark:** alan bazlı; eski değer kırmızı ve üstü çizili, yeni değer yeşil; maskeli alan "gizli".
+  - **Ölçüm:** 1 milyon satırda her sayfa ≤ 2,1 ms, tam zincir doğrulaması 9,5 sn.
 - ❌ Primler · Kongreler · Bayiler · Bayi sevkiyat — **söküldü** (C2, C4, C5). Yeni hakediş (sevkiyat satırına donmuş oran) raporda — 1B madde 3c; oran sevkiyat satırına donar (1B-7a); kongre Faz 3+ modül; bayi = `Doctor` satırı (1B madde 7)
 
 **Satıcı** (`src/app/(seller)/`)

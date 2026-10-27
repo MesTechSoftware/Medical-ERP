@@ -25,6 +25,19 @@ export function formatDateTime(d: Date): string {
   }).format(d);
 }
 
+/** Denetim kaydının zaman damgası: İstanbul, saniyeli ("27.10.2026 14:02:11"). */
+export function formatZamanDamgasi(d: Date): string {
+  return new Intl.DateTimeFormat("tr-TR", {
+    timeZone,
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).format(d);
+}
+
 /**
  * `date` kolonu (takvim günü) gösterimi. Değer UTC gece yarısıdır ve dilim
  * taşımaz (E-1 §(1)); İstanbul'a çevrilmez, olduğu gibi okunur.
