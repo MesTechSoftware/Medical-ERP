@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import { BarMicro, OranCubugu } from "@/components/grafik/BarMicro";
 import { ColumnMicro } from "@/components/grafik/ColumnMicro";
 import { Sparkline } from "@/components/grafik/Sparkline";
+import { YigilmisOranCubugu, type Dilim } from "@/components/grafik/YigilmisOranCubugu";
 import { GrafikIskeleti } from "@/components/Iskelet";
 
 const html = (el: Parameters<typeof renderToStaticMarkup>[0]) => renderToStaticMarkup(el);
@@ -92,5 +93,39 @@ describe("BarMicro / OranCubugu", () => {
 describe("GrafikIskeleti", () => {
   it("grafikle aynı ölçü sınıflarını taşır", () => {
     expect(html(createElement(GrafikIskeleti, { boyut: "XS" }))).toContain("h-5 w-16 dokunmatik:h-7");
+  });
+});
+
+describe("YigilmisOranCubugu (brief §3.3)", () => {
+  const dilim = (anahtar: string, adet: number, ton: Dilim["ton"]): Dilim => ({
+    anahtar,
+    etiket: anahtar,
+    adet,
+    ton,
+    href: `/orders?status=${anahtar}`,
+  });
+  const dilimler = [dilim("BEKLIYOR", 2, "uyari"), dilim("IPTAL", 0, "hata"), dilim("TESLIM_EDILDI", 1, "olumlu")];
+  const cubuk = (d: Dilim[]) => html(createElement(YigilmisOranCubugu, { dilimler: d, bosMetin: "Bu aralıkta sipariş yok" }));
+
+  it("tek yatay çubuk: dilim genişlikleri yigilmisOranlar'dan, toplam tam genişlik; çubuk ekran okuyucudan gizli", () => {
+    const h = cubuk(dilimler);
+    expect(h).toMatch(/<svg[^>]*aria-hidden="true"/);
+    const rect = [...h.matchAll(/<rect x="(\d+)"[^>]* width="(\d+)"[^>]*class="([^"]+)"/g)].map((m) => [m[1], m[2], m[3]]);
+    expect(rect).toEqual([
+      ["0", "667", "fill-critical"],
+      ["667", "333", "fill-positive"],
+    ]);
+  });
+
+  it("lejant: her durum adı, adedi ve oranıyla; öğe süzülmüş listeye bağlantı; sıfır adet de yazılır", () => {
+    const h = cubuk(dilimler);
+    expect(h).toMatch(/<a[^>]*href="\/orders\?status=BEKLIYOR"[^>]*>[\s\S]*?BEKLIYOR[\s\S]*?>2<[\s\S]*?%66,7[\s\S]*?<\/a>/);
+    expect(h).toMatch(/href="\/orders\?status=IPTAL"[\s\S]*?>0<[\s\S]*?%0</);
+    expect(h).toContain("bg-critical");
+  });
+
+  it("hiç sipariş yoksa çubuk ve lejant yok, sakin boş metin", () => {
+    const h = cubuk([dilim("BEKLIYOR", 0, "uyari"), dilim("IPTAL", 0, "hata")]);
+    expect(h).toBe('<p class="py-2 text-sm text-slate-500">Bu aralıkta sipariş yok</p>');
   });
 });

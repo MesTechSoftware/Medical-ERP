@@ -155,6 +155,11 @@ describe("görsel tasarım sistemi (ADR-009)", () => {
     expect(ihlal).toEqual([]);
   });
 
+  it("istisna bandı sabittir: kayan yazı ve hareket yok (brief §3.1)", () => {
+    const bant = readFileSync(join(SRC, "components", "dashboard", "IstisnaBandi.tsx"), "utf8");
+    expect(bant).not.toMatch(/marquee|animate-|transition|aria-live/);
+  });
+
   it("ham palet renk sınıfı yok — renk yalnız semantik token'dan; nötr griler serbest", () => {
     // slate/gray/zinc/neutral/stone, beyaz ve siyah nötrdür; marka ve semantik token'lar ad taşır.
     const PALET =

@@ -6,7 +6,7 @@ import { formatla, type ParaDegeri } from "@/lib/money";
 import type { Taban } from "@/lib/taban";
 
 /**
- * KPI kartı (ADR-010; brief §3.1): etiket → büyük değer → değişim (▲/▼ + yüzde) → trend → alt not
+ * KPI kartı (ADR-010; brief §3.1): etiket → büyük değer → değişim (▲/▼ + yüzde) → ikincil metrik → trend → alt not
  * (dönem ve karşılaştırma tabanı: "Bu ay · geçen ayın aynı günlerine göre"). Her KPI "iyi yön" ve
  * "boş davranışı" bildirir; kötü yön uyarı tonundadır (hata değil — kötü trend bir hata değildir).
  * Renk tek başına bilgi taşımaz: ok, yönün adı (ekran okuyucuya), yüzde ve karşılaştırma notu
@@ -35,6 +35,8 @@ type Ortak = {
   trend?: { seri: readonly OlcekGirdisi[]; sonDevamEdiyor: boolean; ozet: React.ReactNode };
   /** Değerin dönemi ("Bu ay"): alt satırda, karşılaştırma notunun önünde. */
   donemNotu?: string;
+  /** Tek ikincil metrik ("Medyan hazırlama süresi: 1,4 gün"): değerin altında küçük, nötr satır. */
+  ikincilMetrik?: string;
   /** Değerin kendisi bir uyarıysa (ör. bekleyen iş > 0). */
   vurgu?: "uyari";
   /**
@@ -87,7 +89,7 @@ function Degisim({ y, simdi, onceki, iyiYon }: { y: Yon; simdi: OlcekGirdisi; on
 }
 
 export function KpiCard(props: KpiCardProps) {
-  const { etiket, varyant, iyiYon, bosDavranisi, karsilastirma, trend, donemNotu, vurgu, hataReferansi } = props;
+  const { etiket, varyant, iyiYon, bosDavranisi, karsilastirma, trend, donemNotu, ikincilMetrik, vurgu, hataReferansi } = props;
   const paraMi = props.tutar !== undefined;
   const ham = paraMi ? props.tutar : props.adet;
   // "sifir": kayıt yoksa gerçek değer sıfırdır; "veri-yok": sıfır anlamsızdır, "Veri yok" yazılır.
@@ -125,6 +127,7 @@ export function KpiCard(props: KpiCardProps) {
           {karsilastirma && "anlik" in karsilastirma && (
             <p className="mt-1 text-xs text-slate-500">{karsilastirma.anlik}</p>
           )}
+          {ikincilMetrik && <p className="mt-1 text-xs text-slate-500">{ikincilMetrik}</p>}
           {trend && (
             <div className="mt-3">
               <Sparkline seri={trend.seri} sonDevamEdiyor={trend.sonDevamEdiyor} ozet={trend.ozet} />

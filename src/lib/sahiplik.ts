@@ -1,6 +1,12 @@
 import { Prisma } from "@/generated/prisma/client";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 
+/**
+ * "Sahipsiz" cari (X-17 §(6)): bayinin sahibi hiç olmaz, sahipsiz sayılmaz (X-8 §(3)). Doktor
+ * listesinin süzgeci ve dashboard özeti aynı tanımı okur.
+ */
+export const SAHIPSIZ_DOKTOR = { ownerSellerId: null, accountClass: "DOKTOR" } as const satisfies Prisma.DoctorWhereInput;
+
 export type SahiplikSonucu =
   | { durum: "TAMAM"; degisen: number }
   | { durum: "HATA"; kuralKodu: "SAHIP_AKTIF_SATICI_DEGIL" | "BAYI_SAHIP_ATANAMAZ" };

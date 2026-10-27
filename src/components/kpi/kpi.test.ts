@@ -105,6 +105,13 @@ describe("KpiCard", () => {
     expect(hatali).not.toContain("₺1.200,00");
   });
 
+  it("ikincil metrik: değerin altında tek satır, nötr ve küçük; hata ve boş durumda yazılmaz", () => {
+    const h = kart({ adet: 12, tutar: undefined, taban: undefined, karsilastirma: { anlik: "şu an" }, ikincilMetrik: "Medyan hazırlama süresi: 1,4 gün" });
+    expect(h).toContain('<p class="mt-1 text-xs text-slate-500">Medyan hazırlama süresi: 1,4 gün</p>');
+    expect(h.indexOf("şu an")).toBeLessThan(h.indexOf("Medyan hazırlama"));
+    expect(kart({ ikincilMetrik: "x", hataReferansi: "R-1" })).not.toContain(">x<");
+  });
+
   it("trend verilirse kart içinde sparkline çizilir", () => {
     const h = kart({ trend: { seri: ["1", "2", "3"], sonDevamEdiyor: true, ozet: "Son 3 ay" } });
     expect(h).toContain("<svg");
@@ -142,5 +149,14 @@ describe("KpiSatiri — statik grid, ilk kart birincil", () => {
     expect(h).toContain('data-metin="Bu ay · geçen aya göre"');
     expect(h).toContain('data-metin="şu an"');
     expect(h).not.toMatch(/>(Bu ay · geçen aya göre|şu an|Ciro|Tahsilat)</);
+  });
+
+  it("iskelet ikincil metrik satırını aynı metinle taşır", () => {
+    const h = renderToStaticMarkup(
+      createElement(KpiSatiriIskeleti, {
+        kartlar: [{ etiket: "Bekleyen", varyant: "birincil", para: false, degisim: { anlik: "şu an" }, trend: false, ikincilMetrik: "Medyan hazırlama süresi: 0,0 gün" }],
+      })
+    );
+    expect(h).toContain('<p class="mt-1 text-xs"><span data-metin="Medyan hazırlama süresi: 0,0 gün"');
   });
 });
