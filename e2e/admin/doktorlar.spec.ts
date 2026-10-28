@@ -210,3 +210,22 @@ test.describe("sütun seçici", () => {
     }
   });
 });
+
+/** Gözden geçirme bulgusu: yumuşak gezinmeden sonra süzgeç formu güncel süzgeci gösterir. */
+test("sekmeden sonra Filtrele sekmenin süzgecini korur; kaldırılan etiket geri gelmez", async ({ page }) => {
+  await page.goto("/doctors");
+  await sekmeler(page).getByRole("link", { name: "Doktorlar" }).click();
+  await expect(page).toHaveURL(/sinif=DOKTOR/);
+  await page.getByText("Filtrele · 1").click();
+  const form = page.getByRole("form", { name: "Cari süzgeci" });
+  await expect(form.getByLabel("Hesap sınıfı")).toHaveValue("DOKTOR");
+  await form.getByLabel("Bölge").selectOption("Marmara");
+  await form.getByRole("button", { name: "Uygula" }).click();
+  await expect(page).toHaveURL(/sinif=DOKTOR/);
+  await expect(page).toHaveURL(/bolge=Marmara/);
+
+  await page.getByRole("link", { name: "Kaldır: Bölge: Marmara" }).click();
+  await expect(page).not.toHaveURL(/bolge=/);
+  await page.getByText("Filtrele · 1").click();
+  await expect(page.getByRole("form", { name: "Cari süzgeci" }).getByLabel("Bölge")).toHaveValue("");
+});

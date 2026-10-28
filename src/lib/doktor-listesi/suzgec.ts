@@ -156,3 +156,8 @@ export function bosDurum(s: DoktorSuzgeci): BosDurum {
   if (ayniSuzgec(s, { ...BOS_SUZGEC, fatura: "eksik" })) return "eksik-fatura";
   return "suzgecli";
 }
+
+/** Seçeneklerde olmayan (bilinmeyen ya da pasif) satıcı süzgeci yok sayılır (spec §5). */
+export function saticiyiDogrula(s: DoktorSuzgeci, aktifSaticilar: readonly string[]): DoktorSuzgeci {
+  return s.satici === null || s.satici === SAHIPSIZ || aktifSaticilar.includes(s.satici) ? s : { ...s, satici: null };
+}

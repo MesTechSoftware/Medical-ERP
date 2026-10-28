@@ -71,7 +71,8 @@ export function SuzgecCubugu({
           })}
         </nav>
         <div className="ml-auto flex flex-wrap items-start gap-2">
-          <details className="relative">
+          {/* Süzgeç değişince form yeniden kurulur: yumuşak gezinmede <select> eski değerini korur (React). */}
+          <details key={doktorAdresi(suzgec)} className="relative">
             <summary className={`${buton("ikincil")} cursor-pointer list-none`}>
               <Ikon ad="filtrele" />
               {sayi > 0 ? `Filtrele · ${sayi}` : "Filtrele"}

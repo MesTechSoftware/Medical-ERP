@@ -6,7 +6,8 @@ import { sutunlariKaydet } from "./sutunEylemi";
 /** Sütun seçici menüsü (spec Ü-18 §3.4): JS'siz form; Ad Soyad listede yoktur, gizlenemez. */
 export function SutunSecici({ gizli, donus }: { gizli: ReadonlySet<SutunAnahtari>; donus: string }) {
   return (
-    <details className="relative">
+    // Kaydedince menü yeni tercihle yeniden kurulur (yönlendirme yumuşak gezinmedir).
+    <details key={[...gizli].join(",")} className="relative">
       <summary className={`${buton("ikincil")} cursor-pointer list-none`}>
         <Ikon ad="duzenle" />
         Sütunlar

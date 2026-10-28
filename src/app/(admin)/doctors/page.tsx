@@ -5,7 +5,7 @@ import Pagination from "@/components/Pagination";
 import { getPagination, pageCount } from "@/lib/pagination";
 import { doktorKpileri, doktorListesi, doktorPaneli, doktorSuzgecSecenekleri } from "@/lib/doktor-listesi/sorgu";
 import { SUTUN_CEREZI, gizliSutunlariCoz } from "@/lib/doktor-listesi/sutunlar";
-import { doktorAdresi, suzgecCoz, type Parametreler } from "@/lib/doktor-listesi/suzgec";
+import { doktorAdresi, saticiyiDogrula, suzgecCoz, type Parametreler } from "@/lib/doktor-listesi/suzgec";
 import { simdi } from "@/lib/zaman";
 import TransferForm from "./TransferForm";
 import { DoktorPaneli } from "./DoktorPaneli";
@@ -23,18 +23,21 @@ export default async function AdminDoctorsPage({ searchParams }: { searchParams:
   const params = await searchParams;
   const { page, perPage, skip, take } = getPagination({ page: tek(params.page), per: tek(params.per) });
   // X-8 §(5) hesap sınıfı, A-13 §(5) eksik fatura bilgisi ve diğer süzgeçler birleşir (X-8-4).
-  const { suzgec, detay } = suzgecCoz(params);
+  const cozulen = suzgecCoz(params);
+  const detay = cozulen.detay;
   const an = simdi();
+  // Bilinmeyen ya da pasif satıcı süzgeci yok sayılır: liste, etiket ve sayaç aynı süzgeci görür.
+  const secenekler = await doktorSuzgecSecenekleri();
+  const suzgec = saticiyiDogrula(cozulen.suzgec, secenekler.saticilar.map((s) => s.id));
   const yer = { page, per: tek(params.per) ? perPage : undefined };
   // Sütun tercihi çerezdedir; gizli sütun hiç çizilmez (spec §3.4).
   const gizli = gizliSutunlariCoz((await cookies()).get(SUTUN_CEREZI)?.value);
   const listeAdresi = doktorAdresi(suzgec, yer);
 
   // FR-05: admin TÜM doktorları görür.
-  const [liste, sayilar, secenekler, panel] = await Promise.all([
+  const [liste, sayilar, panel] = await Promise.all([
     doktorListesi(suzgec, { skip, take }, an),
     doktorKpileri(),
-    doktorSuzgecSecenekleri(),
     detay ? doktorPaneli(detay) : null,
   ]);
 
