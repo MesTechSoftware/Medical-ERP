@@ -14,6 +14,7 @@ import { simdi, takvimAyi } from "@/lib/zaman";
 import { SonucGosterimi } from "@/components/Sonuc";
 import { sonucOlustur } from "@/lib/sonuc";
 import CariHareketleri from "./CariHareketleri";
+import { BAKIYE_ETIKETI } from "../bakiye";
 import {
   PageHeader,
   Card,
@@ -26,12 +27,6 @@ import { KpiCard } from "@/components/kpi/KpiCard";
 import { KpiSatiri } from "@/components/kpi/KpiSatiri";
 import { buton } from "@/components/stil";
 import { Ikon } from "@/components/Ikon";
-
-const BAKIYE_ETIKETI = {
-  BORC: "Doktor borçlu",
-  ALACAK: "Doktor alacaklı (avans)",
-  KAPALI: "Bakiye kapalı",
-} as const;
 
 /**
  * FR-10: Doktor detayı — cari bakiye, sipariş ve tahsilat geçmişi.
