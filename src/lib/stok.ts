@@ -10,6 +10,7 @@ type Db = Prisma.TransactionClient | typeof prisma;
  * (ADR-008 §(4)); yazım `stokHareketiYaz()`'dadır.
  *
  * `tarih` verilirse sonuç o günün İstanbul günü sonu itibarıyladır (E-1 §(5)).
+ * Toplu ve tekli aynı yoldur (B-4-7): bu fonksiyon `hesaplaStoklar()`'ı tek kimlikle çağırır.
  */
 export async function hesaplaStok(
   urunId: string,
@@ -17,26 +18,39 @@ export async function hesaplaStok(
   tarih?: Date,
   db: Db = prisma
 ): Promise<number> {
+  return (await hesaplaStoklar([urunId], konumId, tarih, db)).get(urunId)!;
+}
+
+/**
+ * Birden çok ürünün stoğu tek sorguda (B-4-7). Her istenen kimlik haritadadır; hareketsiz ürün 0.
+ */
+export async function hesaplaStoklar(
+  urunIdler: readonly string[],
+  konumId?: string,
+  tarih?: Date,
+  db: Db = prisma
+): Promise<Map<string, number>> {
+  const stoklar = new Map<string, number>(urunIdler.map((id) => [id, 0]));
+  if (urunIdler.length === 0) return stoklar;
   const gruplar = await db.stockMovement.groupBy({
-    by: ["type"],
+    by: ["productId", "type"],
     where: {
-      productId: urunId,
+      productId: { in: [...urunIdler] },
       ...(konumId ? { locationId: konumId } : {}),
       ...(tarih ? { createdAt: { lt: gunAraligi(tarih).bitis } } : {}),
     },
     _sum: { quantity: true },
   });
-  let stok = 0;
   for (const g of gruplar) {
     const miktar = g._sum.quantity ?? 0;
-    stok += g.type === "GIRIS" ? miktar : -miktar;
+    stoklar.set(g.productId, stoklar.get(g.productId)! + (g.type === "GIRIS" ? miktar : -miktar));
   }
-  return stok;
+  return stoklar;
 }
 
 /**
  * Aktif ürünler ve stokları (dashboard: kritik stok listesi ve istisna bandı tek okumayı paylaşır).
- * Ürün başına `hesaplaStok()`; ad sırasıyla.
+ * Tek `hesaplaStoklar()` okuması; ad sırasıyla.
  */
 export async function aktifUrunStoklari(): Promise<{ id: string; name: string; code: string; stok: number }[]> {
   const urunler = await prisma.product.findMany({
@@ -44,7 +58,8 @@ export async function aktifUrunStoklari(): Promise<{ id: string; name: string; c
     select: { id: true, name: true, code: true },
     orderBy: { name: "asc" },
   });
-  return Promise.all(urunler.map(async (u) => ({ ...u, stok: await hesaplaStok(u.id) })));
+  const stoklar = await hesaplaStoklar(urunler.map((u) => u.id));
+  return urunler.map((u) => ({ ...u, stok: stoklar.get(u.id)! }));
 }
 
 /**

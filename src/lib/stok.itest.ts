@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { prisma } from "@/lib/db";
-import { hesaplaStok, stokHareketiYaz } from "@/lib/stok";
+import { hesaplaStok, hesaplaStoklar, stokHareketiYaz } from "@/lib/stok";
+import { bugun, gunEkle } from "@/lib/zaman";
 import { referansVeri, yeniDoktorVerisi } from "../../test/integration/referans";
 
 // `stokHareketiYaz()` — KABUL_KRITERLERI B-4-2…B-4-4.
@@ -113,5 +114,43 @@ describe("stokHareketiYaz — eşzamanlılık (B-4-4)", () => {
     expect(n1).toEqual([]);
     expect(n2).toEqual([{ kuralKodu: "NEGATIF_STOK", urunId: u.id, konumId: depoId, once: 2, sonra: -6 }]);
     expect(await hesaplaStok(u.id)).toBe(-6);
+  });
+});
+
+describe("hesaplaStoklar — toplu ≡ tekli (B-4-7)", () => {
+  it("her ürün için tekliyle aynı: konumsuz, konumlu, tarihli", async () => {
+    const [a, b, c] = [await urun("A"), await urun("B"), await urun("C")];
+    await prisma.$transaction((tx) =>
+      stokHareketiYaz(tx, [giris(a.id, 20), cikis(a.id, 5), giris(b.id, 10), cikis(b.id, 4), giris(b.id, 4, konsinyeId)])
+    );
+    const idler = [a.id, b.id, c.id];
+    const dun = gunEkle(bugun(), -1);
+    for (const [konum, tarih] of [
+      [undefined, undefined],
+      [depoId, undefined],
+      [konsinyeId, undefined],
+      [undefined, dun],
+      [depoId, bugun()],
+    ] as const) {
+      const toplu = await hesaplaStoklar(idler, konum, tarih);
+      for (const id of idler) expect(toplu.get(id)).toBe(await hesaplaStok(id, konum, tarih));
+    }
+    expect((await hesaplaStoklar(idler)).get(a.id)).toBe(15);
+    expect((await hesaplaStoklar(idler, konsinyeId)).get(b.id)).toBe(4);
+  });
+
+  it("hareketsiz ürün 0 döner", async () => {
+    const u = await urun("H");
+    expect((await hesaplaStoklar([u.id])).get(u.id)).toBe(0);
+  });
+
+  it("boş liste boş harita", async () => {
+    expect((await hesaplaStoklar([])).size).toBe(0);
+  });
+
+  it("negatif stok korunur", async () => {
+    const u = await urun("N");
+    await prisma.$transaction((tx) => stokHareketiYaz(tx, [giris(u.id, 2), cikis(u.id, 5)]));
+    expect((await hesaplaStoklar([u.id])).get(u.id)).toBe(-3);
   });
 });
