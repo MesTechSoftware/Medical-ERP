@@ -1,8 +1,10 @@
+import { cookies } from "next/headers";
 import { requireStaff } from "@/lib/session";
 import { PageHeader, Card, LinkButton } from "@/components/ui";
 import Pagination from "@/components/Pagination";
 import { getPagination, pageCount } from "@/lib/pagination";
 import { doktorKpileri, doktorListesi, doktorPaneli, doktorSuzgecSecenekleri } from "@/lib/doktor-listesi/sorgu";
+import { SUTUN_CEREZI, gizliSutunlariCoz } from "@/lib/doktor-listesi/sutunlar";
 import { doktorAdresi, suzgecCoz, type Parametreler } from "@/lib/doktor-listesi/suzgec";
 import { simdi } from "@/lib/zaman";
 import TransferForm from "./TransferForm";
@@ -10,6 +12,7 @@ import { DoktorPaneli } from "./DoktorPaneli";
 import { DoktorTablosu } from "./DoktorTablosu";
 import { KpiKartlari } from "./KpiKartlari";
 import { SuzgecCubugu } from "./SuzgecCubugu";
+import { SutunSecici } from "./SutunSecici";
 
 const tek = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 
@@ -23,6 +26,9 @@ export default async function AdminDoctorsPage({ searchParams }: { searchParams:
   const { suzgec, detay } = suzgecCoz(params);
   const an = simdi();
   const yer = { page, per: tek(params.per) ? perPage : undefined };
+  // Sütun tercihi çerezdedir; gizli sütun hiç çizilmez (spec §3.4).
+  const gizli = gizliSutunlariCoz((await cookies()).get(SUTUN_CEREZI)?.value);
+  const listeAdresi = doktorAdresi(suzgec, yer);
 
   // FR-05: admin TÜM doktorları görür.
   const [liste, sayilar, secenekler, panel] = await Promise.all([
@@ -55,7 +61,7 @@ export default async function AdminDoctorsPage({ searchParams }: { searchParams:
         </div>
       )}
 
-      <SuzgecCubugu suzgec={suzgec} secenekler={secenekler} />
+      <SuzgecCubugu suzgec={suzgec} secenekler={secenekler} sutunMenusu={<SutunSecici gizli={gizli} donus={listeAdresi} />} />
 
       {/* Toplu devir (X-17 §(4)): satırlardaki kutular bu forma `form` niteliğiyle bağlıdır. */}
       {devirYetkisi && (
@@ -66,7 +72,7 @@ export default async function AdminDoctorsPage({ searchParams }: { searchParams:
         </div>
       )}
 
-      <DoktorTablosu satirlar={liste.satirlar} gizli={new Set()} devirYetkisi={devirYetkisi} suzgec={suzgec} yer={yer} an={an} />
+      <DoktorTablosu satirlar={liste.satirlar} gizli={gizli} devirYetkisi={devirYetkisi} suzgec={suzgec} yer={yer} an={an} />
 
       <Pagination
         page={page}
@@ -78,7 +84,7 @@ export default async function AdminDoctorsPage({ searchParams }: { searchParams:
 
       {/* Geçersiz ya da bulunamayan kimlikte panel açılmaz (spec §3.6). */}
       {panel && (
-        <DoktorPaneli key={panel.doktor.id} veri={panel} kapatAdresi={doktorAdresi(suzgec, yer)} yonetici={devirYetkisi} />
+        <DoktorPaneli key={panel.doktor.id} veri={panel} kapatAdresi={listeAdresi} yonetici={devirYetkisi} />
       )}
     </div>
   );

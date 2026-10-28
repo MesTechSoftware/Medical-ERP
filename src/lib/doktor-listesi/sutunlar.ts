@@ -31,3 +31,8 @@ export function gizliSutunlariCoz(deger: string | undefined): ReadonlySet<SutunA
 export function gizliSutunCerezi(gizli: Iterable<string>): string {
   return gecerli(gizli).join(",");
 }
+
+/** Kaydettikten sonra dönülecek adres: yalnız cari listesi, başkası listeye düşer (açık yönlendirme yok). */
+export function guvenliDonus(donus: string): string {
+  return /^\/doctors(\?|$)/.test(donus) ? donus : "/doctors";
+}

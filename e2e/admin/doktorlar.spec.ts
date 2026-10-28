@@ -162,3 +162,51 @@ test("geçersiz detay kimliği paneli açmaz", async ({ page }) => {
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.getByRole("table")).toBeVisible();
 });
+
+/** Sütun seçici (spec §3.4) — tercih çerezde, sayfa sunucuda gizli sütunu hiç çizmez. */
+
+const sutunMenusu = async (page: import("@playwright/test").Page) => {
+  await page.getByText("Sütunlar", { exact: true }).click();
+  return page.getByRole("form", { name: "Görünür sütunlar" });
+};
+
+test.describe("sütun seçici", () => {
+  test.afterEach(async ({ context }) => {
+    await context.clearCookies({ name: "doktor-sutunlar" });
+  });
+
+  test("Telefon ve Bakiye gizlenir, yenilemede gizli kalır; Varsayılana dön geri getirir", async ({ page }) => {
+    await page.goto("/doctors?bolge=Marmara");
+    const menu = await sutunMenusu(page);
+    await menu.getByLabel("Telefon").uncheck();
+    await menu.getByLabel("Bakiye").uncheck();
+    await menu.getByRole("button", { name: "Kaydet" }).click();
+    await expect(page).toHaveURL(/bolge=Marmara/);
+    await expect(page.getByRole("columnheader", { name: "Telefon" })).toHaveCount(0);
+    await expect(page.getByRole("columnheader", { name: "Bakiye (KDV dahil)" })).toHaveCount(0);
+    await expect(page.getByRole("columnheader", { name: "Durum" })).toBeVisible();
+
+    await page.reload();
+    await expect(page.getByRole("columnheader", { name: "Telefon" })).toHaveCount(0);
+
+    await (await sutunMenusu(page)).getByRole("button", { name: "Varsayılana dön" }).click();
+    await expect(page.getByRole("columnheader", { name: "Telefon" })).toBeVisible();
+  });
+
+  test("bütün sütunlar gizli ve sonuç boş: boş durum tüm satırı kaplar", async ({ page }) => {
+    await page.goto("/doctors?bolge=E2E-Olmayan-Bolge");
+    const menu = await sutunMenusu(page);
+    for (const kutu of await menu.getByRole("checkbox").all()) await kutu.uncheck();
+    await menu.getByRole("button", { name: "Kaydet" }).click();
+    await expect(page.getByRole("columnheader")).toHaveCount(2); // seçim kutusu + Ad Soyad
+    await expect(page.getByText("Bu süzgeçlere uyan cari bulunamadı.").locator("xpath=ancestor::td[1]")).toHaveAttribute("colspan", "2");
+  });
+
+  test("bozuk çerez varsayılan görünümü verir", async ({ page, context, baseURL }) => {
+    await context.addCookies([{ name: "doktor-sutunlar", value: "%%%,adSoyad", url: `${baseURL}/doctors` }]);
+    await page.goto("/doctors");
+    for (const baslik of ["Klinik / Bölge", "Telefon", "Sorumlu Satıcı", "Sipariş", "Son Sipariş", "Bakiye (KDV dahil)", "Durum"]) {
+      await expect(page.getByRole("columnheader", { name: baslik, exact: true })).toBeVisible();
+    }
+  });
+});

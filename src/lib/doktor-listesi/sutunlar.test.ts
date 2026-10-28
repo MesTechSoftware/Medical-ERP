@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { SUTUNLAR, gizliSutunCerezi, gizliSutunlariCoz } from "@/lib/doktor-listesi/sutunlar";
+import { SUTUNLAR, gizliSutunCerezi, gizliSutunlariCoz, guvenliDonus } from "@/lib/doktor-listesi/sutunlar";
 
 // Cari listesinin sütun seçicisi — spec Ü-18 §3.4 (çerez biçimi).
 
@@ -41,5 +41,18 @@ describe("SUTUNLAR", () => {
       "Bakiye",
       "Durum",
     ]);
+  });
+});
+
+describe("guvenliDonus — kaydettikten sonra yalnız cari listesine dönülür", () => {
+  it("liste adresini aynen döner", () => {
+    expect(guvenliDonus("/doctors")).toBe("/doctors");
+    expect(guvenliDonus("/doctors?bolge=Ege&page=2")).toBe("/doctors?bolge=Ege&page=2");
+  });
+
+  it("başka adres listeye düşer", () => {
+    for (const kotu of ["", "https://kotu.example", "//kotu.example", "/doctors.kotu", "/doctorsx", "/users", "/doctors/abc/edit"]) {
+      expect(guvenliDonus(kotu)).toBe("/doctors");
+    }
   });
 });
