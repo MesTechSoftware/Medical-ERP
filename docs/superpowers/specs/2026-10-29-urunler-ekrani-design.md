@@ -111,7 +111,7 @@ eğrisine, son hareketlere ve ürünün geçtiği fiyat listelerine listeden ayr
 
 ### 3.6 Yan panel
 
-- **Açılış:** Ürün bağlantısı `urunAdresi(suzgec, { sayfa, detay: id })`, `scroll={false}`,
+- **Açılış:** Ürün bağlantısı `urunAdresi(suzgec, { page, per, detay: id })`, `scroll={false}`,
   `data-kayit={id}`. Sunucu paneli listeyle birlikte çizer. Kabuk `src/components/YanPanel.tsx`.
 - **Geçersiz kimlik:** kimlik geçersiz ya da kayıt yoksa panel açılmaz, liste normal görünür.
 - **İçerik** (yukarıdan aşağıya):
@@ -174,12 +174,12 @@ eğrisine, son hareketlere ve ürünün geçtiği fiyat listelerine listeden ayr
   - `gizliSutunCerezi(sutunlar, gizli)` — boşsa `-`
   - `guvenliDonus(yol, donus)` — yalnız `yol` ile başlayan adres, değilse `yol`
   - `doktor-listesi/sutunlar.ts` bu modülün üstüne iner (anahtar listesi ve çerez adı orada kalır).
-- **`src/lib/urun-listesi/suzgec.ts`:** `UrunSuzgeci`, `BOS_SUZGEC`, `suzgecCoz(params) → { suzgec, sayfa,
+- **`src/lib/urun-listesi/suzgec.ts`:** `UrunSuzgeci`, `BOS_SUZGEC`, `suzgecCoz(params) → { suzgec,
   detay }`, `urunAdresi(suzgec, ek?)` (tek adres üreticisi), `etkinSuzgecler`, `bosDurumTuru`, `HIZLI_SEKMELER`.
 - **`src/lib/urun-listesi/sutunlar.ts`:** `SUTUNLAR` (KDV dahil `varsayilanGizli`), `SUTUN_CEREZI = "urun-sutunlar"`.
 - **`src/lib/stok-hareket-turu.ts`:** `hareketTuru(hareket) → etiket` kaynak belge bağından: sevkiyat →
   "Sevkiyat" · iade → "İade" · konsinye → "Konsinye" · transfer → "Transfer" · düzeltme → "Düzeltme" ·
-  içe aktarım partisi → "Açılış" · sipariş (1B-7a öncesi) → "Sipariş" · hiçbiri → "Stok girişi".
+  içe aktarım partisi → "Açılış" · sipariş (1B-7a öncesi) → "Sipariş" · hiçbiri → "Stok girişi" (çıkış hareketinde "Çıkış").
   Stok ekranı (Ü-20) da kullanacak.
 
 ### 4.4 Bileşenler
