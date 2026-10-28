@@ -97,6 +97,16 @@ test("bütün carileri görür; devir formu yoktur (X-13 §(1)/(5))", async ({ p
   await expect(page.locator('input[name="doctorId"]')).toHaveCount(0);
 });
 
+test("cari listesinde yan paneli açar; Düzenle ve Yeni Cari yoktur (X-13-2)", async ({ page }) => {
+  const [d] = await query<{ id: string; fullName: string }>(`SELECT id, "fullName" FROM "Doctor" ORDER BY "fullName" LIMIT 1`);
+  await page.goto(`/doctors?detay=${d.id}`);
+  const panel = page.getByRole("dialog", { name: new RegExp(d.fullName) });
+  await expect(panel).toBeVisible();
+  await expect(panel.getByRole("link", { name: "Tam detaya git" })).toBeVisible();
+  await expect(panel.getByRole("link", { name: "Düzenle" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Yeni Cari" })).toHaveCount(0);
+});
+
 test("stok girişi yapar (stok hareketi — D-2 §(1))", async ({ page }) => {
   const not = `E2E operasyon girişi ${Date.now()}`;
   await page.goto("/stock");

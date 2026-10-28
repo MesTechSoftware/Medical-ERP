@@ -118,6 +118,7 @@ export async function doktorSuzgecSecenekleri(): Promise<{ bolgeler: string[]; s
 
 export type DoktorPaneliVerisi = {
   doktor: Doctor & { ownerSeller: { name: string } | null };
+  eksikFatura: boolean;
   risk: DoktorRisk;
   vadeUyarisi: Bildirim | null;
   siparisler: { id: string; documentNo: string; orderDate: Date; stage: OrderStage; status: OrderStatus; toplam: Decimal }[];
@@ -136,7 +137,8 @@ export type DoktorPaneliVerisi = {
 export async function doktorPaneli(id: string): Promise<DoktorPaneliVerisi | null> {
   const doktor = await prisma.doctor.findUnique({ where: { id }, include: { ownerSeller: { select: { name: true } } } });
   if (!doktor) return null;
-  const [risk, vadeUyarisi, siparisler, hareketler, devirler] = await Promise.all([
+  const [eksik, risk, vadeUyarisi, siparisler, hareketler, devirler] = await Promise.all([
+    prisma.doctor.count({ where: { AND: [{ id }, EKSIK_FATURA_BILGISI] } }),
     hesaplaDoktorRisk(id),
     vadesiGecmisUyarisi(id),
     prisma.order.findMany({
@@ -160,6 +162,7 @@ export async function doktorPaneli(id: string): Promise<DoktorPaneliVerisi | nul
   ]);
   return {
     doktor,
+    eksikFatura: eksik > 0,
     risk,
     vadeUyarisi,
     siparisler: siparisler.map(({ items, ...o }) => ({ ...o, toplam: siparisToplami(items).toplam })),

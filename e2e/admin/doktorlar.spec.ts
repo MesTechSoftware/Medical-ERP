@@ -123,3 +123,42 @@ test("eski adres ?sahip=yok Sahipsiz sekmesini açar", async ({ page }) => {
   await page.goto("/doctors?sahip=yok");
   await expect(sekmeler(page).getByRole("link", { name: "Sahipsiz" })).toHaveAttribute("aria-current", "page");
 });
+
+/** Yan panel (spec §3.6) — X-18 §(9) kabuğu. */
+
+test("isim yan paneli açar; Esc kapatır, odak isme döner", async ({ page }) => {
+  const [d] = await sorgu<{ id: string; fullName: string }>(
+    `SELECT id, "fullName" FROM "Doctor" WHERE region = 'Marmara' ORDER BY "fullName" LIMIT 1`
+  );
+  await page.goto("/doctors?bolge=Marmara");
+  await page.locator(`a[data-kayit="${d.id}"]`).click();
+  const panel = page.getByRole("dialog", { name: new RegExp(d.fullName) });
+  await expect(panel).toBeVisible();
+  await expect(page).toHaveURL(new RegExp(`detay=${d.id}`));
+  await expect(page).toHaveURL(/bolge=Marmara/);
+  for (const bolum of ["Cari özeti", "Son siparişler", "Son cari hareketler", "Devir geçmişi"]) {
+    await expect(panel.getByRole("region", { name: bolum })).toBeVisible();
+  }
+  await expect(panel.getByRole("link", { name: "Tam detaya git" })).toHaveAttribute("href", `/doctors/${d.id}`);
+  await expect(panel.getByRole("link", { name: "Düzenle" })).toBeVisible();
+
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page).not.toHaveURL(/detay=/);
+  await expect(page).toHaveURL(/bolge=Marmara/);
+  await expect(page.locator(`a[data-kayit="${d.id}"]`)).toBeFocused();
+});
+
+test("Tam detaya git detay sayfasını açar", async ({ page }) => {
+  const [d] = await sorgu<{ id: string; fullName: string }>(`SELECT id, "fullName" FROM "Doctor" ORDER BY "fullName" LIMIT 1`);
+  await page.goto(`/doctors?detay=${d.id}`);
+  await page.getByRole("dialog").getByRole("link", { name: "Tam detaya git" }).click();
+  await expect(page).toHaveURL(new RegExp(`/doctors/${d.id}$`));
+  await expect(page.getByRole("heading", { level: 1, name: new RegExp(d.fullName) })).toBeVisible();
+});
+
+test("geçersiz detay kimliği paneli açmaz", async ({ page }) => {
+  await page.goto("/doctors?detay=olmayan-kimlik");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.getByRole("table")).toBeVisible();
+});

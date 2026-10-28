@@ -2,10 +2,11 @@ import { requireStaff } from "@/lib/session";
 import { PageHeader, Card, LinkButton } from "@/components/ui";
 import Pagination from "@/components/Pagination";
 import { getPagination, pageCount } from "@/lib/pagination";
-import { doktorKpileri, doktorListesi, doktorSuzgecSecenekleri } from "@/lib/doktor-listesi/sorgu";
+import { doktorKpileri, doktorListesi, doktorPaneli, doktorSuzgecSecenekleri } from "@/lib/doktor-listesi/sorgu";
 import { doktorAdresi, suzgecCoz, type Parametreler } from "@/lib/doktor-listesi/suzgec";
 import { simdi } from "@/lib/zaman";
 import TransferForm from "./TransferForm";
+import { DoktorPaneli } from "./DoktorPaneli";
 import { DoktorTablosu } from "./DoktorTablosu";
 import { KpiKartlari } from "./KpiKartlari";
 import { SuzgecCubugu } from "./SuzgecCubugu";
@@ -19,14 +20,16 @@ export default async function AdminDoctorsPage({ searchParams }: { searchParams:
   const params = await searchParams;
   const { page, perPage, skip, take } = getPagination({ page: tek(params.page), per: tek(params.per) });
   // X-8 §(5) hesap sınıfı, A-13 §(5) eksik fatura bilgisi ve diğer süzgeçler birleşir (X-8-4).
-  const { suzgec } = suzgecCoz(params);
+  const { suzgec, detay } = suzgecCoz(params);
   const an = simdi();
+  const yer = { page, per: tek(params.per) ? perPage : undefined };
 
   // FR-05: admin TÜM doktorları görür.
-  const [liste, sayilar, secenekler] = await Promise.all([
+  const [liste, sayilar, secenekler, panel] = await Promise.all([
     doktorListesi(suzgec, { skip, take }, an),
     doktorKpileri(),
     doktorSuzgecSecenekleri(),
+    detay ? doktorPaneli(detay) : null,
   ]);
 
   // Sayfalama süzgeci ve sayfa boyunu korur; paneli taşımaz.
@@ -63,7 +66,7 @@ export default async function AdminDoctorsPage({ searchParams }: { searchParams:
         </div>
       )}
 
-      <DoktorTablosu satirlar={liste.satirlar} gizli={new Set()} devirYetkisi={devirYetkisi} suzgec={suzgec} an={an} />
+      <DoktorTablosu satirlar={liste.satirlar} gizli={new Set()} devirYetkisi={devirYetkisi} suzgec={suzgec} yer={yer} an={an} />
 
       <Pagination
         page={page}
@@ -72,6 +75,11 @@ export default async function AdminDoctorsPage({ searchParams }: { searchParams:
         basePath="/doctors"
         params={sayfaParametreleri}
       />
+
+      {/* Geçersiz ya da bulunamayan kimlikte panel açılmaz (spec §3.6). */}
+      {panel && (
+        <DoktorPaneli key={panel.doktor.id} veri={panel} kapatAdresi={doktorAdresi(suzgec, yer)} yonetici={devirYetkisi} />
+      )}
     </div>
   );
 }
