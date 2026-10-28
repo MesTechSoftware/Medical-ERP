@@ -156,7 +156,7 @@ test("doktor sahipsiz havuza alınabilir; uyarı ve Sahipsiz süzgeci gösterir 
   const [owned] = await query<{ fullName: string }>(
     `SELECT "fullName" FROM "Doctor" WHERE "ownerSellerId" IS NOT NULL LIMIT 1`
   );
-  await page.getByRole("link", { name: "Sahipsiz", exact: true }).click();
+  await page.getByRole("navigation", { name: "Hızlı süzgeçler" }).getByRole("link", { name: "Sahipsiz", exact: true }).click();
   await expect(page).toHaveURL(/[?&]satici=yok/);
   await expect(page.getByRole("link", { name: new RegExp(doc.fullName) })).toBeVisible();
   await expect(page.getByRole("link", { name: new RegExp(owned.fullName) })).toHaveCount(0);
