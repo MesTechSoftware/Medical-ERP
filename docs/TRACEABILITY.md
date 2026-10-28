@@ -6,7 +6,7 @@
 > Kod yeri, kriter metninde anılan fonksiyonun tanımlandığı dosyadır. Eski PRD matrisi (8 Ağustos 2026)
 > `docs/arsiv/TRACEABILITY_PRD_V2.md`'dedir.
 
-**Özet:** 131 KANITLI · 0 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.0** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
+**Özet:** 134 KANITLI · 1 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.7** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
 
 | Kriter | Karar | Durum | Kod yeri | Test | Kriter metni |
 |---|---|---|---|---|---|
@@ -78,6 +78,7 @@
 | B-4-5 | B-4 | KANITLI | — | `src/lib/stok-transfer.itest.ts`<br>`e2e/admin/konsinye.spec.ts` | `StokTransfer` (`TRF`) konumdan **depoya** taşır (hedef depo değilse ya da kaynak = hedefse `SERT` `TRANSFER_KONUMU_GECERSIZ`); mali sonu… |
 | B-4-6 | B-4 | KANITLI | `src/lib/stok.ts` | `src/lib/ice-aktarim/acilis.itest.ts` | Açılış stoğu konum bazındadır: ürün ve konum koduyla (boş konum varsayılan depo), pozitif tam sayı miktar; her satır `stokHareketiYaz()`… |
 | B-4-4 | B-4 | KANITLI | — | `src/lib/stok.itest.ts` | Aynı ürüne eşzamanlı iki çıkış aynı ön stoğu göremez: ikinci yazım birincinin commit'ini bekler ve onun sonucunu okur (ADR-008 §(6), F-06). |
+| B-4-7 | B-4 | KANITLI | `src/lib/stok.ts` | `src/lib/stok.itest.ts`<br>`src/lib/tek-cagri.test.ts` | `hesaplaStoklar` her ürün ve konum için `hesaplaStok` ile aynıdır; `stokSerisi`'nin her noktası o günün `hesaplaStok(urun, —, gün)` değer… |
 | B-5-1 | B-5 | KANITLI | — | `src/lib/fiyat.itest.ts`<br>`src/lib/kisitlar.itest.ts` | Fiyat satırı belge gününde geçerliyse seçilir: aralık yarı açıktır (`gecerli_baslangic` dahil, `gecerli_bitis` hariç), boş uç süresizdir.… |
 | B-6-1 | B-6 | KANITLI | — | `src/lib/fiyat.itest.ts`<br>`src/app/(seller)/my-orders/orders.itest.ts` | Barem `min_adet` alt sınır satırlarıyla kurulur, üst sınır yoktur: satır miktarını karşılayan **en yüksek** `min_adet`'li satır seçilir;… |
 | B-7-1 | B-7 | KANITLI | `src/lib/session.ts` | `src/lib/stok-duzeltme.itest.ts`<br>`e2e/admin/stok-duzeltme.spec.ts`<br>`src/lib/yetki.test.ts`<br>`e2e/operasyon/operasyon.spec.ts` | Stok düzeltme (`DZL`) yalnız `YONETICI`'dedir (action `requireAdmin`, servis başka rolde teknik hata). Belge çok satırlıdır: ürün · konum… |
@@ -91,6 +92,7 @@
 | C-7-1 | C-7 | KAPSAM DIŞI | — | — | — |
 | D-1-1 | D-1 | KANITLI | `src/lib/olaylar.ts` | `src/lib/olaylar.itest.ts` | Bildirim olay noktaları akışlarda çağrılır, işleyicileri boştur (`notifications.enabled = false`): `onBlokAcildi` (blok yazılınca), `onBl… |
 | D-2-1 | D-2 | KANITLI | — | `src/lib/yetki.test.ts`<br>`e2e/operasyon/operasyon.spec.ts` | Roller üç değerli kapalı katalogdur. `OPERASYON` giriş yapar; ana sayfası Dashboard'dur. Sipariş hazırlama, teslim ve iptal, kargolama, t… |
+| D-2-2 | D-2 | KANITLI | — | `e2e/operasyon/operasyon.spec.ts` | `OPERASYON` ürün listesini ve yan panelini görür; Yeni Ürün, Düzenle ve Sil görmez. |
 | D-3-1 | D-3 | KANITLI | `src/lib/kargo.ts` | `src/lib/kargo.test.ts`<br>`src/lib/sevkiyat.itest.ts` | Sevkiyat kargo firmasını (tanım tablosu), takip numarasını (elle, isteğe bağlı) ve gönderi gününü (otomatik, sevk günü) taşır. Takip link… |
 | D-4-1 | D-4 | KANITLI | — | `src/lib/reports-service.itest.ts` | Hakediş yalnız satırın matrahı ve satıra donmuş oranla hesaplanır; satıcının dönem cirosu, hedefi ya da kotası oranı değiştirmez — aynı s… |
 | D-5-1 | D-5 | KANITLI | `src/lib/disa-aktarim.ts`<br>`src/lib/satir-tutarlari.ts` | `src/lib/disa-aktarim.itest.ts`<br>`src/lib/disa-aktarim-yazici.test.ts`<br>`e2e/admin/disa-aktarim.spec.ts`<br>`src/lib/yetki.test.ts`<br>`e2e/operasyon/operasyon.spec.ts` | Dışa aktarım yalnız `calistirDisaAktarim()` ile çalışır ve `{ kolonlar, satirlar }` döner; format katmanı (XLSX, CSV) iş kavramı tanımaz.… |
@@ -129,6 +131,7 @@
 | X-10-1 | X-10 | KANITLI | — | `src/lib/fiyat.itest.ts`<br>`src/app/(seller)/my-orders/orders.itest.ts` | Fiyat listesi carinin atanmış listesidir, atanmamışsa `pricing.varsayilanFiyatListesiKodu` listesidir. Atanmış listede ürünün uygun satır… |
 | X-10-2 | X-10 | KANITLI | — | `src/app/(admin)/price-lists/price-lists.itest.ts`<br>`e2e/admin/fiyat-listesi.spec.ts`<br>`src/lib/yetki.test.ts` | Fiyat listesi ekranı yalnız `YONETICI`'dedir: liste başlığı (kod — 2–32 karakter, büyük harfe çevrilir, `UNIQUE` — ve ad) ve satırlar (ür… |
 | X-10-3 | X-10 | KANITLI | — | `src/lib/cari.itest.ts`<br>`e2e/admin/cari.spec.ts` | Cariye fiyat listesi ataması cari formundadır ve yalnız `YONETICI` yapar; boş bırakılırsa varsayılan liste geçerlidir; tanınmayan liste `… |
+| X-10-4 | X-10 | KANITLI | — | `src/lib/fiyat.itest.ts` | Ürün listesi ve panelindeki liste fiyatı varsayılan listedendir; `cozumleListeFiyatlari` her ürün için `cozumleBirimFiyat(urun, null, …)`… |
 | X-11-1 | X-11 | KANITLI | — | `src/app/(admin)/collections/collections.itest.ts`<br>`src/lib/sevkiyat.itest.ts`<br>`src/lib/tek-cagri.test.ts` | Borç ya da alacak doğuran her olay tek cari hareket satırı yazar: tutar pozitif, yön ayrı, kaynak belgenin numarasıyla ve belgeyle aynı t… |
 | X-11-2 | X-11 | KANITLI | — | `src/app/(admin)/doctors/cari-hareket.itest.ts`<br>`e2e/admin/vade-farki.spec.ts` | Elle ters kayıt yalnız `ACILIS` ve `VADE_FARKI` hareketinde, yalnız `YONETICI` ve gerekçeyle yapılır: `TERS_KAYIT` ters yönde, aynı tutar… |
 | X-12-1 | X-12 | KANITLI | — | `src/lib/ice-aktarim/ice-aktarim.itest.ts`<br>`e2e/admin/ice-aktarim.spec.ts` | Parti geri alma yalnız `YONETICI`, gerekçe zorunlu, tek transaction; koşul partinin **tamamına** bakar (C-3 §(6)): bir kayıt bile belgeye… |
@@ -154,3 +157,4 @@
 | X-18-6 | X-18 | KANITLI | — | `src/lib/denetim/sorgu.itest.ts`<br>`src/lib/denetim/suzgec.test.ts`<br>`e2e/admin/denetim.spec.ts` | `/audit-logs` yalnız `YONETICI` açar. Liste zaman, kullanıcı (ad + rol), işlem türü rozeti (ikon + metin), modül ve varlık, kısa özet gös… |
 | X-18-7 | X-18 | KANITLI | — | `e2e/admin/denetim.spec.ts`<br>`e2e/mobil/denetim.spec.ts`<br>`src/lib/denetim/ozet.test.ts` | Satırdaki Detay bağlantısı detay panelini açar (`?kayit=<id>`; geniş ekranda sağdan, telefonda tam ekran; Esc ve Kapat listeye döner, yen… |
 | Ü-3-1 | Ü-3 | KANITLI | — | `src/lib/taban.test.ts`<br>`e2e/admin/reports.spec.ts`<br>`e2e/admin/siparis-toplam.spec.ts`<br>`e2e/mobil/toplam-hizasi.spec.ts` | Ekranda gösterilen her para tutarının yanında vergi tabanı yazılıdır (*KDV hariç* / *KDV dahil*); tabloda etiket kolon başlığındadır ve b… |
+| Ü-3-2 | Ü-3 | TESTSIZ | `src/lib/taban.ts`<br>`src/lib/satir-tutarlari.ts` | — | Ürün listesindeki KDV dahil liste fiyatı `BRUT` taban etiketini taşır ve 1 adetlik satırın `hesaplaSatirTutarlari` toplamıdır (yeni yuvar… |
