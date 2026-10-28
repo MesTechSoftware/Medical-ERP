@@ -1,15 +1,14 @@
-import Link from "next/link";
-import { prisma } from "@/lib/db";
 import { requireStaff } from "@/lib/session";
 import { PageHeader, Card, LinkButton } from "@/components/ui";
-import { SAHIPSIZ_DOKTOR } from "@/lib/sahiplik";
 import Pagination from "@/components/Pagination";
 import { getPagination, pageCount } from "@/lib/pagination";
-import { doktorListesi } from "@/lib/doktor-listesi/sorgu";
-import { HIZLI_SEKMELER, ayniSuzgec, doktorAdresi, suzgecCoz, type Parametreler } from "@/lib/doktor-listesi/suzgec";
+import { doktorKpileri, doktorListesi, doktorSuzgecSecenekleri } from "@/lib/doktor-listesi/sorgu";
+import { doktorAdresi, suzgecCoz, type Parametreler } from "@/lib/doktor-listesi/suzgec";
 import { simdi } from "@/lib/zaman";
 import TransferForm from "./TransferForm";
 import { DoktorTablosu } from "./DoktorTablosu";
+import { KpiKartlari } from "./KpiKartlari";
+import { SuzgecCubugu } from "./SuzgecCubugu";
 
 const tek = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 
@@ -24,14 +23,10 @@ export default async function AdminDoctorsPage({ searchParams }: { searchParams:
   const an = simdi();
 
   // FR-05: admin TÜM doktorları görür.
-  const [liste, unowned, sellers] = await Promise.all([
+  const [liste, sayilar, secenekler] = await Promise.all([
     doktorListesi(suzgec, { skip, take }, an),
-    prisma.doctor.count({ where: SAHIPSIZ_DOKTOR }),
-    prisma.user.findMany({
-      where: { role: "SATICI", isActive: true },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true },
-    }),
+    doktorKpileri(),
+    doktorSuzgecSecenekleri(),
   ]);
 
   // Sayfalama süzgeci ve sayfa boyunu korur; paneli taşımaz.
@@ -48,35 +43,22 @@ export default async function AdminDoctorsPage({ searchParams }: { searchParams:
         action={devirYetkisi ? <LinkButton href="/doctors/new" ikon="yeni">Yeni Cari</LinkButton> : undefined}
       />
 
-      {unowned > 0 && (
+      <KpiKartlari sayilar={sayilar} />
+
+      {sayilar.sahipsiz > 0 && (
         <div className="mb-4 rounded-lg border border-critical/30 bg-critical-bg px-4 py-3 text-sm text-critical">
-          <strong>{unowned}</strong> doktor sahipsiz havuzda. Bir satıcıya
+          <strong>{sayilar.sahipsiz}</strong> doktor sahipsiz havuzda. Bir satıcıya
           atanana kadar bu doktorlara sipariş girilemez.
         </div>
       )}
 
-      <div className="mb-4 flex flex-wrap gap-2">
-        {HIZLI_SEKMELER.map((f) => (
-          <Link
-            key={f.etiket}
-            href={doktorAdresi(f.suzgec)}
-            className={
-              "inline-flex h-(--toolbar-h) items-center rounded-full px-3 text-sm font-medium transition " +
-              (ayniSuzgec(suzgec, f.suzgec)
-                ? "bg-slate-900 text-white"
-                : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-100")
-            }
-          >
-            {f.etiket}
-          </Link>
-        ))}
-      </div>
+      <SuzgecCubugu suzgec={suzgec} secenekler={secenekler} />
 
       {/* Toplu devir (X-17 §(4)): satırlardaki kutular bu forma `form` niteliğiyle bağlıdır. */}
       {devirYetkisi && (
         <div className="mb-4">
           <Card>
-            <TransferForm formId="toplu-devir" sellers={sellers} />
+            <TransferForm formId="toplu-devir" sellers={secenekler.saticilar} />
           </Card>
         </div>
       )}
