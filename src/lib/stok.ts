@@ -1,6 +1,6 @@
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
-import { gunAraligi } from "@/lib/zaman";
+import { bugun, gunAraligi, gunEkle, yerelGunMetni } from "@/lib/zaman";
 
 type Db = Prisma.TransactionClient | typeof prisma;
 
@@ -46,6 +46,37 @@ export async function hesaplaStoklar(
     stoklar.set(g.productId, stoklar.get(g.productId)! + (g.type === "GIRIS" ? miktar : -miktar));
   }
   return stoklar;
+}
+
+/**
+ * Son `gunSayisi` İstanbul gününün gün sonu stoğu, eskiden yeniye; son eleman bugündür (B-4-7).
+ * Her nokta `hesaplaStok(urun, undefined, gün)` ile aynıdır: başlangıç o yoldan okunur, aralıktaki
+ * hareketler gün gün eklenir (E-1 gün sınırı).
+ */
+export async function stokSerisi(
+  urunId: string,
+  gunSayisi: number,
+  db: Db = prisma
+): Promise<{ gun: string; stok: number }[]> {
+  const ilk = gunEkle(bugun(), -(gunSayisi - 1));
+  const [baslangic, hareketler] = await Promise.all([
+    hesaplaStok(urunId, undefined, gunEkle(ilk, -1), db),
+    db.stockMovement.findMany({
+      where: { productId: urunId, createdAt: { gte: gunAraligi(ilk).baslangic } },
+      select: { type: true, quantity: true, createdAt: true },
+    }),
+  ]);
+  const gunluk = new Map<string, number>();
+  for (const h of hareketler) {
+    const gun = yerelGunMetni(h.createdAt);
+    gunluk.set(gun, (gunluk.get(gun) ?? 0) + (h.type === "GIRIS" ? h.quantity : -h.quantity));
+  }
+  let stok = baslangic;
+  return Array.from({ length: gunSayisi }, (_, i) => {
+    const gun = yerelGunMetni(gunEkle(ilk, i));
+    stok += gunluk.get(gun) ?? 0;
+    return { gun, stok };
+  });
 }
 
 /**
