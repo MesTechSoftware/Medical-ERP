@@ -1,6 +1,5 @@
 import type { EntityStatus } from "@/generated/prisma/enums";
 import type { DoktorRisk } from "@/lib/doctor-cari";
-import { formatla } from "@/lib/money";
 import { StatusBadge, StatusChip } from "@/components/ui";
 
 /**
@@ -15,14 +14,14 @@ export function DurumRozetleri({
 }: {
   status: EntityStatus;
   eksikFatura: boolean;
-  risk: Pick<DoktorRisk, "risk" | "krediLimiti" | "limitAsildi">;
+  risk: Pick<DoktorRisk, "limitAsildi">;
 }) {
   return (
     <span className="inline-flex flex-wrap gap-1">
       <StatusBadge status={status} />
       {eksikFatura && <StatusChip ton="uyari">Eksik fatura</StatusChip>}
       {risk.limitAsildi && (
-        <span title={`Risk ${formatla(risk.risk)} / Limit ${formatla(risk.krediLimiti)}`} className="inline-flex">
+        <span title="Risk kredi limitini aşıyor; tutarlar yan panelde" className="inline-flex">
           <StatusChip ton="hata">Limit aşıldı</StatusChip>
         </span>
       )}

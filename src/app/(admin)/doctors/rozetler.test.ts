@@ -9,7 +9,7 @@ import { BakiyeHucresi } from "./bakiye";
 
 // Cari listesi ve yan panelin durum rozetleri — KABUL_KRITERLERI A-12-5, A-13-3; spec Ü-18 §3.3.
 
-const LIMITSIZ = { risk: new Decimal("0"), krediLimiti: null, limitAsildi: false };
+const LIMITSIZ = { limitAsildi: false };
 const ciz = (p: Parameters<typeof DurumRozetleri>[0]) => renderToStaticMarkup(createElement(DurumRozetleri, p));
 const rozetler = (h: string) => [...h.matchAll(/<span[^>]*>([^<]+)<\/span>/g)].map((m) => m[1]);
 
@@ -27,19 +27,20 @@ describe("DurumRozetleri", () => {
     expect(h).toMatch(/bg-critical-bg[^>]*>Eksik fatura/);
   });
 
-  it("limit aşımı kırmızı, ipucunda risk ve limit (A-12-5)", () => {
-    const h = ciz({ status: "AKTIF", eksikFatura: false, risk: { risk: new Decimal("152400"), krediLimiti: new Decimal("150000"), limitAsildi: true } });
+  it("limit aşımı kırmızı; ipucunda tutar yok — tutar yalnız <Tutar> ile (A-12-5, Ü-3-1)", () => {
+    const h = ciz({ status: "AKTIF", eksikFatura: false, risk: { limitAsildi: true } });
     expect(h).toMatch(/bg-negative-bg[^>]*>Limit aşıldı/);
-    expect(h).toContain('title="Risk ₺152.400,00 / Limit ₺150.000,00"');
+    expect(h).toContain('title="Risk kredi limitini aşıyor; tutarlar yan panelde"');
+    expect(h).not.toContain("₺");
   });
 
   it("limite eşit risk rozet taşımaz", () => {
-    const h = ciz({ status: "AKTIF", eksikFatura: false, risk: { risk: new Decimal("100"), krediLimiti: new Decimal("100"), limitAsildi: false } });
+    const h = ciz({ status: "AKTIF", eksikFatura: false, risk: { limitAsildi: false } });
     expect(rozetler(h)).toEqual(["Aktif"]);
   });
 
   it("üçü birden sırayla", () => {
-    const h = ciz({ status: "PASIF", eksikFatura: true, risk: { risk: new Decimal("2"), krediLimiti: new Decimal("1"), limitAsildi: true } });
+    const h = ciz({ status: "PASIF", eksikFatura: true, risk: { limitAsildi: true } });
     expect(rozetler(h)).toEqual(["Pasif", "Eksik fatura", "Limit aşıldı"]);
   });
 });

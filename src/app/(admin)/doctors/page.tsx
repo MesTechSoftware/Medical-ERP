@@ -1,51 +1,31 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireStaff } from "@/lib/session";
-import { formatPhone } from "@/lib/phone";
-import { PageHeader, Card, StatusBadge, EmptyRow, LinkButton } from "@/components/ui";
-import { EKSIK_FATURA_BILGISI } from "@/lib/cari";
+import { PageHeader, Card, LinkButton } from "@/components/ui";
 import { SAHIPSIZ_DOKTOR } from "@/lib/sahiplik";
-import type { Prisma } from "@/generated/prisma/client";
 import Pagination from "@/components/Pagination";
 import { getPagination, pageCount } from "@/lib/pagination";
+import { doktorListesi } from "@/lib/doktor-listesi/sorgu";
+import { HIZLI_SEKMELER, ayniSuzgec, doktorAdresi, suzgecCoz, type Parametreler } from "@/lib/doktor-listesi/suzgec";
+import { simdi } from "@/lib/zaman";
 import TransferForm from "./TransferForm";
+import { DoktorTablosu } from "./DoktorTablosu";
 
-export default async function AdminDoctorsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ page?: string; per?: string; sahip?: string; sinif?: string; fatura?: string }>;
-}) {
+const tek = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
+
+export default async function AdminDoctorsPage({ searchParams }: { searchParams: Promise<Parametreler> }) {
   const session = await requireStaff();
   // Cariyi OPERASYON da görür (X-13 §(1)); devir yalnız YONETICI (X-13 §(5)) — yetki action'dadır.
   const devirYetkisi = session.user.role === "YONETICI";
   const params = await searchParams;
-  const { page, perPage, skip, take } = getPagination(params);
-
-  const sahipsizSuzgec = params.sahip === "yok";
-  // X-8 §(5): liste hesap sınıfıyla süzülür; A-13 §(5): eksik fatura bilgisi süzgeci (bilgi kademesi).
-  const sinif = params.sinif === "BAYI" || params.sinif === "DOKTOR" ? params.sinif : null;
-  const eksikFatura = params.fatura === "eksik";
-  const where: Prisma.DoctorWhereInput = {
-    AND: [
-      sahipsizSuzgec ? SAHIPSIZ_DOKTOR : {},
-      sinif ? { accountClass: sinif } : {},
-      eksikFatura ? EKSIK_FATURA_BILGISI : {},
-    ],
-  };
+  const { page, perPage, skip, take } = getPagination({ page: tek(params.page), per: tek(params.per) });
+  // X-8 §(5) hesap sınıfı, A-13 §(5) eksik fatura bilgisi ve diğer süzgeçler birleşir (X-8-4).
+  const { suzgec } = suzgecCoz(params);
+  const an = simdi();
 
   // FR-05: admin TÜM doktorları görür.
-  const [doctors, total, unowned, sellers] = await Promise.all([
-    prisma.doctor.findMany({
-      where,
-      orderBy: { fullName: "asc" },
-      skip,
-      take,
-      include: {
-        ownerSeller: { select: { id: true, name: true } },
-        _count: { select: { orders: true } },
-      },
-    }),
-    prisma.doctor.count({ where }),
+  const [liste, unowned, sellers] = await Promise.all([
+    doktorListesi(suzgec, { skip, take }, an),
     prisma.doctor.count({ where: SAHIPSIZ_DOKTOR }),
     prisma.user.findMany({
       where: { role: "SATICI", isActive: true },
@@ -53,6 +33,12 @@ export default async function AdminDoctorsPage({
       select: { id: true, name: true },
     }),
   ]);
+
+  // Sayfalama süzgeci ve sayfa boyunu korur; paneli taşımaz.
+  const sayfaParametreleri = {
+    ...Object.fromEntries(new URL(doktorAdresi(suzgec), "http://x").searchParams),
+    per: tek(params.per),
+  };
 
   return (
     <div>
@@ -70,24 +56,18 @@ export default async function AdminDoctorsPage({
       )}
 
       <div className="mb-4 flex flex-wrap gap-2">
-        {[
-          { href: "/doctors", label: "Tümü", active: !sahipsizSuzgec && !sinif && !eksikFatura },
-          { href: "/doctors?sinif=DOKTOR", label: "Doktorlar", active: sinif === "DOKTOR" },
-          { href: "/doctors?sinif=BAYI", label: "Bayiler", active: sinif === "BAYI" },
-          { href: "/doctors?sahip=yok", label: "Sahipsiz", active: sahipsizSuzgec },
-          { href: "/doctors?fatura=eksik", label: "Eksik fatura bilgisi", active: eksikFatura },
-        ].map((f) => (
+        {HIZLI_SEKMELER.map((f) => (
           <Link
-            key={f.href}
-            href={f.href}
+            key={f.etiket}
+            href={doktorAdresi(f.suzgec)}
             className={
               "inline-flex h-(--toolbar-h) items-center rounded-full px-3 text-sm font-medium transition " +
-              (f.active
+              (ayniSuzgec(suzgec, f.suzgec)
                 ? "bg-slate-900 text-white"
                 : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-100")
             }
           >
-            {f.label}
+            {f.etiket}
           </Link>
         ))}
       </div>
@@ -101,93 +81,14 @@ export default async function AdminDoctorsPage({
         </div>
       )}
 
-      <Card>
-        <div className="tablo-kutusu">
-          <table className="veri-tablosu">
-            <thead>
-              <tr>
-                <th className="w-8"></th>
-                <th>Ad Soyad</th>
-                <th className="oncelik-dusuk">Klinik / Bölge</th>
-                <th className="oncelik-dusuk">Telefon</th>
-                <th>Sorumlu Satıcı</th>
-                <th className="sayi oncelik-dusuk">Sipariş</th>
-                <th>Durum</th>
-              </tr>
-            </thead>
-            <tbody>
-              {doctors.length === 0 && (
-                <EmptyRow colSpan={7} text="Henüz doktor kaydı yok." />
-              )}
-              {doctors.map((d) => (
-                <tr key={d.id}>
-                    <td>
-                      {devirYetkisi && d.accountClass === "DOKTOR" && (
-                        <label className="dokunma-hedefi">
-                          <input
-                            type="checkbox"
-                            id={`sec-${d.id}`}
-                            name="doctorId"
-                            value={d.id}
-                            form="toplu-devir"
-                            aria-label={`${d.fullName} seç`}
-                          />
-                        </label>
-                      )}
-                    </td>
-                    <td className="font-medium text-slate-900">
-                      <Link
-                        href={`/doctors/${d.id}`}
-                        className="hover:underline"
-                      >
-                        {d.title ? `${d.title} ` : ""}
-                        {d.fullName}
-                      </Link>
-                      {d.accountClass === "BAYI" && (
-                        <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">Bayi</span>
-                      )}
-                    </td>
-                    <td className="text-slate-500 oncelik-dusuk">
-                      {d.clinic}
-                      <span className="ml-1 text-xs text-slate-400">
-                        {d.region}
-                      </span>
-                    </td>
-                    <td className="tabular-nums text-slate-500 oncelik-dusuk">
-                      {formatPhone(d.phoneNormalized)}
-                    </td>
-                    <td>
-                      {d.accountClass === "BAYI" ? (
-                        <span className="text-slate-400">—</span>
-                      ) : d.ownerSeller ? (
-                        <span className="text-slate-900">
-                          {d.ownerSeller.name}
-                        </span>
-                      ) : (
-                        <span className="font-medium text-critical">
-                          Sahipsiz
-                        </span>
-                      )}
-                    </td>
-                    <td className="sayi oncelik-dusuk">
-                      {d._count.orders}
-                    </td>
-                    <td>
-                      <StatusBadge status={d.status} />
-                    </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+      <DoktorTablosu satirlar={liste.satirlar} gizli={new Set()} devirYetkisi={devirYetkisi} suzgec={suzgec} an={an} />
 
       <Pagination
         page={page}
-        totalPages={pageCount(total, perPage)}
-        total={total}
+        totalPages={pageCount(liste.toplam, perPage)}
+        total={liste.toplam}
         basePath="/doctors"
-        params={{ sahip: params.sahip, sinif: params.sinif, fatura: params.fatura }}
+        params={sayfaParametreleri}
       />
     </div>
   );
