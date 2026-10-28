@@ -4,14 +4,15 @@
  */
 
 import type { SutunTanimi } from "@/lib/liste/sutunlar";
+import { BRUT, MATRAH, tabanli } from "@/lib/taban";
 
 export type UrunSutunu = "kod" | "fiyat" | "fiyatKdvDahil" | "kdv" | "stok" | "durum";
 
 /** Tablo sırası. */
 export const SUTUNLAR: readonly SutunTanimi<UrunSutunu>[] = [
   { anahtar: "kod", baslik: "Kod" },
-  { anahtar: "fiyat", baslik: "Liste Fiyatı (KDV hariç)" },
-  { anahtar: "fiyatKdvDahil", baslik: "Liste Fiyatı (KDV dahil)", varsayilanGizli: true },
+  { anahtar: "fiyat", baslik: tabanli("Liste Fiyatı", MATRAH) },
+  { anahtar: "fiyatKdvDahil", baslik: tabanli("Liste Fiyatı", BRUT), varsayilanGizli: true },
   { anahtar: "kdv", baslik: "KDV" },
   { anahtar: "stok", baslik: "Stok" },
   { anahtar: "durum", baslik: "Durum" },
