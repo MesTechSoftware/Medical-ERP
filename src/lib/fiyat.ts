@@ -50,16 +50,59 @@ export async function cozumleBirimFiyat(
     fiyatListesiId = doktor?.priceListId ?? null;
   }
   if (!fiyatListesiId) {
-    const kod = policy.pricing.varsayilanFiyatListesiKodu;
-    const varsayilan = await db.priceList.findUnique({ where: { code: kod }, select: { id: true } });
-    if (!varsayilan) return { durum: "HATA", neden: "LISTE_YOK" };
-    fiyatListesiId = varsayilan.id;
+    fiyatListesiId = await varsayilanListeId(db);
+    if (!fiyatListesiId) return { durum: "HATA", neden: "LISTE_YOK" };
   }
 
-  const satir = await db.priceListItem.findFirst({
+  const listeFiyat = (await listedenFiyatlar(fiyatListesiId, [urunId], kosul, db)).get(urunId);
+  if (!listeFiyat) return { durum: "HATA", neden: "FIYAT_COZUMLENEMEDI" };
+
+  return { durum: "TAMAM", listeFiyat, fiyatListesiId };
+}
+
+/**
+ * Birden çok ürünün varsayılan liste fiyatı (ürün ekranı; X-10 §(5)). Satır seçimi
+ * `cozumleBirimFiyat()` ile aynı yoldur (X-10-4). Her istenen kimlik haritadadır.
+ */
+export async function cozumleListeFiyatlari(
+  urunIdler: readonly string[],
+  kosul: FiyatKosulu,
+  db: Db = prisma
+): Promise<Map<string, FiyatSonucu>> {
+  const sonuc = new Map<string, FiyatSonucu>();
+  if (urunIdler.length === 0) return sonuc;
+  const fiyatListesiId = await varsayilanListeId(db);
+  const fiyatlar = fiyatListesiId ? await listedenFiyatlar(fiyatListesiId, urunIdler, kosul, db) : new Map();
+  for (const id of urunIdler) {
+    const listeFiyat = fiyatlar.get(id);
+    sonuc.set(
+      id,
+      !fiyatListesiId
+        ? { durum: "HATA", neden: "LISTE_YOK" }
+        : listeFiyat
+          ? { durum: "TAMAM", listeFiyat, fiyatListesiId }
+          : { durum: "HATA", neden: "FIYAT_COZUMLENEMEDI" }
+    );
+  }
+  return sonuc;
+}
+
+async function varsayilanListeId(db: Db): Promise<string | null> {
+  const kod = policy.pricing.varsayilanFiyatListesiKodu;
+  return (await db.priceList.findUnique({ where: { code: kod }, select: { id: true } }))?.id ?? null;
+}
+
+/** Listede, `kosul`da geçerli satırlardan ürün başına en yüksek `min_adet`'linin fiyatı (B-5, B-6). */
+async function listedenFiyatlar(
+  fiyatListesiId: string,
+  urunIdler: readonly string[],
+  kosul: FiyatKosulu,
+  db: Db
+): Promise<Map<string, Decimal>> {
+  const satirlar = await db.priceListItem.findMany({
     where: {
       priceListId: fiyatListesiId,
-      productId: urunId,
+      productId: { in: [...urunIdler] },
       minQuantity: { lte: kosul.miktar },
       AND: [
         { OR: [{ validFrom: null }, { validFrom: { lte: kosul.gun } }] },
@@ -67,9 +110,9 @@ export async function cozumleBirimFiyat(
       ],
     },
     orderBy: { minQuantity: "desc" },
-    select: { listPrice: true },
+    select: { productId: true, listPrice: true },
   });
-  if (!satir) return { durum: "HATA", neden: "FIYAT_COZUMLENEMEDI" };
-
-  return { durum: "TAMAM", listeFiyat: new Decimal(satir.listPrice), fiyatListesiId };
+  const fiyatlar = new Map<string, Decimal>();
+  for (const s of satirlar) if (!fiyatlar.has(s.productId)) fiyatlar.set(s.productId, new Decimal(s.listPrice));
+  return fiyatlar;
 }

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { prisma } from "@/lib/db";
-import { cozumleBirimFiyat } from "@/lib/fiyat";
+import { cozumleBirimFiyat, cozumleListeFiyatlari } from "@/lib/fiyat";
 import { referansVeri, yeniDoktorVerisi } from "../../test/integration/referans";
 
 // `cozumleBirimFiyat()` tamamı — B-5-1 (tarih), B-6-1 (barem), X-10-1 (liste seçimi).
@@ -91,5 +91,58 @@ describe("liste seçimi (X-10-1)", () => {
     const doktor = await prisma.doctor.create({ data: yeniDoktorVerisi() });
     await satir("100", 1);
     expect(await fiyat(1, "2026-10-20", doktor.id)).toBe("100.00");
+  });
+});
+
+describe("cozumleListeFiyatlari — toplu ≡ tekli (X-10-4)", () => {
+  const yeniUrun = async (code: string) =>
+    (await prisma.product.create({ data: { name: code, code, taxRateId: s.kdv20.id } })).id;
+  const satirEkle = (productId: string, listPrice: string, minQuantity = 1, validFrom?: string, validTo?: string) =>
+    prisma.priceListItem.create({
+      data: {
+        priceListId: s.liste.id,
+        productId,
+        listPrice,
+        minQuantity,
+        validFrom: validFrom ? gun(validFrom) : null,
+        validTo: validTo ? gun(validTo) : null,
+      },
+    });
+  const ozet = (r: Awaited<ReturnType<typeof cozumleBirimFiyat>> | undefined) =>
+    r?.durum === "TAMAM" ? `${r.listeFiyat.toFixed(4)}@${r.fiyatListesiId}` : r?.neden;
+
+  it("her ürün için cozumleBirimFiyat(urun, null, …) ile aynı", async () => {
+    const tek = await yeniUrun("T");
+    const barem = await yeniUrun("B");
+    const yalniz10 = await yeniUrun("Y");
+    const sureli = await yeniUrun("S");
+    const satirsiz = await yeniUrun("X");
+    await satirEkle(tek, "100");
+    await satirEkle(barem, "100", 1);
+    await satirEkle(barem, "90", 10);
+    await satirEkle(yalniz10, "80", 10);
+    await satirEkle(sureli, "50", 1, undefined, "2026-10-01");
+    await satirEkle(sureli, "55.5", 1, "2026-10-01");
+    const idler = [tek, barem, yalniz10, sureli, satirsiz];
+    for (const miktar of [1, 10]) {
+      const kosul = { miktar, gun: gun("2026-10-20") };
+      const toplu = await cozumleListeFiyatlari(idler, kosul);
+      expect(toplu.size).toBe(idler.length);
+      for (const id of idler) expect(ozet(toplu.get(id))).toBe(ozet(await cozumleBirimFiyat(id, null, kosul)));
+    }
+    const birde = await cozumleListeFiyatlari(idler, { miktar: 1, gun: gun("2026-10-20") });
+    expect(ozet(birde.get(yalniz10))).toBe("FIYAT_COZUMLENEMEDI");
+    expect(ozet(birde.get(sureli))).toBe(`55.5000@${s.liste.id}`);
+  });
+
+  it("varsayılan liste yoksa her ürün LISTE_YOK", async () => {
+    await satir("100");
+    await prisma.priceList.update({ where: { id: s.liste.id }, data: { code: "BASKA" } });
+    const toplu = await cozumleListeFiyatlari([urunId], { miktar: 1, gun: gun("2026-10-20") });
+    expect(ozet(toplu.get(urunId))).toBe("LISTE_YOK");
+  });
+
+  it("boş liste boş harita", async () => {
+    expect((await cozumleListeFiyatlari([], { miktar: 1, gun: gun("2026-10-20") })).size).toBe(0);
   });
 });
