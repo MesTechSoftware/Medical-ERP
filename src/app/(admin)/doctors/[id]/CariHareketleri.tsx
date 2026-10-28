@@ -9,7 +9,7 @@ import { addVadeFarki, reverseLedgerEntry } from "../actions";
 import { ACILIR_EYLEM, KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import { Ikon } from "@/components/Ikon";
 
-const TIP: Record<string, string> = {
+export const TIP: Record<string, string> = {
   SEVKIYAT: "Sevkiyat",
   IADE: "İade",
   TAHSILAT: "Tahsilat",

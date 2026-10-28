@@ -207,6 +207,13 @@ describe("doktorPaneli", () => {
     expect(await doktorPaneli("yok")).toBeNull();
   });
 
+  it("eksik fatura işareti A-13-2 tanımıdır (A-13-3)", async () => {
+    const tam = await doktor("Dr. Tam");
+    const eksik = await doktor("Dr. Eksik", { invoiceCity: null });
+    expect((await doktorPaneli(tam.id))!.eksikFatura).toBe(false);
+    expect((await doktorPaneli(eksik.id))!.eksikFatura).toBe(true);
+  });
+
   it("sınırlar 5/5/3, en yeni önce; sipariş toplamı brüt", async () => {
     const d = await doktor("Dr. Panel");
     for (let i = 1; i <= 6; i++) await siparis(d.id, `2026-10-0${i}T09:00:00Z`);

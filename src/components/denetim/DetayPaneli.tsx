@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { DegisiklikListesi } from "@/components/denetim/DegisiklikListesi";
 import { IslemTuruRozeti } from "@/components/denetim/IslemTuruRozeti";
-import { YanPanel } from "@/components/denetim/YanPanel";
+import { YanPanel } from "@/components/YanPanel";
 import { Ikon, type IkonAdi } from "@/components/Ikon";
 import { buton } from "@/components/stil";
 import { StatusChip, type Ton } from "@/components/ui";

@@ -4,7 +4,7 @@ import { Ikon } from "@/components/Ikon";
 import { bakiyeYonu } from "@/lib/doctor-cari";
 import type { DoktorSatiri } from "@/lib/doktor-listesi/sorgu";
 import { SUTUNLAR, type SutunAnahtari } from "@/lib/doktor-listesi/sutunlar";
-import { bosDurum, type DoktorSuzgeci } from "@/lib/doktor-listesi/suzgec";
+import { bosDurum, doktorAdresi, type DoktorSuzgeci } from "@/lib/doktor-listesi/suzgec";
 import { formatDate } from "@/lib/format";
 import { formatPhone } from "@/lib/phone";
 import { bugun } from "@/lib/zaman";
@@ -33,19 +33,22 @@ function kacGunOnce(son: Date, an: Date): string {
 
 /**
  * Cari listesinin tablosu (spec Ü-18 §3.3). Eksik fatura bilgisi olan satır uyarı arka planı taşır
- * (A-13-3). Gizli sütunun başlığı ve hücresi çizilmez.
+ * (A-13-3). Gizli sütunun başlığı ve hücresi çizilmez. İsim yan paneli açar.
  */
 export function DoktorTablosu({
   satirlar,
   gizli,
   devirYetkisi,
   suzgec,
+  yer,
   an,
 }: {
   satirlar: DoktorSatiri[];
   gizli: ReadonlySet<SutunAnahtari>;
   devirYetkisi: boolean;
   suzgec: DoktorSuzgeci;
+  /** Listenin sayfası; panel bağlantısı korur. */
+  yer: { page?: number; per?: number };
   an: Date;
 }) {
   const gorunur = SUTUNLAR.filter((s) => !gizli.has(s.anahtar)).map((s) => s.anahtar);
@@ -87,8 +90,11 @@ export function DoktorTablosu({
                   )}
                 </td>
                 <td className="font-medium text-slate-900">
+                  {/* İsim yan paneli açar (spec §3.6); kapanınca odak `data-kayit` ile buraya döner. */}
                   <Link
-                    href={`/doctors/${d.id}`}
+                    href={doktorAdresi(suzgec, { ...yer, detay: d.id })}
+                    scroll={false}
+                    data-kayit={d.id}
                     className="inline-flex items-center gap-0.5 text-link underline decoration-link/40 underline-offset-4 hover:decoration-link"
                   >
                     <span>

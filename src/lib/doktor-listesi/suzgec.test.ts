@@ -8,6 +8,7 @@ import {
   doktorAdresi,
   etkinSayisi,
   etkinSuzgecler,
+  saticiyiDogrula,
   suzgecCoz,
   type DoktorSuzgeci,
 } from "@/lib/doktor-listesi/suzgec";
@@ -188,5 +189,14 @@ describe("bosDurum", () => {
     expect(bosDurum({ ...BOS_SUZGEC, fatura: "eksik" })).toBe("eksik-fatura");
     expect(bosDurum({ ...BOS_SUZGEC, fatura: "eksik", bolge: "Ege" })).toBe("suzgecli");
     expect(bosDurum({ ...BOS_SUZGEC, satici: "abc" })).toBe("suzgecli");
+  });
+});
+
+describe("saticiyiDogrula — bilinmeyen satıcı yok sayılır (spec §5)", () => {
+  it("aktif satıcı ve sahipsiz kalır; bilinmeyen düşer", () => {
+    const aktif = ["s1", "s2"];
+    expect(saticiyiDogrula({ ...BOS_SUZGEC, satici: "s1" }, aktif).satici).toBe("s1");
+    expect(saticiyiDogrula({ ...BOS_SUZGEC, satici: "yok" }, aktif).satici).toBe("yok");
+    expect(saticiyiDogrula({ ...BOS_SUZGEC, satici: "pasif", bolge: "Ege" }, aktif)).toEqual({ ...BOS_SUZGEC, bolge: "Ege" });
   });
 });
