@@ -21,6 +21,7 @@ yolsuz geçen `KARARLAR.md` gibi atıflar `docs/KARARLAR.md` demektir.
 | `docs/adr/` | Mimari "**nasıl**" kararları (ADR-001…006 ve 008…010; **007 numarası boş** — taslak yazılmadı, yeniden kullanılmaz). Dizin: `docs/adr/README.md` §4 | Mimariye dokunmadan önce |
 | `docs/TRACEABILITY.md` | İzlenebilirlik matrisi (kriter × kod × test × karar) — **üretilmiş**, elle düzenlenmez: `npm run izlenebilirlik` | Bir kriterin kodunu/testini ararken |
 | `docs/MEVCUT_SISTEM_DURUMU.md` · `docs/DENETIM_BULGULARI.md` · `docs/arsiv/TRACEABILITY_PRD_V2.md` | Denetim kayıtları — **dondurulmuş** | Tarihsel referans |
+| `docs/superpowers/` | Tasarım spec'leri (`specs/`) ve uygulama planları (`plans/`) — plan sınıfı, **karar üretmez** | Bir işin spec'ine ya da görev dökümüne bakarken |
 | `docs/arsiv/` | Yürürlükten kalkmış belgeler — `PRD_V2.md` dahil (C10, X-7); `FR-*`/`RULE-*` numaraları oradadır · `KARAR_ONERISI_2026-09-19.md` (X-16/X-17/ADR-006 önerisi; kabul kriteri taslakları 1B madde 7'de girdi olarak okunur) | Normalde **okuma** |
 
 Karar/plan ayrımı: *ne* ve *neden* → `KARARLAR.md`; *nasıl* → `docs/adr/`; *sıra ve iş dökümü* →
