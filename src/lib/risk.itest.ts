@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { prisma } from "@/lib/db";
-import { hesaplaDoktorRisk } from "@/lib/doctor-cari";
+import { hesaplaDoktorRisk, hesaplaDoktorRiskleri } from "@/lib/doctor-cari";
 import { referansVeri, yeniDoktorVerisi } from "../../test/integration/referans";
 
-// `hesaplaDoktorRisk(doktor)` — KABUL_KRITERLERI A-12-1…A-12-4.
+// `hesaplaDoktorRisk(doktor)` — KABUL_KRITERLERI A-12-1…A-12-4; toplu sürüm A-12-5.
 
 let doktorId = "";
 let yapanId = "";
@@ -13,8 +13,8 @@ let no = 0;
 
 type Satir = { miktar: number; birim: string; kdv?: string; bedelsiz?: boolean };
 
-const hareket = (type: "SEVKIYAT" | "TAHSILAT", direction: "BORC" | "ALACAK", amount: string) =>
-  prisma.ledgerEntry.create({ data: { doctorId: doktorId, type, direction, amount, documentNo: "T", createdById: yapanId } });
+const hareket = (type: "SEVKIYAT" | "TAHSILAT", direction: "BORC" | "ALACAK", amount: string, doktor = doktorId) =>
+  prisma.ledgerEntry.create({ data: { doctorId: doktor, type, direction, amount, documentNo: "T", createdById: yapanId } });
 
 function siparis(satirlar: Satir[], stage: "TEKLIF" | "ONAYLI" = "ONAYLI", status: "BEKLIYOR" | "IPTAL" = "BEKLIYOR", doktor = doktorId) {
   no += 1;
@@ -137,5 +137,74 @@ describe("hesaplaDoktorRisk — kredi limiti (A-12-4)", () => {
     await hareket("SEVKIYAT", "BORC", "75");
     const r = await prisma.$transaction((tx) => hesaplaDoktorRisk(doktorId, tx));
     expect(r.risk.toFixed(2)).toBe("75.00");
+  });
+});
+
+describe("hesaplaDoktorRiskleri — toplu ≡ tekli (A-12-5)", () => {
+  const yeni = async (ad: string, creditLimit: string | null = null) =>
+    (await prisma.doctor.create({ data: { ...yeniDoktorVerisi(ad), creditLimit } })).id;
+
+  it("her doktor için tekli sonuçla birebir aynı", async () => {
+    const borclu = doktorId;
+    await hareket("SEVKIYAT", "BORC", "500", borclu);
+    await siparis([{ miktar: 2, birim: "100" }], "ONAYLI", "BEKLIYOR", borclu);
+
+    const avansli = await yeni("Dr. Avans");
+    await hareket("SEVKIYAT", "BORC", "1000", avansli);
+    await hareket("TAHSILAT", "ALACAK", "1250", avansli);
+
+    const kismi = await yeni("Dr. Kısmi");
+    const o = await siparis([{ miktar: 5, birim: "100" }, { miktar: 3, birim: "100", bedelsiz: true }], "ONAYLI", "BEKLIYOR", kismi);
+    await sevkEt(o.id, [{ orderItemId: o.items[0].id, quantity: 2 }]);
+
+    const esit = await yeni("Dr. Eşit", "240.00");
+    await siparis([{ miktar: 2, birim: "100" }], "ONAYLI", "BEKLIYOR", esit);
+
+    const asan = await yeni("Dr. Aşan", "100.00");
+    await hareket("SEVKIYAT", "BORC", "75", asan);
+    await siparis([{ miktar: 1, birim: "100" }], "ONAYLI", "BEKLIYOR", asan);
+
+    const idler = [borclu, avansli, kismi, esit, asan];
+    const toplu = await hesaplaDoktorRiskleri(idler);
+    expect(toplu.size).toBe(5);
+    for (const id of idler) {
+      const tekli = await hesaplaDoktorRisk(id);
+      const r = toplu.get(id)!;
+      expect(r.bakiye.toFixed(2)).toBe(tekli.bakiye.toFixed(2));
+      expect(r.acikSiparis.toFixed(2)).toBe(tekli.acikSiparis.toFixed(2));
+      expect(r.risk.toFixed(2)).toBe(tekli.risk.toFixed(2));
+      expect(r.krediLimiti?.toFixed(2)).toBe(tekli.krediLimiti?.toFixed(2));
+      expect(r.limitAsildi).toBe(tekli.limitAsildi);
+    }
+    expect(toplu.get(avansli)!.risk.toFixed(2)).toBe("-250.00");
+    expect(toplu.get(kismi)!.acikSiparis.toFixed(2)).toBe("360.00");
+    expect(toplu.get(esit)!.limitAsildi).toBe(false);
+    expect(toplu.get(asan)!.limitAsildi).toBe(true);
+  });
+
+  it("hareketsiz ve siparişsiz doktor döner: bakiye 0, açık 0, limitsiz", async () => {
+    const r = (await hesaplaDoktorRiskleri([doktorId])).get(doktorId)!;
+    expect(r.bakiye.toFixed(2)).toBe("0.00");
+    expect(r.acikSiparis.toFixed(2)).toBe("0.00");
+    expect(r.risk.toFixed(2)).toBe("0.00");
+    expect(r.krediLimiti).toBeNull();
+    expect(r.limitAsildi).toBe(false);
+  });
+
+  it("boş liste boş harita; bilinmeyen kimlik haritada yok", async () => {
+    expect((await hesaplaDoktorRiskleri([])).size).toBe(0);
+    const r = await hesaplaDoktorRiskleri(["yok", doktorId]);
+    expect(r.has("yok")).toBe(false);
+    expect(r.has(doktorId)).toBe(true);
+  });
+
+  it("tekli bilinmeyen kimlikte reddeder", async () => {
+    await expect(hesaplaDoktorRisk("yok")).rejects.toThrow();
+  });
+
+  it("transaction istemcisiyle de okur", async () => {
+    await hareket("SEVKIYAT", "BORC", "75");
+    const r = await prisma.$transaction((tx) => hesaplaDoktorRiskleri([doktorId], tx));
+    expect(r.get(doktorId)!.risk.toFixed(2)).toBe("75.00");
   });
 });

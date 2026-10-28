@@ -35,6 +35,11 @@ type Satir = { borc: Prisma.Decimal; alacak: Prisma.Decimal; bakiye: Prisma.Deci
 /** İşaretli bakiye ifadesi; bakiye de risk de bunu okur. */
 const BAKIYE = Prisma.sql`COALESCE(SUM(CASE WHEN "direction" = 'BORC' THEN "amount" ELSE -"amount" END), 0)`;
 
+/** İşaretli bakiyenin yönü (K-2): pozitif borç, negatif avans. */
+export function bakiyeYonu(bakiye: Decimal): BakiyeYonu {
+  return bakiye.gt(0) ? "BORC" : bakiye.lt(0) ? "ALACAK" : "KAPALI";
+}
+
 export async function hesaplaDoktorBakiye(doktorId: string, tarih?: Date, db: Db = prisma): Promise<DoktorBakiye> {
   const tarihFiltresi = tarih ? Prisma.sql`AND "createdAt" < ${gunAraligi(tarih).bitis}` : Prisma.empty;
   const [s] = await db.$queryRaw<Satir[]>`
@@ -48,7 +53,7 @@ export async function hesaplaDoktorBakiye(doktorId: string, tarih?: Date, db: Db
     toplamBorc: new Decimal(s.borc),
     toplamAlacak: new Decimal(s.alacak),
     bakiye,
-    yon: bakiye.gt(0) ? "BORC" : bakiye.lt(0) ? "ALACAK" : "KAPALI",
+    yon: bakiyeYonu(bakiye),
   };
 }
 
@@ -106,29 +111,53 @@ export type DoktorRisk = {
 };
 
 export async function hesaplaDoktorRisk(doktorId: string, db: Db = prisma): Promise<DoktorRisk> {
-  const [doktor, satirlar] = await Promise.all([
-    db.doctor.findUniqueOrThrow({ where: { id: doktorId }, select: { creditLimit: true } }),
+  const r = (await hesaplaDoktorRiskleri([doktorId], db)).get(doktorId);
+  if (!r) throw new Error(`Doktor bulunamadı: ${doktorId}`);
+  return r;
+}
+
+/**
+ * Doktorların riski tek seferde (cari listesi — A-12-5). Tekli `hesaplaDoktorRisk` bunu çağırır:
+ * toplu ve tekli aynı yoldur. Açık sipariş satır bazında `siparisToplami()` ile yuvarlanır; bakiye
+ * ve risk toplaması veritabanındadır (X-5 §(4)). Bulunamayan kimlik haritada yoktur.
+ */
+export async function hesaplaDoktorRiskleri(idler: readonly string[], db: Db = prisma): Promise<Map<string, DoktorRisk>> {
+  const sonuc = new Map<string, DoktorRisk>();
+  if (idler.length === 0) return sonuc;
+  const [doktorlar, satirlar] = await Promise.all([
+    db.doctor.findMany({ where: { id: { in: [...idler] } }, select: { id: true, creditLimit: true } }),
     db.orderItem.findMany({
-      where: { order: { ...sayilanBelgeler.siparis, doctorId: doktorId } },
-      select: { ...SIPARIS_SATIRI, shipmentItems: { select: { quantity: true } } },
+      where: { order: { ...sayilanBelgeler.siparis, doctorId: { in: [...idler] } } },
+      select: { ...SIPARIS_SATIRI, shipmentItems: { select: { quantity: true } }, order: { select: { doctorId: true } } },
     }),
   ]);
-  const acik = siparisToplami(
-    satirlar
-      .map((s) => ({ ...s, quantity: s.quantity - s.shipmentItems.reduce((t, i) => t + i.quantity, 0) }))
-      .filter((s) => s.quantity > 0)
-  ).toplam;
-  const [r] = await db.$queryRaw<{ bakiye: Prisma.Decimal; risk: Prisma.Decimal }[]>`
-    SELECT ${BAKIYE} AS bakiye, ${BAKIYE} + ${acik.toFixed(2)}::numeric AS risk
-    FROM "LedgerEntry"
-    WHERE "doctorId" = ${doktorId}`;
-  const risk = new Decimal(r.risk);
-  const krediLimiti = doktor.creditLimit === null ? null : new Decimal(doktor.creditLimit);
-  return {
-    bakiye: new Decimal(r.bakiye),
-    acikSiparis: acik,
-    risk,
-    krediLimiti,
-    limitAsildi: krediLimiti !== null && risk.gt(krediLimiti),
-  };
+  if (doktorlar.length === 0) return sonuc;
+
+  const acikSatirlar = new Map<string, typeof satirlar>();
+  for (const s of satirlar) {
+    const kalan = s.quantity - s.shipmentItems.reduce((t, i) => t + i.quantity, 0);
+    if (kalan > 0) acikSatirlar.set(s.order.doctorId, [...(acikSatirlar.get(s.order.doctorId) ?? []), { ...s, quantity: kalan }]);
+  }
+  const acik = new Map(doktorlar.map((d) => [d.id, siparisToplami(acikSatirlar.get(d.id) ?? []).toplam]));
+
+  const degerler = Prisma.join(doktorlar.map((d) => Prisma.sql`(${d.id}, ${acik.get(d.id)!.toFixed(2)}::numeric)`));
+  const bakiyeler = await db.$queryRaw<{ id: string; bakiye: Prisma.Decimal; risk: Prisma.Decimal }[]>`
+    SELECT v.id, ${BAKIYE} AS bakiye, ${BAKIYE} + v.acik AS risk
+    FROM (VALUES ${degerler}) AS v(id, acik)
+    LEFT JOIN "LedgerEntry" ON "LedgerEntry"."doctorId" = v.id
+    GROUP BY v.id, v.acik`;
+  const r = new Map(bakiyeler.map((b) => [b.id, b]));
+
+  for (const d of doktorlar) {
+    const risk = new Decimal(r.get(d.id)!.risk);
+    const krediLimiti = d.creditLimit === null ? null : new Decimal(d.creditLimit);
+    sonuc.set(d.id, {
+      bakiye: new Decimal(r.get(d.id)!.bakiye),
+      acikSiparis: acik.get(d.id)!,
+      risk,
+      krediLimiti,
+      limitAsildi: krediLimiti !== null && risk.gt(krediLimiti),
+    });
+  }
+  return sonuc;
 }
