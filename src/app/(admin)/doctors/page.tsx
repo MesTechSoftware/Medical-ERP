@@ -4,7 +4,7 @@ import { PageHeader, Card, LinkButton } from "@/components/ui";
 import Pagination from "@/components/Pagination";
 import { getPagination, pageCount } from "@/lib/pagination";
 import { doktorKpileri, doktorListesi, doktorPaneli, doktorSuzgecSecenekleri } from "@/lib/doktor-listesi/sorgu";
-import { SUTUN_CEREZI, gizliSutunlariCoz } from "@/lib/doktor-listesi/sutunlar";
+import { SUTUNLAR, SUTUN_CEREZI, gizliSutunlariCoz } from "@/lib/doktor-listesi/sutunlar";
 import { doktorAdresi, saticiyiDogrula, suzgecCoz, type Parametreler } from "@/lib/doktor-listesi/suzgec";
 import { simdi } from "@/lib/zaman";
 import TransferForm from "./TransferForm";
@@ -12,7 +12,8 @@ import { DoktorPaneli } from "./DoktorPaneli";
 import { DoktorTablosu } from "./DoktorTablosu";
 import { KpiKartlari } from "./KpiKartlari";
 import { SuzgecCubugu } from "./SuzgecCubugu";
-import { SutunSecici } from "./SutunSecici";
+import { SutunSecici } from "@/components/liste/SutunSecici";
+import { sutunlariKaydet } from "./sutunEylemi";
 
 const tek = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 
@@ -64,7 +65,7 @@ export default async function AdminDoctorsPage({ searchParams }: { searchParams:
         </div>
       )}
 
-      <SuzgecCubugu suzgec={suzgec} secenekler={secenekler} sutunMenusu={<SutunSecici gizli={gizli} donus={listeAdresi} />} />
+      <SuzgecCubugu suzgec={suzgec} secenekler={secenekler} sutunMenusu={<SutunSecici sutunlar={SUTUNLAR} gizli={gizli} action={sutunlariKaydet} donus={listeAdresi} />} />
 
       {/* Toplu devir (X-17 §(4)): satırlardaki kutular bu forma `form` niteliğiyle bağlıdır. */}
       {devirYetkisi && (
