@@ -47,7 +47,8 @@ test("alansız işlemin SERT bildirimi form kutusunda; kayıt yerinde kalır (X-
   );
   expect(urun, "seed'de siparişte kullanılmış ürün olmalı").toBeDefined();
 
-  await page.goto("/products");
+  // Liste sayfalıdır (Ü-19); seed ürünü e2e'nin eklediklerinin altında kalabilir.
+  await page.goto("/products?per=100");
   page.once("dialog", (d) => d.accept());
   const satir = page.getByRole("row").filter({ hasText: urun.name }).first();
   await satir.getByRole("button", { name: "Sil" }).click();

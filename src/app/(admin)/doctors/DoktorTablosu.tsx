@@ -1,15 +1,15 @@
 import Link from "next/link";
-import { Card } from "@/components/ui";
+import { Card, LinkButton } from "@/components/ui";
 import { Ikon } from "@/components/Ikon";
+import { BosDurum } from "@/components/liste/BosDurum";
 import { bakiyeYonu } from "@/lib/doctor-cari";
 import type { DoktorSatiri } from "@/lib/doktor-listesi/sorgu";
 import { SUTUNLAR, type SutunAnahtari } from "@/lib/doktor-listesi/sutunlar";
-import { bosDurum, doktorAdresi, type DoktorSuzgeci } from "@/lib/doktor-listesi/suzgec";
+import { bosDurum, doktorAdresi, type BosDurum as BosTur, type DoktorSuzgeci } from "@/lib/doktor-listesi/suzgec";
 import { formatDate } from "@/lib/format";
 import { formatPhone } from "@/lib/phone";
 import { bugun } from "@/lib/zaman";
 import { BAKIYE_BASLIGI, BakiyeHucresi } from "./bakiye";
-import { BosDurum } from "./BosDurum";
 import { DurumRozetleri } from "./DurumRozetleri";
 
 /** Sütun başlıkları; Bakiye'nin tabanı başlıktadır (`BAKIYE_BASLIGI` — Ü-3-1). */
@@ -21,6 +21,14 @@ const BASLIK: Record<SutunAnahtari, { metin: string; sinif?: string }> = {
   sonSiparis: { metin: "Son Sipariş", sinif: "oncelik-dusuk" },
   bakiye: { metin: BAKIYE_BASLIGI, sinif: "sayi" },
   durum: { metin: "Durum" },
+};
+
+/** Boş liste metinleri (spec Ü-18 §3.5). */
+const BOS: Record<BosTur, { ikon: "yeni" | "onayla" | "filtrele"; baslik: string }> = {
+  "hic-kayit": { ikon: "yeni", baslik: "Henüz cari yok." },
+  sahipsiz: { ikon: "onayla", baslik: "Sahipsiz cari yok — tüm doktorlar bir satıcıya atanmış." },
+  "eksik-fatura": { ikon: "onayla", baslik: "Fatura bilgisi eksik cari yok." },
+  suzgecli: { ikon: "filtrele", baslik: "Bu süzgeçlere uyan cari bulunamadı." },
 };
 
 const GUN_MS = 86_400_000;
@@ -71,7 +79,7 @@ export function DoktorTablosu({
           </thead>
           <tbody>
             {satirlar.length === 0 && (
-              <BosDurum tur={bosDurum(suzgec)} colSpan={2 + gorunur.length} yeniCari={devirYetkisi} />
+              <BosHucre tur={bosDurum(suzgec)} colSpan={2 + gorunur.length} yeniCari={devirYetkisi} />
             )}
             {satirlar.map((d) => (
               <tr key={d.id} className={d.eksikFatura ? "bg-critical-bg" : undefined}>
@@ -156,5 +164,22 @@ export function DoktorTablosu({
         </table>
       </div>
     </Card>
+  );
+}
+
+function BosHucre({ tur, colSpan, yeniCari }: { tur: BosTur; colSpan: number; yeniCari: boolean }) {
+  return (
+    <BosDurum
+      colSpan={colSpan}
+      {...BOS[tur]}
+      temizleAdresi={tur === "suzgecli" ? "/doctors" : undefined}
+      eylem={
+        tur === "hic-kayit" && yeniCari ? (
+          <LinkButton href="/doctors/new" ikon="yeni">
+            Yeni Cari
+          </LinkButton>
+        ) : undefined
+      }
+    />
   );
 }

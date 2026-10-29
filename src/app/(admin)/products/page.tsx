@@ -1,40 +1,40 @@
-import Link from "next/link";
-import { prisma } from "@/lib/db";
-import { formatla } from "@/lib/money";
-import { Tutar } from "@/components/Tutar";
-import { MATRAH, tabanli } from "@/lib/taban";
-import { cozumleBirimFiyat } from "@/lib/fiyat";
-import { hesaplaStok } from "@/lib/stok";
-import { StokMiktari } from "@/components/StokMiktari";
+import { cookies } from "next/headers";
 import { requireStaff } from "@/lib/session";
-import { PageHeader, LinkButton, Card, StatusBadge, EmptyRow } from "@/components/ui";
-import ConfirmSubmit from "@/components/ConfirmSubmit";
-import { IslemFormu } from "@/components/Sonuc";
-import { deleteProduct } from "./actions";
-import { bugun } from "@/lib/zaman";
-import { buton } from "@/components/stil";
-import { Ikon } from "@/components/Ikon";
+import { PageHeader, LinkButton } from "@/components/ui";
+import Pagination from "@/components/Pagination";
+import { SutunSecici } from "@/components/liste/SutunSecici";
+import { gizliSutunlariCoz } from "@/lib/liste/sutunlar";
+import { getPagination, pageCount } from "@/lib/pagination";
+import { urunKpileri, urunListesi } from "@/lib/urun-listesi/sorgu";
+import { SUTUNLAR, SUTUN_CEREZI } from "@/lib/urun-listesi/sutunlar";
+import { suzgecCoz, urunAdresi, type Parametreler } from "@/lib/urun-listesi/suzgec";
+import { KpiKartlari } from "./KpiKartlari";
+import { SuzgecCubugu } from "./SuzgecCubugu";
+import { UrunTablosu } from "./UrunTablosu";
+import { sutunlariKaydet } from "./sutunEylemi";
 
+const tek = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 
-export default async function ProductsPage() {
+export default async function ProductsPage({ searchParams }: { searchParams: Promise<Parametreler> }) {
   const session = await requireStaff();
   // OPERASYON ürünü görür, açmaz ve düzenlemez (D-2 17.10 eki); yetki action'dadır.
   const yonetici = session.user.role === "YONETICI";
-  const urunler = await prisma.product.findMany({
-    orderBy: { createdAt: "desc" },
-    include: { taxRate: { select: { rate: true } } },
-  });
+  const params = await searchParams;
+  const { page, perPage, skip, take } = getPagination({ page: tek(params.page), per: tek(params.per) });
+  const { suzgec } = suzgecCoz(params);
+  const yer = { page, per: tek(params.per) ? perPage : undefined };
+  // Sütun tercihi çerezdedir; gizli sütun hiç çizilmez, çerez yoksa KDV dahil gizlidir (spec §3.4).
+  const gizli = gizliSutunlariCoz(SUTUNLAR, (await cookies()).get(SUTUN_CEREZI)?.value);
+  const listeAdresi = urunAdresi(suzgec, yer);
+
   // Liste fiyatı varsayılan listenin satırıdır (X-10 §(5)); stok hareketlerden türer (ADR-005).
-  const products = await Promise.all(
-    urunler.map(async (p) => {
-      const fiyat = await cozumleBirimFiyat(p.id, null, { miktar: 1, gun: bugun() });
-      return {
-        ...p,
-        listPrice: fiyat.durum === "TAMAM" ? fiyat.listeFiyat : null,
-        stock: await hesaplaStok(p.id),
-      };
-    })
-  );
+  const [liste, sayilar] = await Promise.all([urunListesi(suzgec, { skip, take }), urunKpileri()]);
+
+  // Sayfalama süzgeci ve sayfa boyunu korur; paneli taşımaz.
+  const sayfaParametreleri = {
+    ...Object.fromEntries(new URL(urunAdresi(suzgec), "http://x").searchParams),
+    per: tek(params.per),
+  };
 
   return (
     <div>
@@ -44,68 +44,22 @@ export default async function ProductsPage() {
         action={yonetici && <LinkButton href="/products/new" ikon="yeni">Yeni Ürün</LinkButton>}
       />
 
-      <Card>
-        <div className="tablo-kutusu">
-          <table className="veri-tablosu">
-            <thead>
-              <tr>
-                <th>Ürün</th>
-                <th className="oncelik-dusuk">Kod</th>
-                <th className="sayi">
-                  {tabanli("Liste Fiyatı", MATRAH)}
-                </th>
-                <th className="sayi oncelik-dusuk">KDV</th>
-                <th className="sayi">Stok</th>
-                <th>Durum</th>
-                <th className="sayi">İşlem</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.length === 0 && (
-                <EmptyRow colSpan={7} text="Henüz ürün eklenmemiş." />
-              )}
-              {products.map((p) => (
-                <tr key={p.id}>
-                  <td className="font-medium text-slate-900">
-                    {p.name}
-                  </td>
-                  <td className="text-slate-500 oncelik-dusuk">{p.code}</td>
-                  <td className="sayi">
-                    <Tutar deger={p.listPrice} taban={MATRAH} baslikta />
-                  </td>
-                  <td className="sayi text-slate-500 oncelik-dusuk">
-                    {formatla(p.taxRate.rate, "oran")}
-                  </td>
-                  <td className="sayi">
-                    <StokMiktari miktar={p.stock} />
-                  </td>
-                  <td>
-                    <StatusBadge status={p.status} />
-                  </td>
-                  <td>
-                    {yonetici && (
-                      <div className="flex items-center justify-end gap-3">
-                        <Link
-                          href={`/products/${p.id}/edit`}
-                          className={buton("metin")}
-                        >
-                          <Ikon ad="duzenle" />
-                          Düzenle
-                        </Link>
-                        <IslemFormu action={deleteProduct.bind(null, p.id)}>
-                          <ConfirmSubmit confirmText={`"${p.name}" silinsin mi?`} ikon="sil">
-                            Sil
-                          </ConfirmSubmit>
-                        </IslemFormu>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+      <KpiKartlari sayilar={sayilar} />
+
+      <SuzgecCubugu
+        suzgec={suzgec}
+        sutunMenusu={<SutunSecici sutunlar={SUTUNLAR} gizli={gizli} action={sutunlariKaydet} donus={listeAdresi} />}
+      />
+
+      <UrunTablosu satirlar={liste.satirlar} gizli={gizli} yonetici={yonetici} suzgec={suzgec} yer={yer} />
+
+      <Pagination
+        page={page}
+        totalPages={pageCount(liste.toplam, perPage)}
+        total={liste.toplam}
+        basePath="/products"
+        params={sayfaParametreleri}
+      />
     </div>
   );
 }

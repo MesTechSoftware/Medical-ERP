@@ -67,7 +67,8 @@ for (const yol of ["/reports", "/audit-logs", "/exports", "/approvals", "/price-
 }
 
 test("ürünleri ve satıcıları salt okur — ekleme/düzenleme/silme yok", async ({ page }) => {
-  await page.goto("/products");
+  // Liste sayfalıdır (Ü-19); seed ürünü e2e'nin eklediklerinin altında kalabilir.
+  await page.goto("/products?per=100");
   await expect(page.getByRole("heading", { name: "Ürünler" })).toBeVisible();
   await expect(page.getByText("Cerrahi Eldiven (Kutu)")).toBeVisible();
   await expect(page.getByRole("link", { name: "Yeni Ürün" })).toHaveCount(0);
