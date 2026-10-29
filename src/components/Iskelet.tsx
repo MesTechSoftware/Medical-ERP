@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui";
+import { buton } from "@/components/stil";
 import { BOYUT_SINIFI, type GrafikBoyutu } from "@/components/grafik/ortak";
 import { KPI_YERLESIMI } from "@/components/kpi/KpiSatiri";
 import { DEGER_BOYU, DEGER_SATIRI, type KpiVaryanti } from "@/components/kpi/KpiCard";
@@ -163,6 +164,37 @@ export function KpiSatiriIskeleti({ kartlar }: { kartlar: readonly KpiIskeletYap
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Liste süzgeç çubuğu iskeleti: hızlı sekmeler ve sağdaki menü düğmeleri gerçekle aynı sınıf ve aynı
+ * metinle (saydam) çizilir — dar ekranda kırılım gerçekle aynıdır. Etkin süzgeç etiketi yoktur
+ * (varsayılan adres).
+ */
+export function SuzgecCubuguIskeleti({ sekmeler, dugmeler }: { sekmeler: readonly string[]; dugmeler: readonly string[] }) {
+  return (
+    <div aria-hidden="true" className="mb-4">
+      <div className="flex flex-wrap items-start gap-2">
+        <div className="flex flex-wrap gap-2">
+          {sekmeler.map((s) => (
+            <span
+              key={s}
+              data-metin={s}
+              className="inline-flex h-(--toolbar-h) animate-skeleton items-center rounded-full bg-slate-100 px-3 text-sm font-medium text-transparent before:content-[attr(data-metin)]"
+            />
+          ))}
+        </div>
+        <div className="ml-auto flex flex-wrap items-start gap-2">
+          {dugmeler.map((d) => (
+            <span key={d} className={`${buton("ikincil")} animate-skeleton border-transparent bg-slate-100 text-transparent`}>
+              <span className="size-[1.15em] shrink-0" />
+              <span data-metin={d} className="before:content-[attr(data-metin)]" />
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );
