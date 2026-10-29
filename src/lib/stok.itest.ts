@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { prisma } from "@/lib/db";
-import { hesaplaStok, stokHareketiYaz } from "@/lib/stok";
+import { hesaplaStok, hesaplaStoklar, stokHareketiYaz, stokSerisi } from "@/lib/stok";
+import { bugun, gunEkle, yerelGunAraligi, yerelGunMetni } from "@/lib/zaman";
 import { referansVeri, yeniDoktorVerisi } from "../../test/integration/referans";
 
 // `stokHareketiYaz()` — KABUL_KRITERLERI B-4-2…B-4-4.
@@ -113,5 +114,81 @@ describe("stokHareketiYaz — eşzamanlılık (B-4-4)", () => {
     expect(n1).toEqual([]);
     expect(n2).toEqual([{ kuralKodu: "NEGATIF_STOK", urunId: u.id, konumId: depoId, once: 2, sonra: -6 }]);
     expect(await hesaplaStok(u.id)).toBe(-6);
+  });
+});
+
+describe("hesaplaStoklar — toplu ≡ tekli (B-4-7)", () => {
+  it("her ürün için tekliyle aynı: konumsuz, konumlu, tarihli", async () => {
+    const [a, b, c] = [await urun("A"), await urun("B"), await urun("C")];
+    await prisma.$transaction((tx) =>
+      stokHareketiYaz(tx, [giris(a.id, 20), cikis(a.id, 5), giris(b.id, 10), cikis(b.id, 4), giris(b.id, 4, konsinyeId)])
+    );
+    const idler = [a.id, b.id, c.id];
+    const dun = gunEkle(bugun(), -1);
+    for (const [konum, tarih] of [
+      [undefined, undefined],
+      [depoId, undefined],
+      [konsinyeId, undefined],
+      [undefined, dun],
+      [depoId, bugun()],
+    ] as const) {
+      const toplu = await hesaplaStoklar(idler, konum, tarih);
+      for (const id of idler) expect(toplu.get(id)).toBe(await hesaplaStok(id, konum, tarih));
+    }
+    expect((await hesaplaStoklar(idler)).get(a.id)).toBe(15);
+    expect((await hesaplaStoklar(idler, konsinyeId)).get(b.id)).toBe(4);
+  });
+
+  it("hareketsiz ürün 0 döner", async () => {
+    const u = await urun("H");
+    expect((await hesaplaStoklar([u.id])).get(u.id)).toBe(0);
+  });
+
+  it("boş liste boş harita", async () => {
+    expect((await hesaplaStoklar([])).size).toBe(0);
+  });
+
+  it("negatif stok korunur", async () => {
+    const u = await urun("N");
+    await prisma.$transaction((tx) => stokHareketiYaz(tx, [giris(u.id, 2), cikis(u.id, 5)]));
+    expect((await hesaplaStoklar([u.id])).get(u.id)).toBe(-3);
+  });
+});
+
+describe("stokSerisi (B-4-7)", () => {
+  /** `gunOnce` gün önceki İstanbul gününün başı + `saat`. */
+  const an = (gunOnce: number, saat = 12) =>
+    new Date(yerelGunAraligi(yerelGunMetni(gunEkle(bugun(), -gunOnce)))!.baslangic.getTime() + saat * 3_600_000);
+  const tarihle = async (productId: string, h: ReturnType<typeof giris | typeof cikis>, createdAt: Date) => {
+    await prisma.$transaction((tx) => stokHareketiYaz(tx, [h]));
+    const son = await prisma.stockMovement.findFirstOrThrow({ where: { productId }, orderBy: { id: "desc" } });
+    await prisma.stockMovement.update({ where: { id: son.id }, data: { createdAt } });
+  };
+
+  it("her nokta o günün hesaplaStok değeridir", async () => {
+    const u = await urun("S");
+    await tarihle(u.id, giris(u.id, 10), an(5));
+    await tarihle(u.id, cikis(u.id, 3), an(2));
+    await prisma.$transaction((tx) => stokHareketiYaz(tx, [giris(u.id, 1)]));
+    const seri = await stokSerisi(u.id, 7);
+    expect(seri).toHaveLength(7);
+    expect(seri.at(-1)!.gun).toBe(yerelGunMetni(bugun()));
+    for (const n of seri) expect(n.stok).toBe(await hesaplaStok(u.id, undefined, yerelGunAraligi(n.gun)!.baslangic));
+    expect(seri.map((n) => n.stok)).toEqual([0, 10, 10, 10, 7, 7, 8]);
+    expect(seri.at(-1)!.stok).toBe(await hesaplaStok(u.id));
+  });
+
+  it("İstanbul gece yarısı yeni güne düşer", async () => {
+    const u = await urun("G");
+    await tarihle(u.id, giris(u.id, 4), an(1, 0));
+    const seri = await stokSerisi(u.id, 3);
+    expect(seri.map((n) => n.stok)).toEqual([0, 4, 4]);
+  });
+
+  it("hareketsiz ürün sıfır serisi", async () => {
+    const u = await urun("Z");
+    const seri = await stokSerisi(u.id, 90);
+    expect(seri).toHaveLength(90);
+    expect(seri.every((n) => n.stok === 0)).toBe(true);
   });
 });

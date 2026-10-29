@@ -1,6 +1,6 @@
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
-import { gunAraligi } from "@/lib/zaman";
+import { bugun, gunAraligi, gunEkle, yerelGunMetni } from "@/lib/zaman";
 
 type Db = Prisma.TransactionClient | typeof prisma;
 
@@ -10,6 +10,7 @@ type Db = Prisma.TransactionClient | typeof prisma;
  * (ADR-008 §(4)); yazım `stokHareketiYaz()`'dadır.
  *
  * `tarih` verilirse sonuç o günün İstanbul günü sonu itibarıyladır (E-1 §(5)).
+ * Toplu ve tekli aynı yoldur (B-4-7): bu fonksiyon `hesaplaStoklar()`'ı tek kimlikle çağırır.
  */
 export async function hesaplaStok(
   urunId: string,
@@ -17,26 +18,70 @@ export async function hesaplaStok(
   tarih?: Date,
   db: Db = prisma
 ): Promise<number> {
+  return (await hesaplaStoklar([urunId], konumId, tarih, db)).get(urunId)!;
+}
+
+/**
+ * Birden çok ürünün stoğu tek sorguda (B-4-7). Her istenen kimlik haritadadır; hareketsiz ürün 0.
+ */
+export async function hesaplaStoklar(
+  urunIdler: readonly string[],
+  konumId?: string,
+  tarih?: Date,
+  db: Db = prisma
+): Promise<Map<string, number>> {
+  const stoklar = new Map<string, number>(urunIdler.map((id) => [id, 0]));
+  if (urunIdler.length === 0) return stoklar;
   const gruplar = await db.stockMovement.groupBy({
-    by: ["type"],
+    by: ["productId", "type"],
     where: {
-      productId: urunId,
+      productId: { in: [...urunIdler] },
       ...(konumId ? { locationId: konumId } : {}),
       ...(tarih ? { createdAt: { lt: gunAraligi(tarih).bitis } } : {}),
     },
     _sum: { quantity: true },
   });
-  let stok = 0;
   for (const g of gruplar) {
     const miktar = g._sum.quantity ?? 0;
-    stok += g.type === "GIRIS" ? miktar : -miktar;
+    stoklar.set(g.productId, stoklar.get(g.productId)! + (g.type === "GIRIS" ? miktar : -miktar));
   }
-  return stok;
+  return stoklar;
+}
+
+/**
+ * Son `gunSayisi` İstanbul gününün gün sonu stoğu, eskiden yeniye; son eleman bugündür (B-4-7).
+ * Her nokta `hesaplaStok(urun, undefined, gün)` ile aynıdır: başlangıç o yoldan okunur, aralıktaki
+ * hareketler gün gün eklenir (E-1 gün sınırı).
+ */
+export async function stokSerisi(
+  urunId: string,
+  gunSayisi: number,
+  db: Db = prisma
+): Promise<{ gun: string; stok: number }[]> {
+  const ilk = gunEkle(bugun(), -(gunSayisi - 1));
+  const [baslangic, hareketler] = await Promise.all([
+    hesaplaStok(urunId, undefined, gunEkle(ilk, -1), db),
+    db.stockMovement.findMany({
+      where: { productId: urunId, createdAt: { gte: gunAraligi(ilk).baslangic } },
+      select: { type: true, quantity: true, createdAt: true },
+    }),
+  ]);
+  const gunluk = new Map<string, number>();
+  for (const h of hareketler) {
+    const gun = yerelGunMetni(h.createdAt);
+    gunluk.set(gun, (gunluk.get(gun) ?? 0) + (h.type === "GIRIS" ? h.quantity : -h.quantity));
+  }
+  let stok = baslangic;
+  return Array.from({ length: gunSayisi }, (_, i) => {
+    const gun = yerelGunMetni(gunEkle(ilk, i));
+    stok += gunluk.get(gun) ?? 0;
+    return { gun, stok };
+  });
 }
 
 /**
  * Aktif ürünler ve stokları (dashboard: kritik stok listesi ve istisna bandı tek okumayı paylaşır).
- * Ürün başına `hesaplaStok()`; ad sırasıyla.
+ * Tek `hesaplaStoklar()` okuması; ad sırasıyla.
  */
 export async function aktifUrunStoklari(): Promise<{ id: string; name: string; code: string; stok: number }[]> {
   const urunler = await prisma.product.findMany({
@@ -44,7 +89,8 @@ export async function aktifUrunStoklari(): Promise<{ id: string; name: string; c
     select: { id: true, name: true, code: true },
     orderBy: { name: "asc" },
   });
-  return Promise.all(urunler.map(async (u) => ({ ...u, stok: await hesaplaStok(u.id) })));
+  const stoklar = await hesaplaStoklar(urunler.map((u) => u.id));
+  return urunler.map((u) => ({ ...u, stok: stoklar.get(u.id)! }));
 }
 
 /**
