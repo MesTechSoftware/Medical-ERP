@@ -1,3 +1,5 @@
+import { ilk, kimlik, secenek, type Parametreler } from "@/lib/liste/parametreler";
+
 /**
  * Ürün listesinin süzgeci (spec Ü-19 §3.2); adres çubuğunda durur. Geçersiz değer yok sayılır.
  * `stok` hesaplanan değerdir (`stokDurumu`); süzme `sorgu.ts`'tedir. Saf modül.
@@ -11,19 +13,8 @@ export type UrunSuzgeci = {
 
 export const BOS_SUZGEC: UrunSuzgeci = { durum: null, stok: null };
 
-export type Parametreler = Record<string, string | string[] | undefined>;
+export type { Parametreler };
 
-const KIMLIK = /^[A-Za-z0-9-]{1,64}$/;
-
-function ilk(p: Parametreler, ad: string): string | null {
-  const v = p[ad];
-  const deger = Array.isArray(v) ? v[0] : v;
-  return deger ? deger : null;
-}
-
-function secenek<T extends string>(metin: string | null, gecerli: readonly T[]): T | null {
-  return gecerli.find((g) => g === metin) ?? null;
-}
 
 export function suzgecCoz(p: Parametreler): { suzgec: UrunSuzgeci; detay: string | null } {
   const detay = ilk(p, "detay");
@@ -32,7 +23,7 @@ export function suzgecCoz(p: Parametreler): { suzgec: UrunSuzgeci; detay: string
       durum: secenek(ilk(p, "durum"), ["AKTIF", "PASIF"] as const),
       stok: secenek(ilk(p, "stok"), ["kritik", "tukendi"] as const),
     },
-    detay: detay !== null && KIMLIK.test(detay) ? detay : null,
+    detay: kimlik(detay),
   };
 }
 

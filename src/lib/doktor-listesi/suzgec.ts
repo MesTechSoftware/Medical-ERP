@@ -1,3 +1,5 @@
+import { gun, ilk, kimlik, secenek, type Parametreler } from "@/lib/liste/parametreler";
+
 /**
  * Cari listesinin süzgeci (KARARLAR X-8 §(5), A-13 §(5); spec Ü-18 §3.2); adres çubuğunda durur.
  * Geçersiz değer yok sayılır. Saf modül: gün metni ve Prisma koşulu `sorgu.ts`'te kurulur (E-1).
@@ -33,33 +35,10 @@ export const BOS_SUZGEC: DoktorSuzgeci = {
   sonBit: null,
 };
 
-export type Parametreler = Record<string, string | string[] | undefined>;
+export type { Parametreler };
 
 const SESSIZ: readonly Sessiz[] = ["30", "60", "90", "180", "hic"];
-const KIMLIK = /^[A-Za-z0-9-]{1,64}$/;
 const BOLGE_AZAMI = 100;
-
-function ilk(p: Parametreler, ad: string): string | null {
-  const v = p[ad];
-  const deger = Array.isArray(v) ? v[0] : v;
-  return deger ? deger : null;
-}
-
-function gun(metin: string | null): string | null {
-  const m = metin?.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!m) return null;
-  const [yil, ay, g] = [parseInt(m[1], 10), parseInt(m[2], 10), parseInt(m[3], 10)];
-  const d = new Date(Date.UTC(yil, ay - 1, g));
-  return d.getUTCFullYear() === yil && d.getUTCMonth() === ay - 1 && d.getUTCDate() === g ? metin : null;
-}
-
-function secenek<T extends string>(metin: string | null, gecerli: readonly T[]): T | null {
-  return gecerli.find((g) => g === metin) ?? null;
-}
-
-function kimlik(metin: string | null): string | null {
-  return metin !== null && KIMLIK.test(metin) ? metin : null;
-}
 
 export function suzgecCoz(p: Parametreler): { suzgec: DoktorSuzgeci; detay: string | null } {
   const bolge = ilk(p, "bolge")?.trim() ?? "";
