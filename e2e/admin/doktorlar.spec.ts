@@ -229,3 +229,10 @@ test("sekmeden sonra Filtrele sekmenin süzgecini korur; kaldırılan etiket ger
   await page.getByText("Filtrele · 1").click();
   await expect(page.getByRole("form", { name: "Cari süzgeci" }).getByLabel("Bölge")).toHaveValue("");
 });
+
+test("sayfa dışı adres son sayfaya gider; boş durum çıkmaz", async ({ page }) => {
+  await page.goto("/doctors?page=999");
+  await expect(page).not.toHaveURL(/page=999/);
+  await expect(page.locator("a[data-kayit]").first()).toBeVisible();
+  await expect(page.getByText("Henüz cari yok.")).toHaveCount(0);
+});

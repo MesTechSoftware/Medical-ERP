@@ -98,3 +98,25 @@ test("geçersiz detay kimliğinde panel açılmaz", async ({ page }) => {
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.getByRole("table")).toBeVisible();
 });
+
+test("pasif ürünün panelinde Stok girişi yok", async ({ page }) => {
+  const [u] = await sorgu<{ id: string; name: string }>(
+    `UPDATE "Product" SET status = 'PASIF' WHERE id = (SELECT id FROM "Product" WHERE status = 'AKTIF' ORDER BY name DESC LIMIT 1)
+     RETURNING id, name`
+  );
+  try {
+    await page.goto(`/products?detay=${u.id}`);
+    const panel = page.getByRole("dialog", { name: u.name });
+    await expect(panel).toBeVisible();
+    await expect(panel.getByRole("link", { name: "Stok girişi" })).toHaveCount(0);
+  } finally {
+    await sorgu(`UPDATE "Product" SET status = 'AKTIF' WHERE id = $1`, [u.id]);
+  }
+});
+
+test("sayfa dışı adres son sayfaya gider; boş durum çıkmaz", async ({ page }) => {
+  await page.goto("/products?page=999");
+  await expect(page).not.toHaveURL(/page=999/);
+  await expect(page.locator("a[data-kayit]").first()).toBeVisible();
+  await expect(page.getByText("Henüz ürün yok.")).toHaveCount(0);
+});

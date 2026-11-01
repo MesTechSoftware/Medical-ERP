@@ -109,7 +109,7 @@ test("cari listesinde yan paneli açar; Düzenle ve Yeni Cari yoktur (X-13-2)", 
 });
 
 test("OPERASYON ürün panelini görür; Yeni Ürün, Düzenle, Sil yok (D-2-2)", async ({ page }) => {
-  const [u] = await query<{ id: string; name: string }>(`SELECT id, name FROM "Product" ORDER BY name LIMIT 1`);
+  const [u] = await query<{ id: string; name: string }>(`SELECT id, name FROM "Product" WHERE status = 'AKTIF' ORDER BY name LIMIT 1`);
   await page.goto(`/products?detay=${u.id}`);
   const panel = page.getByRole("dialog", { name: u.name });
   await expect(panel).toBeVisible();
