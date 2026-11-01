@@ -172,6 +172,7 @@ model User {
   exportLogs      ExportLog[]
   importBatches   ImportBatch[]      @relation("ImportBatchBy")
   revertedBatches ImportBatch[]      @relation("ImportBatchRevertedBy")
+  stockMovements  StockMovement[]    @relation("StockMovementBy")
 }
 
 // E-2 · ADR-003: opak token; DB'de yalnız SHA-256 hash'i durur.
@@ -485,6 +486,11 @@ model StockMovement {
 
   importBatch   ImportBatch? @relation(fields: [importBatchId], references: [id])
   importBatchId String?
+
+  // B-4 eki (01.11.2026): işlemi yapan. Yazımda zorunlu (`StokHareketi`); eski kaydın bir kısmı
+  // bilinemez (sevkiyat, 1B-7a öncesi sipariş, elle giriş) — boş kalır.
+  createdBy   User?   @relation("StockMovementBy", fields: [createdById], references: [id], onDelete: Restrict)
+  createdById String?
 
   createdAt DateTime @default(now()) @db.Timestamptz(3)
 

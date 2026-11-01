@@ -70,7 +70,7 @@ export async function cancelOrder(id: string): Promise<IslemSonucu> {
     if (eskiCikislar.length > 0) {
       await stokHareketiYaz(
         tx,
-        eskiCikislar.map((h) => ({ ...h, type: "GIRIS" as const, note: "Sipariş iptali - stok iadesi", orderId: id }))
+        eskiCikislar.map((h) => ({ ...h, type: "GIRIS" as const, note: "Sipariş iptali - stok iadesi", orderId: id, createdById: session.user.id }))
       );
     }
     await createAuditLog(

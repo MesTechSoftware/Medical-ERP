@@ -64,6 +64,7 @@ export async function createProduct(
             type: "GIRIS",
             quantity: initialStock,
             note: "Başlangıç stok girişi",
+            createdById: session.user.id,
           },
         ]);
       }

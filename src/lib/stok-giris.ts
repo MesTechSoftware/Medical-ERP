@@ -11,7 +11,7 @@ export async function stokGirisiYaz(
   g: { urunId: string; miktar: number; not: string | null; yapanId: string }
 ): Promise<void> {
   await stokHareketiYaz(tx, [
-    { productId: g.urunId, locationId: await varsayilanDepoId(tx), type: "GIRIS", quantity: g.miktar, note: g.not ?? "Stok girişi" },
+    { productId: g.urunId, locationId: await varsayilanDepoId(tx), type: "GIRIS", quantity: g.miktar, note: g.not ?? "Stok girişi", createdById: g.yapanId },
   ]);
   await createAuditLog(
     {

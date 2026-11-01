@@ -104,7 +104,10 @@ export async function stokKilitle(tx: Prisma.TransactionClient, urunIdler: reado
   await tx.$queryRaw`SELECT "id" FROM "Product" WHERE "id" IN (${Prisma.join(idler)}) ORDER BY "id" FOR UPDATE`;
 }
 
-export type StokHareketi = Omit<Prisma.StockMovementUncheckedCreateInput, "id" | "createdAt">;
+/** Yazılacak hareket; işlemi yapan zorunludur (B-4 eki 01.11 — B-4-8). */
+export type StokHareketi = Omit<Prisma.StockMovementUncheckedCreateInput, "id" | "createdAt" | "createdById"> & {
+  createdById: string;
+};
 
 export type NegatifStok = {
   kuralKodu: "NEGATIF_STOK";

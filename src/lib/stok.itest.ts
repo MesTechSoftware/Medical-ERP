@@ -10,12 +10,13 @@ import { referansVeri, yeniDoktorVerisi } from "../../test/integration/referans"
 let depoId = "";
 let konsinyeId = "";
 let taxRateId = "";
+let yapanId = "";
 
 const urun = (code: string) => prisma.product.create({ data: { name: code, code, taxRateId } });
 const giris = (productId: string, quantity: number, locationId = depoId) =>
-  ({ productId, locationId, type: "GIRIS", quantity }) as const;
+  ({ productId, locationId, type: "GIRIS", quantity, createdById: yapanId }) as const;
 const cikis = (productId: string, quantity: number, locationId = depoId) =>
-  ({ productId, locationId, type: "CIKIS", quantity }) as const;
+  ({ productId, locationId, type: "CIKIS", quantity, createdById: yapanId }) as const;
 const bekle = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 beforeEach(async () => {
@@ -26,6 +27,7 @@ beforeEach(async () => {
   depoId = ref.depo.id;
   konsinyeId = kns.id;
   taxRateId = ref.kdv20.id;
+  yapanId = (await prisma.user.create({ data: { name: "Depocu", email: "depocu@medikal.local", passwordHash: "x", role: "OPERASYON" } })).id;
 });
 
 describe("stokHareketiYaz — yazım (B-4-2)", () => {
@@ -52,6 +54,16 @@ describe("stokHareketiYaz — yazım (B-4-2)", () => {
     ).rejects.toThrow();
     expect(birinciBitti).toBe(false);
     await birinci;
+  });
+});
+
+describe("stokHareketiYaz — hareketi yapan (B-4-8)", () => {
+  it("stokHareketiYaz yapanı yazar", async () => {
+    const u = await urun("U1");
+    const yapan = await prisma.user.create({ data: { name: "Y", email: "y@medikal.local", passwordHash: "x", role: "YONETICI" } });
+    await prisma.$transaction((tx) => stokHareketiYaz(tx, [{ ...giris(u.id, 5), createdById: yapan.id }]));
+    const h = await prisma.stockMovement.findFirstOrThrow({ where: { productId: u.id } });
+    expect(h.createdById).toBe(yapan.id);
   });
 });
 

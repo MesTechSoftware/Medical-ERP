@@ -112,6 +112,7 @@ export async function sevkiyatYaz(tx: Prisma.TransactionClient, girdi: SevkiyatG
     type: "CIKIS" as const,
     quantity: k.miktar,
     note: "Sevkiyat çıkışı",
+    createdById: girdi.yapan.id,
   }));
 
   // A-8: bloklar kilit altında okunur; numara ve hiçbir kayıt bundan önce yazılmaz.

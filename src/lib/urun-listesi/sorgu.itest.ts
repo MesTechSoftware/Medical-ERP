@@ -13,6 +13,7 @@ const SAYFA = { skip: 0, take: 100 };
 
 let ref: Awaited<ReturnType<typeof referansVeri>>;
 let sira = 0;
+let yapanId = "";
 
 /** Stoğu `stok` olan ürün; `createdAt` sırası oluşturma sırasıdır. */
 async function urun(code: string, stok: number, status: "AKTIF" | "PASIF" = "AKTIF", taxRateId = ref.kdv20.id) {
@@ -22,10 +23,10 @@ async function urun(code: string, stok: number, status: "AKTIF" | "PASIF" = "AKT
   });
   const hareketler =
     stok >= 0
-      ? [{ productId: u.id, locationId: ref.depo.id, type: "GIRIS" as const, quantity: stok }]
+      ? [{ productId: u.id, locationId: ref.depo.id, type: "GIRIS" as const, quantity: stok, createdById: yapanId }]
       : [
-          { productId: u.id, locationId: ref.depo.id, type: "GIRIS" as const, quantity: 1 },
-          { productId: u.id, locationId: ref.depo.id, type: "CIKIS" as const, quantity: 1 - stok },
+          { productId: u.id, locationId: ref.depo.id, type: "GIRIS" as const, quantity: 1, createdById: yapanId },
+          { productId: u.id, locationId: ref.depo.id, type: "CIKIS" as const, quantity: 1 - stok, createdById: yapanId },
         ];
   if (stok !== 0) await prisma.$transaction((tx) => stokHareketiYaz(tx, hareketler));
   return u;
@@ -40,6 +41,7 @@ const kodlar = async (s: Partial<UrunSuzgeci>, sayfa = SAYFA) =>
 beforeEach(async () => {
   ref = await referansVeri();
   sira = 0;
+  yapanId = (await prisma.user.create({ data: { name: "Depocu", email: "depocu@medikal.local", passwordHash: "x", role: "OPERASYON" } })).id;
 });
 
 describe("urunListesi — süzgeç", () => {
@@ -106,7 +108,7 @@ describe("urunPaneli", () => {
     await prisma.$transaction((tx) =>
       stokHareketiYaz(
         tx,
-        Array.from({ length: 11 }, () => ({ productId: u.id, locationId: ref.depo.id, type: "GIRIS" as const, quantity: 2 }))
+        Array.from({ length: 11 }, () => ({ productId: u.id, locationId: ref.depo.id, type: "GIRIS" as const, quantity: 2, createdById: yapanId }))
       )
     );
     const doktor = await prisma.doctor.create({ data: yeniDoktorVerisi() });
@@ -115,7 +117,7 @@ describe("urunPaneli", () => {
     });
     const sevk = await prisma.shipment.create({ data: { documentNo: "SVK-P-1", orderId: siparis.id } });
     await prisma.$transaction((tx) =>
-      stokHareketiYaz(tx, [{ productId: u.id, locationId: ref.depo.id, type: "CIKIS", quantity: 5, shipmentId: sevk.id }])
+      stokHareketiYaz(tx, [{ productId: u.id, locationId: ref.depo.id, type: "CIKIS", quantity: 5, shipmentId: sevk.id, createdById: yapanId }])
     );
 
     const p = (await urunPaneli(u.id))!;

@@ -6,7 +6,7 @@
 > Kod yeri, kriter metninde anılan fonksiyonun tanımlandığı dosyadır. Eski PRD matrisi (8 Ağustos 2026)
 > `docs/arsiv/TRACEABILITY_PRD_V2.md`'dedir.
 
-**Özet:** 135 KANITLI · 3 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %2.2** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
+**Özet:** 136 KANITLI · 2 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %1.4** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
 
 | Kriter | Karar | Durum | Kod yeri | Test | Kriter metni |
 |---|---|---|---|---|---|
@@ -79,7 +79,7 @@
 | B-4-6 | B-4 | KANITLI | `src/lib/stok.ts` | `src/lib/ice-aktarim/acilis.itest.ts` | Açılış stoğu konum bazındadır: ürün ve konum koduyla (boş konum varsayılan depo), pozitif tam sayı miktar; her satır `stokHareketiYaz()`… |
 | B-4-4 | B-4 | KANITLI | — | `src/lib/stok.itest.ts` | Aynı ürüne eşzamanlı iki çıkış aynı ön stoğu göremez: ikinci yazım birincinin commit'ini bekler ve onun sonucunu okur (ADR-008 §(6), F-06). |
 | B-4-7 | B-4 | KANITLI | `src/lib/stok.ts` | `src/lib/stok.itest.ts`<br>`src/lib/tek-cagri.test.ts` | `hesaplaStoklar` her ürün ve konum için `hesaplaStok` ile aynıdır; `stokSerisi`'nin her noktası o günün `hesaplaStok(urun, —, gün)` değer… |
-| B-4-8 | B-4 | TESTSIZ | `src/lib/stok.ts` | — | Her stok hareketi işlemi yapan kullanıcıyı taşır; `stokHareketiYaz` kullanıcısız hareket yazmaz. Eski hareketler kaynak belgenin sahibind… |
+| B-4-8 | B-4 | KANITLI | `src/lib/stok.ts` | `src/lib/stok.itest.ts`<br>`src/lib/stok-hareketi-yapan.itest.ts` | Her stok hareketi işlemi yapan kullanıcıyı taşır; `stokHareketiYaz` kullanıcısız hareket yazmaz. Eski hareketler kaynak belgenin sahibind… |
 | B-4-9 | B-4 | TESTSIZ | — | — | `konumStoklari` her konum ve ürün için `hesaplaStok(urun, konum)` ile aynıdır. |
 | B-4-10 | B-4 | TESTSIZ | — | — | Stok ekranının bugün giriş/çıkış kartı, tıklanınca açılan listenin satır sayısına eşittir; hareket türü süzgeci ve tür etiketi aynı sınıf… |
 | B-5-1 | B-5 | KANITLI | — | `src/lib/fiyat.itest.ts`<br>`src/lib/kisitlar.itest.ts` | Fiyat satırı belge gününde geçerliyse seçilir: aralık yarı açıktır (`gecerli_baslangic` dahil, `gecerli_bitis` hariç), boş uç süresizdir.… |

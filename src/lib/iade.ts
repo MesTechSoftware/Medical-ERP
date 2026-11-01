@@ -117,6 +117,7 @@ export async function iadeYaz(
       quantity: k.miktar,
       note: "İade girişi",
       returnNoteId: iade.id,
+      createdById: girdi.yapanId,
     }))
   );
 

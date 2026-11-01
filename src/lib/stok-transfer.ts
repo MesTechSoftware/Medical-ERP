@@ -57,8 +57,8 @@ async function tasi(
 
   const hareketler = (bag: ReturnType<typeof g.bag> | object): StokHareketi[] =>
     g.kalemler.flatMap((k) => [
-      { productId: k.urunId, locationId: g.kaynakId, type: "CIKIS" as const, quantity: k.miktar, note: g.not, ...bag },
-      { productId: k.urunId, locationId: g.hedefId, type: "GIRIS" as const, quantity: k.miktar, note: g.not, ...bag },
+      { productId: k.urunId, locationId: g.kaynakId, type: "CIKIS" as const, quantity: k.miktar, note: g.not, createdById: g.yapan.id, ...bag },
+      { productId: k.urunId, locationId: g.hedefId, type: "GIRIS" as const, quantity: k.miktar, note: g.not, createdById: g.yapan.id, ...bag },
     ]);
 
   const ihlaller: BlokIhlali[] = (await negatifStokOnizle(tx, hareketler({}))).map((n) => ({
