@@ -62,6 +62,11 @@ export function hizliSekmeler(bugun: string): { etiket: "Tümü" | "Bugün" | "S
   ];
 }
 
+/** Süzgecin tarihine uyan ilk sekme; ayın 1'inde "Bugün" ile "Bu ay" aynı aralıktır, yalnız ilki etkindir. */
+export function etkinSekme<E extends string>(sekmeler: readonly { etiket: E; tarih: Tarih }[], s: StokSuzgeci): E | null {
+  return sekmeler.find((f) => f.tarih.baslangic === s.baslangic && f.tarih.bitis === s.bitis)?.etiket ?? null;
+}
+
 /** Sekmenin adresi: tarihleri yazar, tür ve yönü korur; sayfa düşer. */
 export function sekmeAdresi(s: StokSuzgeci, tarih: Tarih): string {
   return stokAdresi({ ...s, ...tarih });

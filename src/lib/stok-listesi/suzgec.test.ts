@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   BOS_SUZGEC,
   bosDurum,
+  etkinSekme,
   etkinSuzgecler,
   hizliSekmeler,
   sekmeAdresi,
@@ -49,6 +50,14 @@ describe("hızlı sekmeler", () => {
     ]);
     expect(hizliSekmeler("2026-03-03")[2].tarih.baslangic).toBe("2026-02-25");
     expect(hizliSekmeler("2026-03-03")[3].tarih.baslangic).toBe("2026-03-01");
+  });
+
+  it("ayın 1'inde Bugün ile Bu ay aynı aralıktadır; yalnız ilk uyan sekme etkindir", () => {
+    const sekmeler = hizliSekmeler("2026-11-01");
+    expect(etkinSekme(sekmeler, { ...BOS_SUZGEC, baslangic: "2026-11-01", bitis: "2026-11-01" })).toBe("Bugün");
+    expect(etkinSekme(sekmeler, BOS_SUZGEC)).toBe("Tümü");
+    expect(etkinSekme(hizliSekmeler("2026-11-15"), { ...BOS_SUZGEC, baslangic: "2026-11-01", bitis: "2026-11-15" })).toBe("Bu ay");
+    expect(etkinSekme(sekmeler, { ...BOS_SUZGEC, baslangic: "2026-10-01", bitis: "2026-10-31" })).toBeNull();
   });
 
   it("sekme adresi tarihleri yazar, tür ve yönü korur, sayfayı düşürür", () => {
