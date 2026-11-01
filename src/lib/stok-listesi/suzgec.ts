@@ -1,14 +1,12 @@
 import { HAREKET_TURLERI, type HareketTuruKodu } from "@/lib/stok-hareket-turu";
-import { gun, gunEtiketi, ilk, secenek, type Parametreler } from "@/lib/liste/parametreler";
-import { gunEkle, yerelGunMetni } from "@/lib/zaman";
+import { aralikEtiketi, gun, ilk, secenek, type Parametreler } from "@/lib/liste/parametreler";
+import { gunEkle } from "@/lib/zaman";
 
 /**
  * Stok ekranının hareket süzgeci (spec Ü-20 §3.3); adres çubuğunda durur. Geçersiz değer yok sayılır.
  * Günler İstanbul günüdür (`YYYY-AA-GG`); aralığa çevirme `sorgu.ts`'tedir. `urun` formun önseçimidir,
  * süzgeç onu taşımaz. Saf modül.
  */
-
-export type { Parametreler };
 
 export type StokSuzgeci = {
   baslangic: string | null;
@@ -48,10 +46,10 @@ export function stokAdresi(s: StokSuzgeci, ek: { page?: number; per?: number } =
   return q ? `/stock?${q}` : "/stock";
 }
 
-/** Takvim gününden `adet` gün önce; `gunEkle` takvim günüyle (UTC gece yarısı) çalışır. */
+/** Takvim gününden `adet` gün önce; takvim günü UTC parçalarıyla taşınır, saat dilimine bakılmaz. */
 function gunOnce(metin: string, adet: number): string {
   const [yil, ay, g] = metin.split("-").map((p) => parseInt(p, 10));
-  return yerelGunMetni(gunEkle(new Date(Date.UTC(yil, ay - 1, g)), -adet));
+  return gunEkle(new Date(Date.UTC(yil, ay - 1, g)), -adet).toISOString().slice(0, 10);
 }
 
 /** Tarih kısayolları; `bugun` İstanbul günüdür (sayfa `yerelGunMetni(bugun())` verir). */
@@ -73,8 +71,11 @@ export function sekmeAdresi(s: StokSuzgeci, tarih: Tarih): string {
 export function etkinSuzgecler(s: StokSuzgeci): { anahtar: "tarih" | "tur" | "yon"; etiket: string; kaldirAdresi: string }[] {
   const liste: { anahtar: "tarih" | "tur" | "yon"; etiket: string; kaldirAdresi: string }[] = [];
   if (s.baslangic || s.bitis) {
-    const aralik = [s.baslangic ? gunEtiketi(s.baslangic) : "", s.bitis ? gunEtiketi(s.bitis) : ""].join(" – ").trim();
-    liste.push({ anahtar: "tarih", etiket: `Tarih: ${aralik}`, kaldirAdresi: stokAdresi({ ...s, baslangic: null, bitis: null }) });
+    liste.push({
+      anahtar: "tarih",
+      etiket: `Tarih: ${aralikEtiketi(s.baslangic, s.bitis)}`,
+      kaldirAdresi: stokAdresi({ ...s, baslangic: null, bitis: null }),
+    });
   }
   if (s.tur) {
     const etiket = HAREKET_TURLERI.find((t) => t.kod === s.tur)!.etiket;

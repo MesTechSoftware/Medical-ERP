@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { gun, ilk, kimlik, secenek } from "./parametreler";
+import { aralikEtiketi, gun, ilk, kimlik, secenek } from "./parametreler";
 
 describe("adres parametresi yardımcıları", () => {
   it("ilk: dizide ilk eleman, boş metin null", () => {
@@ -27,5 +27,11 @@ describe("adres parametresi yardımcıları", () => {
     expect(kimlik("a".repeat(65))).toBeNull();
     expect(kimlik("a b")).toBeNull();
     expect(kimlik(null)).toBeNull();
+  });
+
+  it("aralikEtiketi: iki uç, yalnız başlangıç, yalnız bitiş", () => {
+    expect(aralikEtiketi("2026-10-01", "2026-10-31")).toBe("01.10.2026 – 31.10.2026");
+    expect(aralikEtiketi("2026-10-01", null)).toBe("01.10.2026 sonrası");
+    expect(aralikEtiketi(null, "2026-10-31")).toBe("31.10.2026 öncesi");
   });
 });

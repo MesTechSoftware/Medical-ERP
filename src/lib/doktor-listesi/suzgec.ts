@@ -1,4 +1,4 @@
-import { gun, gunEtiketi, ilk, kimlik, secenek, type Parametreler } from "@/lib/liste/parametreler";
+import { aralikEtiketi, gun, ilk, kimlik, secenek, type Parametreler } from "@/lib/liste/parametreler";
 
 /**
  * Cari listesinin süzgeci (KARARLAR X-8 §(5), A-13 §(5); spec Ü-18 §3.2); adres çubuğunda durur.
@@ -89,11 +89,6 @@ export function ayniSuzgec(a: DoktorSuzgeci, b: DoktorSuzgeci): boolean {
 export function etkinSayisi(s: DoktorSuzgeci): number {
   const { sonBas, sonBit, ...digerleri } = s;
   return Object.values(digerleri).filter((d) => d !== null).length + (sonBas !== null || sonBit !== null ? 1 : 0);
-}
-
-function aralikEtiketi(bas: string | null, bit: string | null): string {
-  if (bas !== null && bit !== null) return `${gunEtiketi(bas)} – ${gunEtiketi(bit)}`;
-  return bas !== null ? `${gunEtiketi(bas)} sonrası` : `${gunEtiketi(bit!)} öncesi`;
 }
 
 /** Etkin süzgeçlerin etiketleri, her biri o alanı düşüren adresle; aralığın iki ucu tek etikettir. */

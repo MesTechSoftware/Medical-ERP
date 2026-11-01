@@ -29,7 +29,6 @@ export const BOS_SUZGEC: DenetimSuzgeci = { baslangic: null, bitis: null, kullan
 const MODULLER: readonly AuditModule[] = ["SATIS", "STOK", "FINANS", "CARI", "URUN_FIYAT", "ICE_AKTARIM", "KULLANICI"];
 const TURLER: readonly AuditActionType[] = ["EKLEME", "GUNCELLEME", "SILME", "OTURUM"];
 
-
 /** `seq` kolonu 32 bit tamsayıdır; aralık dışı imleç yok sayılır. */
 const SEQ_AZAMI = 2_147_483_647;
 

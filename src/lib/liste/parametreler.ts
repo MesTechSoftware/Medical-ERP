@@ -26,6 +26,12 @@ export function gunEtiketi(metin: string): string {
   return metin.split("-").reverse().join(".");
 }
 
+/** Gün aralığının etiketi; tek uçta "… sonrası" / "… öncesi". En az bir uç doludur. */
+export function aralikEtiketi(bas: string | null, bit: string | null): string {
+  if (bas !== null && bit !== null) return `${gunEtiketi(bas)} – ${gunEtiketi(bit)}`;
+  return bas !== null ? `${gunEtiketi(bas)} sonrası` : `${gunEtiketi(bit!)} öncesi`;
+}
+
 export function secenek<T extends string>(metin: string | null, gecerli: readonly T[]): T | null {
   return gecerli.find((g) => g === metin) ?? null;
 }

@@ -15,7 +15,6 @@ export const BOS_SUZGEC: UrunSuzgeci = { durum: null, stok: null };
 
 export type { Parametreler };
 
-
 export function suzgecCoz(p: Parametreler): { suzgec: UrunSuzgeci; detay: string | null } {
   const detay = ilk(p, "detay");
   return {

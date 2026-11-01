@@ -71,8 +71,8 @@ describe("etkin süzgeçler ve boş durum", () => {
   });
 
   it("tek uçlu tarih etiketi", () => {
-    expect(etkinSuzgecler({ ...BOS_SUZGEC, baslangic: "2026-11-01" })[0].etiket).toBe("Tarih: 01.11.2026 –");
-    expect(etkinSuzgecler({ ...BOS_SUZGEC, bitis: "2026-11-01" })[0].etiket).toBe("Tarih: – 01.11.2026");
+    expect(etkinSuzgecler({ ...BOS_SUZGEC, baslangic: "2026-11-01" })[0].etiket).toBe("Tarih: 01.11.2026 sonrası");
+    expect(etkinSuzgecler({ ...BOS_SUZGEC, bitis: "2026-11-01" })[0].etiket).toBe("Tarih: 01.11.2026 öncesi");
     expect(etkinSuzgecler({ ...BOS_SUZGEC, yon: "CIKIS" })[0].etiket).toBe("Yön: Çıkış");
   });
 
