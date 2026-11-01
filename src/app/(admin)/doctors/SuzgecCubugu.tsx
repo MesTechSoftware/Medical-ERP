@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Ikon } from "@/components/Ikon";
+import { EtkinSuzgecler } from "@/components/liste/EtkinSuzgecler";
+import { HizliSekmeler } from "@/components/liste/HizliSekmeler";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import {
   HIZLI_SEKMELER,
@@ -52,24 +54,9 @@ export function SuzgecCubugu({
   return (
     <div className="mb-4 space-y-3">
       <div className="flex flex-wrap items-start gap-2">
-        <nav aria-label="Hızlı süzgeçler" className="flex flex-wrap gap-2">
-          {HIZLI_SEKMELER.map((f) => {
-            const etkin = ayniSuzgec(suzgec, f.suzgec);
-            return (
-              <Link
-                key={f.etiket}
-                href={doktorAdresi(f.suzgec)}
-                aria-current={etkin ? "page" : undefined}
-                className={
-                  "inline-flex h-(--toolbar-h) items-center rounded-full px-3 text-sm font-medium transition " +
-                  (etkin ? "bg-slate-900 text-white" : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-100")
-                }
-              >
-                {f.etiket}
-              </Link>
-            );
-          })}
-        </nav>
+        <HizliSekmeler
+          sekmeler={HIZLI_SEKMELER.map((f) => ({ etiket: f.etiket, adres: doktorAdresi(f.suzgec), etkin: ayniSuzgec(suzgec, f.suzgec) }))}
+        />
         <div className="ml-auto flex flex-wrap items-start gap-2">
           {/* Süzgeç değişince form yeniden kurulur: yumuşak gezinmede <select> eski değerini korur (React). */}
           <details key={doktorAdresi(suzgec)} className="relative">
@@ -159,22 +146,7 @@ export function SuzgecCubugu({
         </div>
       </div>
 
-      {etiketler.length > 0 && (
-        <ul aria-label="Etkin süzgeçler" className="flex flex-wrap gap-2">
-          {etiketler.map((e) => (
-            <li key={e.anahtar}>
-              <Link
-                href={e.kaldirAdresi}
-                aria-label={`Kaldır: ${e.etiket}`}
-                className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200"
-              >
-                {e.etiket}
-                <Ikon ad="vazgec" />
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+      <EtkinSuzgecler etiketler={etiketler} />
     </div>
   );
 }
