@@ -3,6 +3,7 @@ import { KpiCard } from "@/components/kpi/KpiCard";
 import { KpiSatiri } from "@/components/kpi/KpiSatiri";
 import { formatSayi } from "@/lib/format";
 import { BOS_SUZGEC, stokAdresi } from "@/lib/stok-listesi/suzgec";
+import { urunAdresi } from "@/lib/urun-listesi/suzgec";
 
 type Sayilar = { stoktaki: number; toplamAdet: number; kritik: number; bugunGiris: number; bugunCikis: number };
 
@@ -26,7 +27,7 @@ export function KpiKartlari({ sayilar, bugun }: { sayilar: Sayilar; bugun: strin
           ikincilMetrik={`toplam ${formatSayi(sayilar.toplamAdet)} adet`}
           karsilastirma={{ anlik: "şu an" }}
         />
-        <Link href="/products?durum=AKTIF&stok=kritik" className={KART}>
+        <Link href={urunAdresi({ durum: "AKTIF", stok: "kritik" })} className={KART}>
           <KpiCard
             etiket="Kritik stok"
             varyant="ikincil"

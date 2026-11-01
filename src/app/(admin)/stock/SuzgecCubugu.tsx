@@ -4,7 +4,7 @@ import { EtkinSuzgecler } from "@/components/liste/EtkinSuzgecler";
 import { HizliSekmeler } from "@/components/liste/HizliSekmeler";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import { HAREKET_TURLERI } from "@/lib/stok-hareket-turu";
-import { etkinSuzgecler, hizliSekmeler, sekmeAdresi, stokAdresi, type StokSuzgeci } from "@/lib/stok-listesi/suzgec";
+import { etkinSekme, etkinSuzgecler, hizliSekmeler, sekmeAdresi, stokAdresi, type StokSuzgeci } from "@/lib/stok-listesi/suzgec";
 
 const ETIKET = "mb-1 block font-medium text-slate-700";
 
@@ -25,15 +25,13 @@ function Alan({ id, etiket, children }: { id: string; etiket: string; children: 
  */
 export function SuzgecCubugu({ suzgec, bugun, sutunMenusu }: { suzgec: StokSuzgeci; bugun: string; sutunMenusu?: React.ReactNode }) {
   const etiketler = etkinSuzgecler(suzgec);
+  const sekmeler = hizliSekmeler(bugun);
+  const etkin = etkinSekme(sekmeler, suzgec);
   return (
     <div className="mb-4 space-y-3">
       <div className="flex flex-wrap items-start gap-2">
         <HizliSekmeler
-          sekmeler={hizliSekmeler(bugun).map((f) => ({
-            etiket: f.etiket,
-            adres: sekmeAdresi(suzgec, f.tarih),
-            etkin: suzgec.baslangic === f.tarih.baslangic && suzgec.bitis === f.tarih.bitis,
-          }))}
+          sekmeler={sekmeler.map((f) => ({ etiket: f.etiket, adres: sekmeAdresi(suzgec, f.tarih), etkin: f.etiket === etkin }))}
         />
         <div className="ml-auto flex flex-wrap items-start gap-2">
           {/* Süzgeç değişince form yeniden kurulur: yumuşak gezinmede <select> eski değerini korur (React). */}

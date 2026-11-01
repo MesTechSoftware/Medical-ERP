@@ -6,8 +6,8 @@ import { formatDateTime } from "@/lib/format";
 import type { StokHareketSatiri } from "@/lib/stok-listesi/sorgu";
 import { SUTUNLAR, type StokSutunu } from "@/lib/stok-listesi/sutunlar";
 
-/** Gizlenebilir sütunların başlık sınıfı (dar ekranda Konum ve Açıklama gizlenir). */
-const SINIF: Partial<Record<StokSutunu, string>> = { konum: "oncelik-dusuk", aciklama: "oncelik-dusuk" };
+/** Dar ekranda gizlenen sütunlar (Konum, Açıklama): başlık ve hücre aynı sınıfı taşır. */
+const DUSUK = "oncelik-dusuk";
 
 /**
  * Stok hareket geçmişi (spec Ü-20 §3.4). Gizli sütunun başlığı ve hücresi çizilmez. Yön rengi yoktur:
@@ -22,7 +22,6 @@ export function HareketTablosu({
   gizli: ReadonlySet<StokSutunu>;
   suzgecli: boolean;
 }) {
-  const gorunur = SUTUNLAR.filter((s) => !gizli.has(s.anahtar));
   const acik = (k: StokSutunu) => !gizli.has(k);
   return (
     <div className="tablo-kutusu">
@@ -32,16 +31,16 @@ export function HareketTablosu({
             <th>Tarih</th>
             <th>Ürün</th>
             {acik("tur") && <th>Tür</th>}
-            {acik("konum") && <th className="oncelik-dusuk">Konum</th>}
+            {acik("konum") && <th className={DUSUK}>Konum</th>}
             <th className="sayi">Miktar</th>
-            {acik("aciklama") && <th className="oncelik-dusuk">Açıklama</th>}
+            {acik("aciklama") && <th className={DUSUK}>Açıklama</th>}
             {acik("yapan") && <th>İşlemi yapan</th>}
           </tr>
         </thead>
         <tbody>
           {satirlar.length === 0 && (
             <BosDurum
-              colSpan={3 + gorunur.length}
+              colSpan={3 + SUTUNLAR.length - gizli.size}
               ikon={suzgecli ? "filtrele" : "yeni"}
               baslik={suzgecli ? "Bu süzgeçlere uyan hareket bulunamadı." : "Henüz stok hareketi yok."}
               temizleAdresi={suzgecli ? "/stock" : undefined}
@@ -66,12 +65,12 @@ export function HareketTablosu({
                   {h.belgeNo && <span className="ml-1 text-xs text-slate-500">{h.belgeNo}</span>}
                 </td>
               )}
-              {acik("konum") && <td className={SINIF.konum}>{h.konum}</td>}
+              {acik("konum") && <td className={DUSUK}>{h.konum}</td>}
               <td className="sayi">
                 {h.miktar > 0 ? "+" : "−"}
                 {Math.abs(h.miktar)}
               </td>
-              {acik("aciklama") && <td className={`text-slate-500 ${SINIF.aciklama}`}>{h.not}</td>}
+              {acik("aciklama") && <td className={`text-slate-500 ${DUSUK}`}>{h.not}</td>}
               {acik("yapan") && <td>{h.yapan ?? <span className="text-slate-400">—</span>}</td>}
             </tr>
           ))}
