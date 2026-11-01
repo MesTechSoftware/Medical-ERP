@@ -108,6 +108,18 @@ test("cari listesinde yan paneli açar; Düzenle ve Yeni Cari yoktur (X-13-2)", 
   await expect(page.getByRole("link", { name: "Yeni Cari" })).toHaveCount(0);
 });
 
+test("OPERASYON ürün panelini görür; Yeni Ürün, Düzenle, Sil yok (D-2-2)", async ({ page }) => {
+  const [u] = await query<{ id: string; name: string }>(`SELECT id, name FROM "Product" ORDER BY name LIMIT 1`);
+  await page.goto(`/products?detay=${u.id}`);
+  const panel = page.getByRole("dialog", { name: u.name });
+  await expect(panel).toBeVisible();
+  await expect(panel.getByRole("region", { name: "Fiyat listeleri" })).toBeVisible();
+  await expect(panel.getByRole("link", { name: "Stok girişi" })).toBeVisible();
+  await expect(panel.getByRole("link", { name: "Düzenle" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Yeni Ürün" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Sil" })).toHaveCount(0);
+});
+
 test("stok girişi yapar (stok hareketi — D-2 §(1))", async ({ page }) => {
   const not = `E2E operasyon girişi ${Date.now()}`;
   await page.goto("/stock");

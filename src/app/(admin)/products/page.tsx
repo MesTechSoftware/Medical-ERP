@@ -5,11 +5,12 @@ import Pagination from "@/components/Pagination";
 import { SutunSecici } from "@/components/liste/SutunSecici";
 import { gizliSutunlariCoz } from "@/lib/liste/sutunlar";
 import { getPagination, pageCount } from "@/lib/pagination";
-import { urunKpileri, urunListesi } from "@/lib/urun-listesi/sorgu";
+import { urunKpileri, urunListesi, urunPaneli } from "@/lib/urun-listesi/sorgu";
 import { SUTUNLAR, SUTUN_CEREZI } from "@/lib/urun-listesi/sutunlar";
 import { suzgecCoz, urunAdresi, type Parametreler } from "@/lib/urun-listesi/suzgec";
 import { KpiKartlari } from "./KpiKartlari";
 import { SuzgecCubugu } from "./SuzgecCubugu";
+import { UrunPaneli } from "./UrunPaneli";
 import { UrunTablosu } from "./UrunTablosu";
 import { sutunlariKaydet } from "./sutunEylemi";
 
@@ -21,14 +22,18 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
   const yonetici = session.user.role === "YONETICI";
   const params = await searchParams;
   const { page, perPage, skip, take } = getPagination({ page: tek(params.page), per: tek(params.per) });
-  const { suzgec } = suzgecCoz(params);
+  const { suzgec, detay } = suzgecCoz(params);
   const yer = { page, per: tek(params.per) ? perPage : undefined };
   // Sütun tercihi çerezdedir; gizli sütun hiç çizilmez, çerez yoksa KDV dahil gizlidir (spec §3.4).
   const gizli = gizliSutunlariCoz(SUTUNLAR, (await cookies()).get(SUTUN_CEREZI)?.value);
   const listeAdresi = urunAdresi(suzgec, yer);
 
   // Liste fiyatı varsayılan listenin satırıdır (X-10 §(5)); stok hareketlerden türer (ADR-005).
-  const [liste, sayilar] = await Promise.all([urunListesi(suzgec, { skip, take }), urunKpileri()]);
+  const [liste, sayilar, panel] = await Promise.all([
+    urunListesi(suzgec, { skip, take }),
+    urunKpileri(),
+    detay ? urunPaneli(detay) : null,
+  ]);
 
   // Sayfalama süzgeci ve sayfa boyunu korur; paneli taşımaz.
   const sayfaParametreleri = {
@@ -60,6 +65,9 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
         basePath="/products"
         params={sayfaParametreleri}
       />
+
+      {/* Geçersiz ya da bulunamayan kimlikte panel açılmaz (spec §3.6). */}
+      {panel && <UrunPaneli key={panel.urun.id} veri={panel} kapatAdresi={listeAdresi} yonetici={yonetici} />}
     </div>
   );
 }

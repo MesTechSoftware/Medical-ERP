@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { sorgu } from "../helpers";
 
 /** Ü-19 — ürün listesi: KPI kartları, süzgeç sekmeleri, sütun seçici, boş durum (Ü-3-2). */
 
@@ -62,4 +63,38 @@ test("süzgece uyan ürün yoksa boş durum ve temizleme", async ({ page }) => {
   await expect(page.getByText("Bu süzgeçlere uyan ürün bulunamadı.")).toBeVisible();
   await page.getByRole("link", { name: "Süzgeçleri temizle" }).click();
   await expect(page).toHaveURL(/\/products$/);
+});
+
+/** Yan panel (spec §3.6) — X-18 §(9) kabuğu. */
+
+test("ürün adı yan paneli açar; içerik; Esc ile kapanır, odak ada döner", async ({ page }) => {
+  // Son 10 hareketinden biri sevkiyat olan, varsayılan listede satırı bulunan ürün.
+  const [u] = await sorgu<{ id: string; name: string }>(
+    `SELECT p.id, p.name FROM "Product" p
+      WHERE EXISTS (SELECT 1 FROM (SELECT "shipmentId" FROM "StockMovement" m WHERE m."productId" = p.id
+                                    ORDER BY m."createdAt" DESC, m.id DESC LIMIT 10) s WHERE s."shipmentId" IS NOT NULL)
+        AND EXISTS (SELECT 1 FROM "PriceListItem" i JOIN "PriceList" l ON l.id = i."priceListId"
+                     WHERE i."productId" = p.id AND l.code = 'VARSAYILAN')
+      ORDER BY p.name LIMIT 1`
+  );
+  expect(u, "kurulumda sevkiyatlı ürün olmalı").toBeDefined();
+  await page.goto("/products?per=100");
+  await page.locator(`a[data-kayit="${u.id}"]`).click();
+  const panel = page.getByRole("dialog", { name: u.name });
+  await expect(panel).toBeVisible();
+  await expect(page).toHaveURL(new RegExp(`detay=${u.id}`));
+  await expect(panel.getByRole("region", { name: "Son stok hareketleri" }).getByText("Sevkiyat").first()).toBeVisible();
+  await expect(panel.getByRole("region", { name: "Fiyat listeleri" }).getByText("VARSAYILAN")).toBeVisible();
+  await expect(panel.getByRole("link", { name: "Düzenle" })).toHaveAttribute("href", `/products/${u.id}/edit`);
+
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page).not.toHaveURL(/detay=/);
+  await expect(page.locator(`a[data-kayit="${u.id}"]`)).toBeFocused();
+});
+
+test("geçersiz detay kimliğinde panel açılmaz", async ({ page }) => {
+  await page.goto("/products?detay=yok");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.getByRole("table")).toBeVisible();
 });
