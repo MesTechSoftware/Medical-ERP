@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { requireStaff } from "@/lib/session";
 import { PageHeader, LinkButton } from "@/components/ui";
 import Pagination from "@/components/Pagination";
@@ -34,6 +35,12 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
     urunKpileri(),
     detay ? urunPaneli(detay) : null,
   ]);
+
+  // Son sayfanın satırı silinmiş ya da elle büyük sayfa yazılmışsa son sayfaya gidilir; boş durum
+  // "hiç kayıt yok" demesin.
+  if (liste.satirlar.length === 0 && liste.toplam > 0) {
+    redirect(urunAdresi(suzgec, { ...yer, page: pageCount(liste.toplam, perPage), ...(detay ? { detay } : {}) }));
+  }
 
   // Sayfalama süzgeci ve sayfa boyunu korur; paneli taşımaz.
   const sayfaParametreleri = {

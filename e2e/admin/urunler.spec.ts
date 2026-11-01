@@ -98,3 +98,30 @@ test("geçersiz detay kimliğinde panel açılmaz", async ({ page }) => {
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.getByRole("table")).toBeVisible();
 });
+
+test("pasif ürünün panelinde Stok girişi yok", async ({ page }) => {
+  const [u] = await sorgu<{ id: string; name: string }>(
+    `UPDATE "Product" SET status = 'PASIF' WHERE id = (SELECT id FROM "Product" WHERE status = 'AKTIF' ORDER BY name DESC LIMIT 1)
+     RETURNING id, name`
+  );
+  expect(u, "kurulumda aktif ürün olmalı").toBeDefined();
+  try {
+    await page.goto(`/products?detay=${u.id}`);
+    const panel = page.getByRole("dialog", { name: u.name });
+    await expect(panel).toBeVisible();
+    await expect(panel.getByRole("link", { name: "Stok girişi" })).toHaveCount(0);
+  } finally {
+    await sorgu(`UPDATE "Product" SET status = 'AKTIF' WHERE id = $1`, [u.id]);
+  }
+});
+
+test("sayfa dışı adres son sayfaya gider; süzgeç ve sayfa boyu korunur", async ({ page }) => {
+  const [{ adet }] = await sorgu<{ adet: number }>(`SELECT count(*)::int AS adet FROM "Product" WHERE status = 'AKTIF'`);
+  await page.goto("/products?durum=AKTIF&per=1&page=999");
+  await expect(page).toHaveURL((u) => {
+    const p = u.searchParams;
+    return u.pathname === "/products" && p.get("durum") === "AKTIF" && p.get("per") === "1" && p.get("page") === String(adet);
+  });
+  await expect(page.locator("a[data-kayit]")).toHaveCount(1);
+  await expect(page.getByText("Henüz ürün yok.")).toHaveCount(0);
+});

@@ -229,3 +229,14 @@ test("sekmeden sonra Filtrele sekmenin süzgecini korur; kaldırılan etiket ger
   await page.getByText("Filtrele · 1").click();
   await expect(page.getByRole("form", { name: "Cari süzgeci" }).getByLabel("Bölge")).toHaveValue("");
 });
+
+test("sayfa dışı adres son sayfaya gider; süzgeç ve sayfa boyu korunur", async ({ page }) => {
+  const [{ adet }] = await sorgu<{ adet: number }>(`SELECT count(*)::int AS adet FROM "Doctor" WHERE status = 'AKTIF'`);
+  await page.goto("/doctors?durum=AKTIF&per=1&page=999");
+  await expect(page).toHaveURL((u) => {
+    const p = u.searchParams;
+    return u.pathname === "/doctors" && p.get("durum") === "AKTIF" && p.get("per") === "1" && p.get("page") === String(adet);
+  });
+  await expect(page.locator("a[data-kayit]")).toHaveCount(1);
+  await expect(page.getByText("Henüz cari yok.")).toHaveCount(0);
+});

@@ -91,7 +91,7 @@ export function UrunPaneli({
             <Sparkline
               seri={seri.map((g) => g.stok)}
               boyut="M"
-              ozet={seri.length > 0 ? `90 gün önce ${seri[0].stok}, bugün ${seri.at(-1)!.stok}` : "veri yok"}
+              ozet={seri.length > 0 ? `Dönem başında ${seri[0].stok}, bugün ${seri.at(-1)!.stok}` : "veri yok"}
             />
           </Bolum>
 
@@ -152,9 +152,12 @@ export function UrunPaneli({
         </div>
 
         <footer className="flex flex-wrap items-center gap-3 border-t border-slate-200 p-4">
-          <LinkButton href={`/stock?urun=${u.id}`} ikon="yeni">
-            Stok girişi
-          </LinkButton>
+          {/* Stok girişi formu yalnız aktif ürünü önseçer; pasif üründe düğme yoktur. */}
+          {u.status === "AKTIF" && (
+            <LinkButton href={`/stock?urun=${u.id}`} ikon="yeni">
+              Stok girişi
+            </LinkButton>
+          )}
           {yonetici && (
             <Link href={`/products/${u.id}/edit`} className={buton("metin")}>
               <Ikon ad="duzenle" />
