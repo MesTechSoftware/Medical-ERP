@@ -120,6 +120,14 @@ test("OPERASYON ürün panelini görür; Yeni Ürün, Düzenle, Sil yok (D-2-2)"
   await expect(page.getByRole("button", { name: "Sil" })).toHaveCount(0);
 });
 
+test("OPERASYON stok KPI ve hareket tablosunu görür; Stok Düzeltme yok", async ({ page }) => {
+  await page.goto("/stock");
+  await expect(page.getByRole("region", { name: "Stok sayıları" })).toBeVisible();
+  await expect(page.getByRole("columnheader", { name: "İşlemi yapan" })).toBeVisible();
+  await expect(page.locator("tbody tr[data-hareket]").first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Stok Düzeltme" })).toHaveCount(0);
+});
+
 test("stok girişi yapar (stok hareketi — D-2 §(1))", async ({ page }) => {
   const not = `E2E operasyon girişi ${Date.now()}`;
   await page.goto("/stock");

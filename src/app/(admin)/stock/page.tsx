@@ -1,31 +1,47 @@
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { PageHeader, Card, EmptyRow, StatusChip } from "@/components/ui";
-import { formatDateTime } from "@/lib/format";
+import { PageHeader, Card } from "@/components/ui";
+import Pagination from "@/components/Pagination";
+import { SutunSecici } from "@/components/liste/SutunSecici";
+import { gizliSutunlariCoz } from "@/lib/liste/sutunlar";
+import { ilk, type Parametreler } from "@/lib/liste/parametreler";
+import { getPagination, pageCount } from "@/lib/pagination";
+import { konsinyedekiMal, stokHareketleri, stokKpileri } from "@/lib/stok-listesi/sorgu";
+import { SUTUNLAR, SUTUN_CEREZI } from "@/lib/stok-listesi/sutunlar";
+import { bosDurum, stokAdresi, suzgecCoz } from "@/lib/stok-listesi/suzgec";
+import { requireStaff } from "@/lib/session";
+import { bugun, yerelGunMetni } from "@/lib/zaman";
 import StockEntryForm from "./StockEntryForm";
 import KonumBelgesiFormu from "./KonumBelgesiFormu";
 import { addConsignment, addTransfer } from "./actions";
-import { konsinyedekiMal } from "@/lib/stok-listesi/sorgu";
-import { requireStaff } from "@/lib/session";
 import DuzeltmeFormu from "./DuzeltmeFormu";
+import { HareketTablosu } from "./HareketTablosu";
+import { KpiKartlari } from "./KpiKartlari";
+import { SuzgecCubugu } from "./SuzgecCubugu";
+import { sutunlariKaydet } from "./sutunEylemi";
 
-export default async function StockPage({ searchParams }: { searchParams: Promise<{ urun?: string }> }) {
+export default async function StockPage({ searchParams }: { searchParams: Promise<Parametreler> }) {
   const session = await requireStaff();
-  const { urun } = await searchParams;
+  const params = await searchParams;
+  const urun = ilk(params, "urun");
   const yonetici = session.user.role === "YONETICI";
-  const [products, movements, konumlar, doktorlar, sebepler, konsinyeStok] = await Promise.all([
+  const { page, perPage, skip, take } = getPagination({ page: ilk(params, "page") ?? undefined, per: ilk(params, "per") ?? undefined });
+  const suzgec = suzgecCoz(params);
+  const yer = { page, per: ilk(params, "per") ? perPage : undefined };
+  const gun = yerelGunMetni(bugun());
+  // Sütun tercihi çerezdedir; gizli sütun hiç çizilmez (spec §3.5).
+  const gizli = gizliSutunlariCoz(SUTUNLAR, (await cookies()).get(SUTUN_CEREZI)?.value);
+  const listeAdresi = stokAdresi(suzgec, yer);
+
+  const [products, liste, sayilar, konumlar, doktorlar, sebepler, konsinyeStok] = await Promise.all([
     prisma.product.findMany({
       where: { status: "AKTIF" },
       orderBy: { name: "asc" },
       select: { id: true, name: true, code: true },
     }),
-    prisma.stockMovement.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 100,
-      include: {
-        product: { select: { name: true, code: true } },
-        location: { select: { name: true } },
-      },
-    }),
+    stokHareketleri(suzgec, { skip, take }),
+    stokKpileri(gun),
     prisma.stockLocation.findMany({
       where: { isActive: true },
       orderBy: [{ type: "asc" }, { sortOrder: "asc" }, { name: "asc" }],
@@ -45,6 +61,16 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
     // Konsinyedeki mal: konum × ürün tek okuma (`konumStoklari`, B-4-9); pasif ürün de görünür.
     konsinyedekiMal(),
   ]);
+  // Son sayfanın satırı kalmamış ya da elle büyük sayfa yazılmışsa son sayfaya gidilir (PR #85).
+  if (liste.satirlar.length === 0 && liste.toplam > 0) {
+    redirect(stokAdresi(suzgec, { ...yer, page: pageCount(liste.toplam, perPage) }));
+  }
+  // Sayfalama süzgeci ve sayfa boyunu korur.
+  const sayfaParametreleri = {
+    ...Object.fromEntries(new URL(stokAdresi(suzgec), "http://x").searchParams),
+    per: ilk(params, "per") ?? undefined,
+  };
+
   const depolar = konumlar.filter((k) => k.type === "DEPO");
   const konsinyeler = konumlar.filter((k) => k.type === "KONSINYE");
   const urunSecenekleri = products.map((p) => ({ value: p.id, label: `${p.name} (${p.code})` }));
@@ -56,6 +82,8 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
         description="Stok girişleri ve hareket geçmişi"
       />
 
+      <KpiKartlari sayilar={sayilar} bugun={gun} />
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-1">
           <Card>
@@ -63,7 +91,7 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
               Stok Girişi
             </h2>
             {/* Dashboard'un kritik stok hızlı işlemi ürünü önseçer (`?urun=`); yalnız aktif ürün. */}
-            <StockEntryForm products={products} seciliUrunId={products.some((p) => p.id === urun) ? urun : undefined} />
+            <StockEntryForm products={products} seciliUrunId={products.some((p) => p.id === urun) ? urun! : undefined} />
           </Card>
 
           {/* B-7 · D-2 §(2): stok düzeltme yalnız yöneticinin; sunucuda da requireAdmin. */}
@@ -148,49 +176,19 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
             <h2 className="mb-4 text-sm font-semibold text-slate-900">
               Hareket Geçmişi
             </h2>
-            <div className="tablo-kutusu">
-              <table className="veri-tablosu">
-                <thead>
-                  <tr>
-                    <th>Tarih</th>
-                    <th>Ürün</th>
-                    <th>Tip</th>
-                    <th className="sayi">Miktar</th>
-                    <th className="oncelik-dusuk">Açıklama</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {movements.length === 0 && (
-                    <EmptyRow colSpan={5} text="Henüz hareket yok." />
-                  )}
-                  {movements.map((m) => (
-                    <tr key={m.id}>
-                      <td className="whitespace-nowrap text-slate-500">
-                        {formatDateTime(m.createdAt)}
-                      </td>
-                      <td className="text-slate-900">
-                        {m.product.name}
-                        <span className="ml-1 text-xs text-slate-400">
-                          {m.product.code}
-                        </span>
-                      </td>
-                      <td>
-                        {/* Yön bir durum değildir: çıkış hata sayılmaz, metin yeter (ADR-009). */}
-                        <StatusChip ton="notr">{m.type === "GIRIS" ? "Giriş" : "Çıkış"}</StatusChip>
-                      </td>
-                      <td className="sayi">
-                        {m.type === "GIRIS" ? "+" : "−"}
-                        {m.quantity}
-                      </td>
-                      <td className="text-slate-500 oncelik-dusuk">
-                        {m.note}
-                        {konumlar.length > 1 && <span className="ml-1 text-xs text-slate-400">· {m.location.name}</span>}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <SuzgecCubugu
+              suzgec={suzgec}
+              bugun={gun}
+              sutunMenusu={<SutunSecici sutunlar={SUTUNLAR} gizli={gizli} action={sutunlariKaydet} donus={listeAdresi} />}
+            />
+            <HareketTablosu satirlar={liste.satirlar} gizli={gizli} suzgecli={bosDurum(suzgec) === "suzgecli"} />
+            <Pagination
+              page={page}
+              totalPages={pageCount(liste.toplam, perPage)}
+              total={liste.toplam}
+              basePath="/stock"
+              params={sayfaParametreleri}
+            />
           </Card>
         </div>
       </div>
