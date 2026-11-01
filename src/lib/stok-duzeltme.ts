@@ -58,6 +58,7 @@ export async function stokDuzeltmeYaz(
       type: k.fark > 0 ? ("GIRIS" as const) : ("CIKIS" as const),
       quantity: Math.abs(k.fark),
       note: "Stok düzeltme",
+      createdById: g.yapan.id,
       ...bag,
     }));
 

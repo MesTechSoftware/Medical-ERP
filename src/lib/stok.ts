@@ -49,6 +49,29 @@ export async function hesaplaStoklar(
 }
 
 /**
+ * Konum × ürün stoğu tek sorguda (B-4-9): her değer `hesaplaStok(urun, konum)` ile aynıdır. Her
+ * istenen konum haritadadır; hareketsiz konum boş haritadır.
+ */
+export async function konumStoklari(
+  konumIdler: readonly string[],
+  db: Db = prisma
+): Promise<Map<string, Map<string, number>>> {
+  const stoklar = new Map<string, Map<string, number>>(konumIdler.map((id) => [id, new Map()]));
+  if (konumIdler.length === 0) return stoklar;
+  const gruplar = await db.stockMovement.groupBy({
+    by: ["locationId", "productId", "type"],
+    where: { locationId: { in: [...konumIdler] } },
+    _sum: { quantity: true },
+  });
+  for (const g of gruplar) {
+    const miktar = g._sum.quantity ?? 0;
+    const konum = stoklar.get(g.locationId)!;
+    konum.set(g.productId, (konum.get(g.productId) ?? 0) + (g.type === "GIRIS" ? miktar : -miktar));
+  }
+  return stoklar;
+}
+
+/**
  * Son `gunSayisi` İstanbul gününün gün sonu stoğu, eskiden yeniye; son eleman bugündür (B-4-7).
  * Her nokta `hesaplaStok(urun, undefined, gün)` ile aynıdır: başlangıç o yoldan okunur, aralıktaki
  * hareketler gün gün eklenir (E-1 gün sınırı).
@@ -104,7 +127,10 @@ export async function stokKilitle(tx: Prisma.TransactionClient, urunIdler: reado
   await tx.$queryRaw`SELECT "id" FROM "Product" WHERE "id" IN (${Prisma.join(idler)}) ORDER BY "id" FOR UPDATE`;
 }
 
-export type StokHareketi = Omit<Prisma.StockMovementUncheckedCreateInput, "id" | "createdAt">;
+/** Yazılacak hareket; işlemi yapan zorunludur (B-4 eki 01.11 — B-4-8). */
+export type StokHareketi = Omit<Prisma.StockMovementUncheckedCreateInput, "id" | "createdAt" | "createdById"> & {
+  createdById: string;
+};
 
 export type NegatifStok = {
   kuralKodu: "NEGATIF_STOK";

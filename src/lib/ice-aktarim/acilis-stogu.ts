@@ -78,7 +78,7 @@ export const ACILIS_STOGU_TANIMI: IceAktarimTanimi<Acilis> = {
   async yaz(tx, yazilacak, parti) {
     await stokHareketiYaz(
       tx,
-      yazilacak.map((a) => ({ ...a, type: "GIRIS" as const, note: "Açılış stoğu", importBatchId: parti.id }))
+      yazilacak.map((a) => ({ ...a, type: "GIRIS" as const, note: "Açılış stoğu", importBatchId: parti.id, createdById: parti.yapanId }))
     );
   },
 };

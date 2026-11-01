@@ -113,6 +113,7 @@ async function main() {
         type: "GIRIS",
         quantity: s.stok,
         note: "Başlangıç stok girişi",
+        createdById: admin.id,
       },
     });
     products.push({ id: created.id, code: s.code, fiyat: s.fiyat });

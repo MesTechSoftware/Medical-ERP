@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { prisma } from "@/lib/db";
-import { hesaplaStok, hesaplaStoklar, stokHareketiYaz, stokSerisi } from "@/lib/stok";
+import { hesaplaStok, hesaplaStoklar, konumStoklari, stokHareketiYaz, stokSerisi } from "@/lib/stok";
 import { bugun, gunEkle, yerelGunAraligi, yerelGunMetni } from "@/lib/zaman";
 import { referansVeri, yeniDoktorVerisi } from "../../test/integration/referans";
 
@@ -10,12 +10,13 @@ import { referansVeri, yeniDoktorVerisi } from "../../test/integration/referans"
 let depoId = "";
 let konsinyeId = "";
 let taxRateId = "";
+let yapanId = "";
 
 const urun = (code: string) => prisma.product.create({ data: { name: code, code, taxRateId } });
 const giris = (productId: string, quantity: number, locationId = depoId) =>
-  ({ productId, locationId, type: "GIRIS", quantity }) as const;
+  ({ productId, locationId, type: "GIRIS", quantity, createdById: yapanId }) as const;
 const cikis = (productId: string, quantity: number, locationId = depoId) =>
-  ({ productId, locationId, type: "CIKIS", quantity }) as const;
+  ({ productId, locationId, type: "CIKIS", quantity, createdById: yapanId }) as const;
 const bekle = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 beforeEach(async () => {
@@ -26,6 +27,7 @@ beforeEach(async () => {
   depoId = ref.depo.id;
   konsinyeId = kns.id;
   taxRateId = ref.kdv20.id;
+  yapanId = (await prisma.user.create({ data: { name: "Depocu", email: "depocu@medikal.local", passwordHash: "x", role: "OPERASYON" } })).id;
 });
 
 describe("stokHareketiYaz — yazım (B-4-2)", () => {
@@ -52,6 +54,16 @@ describe("stokHareketiYaz — yazım (B-4-2)", () => {
     ).rejects.toThrow();
     expect(birinciBitti).toBe(false);
     await birinci;
+  });
+});
+
+describe("stokHareketiYaz — hareketi yapan (B-4-8)", () => {
+  it("stokHareketiYaz yapanı yazar", async () => {
+    const u = await urun("U1");
+    const yapan = await prisma.user.create({ data: { name: "Y", email: "y@medikal.local", passwordHash: "x", role: "YONETICI" } });
+    await prisma.$transaction((tx) => stokHareketiYaz(tx, [{ ...giris(u.id, 5), createdById: yapan.id }]));
+    const h = await prisma.stockMovement.findFirstOrThrow({ where: { productId: u.id } });
+    expect(h.createdById).toBe(yapan.id);
   });
 });
 
@@ -190,5 +202,40 @@ describe("stokSerisi (B-4-7)", () => {
     const seri = await stokSerisi(u.id, 90);
     expect(seri).toHaveLength(90);
     expect(seri.every((n) => n.stok === 0)).toBe(true);
+  });
+});
+
+describe("konumStoklari (B-4-9)", () => {
+  it("her konum ve ürün için hesaplaStok ile aynı; hareketsiz konum boş", async () => {
+    const doktor2 = await prisma.doctor.create({ data: yeniDoktorVerisi("Dr. İki") });
+    const kns2 = await prisma.stockLocation.create({ data: { code: "KNS-2", name: "Konsinye 2", type: "KONSINYE", doctorId: doktor2.id } });
+    const doktor3 = await prisma.doctor.create({ data: yeniDoktorVerisi("Dr. Üç") });
+    const bos = await prisma.stockLocation.create({ data: { code: "KNS-3", name: "Konsinye 3", type: "KONSINYE", doctorId: doktor3.id } });
+    const [a, b, c] = await Promise.all([urun("A"), urun("B"), urun("C")]);
+    await prisma.$transaction((tx) =>
+      stokHareketiYaz(tx, [
+        giris(a.id, 10, konsinyeId),
+        cikis(a.id, 3, konsinyeId),
+        giris(b.id, 4, konsinyeId),
+        cikis(b.id, 4, konsinyeId),
+        giris(b.id, 2, kns2.id),
+        cikis(c.id, 1, kns2.id),
+        giris(c.id, 7),
+      ])
+    );
+
+    const konumlar = [konsinyeId, kns2.id, bos.id];
+    const stoklar = await konumStoklari(konumlar);
+    for (const k of konumlar) {
+      for (const u of [a, b, c]) {
+        expect(stoklar.get(k)?.get(u.id) ?? 0, `${k} × ${u.code}`).toBe(await hesaplaStok(u.id, k));
+      }
+    }
+    expect(stoklar.get(bos.id)?.size).toBe(0);
+    expect(stoklar.has(depoId)).toBe(false);
+  });
+
+  it("boş girdi boş harita", async () => {
+    expect((await konumStoklari([])).size).toBe(0);
   });
 });
