@@ -4,7 +4,7 @@ import { formatDateTime } from "@/lib/format";
 import StockEntryForm from "./StockEntryForm";
 import KonumBelgesiFormu from "./KonumBelgesiFormu";
 import { addConsignment, addTransfer } from "./actions";
-import { hesaplaStok } from "@/lib/stok";
+import { konsinyedekiMal } from "@/lib/stok-listesi/sorgu";
 import { requireStaff } from "@/lib/session";
 import DuzeltmeFormu from "./DuzeltmeFormu";
 
@@ -45,14 +45,8 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
   ]);
   const depolar = konumlar.filter((k) => k.type === "DEPO");
   const konsinyeler = konumlar.filter((k) => k.type === "KONSINYE");
-  // Konsinyedeki mal: konum × ürün, tek okuma yolu hesaplaStok() (B-4); yalnız sıfırdan farklı satırlar.
-  const konsinyeStok = (
-    await Promise.all(
-      konsinyeler.flatMap((k) =>
-        products.map(async (p) => ({ konum: k.name, urun: p.name, miktar: await hesaplaStok(p.id, k.id) }))
-      )
-    )
-  ).filter((r) => r.miktar !== 0);
+  // Konsinyedeki mal: konum × ürün tek okuma (`konumStoklari`, B-4-9); pasif ürün de görünür.
+  const konsinyeStok = await konsinyedekiMal();
   const urunSecenekleri = products.map((p) => ({ value: p.id, label: `${p.name} (${p.code})` }));
 
   return (
