@@ -91,7 +91,7 @@ export function UrunPaneli({
             <Sparkline
               seri={seri.map((g) => g.stok)}
               boyut="M"
-              ozet={seri.length > 0 ? `${seri.length - 1} gün önce ${seri[0].stok}, bugün ${seri.at(-1)!.stok}` : "veri yok"}
+              ozet={seri.length > 0 ? `Dönem başında ${seri[0].stok}, bugün ${seri.at(-1)!.stok}` : "veri yok"}
             />
           </Bolum>
 

@@ -118,7 +118,8 @@ export async function urunKpileri(): Promise<{ toplam: number; aktif: number; kr
 export async function urunPaneli(id: string): Promise<UrunPaneli | null> {
   const urun = await prisma.product.findUnique({ where: { id }, select: URUN_SECIMI });
   if (!urun) return null;
-  const [seri, hareketler, fiyatSatirlari, fiyatlar] = await Promise.all([
+  const [stoklar, seri, hareketler, fiyatSatirlari, fiyatlar] = await Promise.all([
+    hesaplaStoklar([id]),
     stokSerisi(id, 90),
     prisma.stockMovement.findMany({
       where: { productId: id },
@@ -149,8 +150,7 @@ export async function urunPaneli(id: string): Promise<UrunPaneli | null> {
   }
 
   return {
-    // Başlıktaki stok serinin son noktasıdır (bugünkü stok, B-4-7): ikisi aynı okumadan gelir.
-    urun: satir(urun, seri.at(-1)!.stok, fiyatlar.get(id)),
+    urun: satir(urun, stoklar.get(id)!, fiyatlar.get(id)),
     seri,
     hareketler: hareketler.map((h) => ({
       id: h.id,
