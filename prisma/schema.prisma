@@ -495,6 +495,7 @@ model StockMovement {
   createdAt DateTime @default(now()) @db.Timestamptz(3)
 
   @@index([productId, locationId])
+  @@index([createdAt]) // Ü-20: stok ekranı hareket listesi tarihe göre sıralar ve süzer
 }
 
 // ─── Belgeler (hepsi belgeNo + updatedAt taşır — K-4, A-14) ──────────────────

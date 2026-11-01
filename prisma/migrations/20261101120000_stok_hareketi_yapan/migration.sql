@@ -3,6 +3,9 @@
 -- AlterTable
 ALTER TABLE "StockMovement" ADD COLUMN "createdById" TEXT;
 
+-- CreateIndex — Ü-20: stok ekranı hareket listesi tarihe göre sıralar ve süzer.
+CREATE INDEX "StockMovement_createdAt_idx" ON "StockMovement"("createdAt");
+
 -- AddForeignKey
 ALTER TABLE "StockMovement" ADD CONSTRAINT "StockMovement_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 

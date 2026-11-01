@@ -12,7 +12,7 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
   const session = await requireStaff();
   const { urun } = await searchParams;
   const yonetici = session.user.role === "YONETICI";
-  const [products, movements, konumlar, doktorlar, sebepler] = await Promise.all([
+  const [products, movements, konumlar, doktorlar, sebepler, konsinyeStok] = await Promise.all([
     prisma.product.findMany({
       where: { status: "AKTIF" },
       orderBy: { name: "asc" },
@@ -42,11 +42,11 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
       orderBy: { sortOrder: "asc" },
       select: { id: true, name: true },
     }),
+    // Konsinyedeki mal: konum × ürün tek okuma (`konumStoklari`, B-4-9); pasif ürün de görünür.
+    konsinyedekiMal(),
   ]);
   const depolar = konumlar.filter((k) => k.type === "DEPO");
   const konsinyeler = konumlar.filter((k) => k.type === "KONSINYE");
-  // Konsinyedeki mal: konum × ürün tek okuma (`konumStoklari`, B-4-9); pasif ürün de görünür.
-  const konsinyeStok = await konsinyedekiMal();
   const urunSecenekleri = products.map((p) => ({ value: p.id, label: `${p.name} (${p.code})` }));
 
   return (

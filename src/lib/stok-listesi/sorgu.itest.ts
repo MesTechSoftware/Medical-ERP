@@ -162,4 +162,16 @@ describe("konsinyedekiMal", () => {
       { konum: "Konsinye B", urun: "Ürün Y", miktar: 3 },
     ]);
   });
+
+  it("konumlar tanımlı sırayla (sortOrder), sonra adla", async () => {
+    const d1 = await prisma.doctor.create({ data: yeniDoktorVerisi("Dr. Bir") });
+    const d2 = await prisma.doctor.create({ data: yeniDoktorVerisi("Dr. İki") });
+    await prisma.stockLocation.create({ data: { code: "KNS-ON", name: "A Konsinye", type: "KONSINYE", doctorId: d1.id, sortOrder: 2 } });
+    await prisma.stockLocation.create({ data: { code: "KNS-ARD", name: "B Konsinye", type: "KONSINYE", doctorId: d2.id, sortOrder: 1 } });
+    const u = await urun("S");
+    const [a, b] = await Promise.all(["KNS-ON", "KNS-ARD"].map((code) => prisma.stockLocation.findUniqueOrThrow({ where: { code } })));
+    await hareket({ productId: u.id, locationId: a.id, quantity: 1 });
+    await hareket({ productId: u.id, locationId: b.id, quantity: 1 });
+    expect((await konsinyedekiMal()).map((r) => r.konum)).toEqual(["B Konsinye", "A Konsinye"]);
+  });
 });

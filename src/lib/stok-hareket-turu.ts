@@ -50,14 +50,14 @@ export const HAREKET_TURLERI: readonly { kod: HareketTuruKodu; etiket: string }[
   ...KAYNAKLAR.map(([, kod, etiket]) => ({ kod, etiket })),
 ];
 
+const kaynak = (h: HareketKaynagi) => KAYNAKLAR.find(([alan]) => h[alan] !== null);
+
 export function hareketTuruKodu(h: HareketKaynagi): HareketTuruKodu {
-  return KAYNAKLAR.find(([alan]) => h[alan] !== null)?.[1] ?? "giris";
+  return kaynak(h)?.[1] ?? "giris";
 }
 
 export function hareketTuru(h: HareketKaynagi): string {
-  const kod = hareketTuruKodu(h);
-  if (kod === "giris") return h.type === "GIRIS" ? "Stok girişi" : "Çıkış";
-  return HAREKET_TURLERI.find((t) => t.kod === kod)!.etiket;
+  return kaynak(h)?.[2] ?? (h.type === "GIRIS" ? "Stok girişi" : "Çıkış");
 }
 
 /**

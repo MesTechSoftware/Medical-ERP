@@ -119,20 +119,22 @@ export async function stokKpileri(
 
 /**
  * Konsinyedeki mal (spec §3.7): aktif konsinye konumlarında sıfırdan farklı her ürün — pasif ürün
- * ve eksiye düşmüş konum dahil. Konum, sonra ürün adına göre.
+ * ve eksiye düşmüş konum dahil. Konumlar tanımlı sırayla (`sortOrder`, ad), konum içinde ürün adıyla.
  */
 export async function konsinyedekiMal(): Promise<{ konum: string; urun: string; miktar: number }[]> {
   const konumlar = await prisma.stockLocation.findMany({
     where: { type: "KONSINYE", isActive: true },
+    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     select: { id: true, name: true },
   });
   const stoklar = await konumStoklari(konumlar.map((k) => k.id));
   const urunIdler = [...new Set([...stoklar.values()].flatMap((m) => [...m.keys()]))];
   const urunler = await prisma.product.findMany({ where: { id: { in: urunIdler } }, select: { id: true, name: true } });
   const ad = new Map(urunler.map((u) => [u.id, u.name]));
-  return konumlar
-    .flatMap((k) =>
-      [...stoklar.get(k.id)!].filter(([, miktar]) => miktar !== 0).map(([urunId, miktar]) => ({ konum: k.name, urun: ad.get(urunId)!, miktar }))
-    )
-    .sort((a, b) => a.konum.localeCompare(b.konum, "tr") || a.urun.localeCompare(b.urun, "tr"));
+  return konumlar.flatMap((k) =>
+    [...stoklar.get(k.id)!]
+      .filter(([, miktar]) => miktar !== 0)
+      .map(([urunId, miktar]) => ({ konum: k.name, urun: ad.get(urunId)!, miktar }))
+      .sort((a, b) => a.urun.localeCompare(b.urun, "tr"))
+  );
 }

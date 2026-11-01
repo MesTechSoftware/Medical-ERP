@@ -1,5 +1,5 @@
 import { HAREKET_TURLERI, type HareketTuruKodu } from "@/lib/stok-hareket-turu";
-import { gun, ilk, secenek, type Parametreler } from "@/lib/liste/parametreler";
+import { gun, gunEtiketi, ilk, secenek, type Parametreler } from "@/lib/liste/parametreler";
 import { gunEkle, yerelGunMetni } from "@/lib/zaman";
 
 /**
@@ -68,8 +68,6 @@ export function hizliSekmeler(bugun: string): { etiket: "Tümü" | "Bugün" | "S
 export function sekmeAdresi(s: StokSuzgeci, tarih: Tarih): string {
   return stokAdresi({ ...s, ...tarih });
 }
-
-const gunEtiketi = (metin: string) => metin.split("-").reverse().join(".");
 
 /** Etkin süzgeçlerin etiketleri, her biri o alanı düşüren adresle. */
 export function etkinSuzgecler(s: StokSuzgeci): { anahtar: "tarih" | "tur" | "yon"; etiket: string; kaldirAdresi: string }[] {
