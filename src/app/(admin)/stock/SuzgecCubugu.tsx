@@ -3,10 +3,10 @@ import Link from "next/link";
 import { Ikon } from "@/components/Ikon";
 import { EtkinSuzgecler } from "@/components/liste/EtkinSuzgecler";
 import { HizliSekmeler } from "@/components/liste/HizliSekmeler";
-import { SuzgecPaneli } from "@/components/liste/SuzgecPaneli";
+import { AcilirPanel } from "@/components/liste/AcilirPanel";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import { HAREKET_TURLERI } from "@/lib/stok-hareket-turu";
-import { etkinSekme, etkinSuzgecler, hizliSekmeler, sekmeAdresi, stokAdresi, type StokSuzgeci } from "@/lib/stok-listesi/suzgec";
+import { etkinSekme, etkinSuzgecler, hizliSekmeler, sekmeAdresi, type StokSuzgeci } from "@/lib/stok-listesi/suzgec";
 
 const ETIKET = "mb-1 block font-medium text-slate-700";
 
@@ -28,11 +28,14 @@ function Alan({ id, etiket, children }: { id: string; etiket: string; children: 
  */
 export function SuzgecCubugu({
   suzgec,
+  formAnahtari,
   bugun,
   urunler,
   sutunMenusu,
 }: {
   suzgec: StokSuzgeci;
+  /** Adresin ham sorgusu (`sorguMetni`): her yeni adreste form yeniden kurulur. */
+  formAnahtari: string;
   bugun: string;
   urunler: { value: string; label: string }[];
   sutunMenusu?: React.ReactNode;
@@ -47,8 +50,8 @@ export function SuzgecCubugu({
           sekmeler={sekmeler.map((f) => ({ etiket: f.etiket, adres: sekmeAdresi(suzgec, f.tarih), etkin: f.etiket === etkin }))}
         />
         <div className="ml-auto flex flex-wrap items-start gap-2">
-          {/* Süzgeç değişince form yeniden kurulur: yumuşak gezinmede <select> eski değerini korur (React). */}
-          <SuzgecPaneli key={stokAdresi(suzgec)} className="relative">
+          {/* Adres değişince form yeniden kurulur: yumuşak gezinmede <select> eski değerini korur (React). */}
+          <AcilirPanel key={formAnahtari} className="relative">
             <summary className={`${buton("ikincil")} cursor-pointer list-none`}>
               <Ikon ad="filtrele" />
               {etiketler.length > 0 ? `Filtrele · ${etiketler.length}` : "Filtrele"}
@@ -105,7 +108,7 @@ export function SuzgecCubugu({
                 </Link>
               </div>
             </Form>
-          </SuzgecPaneli>
+          </AcilirPanel>
           {sutunMenusu}
         </div>
       </div>

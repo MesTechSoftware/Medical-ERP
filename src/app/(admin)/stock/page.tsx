@@ -5,7 +5,7 @@ import { PageHeader, Card } from "@/components/ui";
 import Pagination from "@/components/Pagination";
 import { SutunSecici } from "@/components/liste/SutunSecici";
 import { gizliSutunlariCoz } from "@/lib/liste/sutunlar";
-import { ilk, type Parametreler } from "@/lib/liste/parametreler";
+import { ilk, sorguMetni, type Parametreler } from "@/lib/liste/parametreler";
 import { getPagination, pageCount } from "@/lib/pagination";
 import { konsinyedekiMal, mevcutStok, stokHareketleri, stokKpileri } from "@/lib/stok-listesi/sorgu";
 import { SUTUNLAR, SUTUN_CEREZI } from "@/lib/stok-listesi/sutunlar";
@@ -195,6 +195,7 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
             </h2>
             <SuzgecCubugu
               suzgec={suzgec}
+              formAnahtari={sorguMetni(params)}
               bugun={gun}
               urunler={urunSuzgeci}
               sutunMenusu={<SutunSecici sutunlar={SUTUNLAR} gizli={gizli} action={sutunlariKaydet} donus={listeAdresi} />}

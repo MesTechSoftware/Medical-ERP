@@ -1,5 +1,6 @@
 import Form from "next/form";
 import Link from "next/link";
+import { Fragment } from "react";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import { Ikon } from "@/components/Ikon";
 
@@ -12,12 +13,13 @@ export function donemAciklamasi(anahtar: string): string {
 /**
  * Rapor dönemi (X-1 §(2)): varsayılan içinde bulunulan aydır; "tüm zamanlar" ayrı,
  * bilinçli bir seçimdir. GET formu — dönem URL'dedir; `next/form` istemci tarafında gezer, JS'siz de
- * çalışır. Dönem değişince form yeniden kurulur: "Tüm zamanlar"dan sonra ay alanı eski değerde kalmaz.
+ * çalışır. Adresteki ham `donem` değişince form yeniden kurulur: "Tüm zamanlar"dan ya da geçersiz bir ay
+ * yazılıp varsayılana dönüldükten sonra ay alanı eski değerde kalmaz.
  */
-export default function DonemSecici({ anahtar, yol }: { anahtar: string; yol: string }) {
+export default function DonemSecici({ anahtar, ham, yol }: { anahtar: string; ham: string | undefined; yol: string }) {
   const tum = anahtar === "tum";
   return (
-    <div key={anahtar}>
+    <Fragment key={ham ?? ""}>
       <Form action={yol} prefetch={false} className="mb-6 flex flex-wrap items-end gap-2">
         <div>
           <label htmlFor="donem" className="mb-1 block text-xs text-slate-500">
@@ -47,6 +49,6 @@ export default function DonemSecici({ anahtar, yol }: { anahtar: string; yol: st
         </Link>
         <p className="w-full text-xs text-slate-500">{donemAciklamasi(anahtar)}</p>
       </Form>
-    </div>
+    </Fragment>
   );
 }

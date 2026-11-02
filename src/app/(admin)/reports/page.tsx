@@ -33,7 +33,8 @@ export default async function ReportsPage({
 }) {
   const session = await requireAdmin();
   const an = simdi();
-  const donem = donemCoz((await searchParams).donem, an);
+  const ham = (await searchParams).donem;
+  const donem = donemCoz(ham, an);
   const k = karsilastirmaAraliklari(donem, an);
   const aylar = sonAylar(6, donemBitisAyi(donem, an), an);
   const baglam = { yol: "/reports", kullaniciId: session.user.id };
@@ -56,7 +57,7 @@ export default async function ReportsPage({
         description="Ciro ve performans"
       />
 
-      <DonemSecici anahtar={donem.anahtar} yol="/reports" />
+      <DonemSecici anahtar={donem.anahtar} ham={ham} yol="/reports" />
 
       {/* FR-60: kanal karşılaştırması C5'te söküldü (X-8) */}
       <KpiSatiri>

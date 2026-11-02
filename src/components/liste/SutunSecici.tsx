@@ -1,4 +1,5 @@
 import { Ikon } from "@/components/Ikon";
+import { AcilirPanel } from "@/components/liste/AcilirPanel";
 import { buton } from "@/components/stil";
 import type { SutunTanimi } from "@/lib/liste/sutunlar";
 
@@ -19,7 +20,7 @@ export function SutunSecici<K extends string>({
 }) {
   return (
     // Kaydedince menü yeni tercihle yeniden kurulur (yönlendirme yumuşak gezinmedir).
-    <details key={[...gizli].join(",")} className="relative">
+    <AcilirPanel key={[...gizli].join(",")} className="relative">
       <summary className={`${buton("ikincil")} cursor-pointer list-none`}>
         <Ikon ad="duzenle" />
         Sütunlar
@@ -50,6 +51,6 @@ export function SutunSecici<K extends string>({
           </button>
         </div>
       </form>
-    </details>
+    </AcilirPanel>
   );
 }

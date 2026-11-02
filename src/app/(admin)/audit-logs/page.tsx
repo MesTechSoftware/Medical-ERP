@@ -1,5 +1,6 @@
 import Form from "next/form";
 import Link from "next/link";
+import { Fragment } from "react";
 
 import { DetayPaneli, KayitYokPaneli } from "@/components/denetim/DetayPaneli";
 import { ImlecSayfalama } from "@/components/denetim/ImlecSayfalama";
@@ -12,6 +13,7 @@ import { varlikEtiketi } from "@/lib/denetim/ozet";
 import { denetimKaydi, denetimListesi, kullaniciSecenekleri } from "@/lib/denetim/sorgu";
 import { SISTEM, denetimAdresi, suzgecCoz, type Imlec } from "@/lib/denetim/suzgec";
 import { formatDateTime } from "@/lib/format";
+import { sorguMetni } from "@/lib/liste/parametreler";
 import { ROLE_LABEL } from "@/lib/roles";
 import { requireAdmin } from "@/lib/session";
 
@@ -28,7 +30,8 @@ export default async function DenetimKaydiSayfasi({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   await requireAdmin();
-  const { suzgec, imlec, kayit } = suzgecCoz(await searchParams);
+  const params = await searchParams;
+  const { suzgec, imlec, kayit } = suzgecCoz(params);
   const [sayfa, kullanicilar, detay] = await Promise.all([
     denetimListesi(suzgec, imlec),
     kullaniciSecenekleri(),
@@ -44,9 +47,9 @@ export default async function DenetimKaydiSayfasi({
         description="Sistemdeki işlemlerin değiştirilemez kaydı; her kayıt zincirle mühürlüdür. Salt okunur."
       />
 
-      {/* `next/form` istemci tarafında gezer; süzgeç değişince form yeniden kurulur, yoksa Temizle'den
+      {/* `next/form` istemci tarafında gezer; adres değişince form yeniden kurulur, yoksa Temizle'den
           sonra <select>'ler eski değeri gösterirdi (React denetimsiz alanı sıfırlamaz). */}
-      <div key={denetimAdresi(suzgec)}>
+      <Fragment key={sorguMetni(params)}>
         <Form
           action="/audit-logs"
           prefetch={false}
@@ -127,7 +130,7 @@ export default async function DenetimKaydiSayfasi({
             Temizle
           </Link>
         </Form>
-      </div>
+      </Fragment>
 
       <Card>
         <div className="tablo-kutusu">

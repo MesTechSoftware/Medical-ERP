@@ -24,7 +24,8 @@ export default async function MyReportPage({
 }) {
   const session = await requireSeller();
   const an = simdi();
-  const donem = donemCoz((await searchParams).donem, an);
+  const ham = (await searchParams).donem;
+  const donem = donemCoz(ham, an);
   const k = karsilastirmaAraliklari(donem, an);
   const aylar = sonAylar(6, donemBitisAyi(donem, an), an);
   const not = karsilastirmaNotu(k.devamEdiyor);
@@ -40,7 +41,7 @@ export default async function MyReportPage({
   return (
     <div>
       <PageHeader title="Raporum" description="Dönem cirom, hakedişim ve tahsilatım" />
-      <DonemSecici anahtar={donem.anahtar} yol="/my-report" />
+      <DonemSecici anahtar={donem.anahtar} ham={ham} yol="/my-report" />
       <KpiSatiri>
         <KpiCard
           etiket="Cirom"

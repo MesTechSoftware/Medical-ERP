@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Ikon } from "@/components/Ikon";
 import { EtkinSuzgecler } from "@/components/liste/EtkinSuzgecler";
 import { HizliSekmeler } from "@/components/liste/HizliSekmeler";
-import { SuzgecPaneli } from "@/components/liste/SuzgecPaneli";
+import { AcilirPanel } from "@/components/liste/AcilirPanel";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import {
   HIZLI_SEKMELER,
@@ -43,10 +43,13 @@ function Alan({ id, etiket, children }: { id: string; etiket: string; children: 
  */
 export function SuzgecCubugu({
   suzgec,
+  formAnahtari,
   secenekler,
   sutunMenusu,
 }: {
   suzgec: DoktorSuzgeci;
+  /** Adresin ham sorgusu (`sorguMetni`): her yeni adreste form yeniden kurulur. */
+  formAnahtari: string;
   secenekler: { bolgeler: string[]; saticilar: { id: string; name: string }[] };
   sutunMenusu?: React.ReactNode;
 }) {
@@ -61,8 +64,8 @@ export function SuzgecCubugu({
           sekmeler={HIZLI_SEKMELER.map((f) => ({ etiket: f.etiket, adres: doktorAdresi(f.suzgec), etkin: ayniSuzgec(suzgec, f.suzgec) }))}
         />
         <div className="ml-auto flex flex-wrap items-start gap-2">
-          {/* Süzgeç değişince form yeniden kurulur: yumuşak gezinmede <select> eski değerini korur (React). */}
-          <SuzgecPaneli key={doktorAdresi(suzgec)} className="relative">
+          {/* Adres değişince form yeniden kurulur: yumuşak gezinmede <select> eski değerini korur (React). */}
+          <AcilirPanel key={formAnahtari} className="relative">
             <summary className={`${buton("ikincil")} cursor-pointer list-none`}>
               <Ikon ad="filtrele" />
               {sayi > 0 ? `Filtrele · ${sayi}` : "Filtrele"}
@@ -144,7 +147,7 @@ export function SuzgecCubugu({
                 </Link>
               </div>
             </Form>
-          </SuzgecPaneli>
+          </AcilirPanel>
           {sutunMenusu}
         </div>
       </div>

@@ -180,3 +180,28 @@ test("stok düzeltmede Satırı sil kırmızıdır", async ({ page }) => {
   await sil.click();
   await expect(page.getByRole("button", { name: "Satırı sil" })).toHaveCount(0);
 });
+
+test("form sunucunun uyguladığı süzgeci gösterir: ters tarihler düzeltilir (istemci gezinmesi)", async ({ page }) => {
+  await page.goto("/stock?baslangic=2026-03-01&bitis=2026-05-01");
+  await page.getByText(/^Filtrele/).click();
+  const form = page.getByRole("form", { name: "Hareket süzgeci" });
+  await form.getByLabel("Başlangıç").fill("2026-05-01");
+  await form.getByLabel("Bitiş").fill("2026-03-01");
+  await form.getByRole("button", { name: "Uygula" }).click();
+  await expect(page).toHaveURL(/baslangic=2026-05-01/);
+  await page.getByText(/^Filtrele/).click();
+  await expect(form.getByLabel("Başlangıç")).toHaveValue("2026-03-01");
+  await expect(form.getByLabel("Bitiş")).toHaveValue("2026-05-01");
+});
+
+test("aynı adrese varan eylemde açılır paneller kapanır: Temizle, değişmemiş sütun tercihi", async ({ page }) => {
+  await page.goto("/stock");
+  await page.getByText(/^Filtrele/).click();
+  const suzgec = page.getByRole("form", { name: "Hareket süzgeci" });
+  await suzgec.getByRole("link", { name: "Temizle" }).click();
+  await expect(suzgec).toBeHidden();
+  await page.getByText("Sütunlar", { exact: true }).click();
+  const sutunlar = page.getByRole("form", { name: "Görünür sütunlar" });
+  await sutunlar.getByRole("button", { name: "Kaydet" }).click();
+  await expect(sutunlar).toBeHidden();
+});
