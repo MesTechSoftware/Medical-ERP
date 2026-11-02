@@ -9,7 +9,6 @@ import {
   sekmeAdresi,
   stokAdresi,
   suzgecCoz,
-  urunuDogrula,
   type StokSuzgeci,
 } from "@/lib/stok-listesi/suzgec";
 
@@ -91,10 +90,8 @@ describe("etkin süzgeçler ve boş durum", () => {
     expect(etkinSuzgecler({ ...BOS_SUZGEC, yon: "CIKIS" }, urunAdi)[0].etiket).toBe("Yön: Çıkış");
   });
 
-  it("urunuDogrula: seçeneklerde olmayan ürün düşer, öbür süzgeçler kalır", () => {
-    expect(urunuDogrula({ ...BOS_SUZGEC, urunId: "cm1" }, ["cm1"]).urunId).toBe("cm1");
-    expect(urunuDogrula({ ...BOS_SUZGEC, urunId: "yok", yon: "GIRIS" }, ["cm1"])).toEqual({ ...BOS_SUZGEC, yon: "GIRIS" });
-    expect(urunuDogrula(BOS_SUZGEC, [])).toEqual(BOS_SUZGEC);
+  it("bilinmeyen ürün kimliğinin etiketi çizilmez", () => {
+    expect(etkinSuzgecler({ ...BOS_SUZGEC, urunId: "yok" }, urunAdi)).toEqual([]);
   });
 
   it("boş durum türü", () => {

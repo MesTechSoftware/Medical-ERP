@@ -1,14 +1,13 @@
 import { Card } from "@/components/ui";
 import { StokMiktari } from "@/components/StokMiktari";
-
-type Satir = { id: string; name: string; code: string; depo: number; konsinye: number; toplam: number };
+import type { MevcutStokSatiri } from "@/lib/stok-listesi/sorgu";
 
 /**
  * Mevcut stok (B-4-11): her aktif ürünün depo, konsinye ve toplam adedi. Toplamın durum etiketi
  * Ürünler ekranı ve dashboard ile aynı eşiktendir (`StokMiktari`). Ortak tablo sınıflarıyla çizilir:
  * masaüstünde tablo yüksekliği sınırlı ve kayar, telefonda iç kaydırma yoktur (ADR-009).
  */
-export function MevcutStokKarti({ satirlar }: { satirlar: Satir[] }) {
+export function MevcutStokKarti({ satirlar }: { satirlar: MevcutStokSatiri[] }) {
   return (
     <Card>
       <h2 id="mevcut-stok" className="mb-3 text-sm font-semibold text-slate-900">

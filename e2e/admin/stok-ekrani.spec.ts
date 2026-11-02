@@ -160,11 +160,17 @@ test("Filtrele formu ürün süzgeci uygular; sekme korur, × ile kalkar (B-4-12
   await expect(page).not.toHaveURL(/urunId=/);
 });
 
+test("bilinmeyen ürün süzgeci adresten düşer; öbür süzgeçler kalır (B-4-12)", async ({ page }) => {
+  await page.goto("/stock?yon=GIRIS&urunId=bilinmeyen-urun");
+  await expect(page).toHaveURL((u) => u.searchParams.get("yon") === "GIRIS" && !u.searchParams.has("urunId"));
+});
+
 test("stok düzeltmede Satırı sil kırmızıdır", async ({ page }) => {
   await page.goto("/stock");
   await page.getByRole("button", { name: "Satır Ekle" }).click();
   const sil = page.getByRole("button", { name: "Satırı sil" }).first();
-  await expect(sil).toHaveClass(/text-negative/);
+  // Kelime sınırı: eski `hover:text-negative` sınıfı eşleşmez.
+  await expect(sil).toHaveClass(/(^|\s)text-negative(\s|$)/);
   await sil.click();
   await expect(page.getByRole("button", { name: "Satırı sil" })).toHaveCount(0);
 });

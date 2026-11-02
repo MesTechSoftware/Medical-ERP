@@ -9,7 +9,7 @@ import { ilk, type Parametreler } from "@/lib/liste/parametreler";
 import { getPagination, pageCount } from "@/lib/pagination";
 import { konsinyedekiMal, mevcutStok, stokHareketleri, stokKpileri } from "@/lib/stok-listesi/sorgu";
 import { SUTUNLAR, SUTUN_CEREZI } from "@/lib/stok-listesi/sutunlar";
-import { bosDurum, stokAdresi, suzgecCoz, urunuDogrula } from "@/lib/stok-listesi/suzgec";
+import { bosDurum, stokAdresi, suzgecCoz } from "@/lib/stok-listesi/suzgec";
 import { requireStaff } from "@/lib/session";
 import { bugun, yerelGunMetni } from "@/lib/zaman";
 import StockEntryForm from "./StockEntryForm";
@@ -28,19 +28,19 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
   const urun = ilk(params, "urun");
   const yonetici = session.user.role === "YONETICI";
   const { page, perPage, skip, take } = getPagination({ page: ilk(params, "page") ?? undefined, per: ilk(params, "per") ?? undefined });
-  // Formlar yalnız aktif ürünü seçer; ürün süzgeci pasif ürünün eski hareketlerini de bulur (B-4-12).
-  const tumUrunler = await prisma.product.findMany({
-    orderBy: { name: "asc" },
-    select: { id: true, name: true, code: true, status: true },
-  });
-  const suzgec = urunuDogrula(suzgecCoz(params), tumUrunler.map((p) => p.id));
+  const suzgec = suzgecCoz(params);
   const yer = { page, per: ilk(params, "per") ? perPage : undefined };
   const gun = yerelGunMetni(bugun());
   // Sütun tercihi çerezdedir; gizli sütun hiç çizilmez (spec §3.5).
   const gizli = gizliSutunlariCoz(SUTUNLAR, (await cookies()).get(SUTUN_CEREZI)?.value);
   const listeAdresi = stokAdresi(suzgec, yer);
 
-  const [liste, sayilar, konumlar, doktorlar, sebepler, konsinyeStok, mevcut] = await Promise.all([
+  const [tumUrunler, liste, sayilar, konumlar, doktorlar, sebepler, konsinyeStok, mevcut] = await Promise.all([
+    // Formlar yalnız aktif ürünü seçer; ürün süzgeci pasif ürünün eski hareketlerini de bulur (B-4-12).
+    prisma.product.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, code: true, status: true },
+    }),
     stokHareketleri(suzgec, { skip, take }),
     stokKpileri(gun),
     prisma.stockLocation.findMany({
@@ -63,6 +63,11 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
     konsinyedekiMal(),
     mevcutStok(),
   ]);
+  // Seçeneklerde olmayan ürün süzgeci (eski yer imi, elle yazılmış kimlik) adresten düşer: formda "Tümü"
+  // görünürken uygulanırsa bir sonraki Uygula onu sessizce kaldırırdı (B-4-12).
+  if (suzgec.urunId && !tumUrunler.some((p) => p.id === suzgec.urunId)) {
+    redirect(stokAdresi({ ...suzgec, urunId: null }, yer));
+  }
   // Son sayfanın satırı kalmamış ya da elle büyük sayfa yazılmışsa son sayfaya gidilir (PR #85).
   if (liste.satirlar.length === 0 && liste.toplam > 0) {
     redirect(stokAdresi(suzgec, { ...yer, page: pageCount(liste.toplam, perPage) }));

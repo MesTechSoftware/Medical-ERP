@@ -124,9 +124,9 @@ export async function stokKpileri(
  * türdeki bütün konumların toplamıdır — pasif konum dahil, böylece toplam `hesaplaStok` ile aynıdır.
  * "Konsinyedeki Mal" yalnız aktif konsinye konumlarını listeler; pasif konumda mal kaldıysa iki kart ayrışır.
  */
-export async function mevcutStok(): Promise<
-  { id: string; name: string; code: string; depo: number; konsinye: number; toplam: number }[]
-> {
+export type MevcutStokSatiri = { id: string; name: string; code: string; depo: number; konsinye: number; toplam: number };
+
+export async function mevcutStok(): Promise<MevcutStokSatiri[]> {
   const [urunler, konumlar] = await Promise.all([
     prisma.product.findMany({ where: { status: "AKTIF" }, orderBy: { name: "asc" }, select: { id: true, name: true, code: true } }),
     prisma.stockLocation.findMany({ select: { id: true, type: true } }),
