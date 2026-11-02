@@ -23,8 +23,18 @@ function Alan({ id, etiket, children }: { id: string; etiket: string; children: 
  * Hareket geçmişinin süzgeç çubuğu (spec Ü-20 §3.3): tarih kısayolları, Filtrele paneli (JS'siz GET
  * formu), etkin süzgeç etiketleri ve sütun menüsünün yuvası. Süzgeç adres çubuğundadır.
  */
-export function SuzgecCubugu({ suzgec, bugun, sutunMenusu }: { suzgec: StokSuzgeci; bugun: string; sutunMenusu?: React.ReactNode }) {
-  const etiketler = etkinSuzgecler(suzgec);
+export function SuzgecCubugu({
+  suzgec,
+  bugun,
+  urunler,
+  sutunMenusu,
+}: {
+  suzgec: StokSuzgeci;
+  bugun: string;
+  urunler: { value: string; label: string }[];
+  sutunMenusu?: React.ReactNode;
+}) {
+  const etiketler = etkinSuzgecler(suzgec, (id) => urunler.find((u) => u.value === id)?.label);
   const sekmeler = hizliSekmeler(bugun);
   const etkin = etkinSekme(sekmeler, suzgec);
   return (
@@ -69,6 +79,18 @@ export function SuzgecCubugu({ suzgec, bugun, sutunMenusu }: { suzgec: StokSuzge
                   <option value="CIKIS">Çıkış</option>
                 </select>
               </Alan>
+              <div className="sm:col-span-2">
+                <Alan id="suzgec-urun" etiket="Ürün">
+                  <select id="suzgec-urun" name="urunId" defaultValue={suzgec.urunId ?? ""} className={KONTROL_TEK_SATIR}>
+                    <option value="">Tümü</option>
+                    {urunler.map((u) => (
+                      <option key={u.value} value={u.value}>
+                        {u.label}
+                      </option>
+                    ))}
+                  </select>
+                </Alan>
+              </div>
               <div className="flex items-center gap-3 sm:col-span-2">
                 <button type="submit" className={buton("birincil")}>
                   <Ikon ad="filtrele" />

@@ -7,7 +7,7 @@ import { SutunSecici } from "@/components/liste/SutunSecici";
 import { gizliSutunlariCoz } from "@/lib/liste/sutunlar";
 import { ilk, type Parametreler } from "@/lib/liste/parametreler";
 import { getPagination, pageCount } from "@/lib/pagination";
-import { konsinyedekiMal, stokHareketleri, stokKpileri } from "@/lib/stok-listesi/sorgu";
+import { konsinyedekiMal, mevcutStok, stokHareketleri, stokKpileri } from "@/lib/stok-listesi/sorgu";
 import { SUTUNLAR, SUTUN_CEREZI } from "@/lib/stok-listesi/sutunlar";
 import { bosDurum, stokAdresi, suzgecCoz } from "@/lib/stok-listesi/suzgec";
 import { requireStaff } from "@/lib/session";
@@ -18,6 +18,7 @@ import { addConsignment, addTransfer } from "./actions";
 import DuzeltmeFormu from "./DuzeltmeFormu";
 import { HareketTablosu } from "./HareketTablosu";
 import { KpiKartlari } from "./KpiKartlari";
+import { MevcutStokKarti } from "./MevcutStokKarti";
 import { SuzgecCubugu } from "./SuzgecCubugu";
 import { sutunlariKaydet } from "./sutunEylemi";
 
@@ -34,11 +35,11 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
   const gizli = gizliSutunlariCoz(SUTUNLAR, (await cookies()).get(SUTUN_CEREZI)?.value);
   const listeAdresi = stokAdresi(suzgec, yer);
 
-  const [products, liste, sayilar, konumlar, doktorlar, sebepler, konsinyeStok] = await Promise.all([
+  const [tumUrunler, liste, sayilar, konumlar, doktorlar, sebepler, konsinyeStok, mevcut] = await Promise.all([
+    // Formlar yalnız aktif ürünü seçer; ürün süzgeci pasif ürünün eski hareketlerini de bulur (B-4-12).
     prisma.product.findMany({
-      where: { status: "AKTIF" },
       orderBy: { name: "asc" },
-      select: { id: true, name: true, code: true },
+      select: { id: true, name: true, code: true, status: true },
     }),
     stokHareketleri(suzgec, { skip, take }),
     stokKpileri(gun),
@@ -60,6 +61,7 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
     }),
     // Konsinyedeki mal: konum × ürün tek okuma (`konumStoklari`, B-4-9); pasif ürün de görünür.
     konsinyedekiMal(),
+    mevcutStok(),
   ]);
   // Son sayfanın satırı kalmamış ya da elle büyük sayfa yazılmışsa son sayfaya gidilir (PR #85).
   if (liste.satirlar.length === 0 && liste.toplam > 0) {
@@ -71,6 +73,8 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
     per: ilk(params, "per") ?? undefined,
   };
 
+  const products = tumUrunler.filter((p) => p.status === "AKTIF").map(({ id, name, code }) => ({ id, name, code }));
+  const urunSuzgeci = tumUrunler.map((p) => ({ value: p.id, label: `${p.name} (${p.code})${p.status === "AKTIF" ? "" : " · pasif"}` }));
   const depolar = konumlar.filter((k) => k.type === "DEPO");
   const konsinyeler = konumlar.filter((k) => k.type === "KONSINYE");
   const urunSecenekleri = products.map((p) => ({ value: p.id, label: `${p.name} (${p.code})` }));
@@ -152,6 +156,10 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
             </div>
           )}
 
+          <div className="mt-6">
+            <MevcutStokKarti satirlar={mevcut} />
+          </div>
+
           {konsinyeStok.length > 0 && (
             <div className="mt-6">
               <Card>
@@ -179,6 +187,7 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
             <SuzgecCubugu
               suzgec={suzgec}
               bugun={gun}
+              urunler={urunSuzgeci}
               sutunMenusu={<SutunSecici sutunlar={SUTUNLAR} gizli={gizli} action={sutunlariKaydet} donus={listeAdresi} />}
             />
             <HareketTablosu satirlar={liste.satirlar} gizli={gizli} suzgecli={bosDurum(suzgec) === "suzgecli"} />

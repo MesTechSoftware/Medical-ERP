@@ -34,6 +34,7 @@ export function hareketKosulu(s: StokSuzgeci): Prisma.StockMovementWhereInput {
     ...(s.baslangic || s.bitis ? { createdAt } : {}),
     ...(s.yon ? { type: s.yon } : {}),
     ...(s.tur ? turKosulu(s.tur) : {}),
+    ...(s.urunId ? { productId: s.urunId } : {}),
   };
 }
 
@@ -115,6 +116,27 @@ export async function stokKpileri(
     bugunGiris,
     bugunCikis,
   };
+}
+
+/**
+ * Mevcut stok kartı (B-4-11): her aktif ürün, stoğu sıfır olan dahil, ürün adıyla. Depo ve konsinye o
+ * türdeki bütün konumların toplamıdır — pasif konum dahil, böylece toplam `hesaplaStok` ile aynıdır.
+ */
+export async function mevcutStok(): Promise<
+  { id: string; name: string; code: string; depo: number; konsinye: number; toplam: number }[]
+> {
+  const [urunler, konumlar] = await Promise.all([
+    prisma.product.findMany({ where: { status: "AKTIF" }, orderBy: { name: "asc" }, select: { id: true, name: true, code: true } }),
+    prisma.stockLocation.findMany({ select: { id: true, type: true } }),
+  ]);
+  const stoklar = await konumStoklari(konumlar.map((k) => k.id));
+  const toplam = (urunId: string, tur: "DEPO" | "KONSINYE") =>
+    konumlar.filter((k) => k.type === tur).reduce((t, k) => t + (stoklar.get(k.id)!.get(urunId) ?? 0), 0);
+  return urunler.map((u) => {
+    const depo = toplam(u.id, "DEPO");
+    const konsinye = toplam(u.id, "KONSINYE");
+    return { ...u, depo, konsinye, toplam: depo + konsinye };
+  });
 }
 
 /**

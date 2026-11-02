@@ -1,7 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { sorgu } from "../helpers";
 
-/** Ü-20 — stok ekranı: KPI kartları, hareket süzgeci, işlemi yapan, sütun seçici, boş durum (B-4-8 · B-4-10). */
+/** Ü-20 — stok ekranı: KPI kartları, hareket süzgeci, işlemi yapan, sütun seçici, boş durum, mevcut stok (B-4-8 · B-4-10 · B-4-11 · B-4-12). */
 
 const kpi = (page: Page) => page.getByRole("region", { name: "Stok sayıları" });
 const tablo = (page: Page) => page.getByRole("table");
@@ -107,4 +107,60 @@ test("sayfa dışı adres son sayfaya gider; süzgeç ve sayfa boyu korunur", as
     return u.pathname === "/stock" && p.get("yon") === "GIRIS" && p.get("per") === "1" && p.get("page") === String(adet);
   });
   await expect(satirlar(page)).toHaveCount(1);
+});
+
+test("mevcut stok kartı: her aktif ürün; depo + konsinye = toplam = hareket toplamı (B-4-11)", async ({ page }) => {
+  await page.goto("/stock");
+  const kart = page.getByRole("table", { name: "Mevcut Stok" });
+  const beklenen = await sorgu<{ id: string; depo: number; konsinye: number }>(
+    `SELECT p.id,
+        COALESCE(SUM(CASE WHEN l.type = 'DEPO' THEN CASE m.type WHEN 'GIRIS' THEN m.quantity ELSE -m.quantity END END), 0)::int AS depo,
+        COALESCE(SUM(CASE WHEN l.type = 'KONSINYE' THEN CASE m.type WHEN 'GIRIS' THEN m.quantity ELSE -m.quantity END END), 0)::int AS konsinye
+       FROM "Product" p
+       LEFT JOIN "StockMovement" m ON m."productId" = p.id
+       LEFT JOIN "StockLocation" l ON l.id = m."locationId"
+      WHERE p.status = 'AKTIF'
+      GROUP BY p.id`
+  );
+  await expect(kart.locator("tbody tr")).toHaveCount(beklenen.length);
+  for (const b of beklenen) {
+    const hucreler = kart.locator(`tr[data-urun="${b.id}"] td`);
+    await expect(hucreler.nth(1)).toHaveText(String(b.depo));
+    await expect(hucreler.nth(2)).toHaveText(String(b.konsinye));
+    await expect(hucreler.nth(3)).toContainText(String(b.depo + b.konsinye));
+  }
+});
+
+test("Filtrele formu ürün süzgeci uygular; sekme korur, × ile kalkar (B-4-12)", async ({ page }) => {
+  await stokGirisi(page, `E2E ürün süzgeci ${Date.now()}`);
+  await page.getByText("Filtrele", { exact: true }).click();
+  const form = page.getByRole("form", { name: "Hareket süzgeci" });
+  const secim = form.getByLabel("Ürün");
+  await secim.selectOption({ index: 1 });
+  const urunId = await secim.inputValue();
+  const etiket = (await secim.locator("option:checked").innerText()).trim();
+  await form.getByRole("button", { name: "Uygula" }).click();
+  await expect(page).toHaveURL(new RegExp(`urunId=${urunId}`));
+  await expect(page.getByRole("list", { name: "Etkin süzgeçler" }).getByText(`Ürün: ${etiket}`)).toBeVisible();
+
+  const [{ adet }] = await sorgu<{ adet: number }>(`SELECT count(*)::int AS adet FROM "StockMovement" WHERE "productId" = $1`, [urunId]);
+  await page.goto(`/stock?urunId=${urunId}&per=100`);
+  await expect(satirlar(page)).toHaveCount(adet);
+  for (const href of await satirlar(page).getByRole("link").evaluateAll((l) => l.map((a) => a.getAttribute("href")))) {
+    expect(href).toBe(`/products?detay=${urunId}`);
+  }
+
+  await page.getByRole("link", { name: "Bugün", exact: true }).click();
+  await expect(page).toHaveURL((u) => u.searchParams.get("urunId") === urunId && u.searchParams.get("baslangic") === bugun());
+  await page.getByRole("link", { name: `Kaldır: Ürün: ${etiket}` }).click();
+  await expect(page).not.toHaveURL(/urunId=/);
+});
+
+test("stok düzeltmede Satırı sil kırmızıdır", async ({ page }) => {
+  await page.goto("/stock");
+  await page.getByRole("button", { name: "Satır Ekle" }).click();
+  const sil = page.getByRole("button", { name: "Satırı sil" }).first();
+  await expect(sil).toHaveClass(/text-negative/);
+  await sil.click();
+  await expect(page.getByRole("button", { name: "Satırı sil" })).toHaveCount(0);
 });
