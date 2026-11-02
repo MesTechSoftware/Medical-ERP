@@ -95,10 +95,12 @@ describe("aktif / boş sınıflaması ve KPI (X-10-6)", () => {
   it("varsayılan liste yoksa bütün aktif ürünler fiyatsızdır ve bağlantı kimliği yoktur", async () => {
     await urun("A");
     await urun("B");
+    await cari("Dr. Listesiz", null);
     await prisma.priceList.update({ where: { id: ref.liste.id }, data: { code: "BASKA" } });
     const k = await fiyatListesiKpileri();
     expect(k.fiyatsizUrun).toBe(2);
     expect(k.varsayilanListeId).toBeNull();
+    expect(k.varsayilanKullanan).toBe(0);
   });
 });
 
