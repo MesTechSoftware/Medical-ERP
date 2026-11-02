@@ -1,15 +1,13 @@
 "use client";
 
 import Form from "next/form";
-import { useSearchParams } from "next/navigation";
 import { startTransition, useState } from "react";
 import { sekmeIciBaglantiTiklamasi } from "@/components/liste/AcilirPanel";
-import { alanSorgusu } from "@/lib/liste/alan-sorgusu";
 
 type Ozellikler = Omit<React.ComponentProps<"form">, "action" | "method" | "onClick" | "onSubmit"> & {
   action: string;
-  /** Formun alan adları (`name`); form bunların adresteki ham değeriyle yeniden kurulur. */
-  alanlar: readonly string[];
+  /** Sunucunun uyguladığı süzgecin adresi (ör. `stokAdresi(suzgec)`); değişince form yeniden kurulur. */
+  anahtar: string;
 };
 
 /**
@@ -17,17 +15,16 @@ type Ozellikler = Omit<React.ComponentProps<"form">, "action" | "method" | "onCl
  * yerinde kalır; hedef hep parametreli olduğundan önceden yükleme yapılmaz. JS'siz düz GET formudur.
  *
  * Alanlar denetimsizdir (`defaultValue`); React yumuşak gezinmede onları güncellemez. Form bu yüzden
- * yeniden kurulur: kendi alanları adreste değişince (sekme, süzgeç etiketi) ve her gönderimde ya da
+ * yeniden kurulur: uygulanan süzgeç değişince (sekme, süzgeç etiketi, geri) ve her gönderimde ya da
  * içindeki bağlantıda (Temizle, Tüm zamanlar) — aynı adrese varılsa bile alanlar sunucunun uyguladığı
  * değeri gösterir. Sayaç gezinmeyle aynı geçişte artar; form yeni değerler gelince bir kez kurulur.
  */
-export function SuzgecFormu({ action, alanlar, ...ozellikler }: Ozellikler) {
-  const sp = useSearchParams();
+export function SuzgecFormu({ action, anahtar, ...ozellikler }: Ozellikler) {
   const [kurulum, setKurulum] = useState(0);
   const yenidenKur = () => startTransition(() => setKurulum((k) => k + 1));
   return (
     <Form
-      key={`${alanSorgusu(sp, alanlar)}#${kurulum}`}
+      key={`${anahtar}#${kurulum}`}
       {...ozellikler}
       action={action}
       prefetch={false}

@@ -10,7 +10,7 @@ import { Card, EmptyRow, PageHeader } from "@/components/ui";
 import { AUDIT_ACTION_LABELS, ISLEM_TURU_ETIKETI, MODUL_ETIKETI } from "@/lib/denetim/olaylar";
 import { varlikEtiketi } from "@/lib/denetim/ozet";
 import { denetimKaydi, denetimListesi, kullaniciSecenekleri } from "@/lib/denetim/sorgu";
-import { SISTEM, SUZGEC_ALANLARI, denetimAdresi, suzgecCoz, type Imlec } from "@/lib/denetim/suzgec";
+import { SISTEM, denetimAdresi, suzgecCoz, type Imlec } from "@/lib/denetim/suzgec";
 import { formatDateTime } from "@/lib/format";
 import { ROLE_LABEL } from "@/lib/roles";
 import { requireAdmin } from "@/lib/session";
@@ -46,7 +46,7 @@ export default async function DenetimKaydiSayfasi({
 
       <SuzgecFormu
         action="/audit-logs"
-        alanlar={SUZGEC_ALANLARI}
+        anahtar={denetimAdresi(suzgec)}
         aria-label="Denetim kaydı süzgeci"
         className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
       >
@@ -120,7 +120,7 @@ export default async function DenetimKaydiSayfasi({
           <Ikon ad="filtrele" />
           Filtrele
         </button>
-        <Link href="/audit-logs" className="text-sm font-medium text-slate-500 hover:text-slate-800">
+        <Link href="/audit-logs" scroll={false} className="text-sm font-medium text-slate-500 hover:text-slate-800">
           Temizle
         </Link>
       </SuzgecFormu>

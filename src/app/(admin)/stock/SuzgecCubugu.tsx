@@ -6,7 +6,7 @@ import { AcilirPanel } from "@/components/liste/AcilirPanel";
 import { SuzgecFormu } from "@/components/liste/SuzgecFormu";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import { HAREKET_TURLERI } from "@/lib/stok-hareket-turu";
-import { SUZGEC_ALANLARI, etkinSekme, etkinSuzgecler, hizliSekmeler, sekmeAdresi, type StokSuzgeci } from "@/lib/stok-listesi/suzgec";
+import { etkinSekme, etkinSuzgecler, hizliSekmeler, sekmeAdresi, stokAdresi, type StokSuzgeci } from "@/lib/stok-listesi/suzgec";
 
 const ETIKET = "mb-1 block font-medium text-slate-700";
 
@@ -47,14 +47,15 @@ export function SuzgecCubugu({
           sekmeler={sekmeler.map((f) => ({ etiket: f.etiket, adres: sekmeAdresi(suzgec, f.tarih), etkin: f.etiket === etkin }))}
         />
         <div className="ml-auto flex flex-wrap items-start gap-2">
-          <AcilirPanel className="relative">
+          {/* Uygulanan süzgeç değişince panel kapalı, form yeni değerlerle kurulur. */}
+          <AcilirPanel key={stokAdresi(suzgec)} className="relative">
             <summary className={`${buton("ikincil")} cursor-pointer list-none`}>
               <Ikon ad="filtrele" />
               {etiketler.length > 0 ? `Filtrele · ${etiketler.length}` : "Filtrele"}
             </summary>
             <SuzgecFormu
               action="/stock"
-              alanlar={SUZGEC_ALANLARI}
+              anahtar={stokAdresi(suzgec)}
               aria-label="Hareket süzgeci"
               className="absolute right-0 z-20 mt-2 grid w-[min(36rem,calc(100vw-2rem))] gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-lg sm:grid-cols-2"
             >
@@ -98,7 +99,7 @@ export function SuzgecCubugu({
                   <Ikon ad="filtrele" />
                   Uygula
                 </button>
-                <Link href="/stock" className={buton("metin")}>
+                <Link href="/stock" scroll={false} className={buton("metin")}>
                   <Ikon ad="vazgec" />
                   Temizle
                 </Link>

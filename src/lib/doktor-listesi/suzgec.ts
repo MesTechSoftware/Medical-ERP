@@ -24,9 +24,6 @@ export type DoktorSuzgeci = {
   sonBit: string | null;
 };
 
-/** Filtrele formunun alanları (eski `sahip` dahil); form bunların ham değeriyle anahtarlanır (`sorguMetni`). */
-export const SUZGEC_ALANLARI = ["sinif", "bolge", "satici", "sahip", "durum", "fatura", "sessiz", "sonBas", "sonBit"] as const;
-
 export const BOS_SUZGEC: DoktorSuzgeci = {
   sinif: null,
   bolge: null,

@@ -206,13 +206,18 @@ test("aynı adrese varan eylemde açılır paneller kapanır, form sıfırlanır
   await page.goto("/stock");
   await page.getByText(/^Filtrele/).click();
   const suzgec = page.getByRole("form", { name: "Hareket süzgeci" });
-  // Gönderilmemiş seçim: Temizle aynı adrese gider, form yeniden kurulmaz ama sıfırlanır.
+  // Gönderilmemiş seçim: Temizle aynı adrese gider; form yine yeniden kurulur, seçim sıfırlanır.
   await suzgec.getByLabel("Yön").selectOption("GIRIS");
   await suzgec.getByRole("link", { name: "Temizle" }).click();
   await expect(suzgec).toBeHidden();
   await page.getByText(/^Filtrele/).click();
   await expect(suzgec.getByLabel("Yön")).toHaveValue("");
   await page.getByText(/^Filtrele/).click();
+  // Dışarıdan süzgeç değişikliği (hızlı sekme): panel kapanır.
+  await page.getByText(/^Filtrele/).click();
+  await page.getByRole("link", { name: "Bugün", exact: true }).click();
+  await expect(page).toHaveURL(/baslangic=/);
+  await expect(suzgec).toBeHidden();
   await page.getByText("Sütunlar", { exact: true }).click();
   const sutunlar = page.getByRole("form", { name: "Görünür sütunlar" });
   await sutunlar.getByRole("button", { name: "Kaydet" }).click();

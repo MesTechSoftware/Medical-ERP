@@ -8,7 +8,6 @@ import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import {
   HIZLI_SEKMELER,
   SAHIPSIZ,
-  SUZGEC_ALANLARI,
   ayniSuzgec,
   doktorAdresi,
   etkinSayisi,
@@ -62,14 +61,15 @@ export function SuzgecCubugu({
           sekmeler={HIZLI_SEKMELER.map((f) => ({ etiket: f.etiket, adres: doktorAdresi(f.suzgec), etkin: ayniSuzgec(suzgec, f.suzgec) }))}
         />
         <div className="ml-auto flex flex-wrap items-start gap-2">
-          <AcilirPanel className="relative">
+          {/* Uygulanan süzgeç değişince panel kapalı, form yeni değerlerle kurulur. */}
+          <AcilirPanel key={doktorAdresi(suzgec)} className="relative">
             <summary className={`${buton("ikincil")} cursor-pointer list-none`}>
               <Ikon ad="filtrele" />
               {sayi > 0 ? `Filtrele · ${sayi}` : "Filtrele"}
             </summary>
             <SuzgecFormu
               action="/doctors"
-              alanlar={SUZGEC_ALANLARI}
+              anahtar={doktorAdresi(suzgec)}
               aria-label="Cari süzgeci"
               className="absolute right-0 z-20 mt-2 grid w-[min(56rem,calc(100vw-2rem))] gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-lg sm:grid-cols-2 lg:grid-cols-4"
             >
@@ -138,7 +138,7 @@ export function SuzgecCubugu({
                   <Ikon ad="filtrele" />
                   Uygula
                 </button>
-                <Link href="/doctors" className={buton("metin")}>
+                <Link href="/doctors" scroll={false} className={buton("metin")}>
                   <Ikon ad="vazgec" />
                   Temizle
                 </Link>

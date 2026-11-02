@@ -16,9 +16,6 @@ export type StokSuzgeci = {
   urunId: string | null;
 };
 
-/** Filtrele formunun alanları; form bunların ham değeriyle anahtarlanır (`sorguMetni`). */
-export const SUZGEC_ALANLARI = ["baslangic", "bitis", "tur", "yon", "urunId"] as const;
-
 export const BOS_SUZGEC: StokSuzgeci = { baslangic: null, bitis: null, tur: null, yon: null, urunId: null };
 
 type Tarih = Pick<StokSuzgeci, "baslangic" | "bitis">;
