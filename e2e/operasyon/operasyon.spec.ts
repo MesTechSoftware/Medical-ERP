@@ -84,7 +84,7 @@ test("ürünleri ve satıcıları salt okur — ekleme/düzenleme/silme yok", as
   // D-2-3: kapsamına göre KPI ve sekme; panelde prim oranı ve son işlemler yok; yönetici paneli açılmaz.
   const kartlar = page.getByRole("region", { name: "Kullanıcı sayıları" });
   await expect(kartlar.getByText("Aktif kullanıcı")).toHaveCount(0);
-  await expect(kartlar.getByText("Aktif satıcı")).toBeVisible();
+  await expect(kartlar.getByText("Aktif satıcı", { exact: true })).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Hızlı süzgeçler" }).getByRole("link", { name: "Satıcılar" })).toHaveCount(0);
 
   const [satici] = await query<{ id: string }>(`SELECT id FROM "User" WHERE email = 'ahmet@medikal.local'`);
