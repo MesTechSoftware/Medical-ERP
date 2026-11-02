@@ -5,9 +5,10 @@ import { cozumleBirimFiyat } from "@/lib/fiyat";
 import { referansVeri } from "../../../../test/integration/referans";
 
 // X-10-2 — fiyat listesi ekranı: başlık + satır (fiyat, min_adet), yalnız yönetici, denetim kaydı.
-const h = vi.hoisted(() => ({ adminId: "" }));
+const h = vi.hoisted(() => ({ adminId: "", yonlendirme: "" }));
 vi.mock("@/lib/session", () => ({ requireAdmin: async () => ({ user: { id: h.adminId, role: "YONETICI" } }) }));
 vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
+vi.mock("next/navigation", () => ({ redirect: (yol: string) => void (h.yonlendirme = yol) }));
 const { createPriceList, setPriceListItem, deletePriceListItem } = await import("./actions");
 
 let s: Awaited<ReturnType<typeof seed>>;
@@ -31,8 +32,10 @@ beforeEach(async () => {
 
 describe("fiyat listesi ekranı (X-10-2)", () => {
   it("liste oluşturur; kod büyük harfe çevrilir, geçersiz ve kayıtlı kod alan altında reddedilir", async () => {
-    expect((await createPriceList(null, form({ code: "bayi-a", name: "Bayi A" }))).durum).toBe("BASARILI");
-    expect(await prisma.priceList.findUnique({ where: { code: "BAYI-A" } })).not.toBeNull();
+    await createPriceList(null, form({ code: "bayi-a", name: "Bayi A" }));
+    const yeni = await prisma.priceList.findUnique({ where: { code: "BAYI-A" } });
+    expect(yeni).not.toBeNull();
+    expect(h.yonlendirme).toBe(`/price-lists/${yeni!.id}`); // oluşturunca detaya (spec Ü-21 §3.7)
     expect(kodlar(await createPriceList(null, form({ code: "BAYI-A", name: "x" })))).toEqual([["FIYAT_LISTESI_KODU_KAYITLI", "code"]]);
     expect(kodlar(await createPriceList(null, form({ code: "a b", name: "" })))).toEqual([
       ["FIYAT_LISTESI_KODU_GECERSIZ", "code"],

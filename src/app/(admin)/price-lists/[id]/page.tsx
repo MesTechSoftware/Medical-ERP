@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { formatDate } from "@/lib/format";
+import { baremMatrisi } from "@/lib/fiyat";
+import { bugun } from "@/lib/zaman";
 import { MATRAH, tabanli } from "@/lib/taban";
 import { PageHeader, Card, EmptyRow } from "@/components/ui";
 import { IslemFormu } from "@/components/Sonuc";
@@ -11,6 +13,7 @@ import ConfirmSubmit from "@/components/ConfirmSubmit";
 import { deletePriceListItem, setPriceListItem } from "../actions";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import { Ikon } from "@/components/Ikon";
+import { BaremMatrisi } from "../BaremMatrisi";
 
 const KUTU = `w-full ${KONTROL_TEK_SATIR}`;
 
@@ -31,11 +34,14 @@ export default async function PriceListDetailPage({ params }: { params: Promise<
     },
   });
   if (!liste) notFound();
-  const urunler = await prisma.product.findMany({
-    where: { status: "AKTIF" },
-    orderBy: { name: "asc" },
-    select: { id: true, name: true, code: true },
-  });
+  const [urunler, matris] = await Promise.all([
+    prisma.product.findMany({
+      where: { status: "AKTIF" },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, code: true },
+    }),
+    baremMatrisi(liste.id, bugun()),
+  ]);
 
   return (
     <div>
@@ -50,8 +56,14 @@ export default async function PriceListDetailPage({ params }: { params: Promise<
         }
       />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+        <div className="space-y-6 lg:col-span-2">
+          {/* Salt okunur (spec Ü-21 §3.6); düzenleme satır formundadır. */}
           <Card>
+            <h2 className="mb-3 text-sm font-semibold text-slate-900">Barem matrisi</h2>
+            <BaremMatrisi matris={matris} />
+          </Card>
+          <Card>
+            <h2 className="mb-3 text-sm font-semibold text-slate-900">Satırlar</h2>
             <div className="tablo-kutusu">
               <table className="veri-tablosu">
                 <thead>
