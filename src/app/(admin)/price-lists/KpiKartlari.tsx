@@ -40,7 +40,7 @@ export function KpiKartlari({ sayilar }: { sayilar: ListeKpileri }) {
           bosDavranisi="sifir"
           adet={sayilar.ozelListeliCari}
           karsilastirma={ANLIK}
-          ikincilMetrik={`${sayilar.varsayilanKullanan} cari varsayılanı kullanır`}
+          ikincilMetrik={sayilar.varsayilanListeId ? `${sayilar.varsayilanKullanan} cari varsayılanı kullanır` : "varsayılan liste yok"}
         />
         {sayilar.varsayilanListeId ? (
           <Link href={listeAdresi(BOS_SUZGEC, { detay: sayilar.varsayilanListeId })} scroll={false} className={KART}>
