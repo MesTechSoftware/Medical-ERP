@@ -66,7 +66,7 @@ Kart sayısı = tıklanınca gelen satır sayısı (aynı `where` üreticisi).
 | Parametre | Değerler | Anlamı |
 |---|---|---|
 | `durum` | `aktif` · `pasif` | `isActive` |
-| `rol` | `YONETICI` · `OPERASYON` · `SATICI` | OPERASYON'da yalnız `SATICI` geçerli (başkası yok sayılır) |
+| `rol` | `YONETICI` · `OPERASYON` · `SATICI` | yalnız YONETICI'de; OPERASYON'un kapsamı zaten satıcılar, `rol` yok sayılır ("Aktif satıcı" kartı ona `durum=aktif` açar) |
 | `portfoy` | `yok` | aktif satıcı ve aktif carisi yok (`durum`/`rol`'ü ezer: kendisi `isActive` + `SATICI`) |
 | `parola` | `gecici` | `mustChangePassword` |
 | `page`, `per`, `detay` | | ortak adlar |
@@ -98,7 +98,11 @@ tanım — X-17 §(4) pasif cari portföyde kalır ama iş yükü değildir).
 2. **Oturum:** son etkinlik, açık oturum sayısı (`revokedAt` boş ve `suresiDolduMu(oturum, şimdi, sureAyari())` yanlış), geçici parola durumu.
 3. **Satıcıysa — Portföy:** aktif cari sayısı, ilk 10 cari (bağlantı `/doctors?detay=`); portföy boşsa
    "Portföyünde aktif cari yok." + "Sahipsiz cariler" bağlantısı (`/doctors?satici=yok`).
-4. **Satıcıysa — Son siparişler:** son 5 sipariş (belge no bağlantısı `/orders/<id>`, tarih, durum rozeti).
+4. **Satıcıysa — Son siparişler:** son 5 belge (belge no bağlantısı `/orders/<id>`, tarih, durum rozeti;
+   teklif "Teklif" çipiyle — doktor paneliyle aynı).
+
+Portföy (aktif cari) ekranın iş yükü ölçüsüdür; pasifleştirmedeki portföy devri (X-17) bütün carileri
+kapsar, o kural ve satıcı detay sayfasındaki "Doktor Sayısı" değişmez.
 5. **YONETICI — Son işlemler:** kullanıcının son 5 denetim kaydı (zaman, işlem türü, özet;
    `/audit-logs?detay=<id>` bağlantısı).
 6. Altta: Düzenle (YONETICI) · Tam detay (satıcı, `/users/<id>`).

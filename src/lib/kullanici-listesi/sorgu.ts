@@ -1,11 +1,11 @@
 import type { Prisma } from "@/generated/prisma/client";
-import type { AuditActionType, OrderStatus, Role } from "@/generated/prisma/enums";
+import type { AuditActionType, OrderStage, OrderStatus, Role } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import { denetimListesi } from "@/lib/denetim/sorgu";
 import { BOS_SUZGEC as BOS_DENETIM } from "@/lib/denetim/suzgec";
-import { suresiDolduMu, sureAyari } from "@/lib/oturum";
+import { sureAyari } from "@/lib/oturum";
 import { simdi } from "@/lib/zaman";
-import type { GorenRol, KullaniciSuzgeci } from "@/lib/kullanici-listesi/suzgec";
+import { BOS_SUZGEC, type GorenRol, type KullaniciSuzgeci } from "@/lib/kullanici-listesi/suzgec";
 
 /**
  * Kullanıcılar ekranı sorguları (spec Ü-22 §4). Kapsam (D-2: OPERASYON yalnız satıcılar) ve süzgeç tek
@@ -16,7 +16,10 @@ const PANEL_CARI_SINIRI = 10;
 const PANEL_SIPARIS_SINIRI = 5;
 const PANEL_ISLEM_SINIRI = 5;
 
-/** Portföyü dolduran cari: sorumlusu bu satıcı olan aktif cari. */
+/**
+ * Portföyü dolduran cari: sorumlusu bu satıcı olan **aktif** cari (X-17-6) — ekranın "iş yükü" ölçüsü.
+ * Pasifleştirmedeki portföy devri (X-17) bütün carileri kapsar; o kural değişmez.
+ */
 const AKTIF_CARI = { status: "AKTIF" } as const;
 
 export type KullaniciSatiri = {
@@ -36,10 +39,16 @@ export type KullaniciSatiri = {
 export type KullaniciKpileri = { aktifKullanici: number; aktifSatici: number; portfoysuz: number; ilkGirisBekleyen: number };
 
 export type KullaniciPaneli = {
-  kullanici: KullaniciSatiri & { createdAt: Date; primOrani: string | null };
+  kullanici: KullaniciSatiri & { createdAt: Date };
+  /**
+   * Satıcının prim oranı — yalnız YONETICI'ye (D-2). `null`: gösterilmez (OPERASYON ya da satıcı değil);
+   * `oran: null`: satıcıya özel oran yok, varsayılan uygulanır (X-14 §(2)).
+   */
+  prim: { oran: string | null } | null;
   acikOturum: number;
   cariler: { id: string; fullName: string }[];
-  siparisler: { id: string; documentNo: string; orderDate: Date; status: OrderStatus }[];
+  /** Son belgeler; teklif (`stage: TEKLIF`) ekranda işaretlenir (doktor paneliyle aynı). */
+  siparisler: { id: string; documentNo: string; orderDate: Date; stage: OrderStage; status: OrderStatus }[];
   /** Son denetim kayıtları — yalnız YONETICI'ye (D-2: OPERASYON denetim kaydı görmez). */
   islemler: { id: string; createdAt: Date; actionType: AuditActionType; ozet: string }[] | null;
 };
@@ -102,8 +111,7 @@ export async function kullaniciListesi(
 
 /** KPI (spec §3.2) — süzgeçten bağımsız, kapsama bağlı; her kart kendi süzgeciyle sayılır. */
 export async function kullaniciKpileri(gorenRol: GorenRol): Promise<KullaniciKpileri> {
-  const say = (s: Partial<KullaniciSuzgeci>) =>
-    prisma.user.count({ where: kullaniciKosulu({ durum: null, rol: null, portfoy: null, parola: null, ...s }, gorenRol) });
+  const say = (s: Partial<KullaniciSuzgeci>) => prisma.user.count({ where: kullaniciKosulu({ ...BOS_SUZGEC, ...s }, gorenRol) });
   const [aktifKullanici, aktifSatici, portfoysuz, ilkGirisBekleyen] = await Promise.all([
     say({ durum: "aktif" }),
     say({ durum: "aktif", rol: "SATICI" }),
@@ -123,9 +131,17 @@ export async function kullaniciPaneli(id: string, gorenRol: GorenRol, an: Date =
   const yonetici = gorenRol === "YONETICI";
   const satici = kayit.role === "SATICI";
   const ayar = sureAyari();
-  const [[satir], oturumlar, cariler, siparisler, islemler] = await Promise.all([
+  const [[satir], acikOturum, cariler, siparisler, islemler] = await Promise.all([
     ekBilgiler([kayit]),
-    prisma.session.findMany({ where: { userId: id, revokedAt: null }, select: { createdAt: true, lastSeenAt: true } }),
+    // Açık oturum: iptal edilmemiş ve `suresiDolduMu` (oturum.ts) yanlış — aynı sınırlar sayımda.
+    prisma.session.count({
+      where: {
+        userId: id,
+        revokedAt: null,
+        lastSeenAt: { gt: new Date(an.getTime() - ayar.hareketsizlikMs) },
+        createdAt: { gt: new Date(an.getTime() - ayar.mutlakMs) },
+      },
+    }),
     satici
       ? prisma.doctor.findMany({
           where: { ownerSellerId: id, ...AKTIF_CARI },
@@ -139,14 +155,15 @@ export async function kullaniciPaneli(id: string, gorenRol: GorenRol, an: Date =
           where: { sellerId: id },
           orderBy: [{ orderDate: "desc" }, { id: "desc" }],
           take: PANEL_SIPARIS_SINIRI,
-          select: { id: true, documentNo: true, orderDate: true, status: true },
+          select: { id: true, documentNo: true, orderDate: true, stage: true, status: true },
         })
       : [],
     yonetici ? denetimListesi({ ...BOS_DENETIM, kullanici: id }, null, PANEL_ISLEM_SINIRI) : null,
   ]);
   return {
-    kullanici: { ...satir, createdAt: kayit.createdAt, primOrani: yonetici && kayit.commissionRate ? kayit.commissionRate.toFixed(2) : null },
-    acikOturum: oturumlar.filter((o) => !suresiDolduMu(o, an, ayar)).length,
+    kullanici: { ...satir, createdAt: kayit.createdAt },
+    prim: yonetici && satici ? { oran: kayit.commissionRate ? kayit.commissionRate.toFixed(2) : null } : null,
+    acikOturum,
     cariler,
     siparisler,
     islemler: islemler ? islemler.satirlar.map((k) => ({ id: k.id, createdAt: k.createdAt, actionType: k.actionType, ozet: k.ozet })) : null,

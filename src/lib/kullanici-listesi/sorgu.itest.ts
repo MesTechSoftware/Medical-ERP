@@ -89,7 +89,7 @@ describe("son etkinlik", () => {
 describe("OPERASYON kapsamı (D-2-3)", () => {
   it("liste ve KPI yalnız satıcılardan; yönetici/operasyon paneli açılmaz; satıcı panelinde prim ve son işlemler yok", async () => {
     const y = await kullanici("Yönetici", "YONETICI");
-    await kullanici("Operasyon", "OPERASYON");
+    const o = await kullanici("Operasyon", "OPERASYON");
     const s = await kullanici("Satıcı", "SATICI");
     await prisma.user.update({ where: { id: s.id }, data: { commissionRate: "7.50" } });
 
@@ -102,13 +102,18 @@ describe("OPERASYON kapsamı (D-2-3)", () => {
     expect((await kullaniciListesi({ ...BOS_SUZGEC, rol: "YONETICI" }, "OPERASYON", SAYFA)).toplam).toBe(0);
 
     expect(await kullaniciPaneli(y.id, "OPERASYON", SIMDI)).toBeNull();
+    expect(await kullaniciPaneli(o.id, "OPERASYON", SIMDI)).toBeNull();
     const p = await kullaniciPaneli(s.id, "OPERASYON", SIMDI);
-    expect(p!.kullanici.primOrani).toBeNull();
+    expect(p!.prim).toBeNull();
     expect(p!.islemler).toBeNull();
 
     const py = await kullaniciPaneli(s.id, "YONETICI", SIMDI);
-    expect(py!.kullanici.primOrani).toBe("7.50");
+    expect(py!.prim).toEqual({ oran: "7.50" });
     expect(py!.islemler).toEqual([]);
+    // Özel oranı olmayan satıcıda yönetici "varsayılan" görür; yönetici kaydında prim yoktur.
+    const varsayilan = await kullanici("Varsayılan oranlı", "SATICI");
+    expect((await kullaniciPaneli(varsayilan.id, "YONETICI", SIMDI))!.prim).toEqual({ oran: null });
+    expect((await kullaniciPaneli(y.id, "YONETICI", SIMDI))!.prim).toBeNull();
   });
 });
 
@@ -121,12 +126,20 @@ describe("yan panel", () => {
     await oturum(s.id, new Date(SIMDI.getTime() - SAAT), { createdAt: new Date(SIMDI.getTime() - 13 * SAAT) }); // mutlak süre doldu
     for (let i = 0; i < 12; i++) await cari(s.id);
     await cari(s.id, "PASIF");
+    const d = await prisma.doctor.findFirstOrThrow({ where: { ownerSellerId: s.id, status: "AKTIF" } });
+    const siparis = (documentNo: string, stage: "TEKLIF" | "ONAYLI") =>
+      prisma.order.create({ data: { documentNo, doctorId: d.id, sellerId: s.id, stage, paymentTermDays: 30 } });
+    await siparis("SIP-1", "ONAYLI");
+    await siparis("TKL-1", "TEKLIF");
 
     const p = await kullaniciPaneli(s.id, "YONETICI", SIMDI);
     expect(p!.acikOturum).toBe(1);
     expect(p!.cariler).toHaveLength(10);
     expect(p!.kullanici.portfoy).toBe(12);
-    expect(p!.siparisler).toEqual([]);
+    expect(p!.siparisler.map((x) => [x.documentNo, x.stage]).sort()).toEqual([
+      ["SIP-1", "ONAYLI"],
+      ["TKL-1", "TEKLIF"],
+    ]);
   });
 
   it("bulunamayan kimlik null", async () => {

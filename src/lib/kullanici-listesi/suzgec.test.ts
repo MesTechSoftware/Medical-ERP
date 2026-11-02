@@ -10,10 +10,10 @@ describe("kullanıcı süzgeci (spec Ü-22 §3.3)", () => {
     expect(suzgecCoz({ durum: "AKTIF", rol: "x", parola: "1", portfoy: "var" }, "YONETICI").suzgec).toEqual(BOS_SUZGEC);
   });
 
-  it("OPERASYON'da rol yalnız SATICI olabilir (D-2-3)", () => {
+  it("OPERASYON'da rol süzgeci yoktur — kapsamı zaten satıcılar (D-2-3)", () => {
     expect(suzgecCoz({ rol: "YONETICI" }, "OPERASYON").suzgec.rol).toBeNull();
     expect(suzgecCoz({ rol: "OPERASYON" }, "OPERASYON").suzgec.rol).toBeNull();
-    expect(suzgecCoz({ rol: "SATICI" }, "OPERASYON").suzgec.rol).toBe("SATICI");
+    expect(suzgecCoz({ rol: "SATICI" }, "OPERASYON").suzgec.rol).toBeNull();
     expect(suzgecCoz({ rol: "YONETICI" }, "YONETICI").suzgec.rol).toBe("YONETICI");
   });
 

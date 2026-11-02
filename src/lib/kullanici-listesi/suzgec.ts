@@ -4,7 +4,7 @@ import { ROLE_LABEL } from "@/lib/roles";
 
 /**
  * Kullanıcı listesinin süzgeci (spec Ü-22 §3.3); adres çubuğunda durur. Geçersiz değer yok sayılır.
- * OPERASYON yalnız satıcıları görür (D-2): onun için `rol` yalnız `SATICI` olabilir. `portfoy=yok`
+ * OPERASYON yalnız satıcıları görür (D-2): onun için `rol` süzgeci yoktur. `portfoy=yok`
  * kendisi "aktif satıcı" demektir; `durum` ve `rol`'ü ezer (adres tek anlam taşısın). Saf modül.
  */
 
@@ -21,9 +21,10 @@ export const BOS_SUZGEC: KullaniciSuzgeci = { durum: null, rol: null, portfoy: n
 
 export type { Parametreler };
 
+/** OPERASYON zaten yalnız satıcıları görür: rol süzgeci ona anlamsızdır, adreste yok sayılır. */
 const ROLLER: Record<GorenRol, readonly Role[]> = {
   YONETICI: ["YONETICI", "OPERASYON", "SATICI"],
-  OPERASYON: ["SATICI"],
+  OPERASYON: [],
 };
 
 export function suzgecCoz(p: Parametreler, gorenRol: GorenRol): { suzgec: KullaniciSuzgeci; detay: string | null } {
