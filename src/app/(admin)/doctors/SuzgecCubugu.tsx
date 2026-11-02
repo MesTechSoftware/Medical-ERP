@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Ikon } from "@/components/Ikon";
 import { EtkinSuzgecler } from "@/components/liste/EtkinSuzgecler";
 import { HizliSekmeler } from "@/components/liste/HizliSekmeler";
+import { SuzgecPaneli } from "@/components/liste/SuzgecPaneli";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import {
   HIZLI_SEKMELER,
@@ -61,13 +62,14 @@ export function SuzgecCubugu({
         />
         <div className="ml-auto flex flex-wrap items-start gap-2">
           {/* Süzgeç değişince form yeniden kurulur: yumuşak gezinmede <select> eski değerini korur (React). */}
-          <details key={doktorAdresi(suzgec)} className="relative">
+          <SuzgecPaneli key={doktorAdresi(suzgec)} className="relative">
             <summary className={`${buton("ikincil")} cursor-pointer list-none`}>
               <Ikon ad="filtrele" />
               {sayi > 0 ? `Filtrele · ${sayi}` : "Filtrele"}
             </summary>
             <Form
               action="/doctors"
+              prefetch={false}
               aria-label="Cari süzgeci"
               className="absolute right-0 z-20 mt-2 grid w-[min(56rem,calc(100vw-2rem))] gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-lg sm:grid-cols-2 lg:grid-cols-4"
             >
@@ -142,7 +144,7 @@ export function SuzgecCubugu({
                 </Link>
               </div>
             </Form>
-          </details>
+          </SuzgecPaneli>
           {sutunMenusu}
         </div>
       </div>

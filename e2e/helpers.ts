@@ -22,7 +22,8 @@ export function unique(prefix: string): string {
  */
 export async function yumusakGezinmeIsareti(page: Page): Promise<() => Promise<boolean>> {
   await page.evaluate(() => ((window as unknown as { __yumusak?: boolean }).__yumusak = true));
-  return () => page.evaluate(() => (window as unknown as { __yumusak?: boolean }).__yumusak === true);
+  // Tam yüklemenin ortasında bağlam yok olur; değerlendirme hatası da "yumuşak değil" sayılır.
+  return () => page.evaluate(() => (window as unknown as { __yumusak?: boolean }).__yumusak === true).catch(() => false);
 }
 
 /** Login formunu doldurup gönderir ve yönlenmeyi bekler. */

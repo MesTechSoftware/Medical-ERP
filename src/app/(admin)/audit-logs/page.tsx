@@ -49,6 +49,7 @@ export default async function DenetimKaydiSayfasi({
       <div key={denetimAdresi(suzgec)}>
         <Form
           action="/audit-logs"
+          prefetch={false}
           aria-label="Denetim kaydı süzgeci"
           className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
         >

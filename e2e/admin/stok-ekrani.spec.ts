@@ -61,6 +61,10 @@ test("Filtrele formu tür süzgeci uygular, sayfayı yeniden yüklemez; × ile k
   await form.getByRole("button", { name: "Uygula" }).click();
   await expect(page).toHaveURL(/tur=giris/);
   expect(await yumusak()).toBe(true);
+  // Süzgeç değişmeden Uygula: adres aynı kalır, panel yine kapanır.
+  await page.getByText(/^Filtrele/).click();
+  await form.getByRole("button", { name: "Uygula" }).click();
+  await expect(form).toBeHidden();
   await expect(page.getByRole("list", { name: "Etkin süzgeçler" }).getByText("Tür: Stok girişi")).toBeVisible();
   await expect(satirlar(page).first()).toBeVisible();
   const turler = await satirlar(page).locator("td[data-sutun='tur']").allInnerTexts();

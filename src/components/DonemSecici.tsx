@@ -18,7 +18,7 @@ export default function DonemSecici({ anahtar, yol }: { anahtar: string; yol: st
   const tum = anahtar === "tum";
   return (
     <div key={anahtar}>
-      <Form action={yol} className="mb-6 flex flex-wrap items-end gap-2">
+      <Form action={yol} prefetch={false} className="mb-6 flex flex-wrap items-end gap-2">
         <div>
           <label htmlFor="donem" className="mb-1 block text-xs text-slate-500">
             Dönem (ay)
