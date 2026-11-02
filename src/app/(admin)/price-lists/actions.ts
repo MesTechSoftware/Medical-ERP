@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
@@ -26,20 +27,23 @@ export async function createPriceList(_prev: unknown, formData: FormData): Promi
   if (!name) hatalar.push(sert("ALAN_ZORUNLU", {}, "name"));
   if (hatalar.length > 0) return sonucOlustur(hatalar);
 
+  let id: string;
   try {
-    await prisma.$transaction(async (tx) => {
+    id = await prisma.$transaction(async (tx) => {
       const liste = await tx.priceList.create({ data: { code, name } });
       await createAuditLog(
         { actorId: session.user.id, action: AUDIT_ACTIONS.PRICE_LIST_CREATE, entityType: "PriceList", entityId: liste.id, after: { code, name } },
         tx
       );
+      return liste.id;
     });
   } catch (e) {
     if (benzersizIhlali(e)) return engel("FIYAT_LISTESI_KODU_KAYITLI", {}, "code");
     throw e;
   }
   revalidatePath("/price-lists");
-  return basarili();
+  // Yeni listede sıradaki iş satır eklemektir (spec Ü-21 §3.7).
+  redirect(`/price-lists/${id}`);
 }
 
 /**
@@ -88,5 +92,6 @@ export async function deletePriceListItem(itemId: string): Promise<IslemSonucu> 
     );
   });
   revalidatePath(`/price-lists/${satir.priceListId}`);
+  revalidatePath("/price-lists");
   return basarili();
 }

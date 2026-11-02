@@ -14,7 +14,7 @@ async function enKucukYazi(page: Page) {
 test.describe("yönetici formları", () => {
   test.use({ storageState: "playwright/.auth/admin.json" });
 
-  for (const yol of ["/doctors/new", "/stock", "/orders/new", "/price-lists"]) {
+  for (const yol of ["/doctors/new", "/stock", "/orders/new", "/price-lists/new"]) {
     test(`${yol}: dokunmatikte alan yazısı ≥ 16 px, etiket alanın üstünde`, async ({ page }) => {
       await page.goto(yol);
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible();

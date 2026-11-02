@@ -85,7 +85,7 @@ Sayımlar süzgeçten bağımsızdır. "Bugün" İstanbul günüdür (`bugun()`)
 | Ürün | bugün geçerli satırı olan farklı ürün sayısı | evet | görünür |
 | Barem | bugün geçerli satırlardan `min_adet > 1` olanların sayısı | evet (`oncelik-dusuk`) | görünür |
 | Atanmış cari | `doctors` sayısı (pasif cariler dahil — atama verisi) | evet | görünür |
-| Durum | `StatusChip`: Aktif (`basari`) / Boş (`notr`) | evet | görünür |
+| Durum | `StatusChip`: Aktif (`olumlu`) / Boş (`notr`) | evet | görünür |
 | İşlem | "Satırlar" bağlantısı → `/price-lists/<id>` | hayır | görünür |
 
 - Sıralama `code asc`. Varsayılan liste rozeti `policy.pricing.varsayilanFiyatListesiKodu` ile.
