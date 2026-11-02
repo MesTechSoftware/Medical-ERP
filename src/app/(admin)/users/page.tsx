@@ -1,35 +1,52 @@
-import Link from "next/link";
-import { prisma } from "@/lib/db";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { requireStaff } from "@/lib/session";
-import { ROLE_LABEL } from "@/lib/roles";
-import {
-  PageHeader,
-  LinkButton,
-  Card,
-  StatusBadge,
-  EmptyRow,
-} from "@/components/ui";
-import { buton } from "@/components/stil";
-import { Ikon } from "@/components/Ikon";
+import { PageHeader, LinkButton } from "@/components/ui";
+import Pagination from "@/components/Pagination";
+import { SutunSecici } from "@/components/liste/SutunSecici";
+import { gizliSutunlariCoz } from "@/lib/liste/sutunlar";
+import { getPagination, pageCount } from "@/lib/pagination";
+import { kullaniciKpileri, kullaniciListesi, kullaniciPaneli } from "@/lib/kullanici-listesi/sorgu";
+import { SUTUNLAR, SUTUN_CEREZI } from "@/lib/kullanici-listesi/sutunlar";
+import { kullaniciAdresi, suzgecCoz, type GorenRol, type Parametreler } from "@/lib/kullanici-listesi/suzgec";
+import { KpiKartlari } from "./KpiKartlari";
+import { KullaniciPaneli } from "./KullaniciPaneli";
+import { KullaniciTablosu } from "./KullaniciTablosu";
+import { SuzgecCubugu } from "./SuzgecCubugu";
+import { sutunlariKaydet } from "./sutunEylemi";
 
-export default async function UsersPage() {
+const tek = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
+
+/** Kullanıcı sayısı küçüktür; varsayılan sayfa bütün ekibi gösterir (spec Ü-22 §3.4). */
+const SAYFA_BOYU = 100;
+
+export default async function UsersPage({ searchParams }: { searchParams: Promise<Parametreler> }) {
   const session = await requireStaff();
-  // Kullanıcı yönetimi yalnız YONETICI'dedir. OPERASYON yalnız satıcıları görür ve salt okur
-  // (D-2 17.10 eki, E-2 20.10 eki).
-  const yonetici = session.user.role === "YONETICI";
-  const [users, doctorCounts] = await Promise.all([
-    prisma.user.findMany({
-      where: yonetici ? {} : { role: "SATICI" },
-      orderBy: [{ role: "asc" }, { name: "asc" }],
-    }),
-    prisma.doctor.groupBy({
-      by: ["ownerSellerId"],
-      _count: { _all: true },
-    }),
+  // Kullanıcı yönetimi yalnız YONETICI'dedir. OPERASYON yalnız satıcıları görür ve salt okur (D-2, E-2).
+  const gorenRol: GorenRol = session.user.role === "YONETICI" ? "YONETICI" : "OPERASYON";
+  const yonetici = gorenRol === "YONETICI";
+  const params = await searchParams;
+  const { page, perPage, skip, take } = getPagination({ page: tek(params.page), per: tek(params.per) }, SAYFA_BOYU);
+  const { suzgec, detay } = suzgecCoz(params, gorenRol);
+  const yer = { page, per: tek(params.per) ? perPage : undefined };
+  const gizli = gizliSutunlariCoz(SUTUNLAR, (await cookies()).get(SUTUN_CEREZI)?.value);
+  const adres = kullaniciAdresi(suzgec, yer);
+
+  const [liste, sayilar, panel] = await Promise.all([
+    kullaniciListesi(suzgec, gorenRol, { skip, take }),
+    kullaniciKpileri(gorenRol),
+    detay ? kullaniciPaneli(detay, gorenRol) : null,
   ]);
-  const doktorSayisi = new Map(
-    doctorCounts.map((g) => [g.ownerSellerId, g._count._all])
-  );
+
+  // Sayfa dışı adres son sayfaya gider; boş durum "hiç kayıt yok" demesin.
+  if (liste.satirlar.length === 0 && liste.toplam > 0) {
+    redirect(kullaniciAdresi(suzgec, { ...yer, page: pageCount(liste.toplam, perPage), ...(detay ? { detay } : {}) }));
+  }
+
+  const sayfaParametreleri = {
+    ...Object.fromEntries(new URL(kullaniciAdresi(suzgec), "http://x").searchParams),
+    per: tek(params.per),
+  };
 
   return (
     <div>
@@ -39,72 +56,20 @@ export default async function UsersPage() {
         action={yonetici && <LinkButton href="/users/new" ikon="yeni">Yeni Kullanıcı</LinkButton>}
       />
 
-      <Card>
-        <div className="tablo-kutusu">
-          <table className="veri-tablosu">
-            <thead>
-              <tr>
-                <th>Kullanıcı</th>
-                <th>Rol</th>
-                <th className="oncelik-dusuk">İletişim</th>
-                <th className="sayi oncelik-dusuk">Doktor</th>
-                <th>Durum</th>
-                <th className="sayi">İşlem</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.length === 0 && (
-                <EmptyRow colSpan={6} text="Henüz kullanıcı yok." />
-              )}
-              {users.map((u) => {
-                const satici = u.role === "SATICI";
-                return (
-                  <tr key={u.id}>
-                    <td>
-                      {satici ? (
-                        <Link
-                          href={`/users/${u.id}`}
-                          className="font-medium text-slate-900 hover:underline"
-                        >
-                          {u.name}
-                        </Link>
-                      ) : (
-                        <span className="font-medium text-slate-900">{u.name}</span>
-                      )}
-                    </td>
-                    <td className="text-slate-600">{ROLE_LABEL[u.role]}</td>
-                    <td className="text-slate-500 oncelik-dusuk">
-                      <div>{u.email}</div>
-                      {u.phone && (
-                        <div className="text-xs text-slate-400">{u.phone}</div>
-                      )}
-                    </td>
-                    <td className="sayi oncelik-dusuk">
-                      {satici ? (doktorSayisi.get(u.id) ?? 0) : "—"}
-                    </td>
-                    <td>
-                      <StatusBadge status={u.isActive ? "AKTIF" : "PASIF"} />
-                    </td>
-                    <td>
-                      {yonetici && (
-                        <div className="flex items-center justify-end gap-3">
-                          <Link
-                            href={`/users/${u.id}/edit`}
-                            className={buton("metin")}
-                          >
-                            <Ikon ad="duzenle" />
-                            Düzenle
-                          </Link>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+      <KpiKartlari sayilar={sayilar} gorenRol={gorenRol} />
+
+      <SuzgecCubugu
+        suzgec={suzgec}
+        gorenRol={gorenRol}
+        sutunMenusu={<SutunSecici sutunlar={SUTUNLAR} gizli={gizli} action={sutunlariKaydet} donus={adres} />}
+      />
+
+      <KullaniciTablosu satirlar={liste.satirlar} gizli={gizli} yonetici={yonetici} suzgec={suzgec} yer={yer} />
+
+      <Pagination page={page} totalPages={pageCount(liste.toplam, perPage)} total={liste.toplam} basePath="/users" params={sayfaParametreleri} />
+
+      {/* Kapsam dışı ya da bulunamayan kimlikte panel açılmaz (spec §5, D-2-3). */}
+      {panel && <KullaniciPaneli key={panel.kullanici.id} veri={panel} kapatAdresi={adres} yonetici={yonetici} />}
     </div>
   );
 }
