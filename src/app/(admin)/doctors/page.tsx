@@ -6,7 +6,7 @@ import Pagination from "@/components/Pagination";
 import { getPagination, pageCount } from "@/lib/pagination";
 import { doktorKpileri, doktorListesi, doktorPaneli, doktorSuzgecSecenekleri } from "@/lib/doktor-listesi/sorgu";
 import { SUTUNLAR, SUTUN_CEREZI, gizliSutunlariCoz } from "@/lib/doktor-listesi/sutunlar";
-import { doktorAdresi, saticiyiDogrula, suzgecCoz, type Parametreler } from "@/lib/doktor-listesi/suzgec";
+import { SUZGEC_ALANLARI, doktorAdresi, saticiyiDogrula, suzgecCoz, type Parametreler } from "@/lib/doktor-listesi/suzgec";
 import { sorguMetni } from "@/lib/liste/parametreler";
 import { simdi } from "@/lib/zaman";
 import TransferForm from "./TransferForm";
@@ -73,7 +73,7 @@ export default async function AdminDoctorsPage({ searchParams }: { searchParams:
         </div>
       )}
 
-      <SuzgecCubugu suzgec={suzgec} formAnahtari={sorguMetni(params)} secenekler={secenekler} sutunMenusu={<SutunSecici sutunlar={SUTUNLAR} gizli={gizli} action={sutunlariKaydet} donus={listeAdresi} />} />
+      <SuzgecCubugu key={sorguMetni(params, SUZGEC_ALANLARI)} suzgec={suzgec} secenekler={secenekler} sutunMenusu={<SutunSecici sutunlar={SUTUNLAR} gizli={gizli} action={sutunlariKaydet} donus={listeAdresi} />} />
 
       {/* Toplu devir (X-17 §(4)): satırlardaki kutular bu forma `form` niteliğiyle bağlıdır. */}
       {devirYetkisi && (

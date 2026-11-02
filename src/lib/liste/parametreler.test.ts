@@ -42,4 +42,11 @@ describe("sorguMetni — süzgeç formunun yeniden kurulma anahtarı", () => {
     expect(sorguMetni({ bitis: "2026-03-01", baslangic: "2026-05-01" })).toBe("bitis=2026-03-01&baslangic=2026-05-01");
     expect(sorguMetni({ gorunur: ["a", "b"], tur: "", yok: undefined })).toBe("gorunur=a&gorunur=b&tur=");
   });
+
+  it("adlar verilirse yalnız süzgeç alanları; yok ile boş ayrı", () => {
+    const p = { page: "3", detay: "cm1", yon: "GIRIS", tur: "" };
+    expect(sorguMetni(p, ["tur", "yon", "urunId"])).toBe("tur=&yon=GIRIS");
+    expect(sorguMetni({}, ["donem"])).toBe("");
+    expect(sorguMetni({ donem: "" }, ["donem"])).toBe("donem=");
+  });
 });

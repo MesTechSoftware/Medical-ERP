@@ -9,7 +9,7 @@ import { ilk, sorguMetni, type Parametreler } from "@/lib/liste/parametreler";
 import { getPagination, pageCount } from "@/lib/pagination";
 import { konsinyedekiMal, mevcutStok, stokHareketleri, stokKpileri } from "@/lib/stok-listesi/sorgu";
 import { SUTUNLAR, SUTUN_CEREZI } from "@/lib/stok-listesi/sutunlar";
-import { bosDurum, stokAdresi, suzgecCoz } from "@/lib/stok-listesi/suzgec";
+import { SUZGEC_ALANLARI, bosDurum, stokAdresi, suzgecCoz } from "@/lib/stok-listesi/suzgec";
 import { requireStaff } from "@/lib/session";
 import { bugun, yerelGunMetni } from "@/lib/zaman";
 import StockEntryForm from "./StockEntryForm";
@@ -194,8 +194,8 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
               Hareket Geçmişi
             </h2>
             <SuzgecCubugu
+              key={sorguMetni(params, SUZGEC_ALANLARI)}
               suzgec={suzgec}
-              formAnahtari={sorguMetni(params)}
               bugun={gun}
               urunler={urunSuzgeci}
               sutunMenusu={<SutunSecici sutunlar={SUTUNLAR} gizli={gizli} action={sutunlariKaydet} donus={listeAdresi} />}

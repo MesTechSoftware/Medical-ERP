@@ -5,6 +5,7 @@ import { BRUT, MATRAH } from "@/lib/taban";
 import { simdi } from "@/lib/zaman";
 import { ciroOzeti, getSellerReports, saticiTahsilatOzeti } from "@/lib/reports-service";
 import DonemSecici from "@/components/DonemSecici";
+import { ilk, sorguMetni, type Parametreler } from "@/lib/liste/parametreler";
 import SaticiRaporTablosu from "@/components/SaticiRaporTablosu";
 import { PageHeader, Card } from "@/components/ui";
 import { KovaOzeti } from "@/components/kpi/KovaOzeti";
@@ -20,12 +21,13 @@ import { KpiSatiri } from "@/components/kpi/KpiSatiri";
 export default async function MyReportPage({
   searchParams,
 }: {
-  searchParams: Promise<{ donem?: string }>;
+  searchParams: Promise<Parametreler>;
 }) {
   const session = await requireSeller();
   const an = simdi();
-  const ham = (await searchParams).donem;
-  const donem = donemCoz(ham, an);
+  const params = await searchParams;
+  // Tekrarlanan `donem` dizi gelir; ilk değer okunur.
+  const donem = donemCoz(ilk(params, "donem") ?? undefined, an);
   const k = karsilastirmaAraliklari(donem, an);
   const aylar = sonAylar(6, donemBitisAyi(donem, an), an);
   const not = karsilastirmaNotu(k.devamEdiyor);
@@ -41,7 +43,7 @@ export default async function MyReportPage({
   return (
     <div>
       <PageHeader title="Raporum" description="Dönem cirom, hakedişim ve tahsilatım" />
-      <DonemSecici anahtar={donem.anahtar} ham={ham} yol="/my-report" />
+      <DonemSecici key={sorguMetni(params, ["donem"])} anahtar={donem.anahtar} yol="/my-report" />
       <KpiSatiri>
         <KpiCard
           etiket="Cirom"

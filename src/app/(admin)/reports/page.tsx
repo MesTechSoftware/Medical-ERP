@@ -6,6 +6,7 @@ import { kpiGetir } from "@/lib/kpi/getir";
 import { cubukOranlari } from "@/lib/kpi/olcek";
 import { simdi } from "@/lib/zaman";
 import DonemSecici from "@/components/DonemSecici";
+import { ilk, sorguMetni, type Parametreler } from "@/lib/liste/parametreler";
 import SaticiRaporTablosu from "@/components/SaticiRaporTablosu";
 import {
   ciroOzeti,
@@ -29,12 +30,13 @@ import { OranCubugu } from "@/components/grafik/BarMicro";
 export default async function ReportsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ donem?: string }>;
+  searchParams: Promise<Parametreler>;
 }) {
   const session = await requireAdmin();
   const an = simdi();
-  const ham = (await searchParams).donem;
-  const donem = donemCoz(ham, an);
+  const params = await searchParams;
+  // Tekrarlanan `donem` dizi gelir; ilk değer okunur.
+  const donem = donemCoz(ilk(params, "donem") ?? undefined, an);
   const k = karsilastirmaAraliklari(donem, an);
   const aylar = sonAylar(6, donemBitisAyi(donem, an), an);
   const baglam = { yol: "/reports", kullaniciId: session.user.id };
@@ -57,7 +59,7 @@ export default async function ReportsPage({
         description="Ciro ve performans"
       />
 
-      <DonemSecici anahtar={donem.anahtar} ham={ham} yol="/reports" />
+      <DonemSecici key={sorguMetni(params, ["donem"])} anahtar={donem.anahtar} yol="/reports" />
 
       {/* FR-60: kanal karşılaştırması C5'te söküldü (X-8) */}
       <KpiSatiri>

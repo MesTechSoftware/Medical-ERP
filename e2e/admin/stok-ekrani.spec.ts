@@ -194,12 +194,17 @@ test("form sunucunun uyguladığı süzgeci gösterir: ters tarihler düzeltilir
   await expect(form.getByLabel("Bitiş")).toHaveValue("2026-05-01");
 });
 
-test("aynı adrese varan eylemde açılır paneller kapanır: Temizle, değişmemiş sütun tercihi", async ({ page }) => {
+test("aynı adrese varan eylemde açılır paneller kapanır, form sıfırlanır: Temizle, değişmemiş sütun tercihi", async ({ page }) => {
   await page.goto("/stock");
   await page.getByText(/^Filtrele/).click();
   const suzgec = page.getByRole("form", { name: "Hareket süzgeci" });
+  // Gönderilmemiş seçim: Temizle aynı adrese gider, form yeniden kurulmaz ama sıfırlanır.
+  await suzgec.getByLabel("Yön").selectOption("GIRIS");
   await suzgec.getByRole("link", { name: "Temizle" }).click();
   await expect(suzgec).toBeHidden();
+  await page.getByText(/^Filtrele/).click();
+  await expect(suzgec.getByLabel("Yön")).toHaveValue("");
+  await page.getByText(/^Filtrele/).click();
   await page.getByText("Sütunlar", { exact: true }).click();
   const sutunlar = page.getByRole("form", { name: "Görünür sütunlar" });
   await sutunlar.getByRole("button", { name: "Kaydet" }).click();

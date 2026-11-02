@@ -24,6 +24,9 @@ export type DenetimSuzgeci = {
 /** `once`: bu sıranın öncesi (daha eski); `sonra`: sonrası (daha yeni). */
 export type Imlec = { yon: "once" | "sonra"; seq: number } | null;
 
+/** Süzgeç formunun alanları; form bunların ham değeriyle anahtarlanır (`sorguMetni`). */
+export const SUZGEC_ALANLARI = ["baslangic", "bitis", "kullanici", "modul", "tur", "olay"] as const;
+
 export const BOS_SUZGEC: DenetimSuzgeci = { baslangic: null, bitis: null, kullanici: null, modul: null, tur: null, olay: null };
 
 const MODULLER: readonly AuditModule[] = ["SATIS", "STOK", "FINANS", "CARI", "URUN_FIYAT", "ICE_AKTARIM", "KULLANICI"];

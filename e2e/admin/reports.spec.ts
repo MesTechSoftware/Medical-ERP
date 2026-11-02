@@ -64,3 +64,17 @@ test("dönem zorunludur: varsayılan içinde bulunulan ay, tüm zamanlar ayrı s
   expect(await yumusak()).toBe(true);
   await expect(page.getByText("2026-03 ayı gösteriliyor.")).toBeVisible();
 });
+
+test("dönem alanı uygulanan dönemi gösterir: boş ay varsayılana döner; tekrarlanan donem çökertmez", async ({ page }) => {
+  const buAy = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul", year: "numeric", month: "2-digit" })
+    .format(new Date())
+    .slice(0, 7);
+  await page.goto("/reports");
+  await page.locator("#donem").fill("");
+  await page.getByRole("button", { name: "Göster" }).click();
+  await expect(page).toHaveURL(/donem=$/);
+  await expect(page.locator("#donem")).toHaveValue(buAy);
+
+  await page.goto("/reports?donem=2026-01&donem=2026-02");
+  await expect(page.getByText("2026-01 ayı gösteriliyor.")).toBeVisible();
+});

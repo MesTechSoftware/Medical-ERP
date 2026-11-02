@@ -1,4 +1,3 @@
-import Form from "next/form";
 import Link from "next/link";
 import { Fragment } from "react";
 
@@ -6,12 +5,13 @@ import { DetayPaneli, KayitYokPaneli } from "@/components/denetim/DetayPaneli";
 import { ImlecSayfalama } from "@/components/denetim/ImlecSayfalama";
 import { IslemTuruRozeti } from "@/components/denetim/IslemTuruRozeti";
 import { Ikon } from "@/components/Ikon";
+import { SuzgecFormu } from "@/components/liste/SuzgecFormu";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import { Card, EmptyRow, PageHeader } from "@/components/ui";
 import { AUDIT_ACTION_LABELS, ISLEM_TURU_ETIKETI, MODUL_ETIKETI } from "@/lib/denetim/olaylar";
 import { varlikEtiketi } from "@/lib/denetim/ozet";
 import { denetimKaydi, denetimListesi, kullaniciSecenekleri } from "@/lib/denetim/sorgu";
-import { SISTEM, denetimAdresi, suzgecCoz, type Imlec } from "@/lib/denetim/suzgec";
+import { SISTEM, SUZGEC_ALANLARI, denetimAdresi, suzgecCoz, type Imlec } from "@/lib/denetim/suzgec";
 import { formatDateTime } from "@/lib/format";
 import { sorguMetni } from "@/lib/liste/parametreler";
 import { ROLE_LABEL } from "@/lib/roles";
@@ -47,12 +47,11 @@ export default async function DenetimKaydiSayfasi({
         description="Sistemdeki işlemlerin değiştirilemez kaydı; her kayıt zincirle mühürlüdür. Salt okunur."
       />
 
-      {/* `next/form` istemci tarafında gezer; adres değişince form yeniden kurulur, yoksa Temizle'den
-          sonra <select>'ler eski değeri gösterirdi (React denetimsiz alanı sıfırlamaz). */}
-      <Fragment key={sorguMetni(params)}>
-        <Form
+      {/* Süzgeç alanları adreste değişince form yeniden kurulur; yoksa yumuşak gezinmede <select>'ler eski
+          değeri gösterirdi (React denetimsiz alanı sıfırlamaz). Kayıt paneli ve sayfa imleci kurmaz. */}
+      <Fragment key={sorguMetni(params, SUZGEC_ALANLARI)}>
+        <SuzgecFormu
           action="/audit-logs"
-          prefetch={false}
           aria-label="Denetim kaydı süzgeci"
           className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
         >
@@ -129,7 +128,7 @@ export default async function DenetimKaydiSayfasi({
           <Link href="/audit-logs" className="text-sm font-medium text-slate-500 hover:text-slate-800">
             Temizle
           </Link>
-        </Form>
+        </SuzgecFormu>
       </Fragment>
 
       <Card>

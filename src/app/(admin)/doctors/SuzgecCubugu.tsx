@@ -1,9 +1,9 @@
-import Form from "next/form";
 import Link from "next/link";
 import { Ikon } from "@/components/Ikon";
 import { EtkinSuzgecler } from "@/components/liste/EtkinSuzgecler";
 import { HizliSekmeler } from "@/components/liste/HizliSekmeler";
 import { AcilirPanel } from "@/components/liste/AcilirPanel";
+import { SuzgecFormu } from "@/components/liste/SuzgecFormu";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import {
   HIZLI_SEKMELER,
@@ -43,13 +43,10 @@ function Alan({ id, etiket, children }: { id: string; etiket: string; children: 
  */
 export function SuzgecCubugu({
   suzgec,
-  formAnahtari,
   secenekler,
   sutunMenusu,
 }: {
   suzgec: DoktorSuzgeci;
-  /** Adresin ham sorgusu (`sorguMetni`): her yeni adreste form yeniden kurulur. */
-  formAnahtari: string;
   secenekler: { bolgeler: string[]; saticilar: { id: string; name: string }[] };
   sutunMenusu?: React.ReactNode;
 }) {
@@ -64,15 +61,15 @@ export function SuzgecCubugu({
           sekmeler={HIZLI_SEKMELER.map((f) => ({ etiket: f.etiket, adres: doktorAdresi(f.suzgec), etkin: ayniSuzgec(suzgec, f.suzgec) }))}
         />
         <div className="ml-auto flex flex-wrap items-start gap-2">
-          {/* Adres değişince form yeniden kurulur: yumuşak gezinmede <select> eski değerini korur (React). */}
-          <AcilirPanel key={formAnahtari} className="relative">
+          {/* Sayfa bu bileşeni süzgeç alanlarının ham değeriyle anahtarlar: yumuşak gezinmede <select> eski
+              değerini korurdu (React). */}
+          <AcilirPanel className="relative">
             <summary className={`${buton("ikincil")} cursor-pointer list-none`}>
               <Ikon ad="filtrele" />
               {sayi > 0 ? `Filtrele · ${sayi}` : "Filtrele"}
             </summary>
-            <Form
+            <SuzgecFormu
               action="/doctors"
-              prefetch={false}
               aria-label="Cari süzgeci"
               className="absolute right-0 z-20 mt-2 grid w-[min(56rem,calc(100vw-2rem))] gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-lg sm:grid-cols-2 lg:grid-cols-4"
             >
@@ -146,7 +143,7 @@ export function SuzgecCubugu({
                   Temizle
                 </Link>
               </div>
-            </Form>
+            </SuzgecFormu>
           </AcilirPanel>
           {sutunMenusu}
         </div>

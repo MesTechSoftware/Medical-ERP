@@ -37,12 +37,13 @@ export function secenek<T extends string>(metin: string | null, gecerli: readonl
 }
 
 /**
- * Adresin ham sorgu metni (normalize edilmez). Süzgeç formları bununla anahtarlanır: her yeni adreste
- * yeniden kurulur, sunucunun düzelttiği ya da yok saydığı girdi formda kalmaz.
+ * Adresin ham sorgu metni (normalize edilmez); `adlar` verilirse yalnız o parametreler, o sırayla.
+ * Süzgeç formları süzgeç alanlarıyla anahtarlanır: alan değeri adreste değişince yeniden kurulur,
+ * sunucunun düzelttiği ya da yok saydığı girdi formda kalmaz. Yok ile boş (`ad=`) ayrıdır.
  */
-export function sorguMetni(p: Parametreler): string {
+export function sorguMetni(p: Parametreler, adlar?: readonly string[]): string {
   const q = new URLSearchParams();
-  for (const [ad, deger] of Object.entries(p)) {
+  for (const [ad, deger] of adlar ? adlar.map((a) => [a, p[a]] as const) : Object.entries(p)) {
     for (const d of Array.isArray(deger) ? deger : deger === undefined ? [] : [deger]) q.append(ad, d);
   }
   return q.toString();
