@@ -138,9 +138,11 @@ Geçersiz ya da bulunamayan `detay` kimliğinde panel açılmaz.
 - İç `listedenFiyatlar` seçilen satırın `minQuantity`'sini de döndürür (`Map<urunId, { fiyat, minQuantity }>`);
   mevcut iki çağıran yalnız fiyatı okur, davranış değişmez.
 - **Yeni `baremMatrisi(fiyatListesiId, gun, db?) → { esikler: number[]; urunler: { id, name, code,
-  hucreler: ({ fiyat: Decimal; devralinan: boolean } | null)[] }[] }`** — listedeki bugün geçerli
+  hucreler: ({ fiyat: Decimal; kaynakEsik: number; devralinan: boolean } | null)[] }[] }`** — listedeki bugün geçerli
   satırların ürünleri ve eşikleri okunur; her eşik için `listedenFiyatlar(liste, ürünler, { miktar: eşik,
-  gun })` bir kez çağrılır (eşik sayısı küçüktür). `devralinan = seçilen minQuantity !== eşik`.
+  gun })` bir kez çağrılır (eşik sayısı küçüktür). `kaynakEsik` seçilen satırın `min_adet`'i,
+  `devralinan = kaynakEsik !== eşik`.
+- **`gecerliSatir(gun)`** satır tarih koşulunun tek tanımı (dışa açık); çağıran `AND: [gecerliSatir(gun)]` içine koyar.
 
 ### 4.2 Liste sorguları — `src/lib/fiyat-listesi-listesi/sorgu.ts` (veritabanına bağlı)
 
@@ -152,7 +154,11 @@ Geçersiz ya da bulunamayan `detay` kimliğinde panel açılmaz.
   `priceListItem.findMany` ile (sayfadaki listeler için) hesaplanır.
 - **`fiyatListesiKpileri() → { toplam, aktif, ozelListeliCari, varsayilanKullanan, fiyatsizUrun,
   varsayilanListeId }`**.
-- **`fiyatListesiPaneli(id) → { liste, ozet, matris, cariler, cariToplam } | null`**.
+- **`fiyatListesiPaneli(id, gun) → { liste, gecerliSatir, toplamSatir, tarihliSatir, matris, cariler,
+  cariToplam } | null`** — ürün/barem sayıları tablo satırıyla aynı yoldan (`satirSayilari`).
+- Üç sorgu da `gun` alır; sayfa günü bir kez okur ve geçirir (kart ile sekme aynı günü sayar).
+- Satır sayımları ürün durumundan bağımsızdır (liste satırı tanım verisidir); pasif ürünün satırı da
+  listeyi "aktif" sayar. Fiyatsız ürün KPI'ı ise yalnız aktif ürünlere bakar.
 
 ### 4.3 Saf modüller (birim testli; `db.ts`'e dokunmaz)
 

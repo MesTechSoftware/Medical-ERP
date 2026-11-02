@@ -11,6 +11,8 @@ import { referansVeri, yeniDoktorVerisi } from "../../../test/integration/refera
 
 const SAYFA = { skip: 0, take: 100 };
 let ref: Awaited<ReturnType<typeof referansVeri>>;
+/** Gün test başında bir kez okunur ve sorgulara geçer — koşu İstanbul gece yarısını aşsa da aynı gün. */
+let g: Date;
 
 const urun = (code: string, status: "AKTIF" | "PASIF" = "AKTIF") =>
   prisma.product.create({ data: { name: code, code, status, taxRateId: ref.kdv20.id } });
@@ -22,6 +24,7 @@ const cari = (ad: string, priceListId: string | null, status: "AKTIF" | "PASIF" 
 
 beforeEach(async () => {
   ref = await referansVeri();
+  g = bugun();
 });
 
 describe("aktif / boş sınıflaması ve KPI (X-10-6)", () => {
@@ -32,19 +35,19 @@ describe("aktif / boş sınıflaması ve KPI (X-10-6)", () => {
     const l3 = await liste("L3");
     await liste("L4");
     await satir(l1.id, a.id);
-    await satir(l2.id, a.id, 1, null, bugun()); // bugün hariç biter
-    await satir(l3.id, a.id, 1, gunEkle(bugun(), 1)); // yarın başlar
+    await satir(l2.id, a.id, 1, null, g); // bugün hariç biter
+    await satir(l3.id, a.id, 1, gunEkle(g, 1)); // yarın başlar
 
-    expect((await fiyatListeleri({ durum: "aktif" }, SAYFA, gunEkle(bugun(), 1))).satirlar.map((l) => l.code)).toEqual(["L1", "L3"]);
-    const aktif = await fiyatListeleri({ durum: "aktif" }, SAYFA);
-    const bos = await fiyatListeleri({ durum: "bos" }, SAYFA);
+    expect((await fiyatListeleri({ durum: "aktif" }, SAYFA, gunEkle(g, 1))).satirlar.map((l) => l.code)).toEqual(["L1", "L3"]);
+    const aktif = await fiyatListeleri({ durum: "aktif" }, SAYFA, g);
+    const bos = await fiyatListeleri({ durum: "bos" }, SAYFA, g);
     expect(aktif.satirlar.map((l) => l.code)).toEqual(["L1"]);
     expect(bos.satirlar.map((l) => l.code)).toEqual(["L2", "L3", "L4", ref.liste.code].sort());
     expect(bos.satirlar.every((l) => !l.aktif)).toBe(true);
 
-    const k = await fiyatListesiKpileri();
+    const k = await fiyatListesiKpileri(g);
     expect(k.aktif).toBe(aktif.toplam);
-    expect(k.toplam).toBe((await fiyatListeleri(BOS_SUZGEC, SAYFA)).toplam);
+    expect(k.toplam).toBe((await fiyatListeleri(BOS_SUZGEC, SAYFA, g)).toplam);
     expect(k.toplam).toBe(5);
   });
 
@@ -54,16 +57,16 @@ describe("aktif / boş sınıflaması ve KPI (X-10-6)", () => {
     await satir(l1.id, a.id, 1);
     await satir(l1.id, a.id, 10);
     await satir(l1.id, b.id, 1);
-    await satir(l1.id, b.id, 20, null, bugun()); // geçersiz barem sayılmaz
+    await satir(l1.id, b.id, 20, null, g); // geçersiz barem sayılmaz
     await cari("Dr. A", l1.id);
     await cari("Dr. B", l1.id);
     await cari("Dr. C", l1.id, "PASIF");
     await cari("Dr. D", null);
     await cari("Dr. E", ref.liste.id); // varsayılana açıkça atanmış: özel liste değildir
 
-    const [s] = (await fiyatListeleri({ durum: "aktif" }, SAYFA)).satirlar;
+    const [s] = (await fiyatListeleri({ durum: "aktif" }, SAYFA, g)).satirlar;
     expect(s).toMatchObject({ code: "L1", urunSayisi: 2, baremSayisi: 1, cariSayisi: 3, aktif: true, varsayilan: false });
-    const k = await fiyatListesiKpileri();
+    const k = await fiyatListesiKpileri(g);
     expect(k.ozelListeliCari).toBe(2);
     expect(k.varsayilanKullanan).toBe(2);
   });
@@ -71,7 +74,7 @@ describe("aktif / boş sınıflaması ve KPI (X-10-6)", () => {
   it("varsayılan liste rozeti ve sıralama koda göre", async () => {
     await liste("ZZ");
     await liste("AA");
-    const { satirlar } = await fiyatListeleri(BOS_SUZGEC, SAYFA);
+    const { satirlar } = await fiyatListeleri(BOS_SUZGEC, SAYFA, g);
     expect(satirlar.map((l) => l.code)).toEqual(satirlar.map((l) => l.code).sort());
     expect(satirlar.filter((l) => l.varsayilan).map((l) => l.code)).toEqual([ref.liste.code]);
   });
@@ -84,9 +87,9 @@ describe("aktif / boş sınıflaması ve KPI (X-10-6)", () => {
     await satir(ref.liste.id, a.id);
     await satir(ref.liste.id, c.id, 10);
 
-    const fiyatlar = await cozumleListeFiyatlari([a.id, b.id, c.id], { miktar: 1, gun: bugun() });
+    const fiyatlar = await cozumleListeFiyatlari([a.id, b.id, c.id], { miktar: 1, gun: g });
     const beklenen = [...fiyatlar.values()].filter((f) => f.durum === "HATA").length;
-    const k = await fiyatListesiKpileri();
+    const k = await fiyatListesiKpileri(g);
     expect(k.fiyatsizUrun).toBe(beklenen);
     expect(k.fiyatsizUrun).toBe(2);
     expect(k.varsayilanListeId).toBe(ref.liste.id);
@@ -97,7 +100,7 @@ describe("aktif / boş sınıflaması ve KPI (X-10-6)", () => {
     await urun("B");
     await cari("Dr. Listesiz", null);
     await prisma.priceList.update({ where: { id: ref.liste.id }, data: { code: "BASKA" } });
-    const k = await fiyatListesiKpileri();
+    const k = await fiyatListesiKpileri(g);
     expect(k.fiyatsizUrun).toBe(2);
     expect(k.varsayilanListeId).toBeNull();
     expect(k.varsayilanKullanan).toBe(0);
@@ -109,11 +112,11 @@ describe("yan panel (spec §3.5)", () => {
     const a = await urun("A");
     const l = await liste("L1");
     await satir(l.id, a.id, 1);
-    await satir(l.id, a.id, 10, gunEkle(bugun(), -5));
-    await satir(l.id, a.id, 50, null, gunEkle(bugun(), -1)); // süresi geçmiş
+    await satir(l.id, a.id, 10, gunEkle(g, -5));
+    await satir(l.id, a.id, 50, null, gunEkle(g, -1)); // süresi geçmiş
     for (let i = 25; i >= 1; i--) await cari(`Dr. ${String(i).padStart(2, "0")}`, l.id, i === 1 ? "PASIF" : "AKTIF");
 
-    const p = await fiyatListesiPaneli(l.id);
+    const p = await fiyatListesiPaneli(l.id, g);
     expect(p).not.toBeNull();
     expect(p!.cariToplam).toBe(25);
     expect(p!.cariler).toHaveLength(20);
@@ -127,6 +130,6 @@ describe("yan panel (spec §3.5)", () => {
   });
 
   it("bulunamayan kimlik null", async () => {
-    expect(await fiyatListesiPaneli("yok")).toBeNull();
+    expect(await fiyatListesiPaneli("yok", g)).toBeNull();
   });
 });

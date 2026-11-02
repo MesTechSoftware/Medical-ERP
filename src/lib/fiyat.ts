@@ -94,7 +94,8 @@ async function varsayilanListeId(db: Db): Promise<string | null> {
 
 /**
  * Satırın `gun`de geçerli olma koşulu (B-5, E-1 §(4)): yarı açık `[başlangıç, bitiş)`, boş uç süresiz.
- * Tek tanımdır; fiyat listesi ekranının "aktif liste" sayımı da bunu kullanır (X-10-6).
+ * Tek tanımdır; fiyat listesi ekranının "aktif liste" sayımı da bunu kullanır (X-10-6). Çağıran yaymaz,
+ * `AND: [gecerliSatir(gun)]` içine koyar — kendi `AND` anahtarı koşulu ezmesin.
  */
 export function gecerliSatir(gun: Date): Prisma.PriceListItemWhereInput {
   return {
@@ -120,7 +121,7 @@ async function listedenFiyatlar(
       priceListId: fiyatListesiId,
       productId: { in: [...urunIdler] },
       minQuantity: { lte: kosul.miktar },
-      ...gecerliSatir(kosul.gun),
+      AND: [gecerliSatir(kosul.gun)],
     },
     orderBy: { minQuantity: "desc" },
     select: { productId: true, listPrice: true, minQuantity: true },
@@ -150,7 +151,7 @@ export type BaremMatrisi = {
  */
 export async function baremMatrisi(fiyatListesiId: string, gun: Date, db: Db = prisma): Promise<BaremMatrisi> {
   const satirlar = await db.priceListItem.findMany({
-    where: { priceListId: fiyatListesiId, ...gecerliSatir(gun) },
+    where: { priceListId: fiyatListesiId, AND: [gecerliSatir(gun)] },
     orderBy: [{ product: { name: "asc" } }, { product: { code: "asc" } }],
     select: { minQuantity: true, product: { select: { id: true, name: true, code: true } } },
   });

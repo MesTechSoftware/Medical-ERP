@@ -62,7 +62,7 @@ type ListeKaydi = Prisma.PriceListGetPayload<{ select: typeof LISTE_SECIMI }>;
 async function satirSayilari(listeIdler: string[], gun: Date): Promise<Map<string, { urun: number; barem: number; satir: number }>> {
   if (listeIdler.length === 0) return new Map();
   const satirlar = await prisma.priceListItem.findMany({
-    where: { priceListId: { in: listeIdler }, ...gecerliSatir(gun) },
+    where: { priceListId: { in: listeIdler }, AND: [gecerliSatir(gun)] },
     select: { priceListId: true, productId: true, minQuantity: true },
   });
   const gruplar = new Map<string, { urunler: string[]; barem: number }>();
@@ -143,7 +143,7 @@ export async function fiyatListesiKpileri(gun: Date = bugun()): Promise<ListeKpi
 export async function fiyatListesiPaneli(id: string, gun: Date = bugun()): Promise<ListePaneli | null> {
   const liste = await prisma.priceList.findUnique({ where: { id }, select: LISTE_SECIMI });
   if (!liste) return null;
-  const [sayilar, toplamSatir, tarihliSatir, matris, cariler] = await Promise.all([
+  const [sayilar, toplamSatir, tarihliSatir, matris, cariler, cariToplam] = await Promise.all([
     satirSayilari([id], gun),
     prisma.priceListItem.count({ where: { priceListId: id } }),
     prisma.priceListItem.count({ where: { priceListId: id, OR: [{ validFrom: { not: null } }, { validTo: { not: null } }] } }),
@@ -154,6 +154,7 @@ export async function fiyatListesiPaneli(id: string, gun: Date = bugun()): Promi
       take: PANEL_CARI_SINIRI,
       select: { id: true, fullName: true, status: true },
     }),
+    prisma.doctor.count({ where: { priceListId: id } }),
   ]);
   return {
     liste: satir(liste, sayilar.get(id)),
@@ -162,6 +163,6 @@ export async function fiyatListesiPaneli(id: string, gun: Date = bugun()): Promi
     tarihliSatir,
     matris,
     cariler: cariler.map((c) => ({ id: c.id, fullName: c.fullName, pasif: c.status === "PASIF" })),
-    cariToplam: liste._count.doctors,
+    cariToplam: Math.max(cariToplam, cariler.length),
   };
 }
