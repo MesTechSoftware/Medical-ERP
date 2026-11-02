@@ -77,7 +77,7 @@ export function sekmeAdresi(s: StokSuzgeci, tarih: Tarih): string {
 
 type Anahtar = "tarih" | "tur" | "yon" | "urun";
 
-/** Etkin süzgeçlerin etiketleri, her biri o alanı düşüren adresle; adı bilinmeyen ürün "bulunamadı" olarak görünür. */
+/** Etkin süzgeçlerin etiketleri, her biri o alanı düşüren adresle. Ürün önce `urunuDogrula`'dan geçer. */
 export function etkinSuzgecler(
   s: StokSuzgeci,
   urunAdi: (id: string) => string | undefined
@@ -97,12 +97,19 @@ export function etkinSuzgecler(
   if (s.yon) {
     liste.push({ anahtar: "yon", etiket: `Yön: ${s.yon === "GIRIS" ? "Giriş" : "Çıkış"}`, kaldirAdresi: stokAdresi({ ...s, yon: null }) });
   }
-  if (s.urunId) {
-    // Süzgeç uygulanırken etiketi kaybolmaz: eski yer imi ya da silinmiş ürün de kaldırılabilir.
-    const ad = urunAdi(s.urunId) ?? "bulunamadı";
+  const ad = s.urunId ? urunAdi(s.urunId) : undefined;
+  if (ad !== undefined) {
     liste.push({ anahtar: "urun", etiket: `Ürün: ${ad}`, kaldirAdresi: stokAdresi({ ...s, urunId: null }) });
   }
   return liste;
+}
+
+/**
+ * Seçeneklerde olmayan ürün süzgeci yok sayılır (eski yer imi, elle yazılmış kimlik): uygulanıp formda
+ * "Tümü" görünseydi bir sonraki Uygula süzgeci sessizce düşürürdü (B-4-12).
+ */
+export function urunuDogrula(s: StokSuzgeci, urunIdler: readonly string[]): StokSuzgeci {
+  return s.urunId === null || urunIdler.includes(s.urunId) ? s : { ...s, urunId: null };
 }
 
 /** Sonuç boşken gösterilecek açıklamanın türü (spec §3.6). */

@@ -1,4 +1,5 @@
 import type { Prisma } from "@/generated/prisma/client";
+import type { StockLocationType } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import { aktifUrunStoklari, konumStoklari } from "@/lib/stok";
 import { stokDurumu } from "@/lib/stok-durumu";
@@ -131,16 +132,16 @@ export async function mevcutStok(): Promise<
     prisma.stockLocation.findMany({ select: { id: true, type: true } }),
   ]);
   const stoklar = await konumStoklari(konumlar.map((k) => k.id));
-  const depo = new Map<string, number>();
-  const konsinye = new Map<string, number>();
+  // Konum türü başına toplam; yeni bir tür eklenirse bu kayıt derlenmez.
+  const tur: Record<StockLocationType, Map<string, number>> = { DEPO: new Map(), KONSINYE: new Map() };
   for (const k of konumlar) {
-    const hedef = k.type === "DEPO" ? depo : konsinye;
+    const hedef = tur[k.type];
     for (const [urunId, miktar] of stoklar.get(k.id)!) hedef.set(urunId, (hedef.get(urunId) ?? 0) + miktar);
   }
   return urunler.map((u) => {
-    const d = depo.get(u.id) ?? 0;
-    const k = konsinye.get(u.id) ?? 0;
-    return { ...u, depo: d, konsinye: k, toplam: d + k };
+    const depo = tur.DEPO.get(u.id) ?? 0;
+    const konsinye = tur.KONSINYE.get(u.id) ?? 0;
+    return { ...u, depo, konsinye, toplam: depo + konsinye };
   });
 }
 
