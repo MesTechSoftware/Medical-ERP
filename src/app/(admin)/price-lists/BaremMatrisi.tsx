@@ -38,13 +38,11 @@ export function BaremMatrisi({ matris }: { matris: Matris }) {
                     </td>
                   );
                 }
-                // Devralınan hücrenin kaynağı soldaki ilk devralınmamış hücrenin eşiğidir.
-                const kaynak = h.devralinan ? matris.esikler[u.hucreler.slice(0, i).findLastIndex((x) => x && !x.devralinan)] : null;
                 return (
                   <td
                     key={matris.esikler[i]}
                     className={h.devralinan ? "sayi text-slate-400" : "sayi"}
-                    title={kaynak ? `${kaynak}+ eşiğinden` : undefined}
+                    title={h.devralinan ? `${h.kaynakEsik}+ eşiğinden` : undefined}
                     data-devralinan={h.devralinan || undefined}
                   >
                     <Tutar deger={h.fiyat} taban={MATRAH} baslikta />

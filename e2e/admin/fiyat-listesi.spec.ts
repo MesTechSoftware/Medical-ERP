@@ -77,13 +77,13 @@ test("Aktif liste kartı Aktif sekmesini açar; kart sayısı satır sayısına 
 });
 
 test("satırsız yeni liste Boş sekmesinde; etiket × ile kaldırılır", async ({ page }) => {
-  const kod = await yeniListe(page, "Boş liste");
+  const kod = await yeniListe(page, "Satırsız liste");
   await page.goto("/price-lists?per=100");
   await page.getByRole("navigation", { name: "Hızlı süzgeçler" }).getByRole("link", { name: "Boş" }).click();
   await expect(page).toHaveURL(/durum=bos/);
   await page.goto("/price-lists?durum=bos&per=100");
   await expect(listeSatirlari(page).filter({ hasText: kod })).toHaveCount(1);
-  await expect(listeSatirlari(page).filter({ hasText: kod })).toContainText("Boş");
+  await expect(listeSatirlari(page).filter({ hasText: kod }).getByText("Boş", { exact: true })).toBeVisible();
   await etkinler(page).getByRole("link", { name: "Kaldır: Durum: Boş" }).click();
   await expect(page).not.toHaveURL(/durum=/);
 });

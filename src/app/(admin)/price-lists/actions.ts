@@ -92,5 +92,6 @@ export async function deletePriceListItem(itemId: string): Promise<IslemSonucu> 
     );
   });
   revalidatePath(`/price-lists/${satir.priceListId}`);
+  revalidatePath("/price-lists");
   return basarili();
 }
