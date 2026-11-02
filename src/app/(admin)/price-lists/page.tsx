@@ -54,7 +54,10 @@ export default async function PriceListsPage({ searchParams }: { searchParams: P
         action={<LinkButton href="/price-lists/new" ikon="yeni">Yeni Liste</LinkButton>}
       />
 
-      <KpiKartlari sayilar={sayilar} />
+      <KpiKartlari
+        sayilar={sayilar}
+        fiyatsizAdresi={sayilar.varsayilanListeId ? listeAdresi(suzgec, { ...yer, detay: sayilar.varsayilanListeId }) : null}
+      />
 
       <SuzgecCubugu
         suzgec={suzgec}

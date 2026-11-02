@@ -11,7 +11,14 @@ const ANLIK = { anlik: "şu an" } as const;
  * Fiyat listesi ekranının üst kartları (spec Ü-21 §3.2): anlık sayılar, süzgeçten bağımsız. Aktif liste
  * kartı `durum=aktif` süzgecini açar (X-10-6); fiyatsız ürün kartı varsayılan listenin panelini.
  */
-export function KpiKartlari({ sayilar }: { sayilar: ListeKpileri }) {
+export function KpiKartlari({
+  sayilar,
+  fiyatsizAdresi,
+}: {
+  sayilar: ListeKpileri;
+  /** Varsayılan listenin paneli, bulunulan süzgeç ve sayfa korunarak; liste yoksa `null`. */
+  fiyatsizAdresi: string | null;
+}) {
   const fiyatsiz = (
     <KpiCard
       etiket="Fiyatsız ürün"
@@ -42,8 +49,8 @@ export function KpiKartlari({ sayilar }: { sayilar: ListeKpileri }) {
           karsilastirma={ANLIK}
           ikincilMetrik={sayilar.varsayilanListeId ? `${sayilar.varsayilanKullanan} cari varsayılanı kullanır` : "varsayılan liste yok"}
         />
-        {sayilar.varsayilanListeId ? (
-          <Link href={listeAdresi(BOS_SUZGEC, { detay: sayilar.varsayilanListeId })} scroll={false} className={KART}>
+        {fiyatsizAdresi ? (
+          <Link href={fiyatsizAdresi} scroll={false} className={KART}>
             {fiyatsiz}
           </Link>
         ) : (

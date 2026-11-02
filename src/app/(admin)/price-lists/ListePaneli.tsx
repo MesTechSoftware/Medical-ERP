@@ -56,11 +56,8 @@ export function ListePaneli({ veri, kapatAdresi }: { veri: ListePaneliVerisi; ka
         <div className="flex-1 space-y-5 overflow-y-auto p-4">
           <Bolum baslik="Özet">
             <dl className="divide-y divide-slate-100">
-              <Satir ad="Bugün geçerli">
-                {l.urunSayisi} ürün · {l.baremSayisi} barem satırı
-              </Satir>
               <Satir ad="Satır">
-                {veri.gecerliSatir} bugün geçerli / {veri.toplamSatir} toplam
+                {veri.gecerliSatir} bugün geçerli ({l.urunSayisi} ürün, {l.baremSayisi} barem) / {veri.toplamSatir} toplam
               </Satir>
               {veri.tarihliSatir > 0 && (
                 <Satir ad="Tarihli satır">
@@ -76,10 +73,10 @@ export function ListePaneli({ veri, kapatAdresi }: { veri: ListePaneliVerisi; ka
           </Bolum>
 
           <Bolum baslik="Atanmış cariler">
+            {/* Varsayılan listeyi atanmamış cariler de kullanır; not açık atama olsa da kalır. */}
+            {l.varsayilan && <p className="mb-1 text-sm text-slate-500">Atanmamış bütün cariler bu listeyi kullanır.</p>}
             {veri.cariler.length === 0 ? (
-              <p className="text-sm text-slate-400">
-                {l.varsayilan ? "Atanmamış bütün cariler bu listeyi kullanır." : "Bu listeye atanmış cari yok."}
-              </p>
+              !l.varsayilan && <p className="text-sm text-slate-400">Bu listeye atanmış cari yok.</p>
             ) : (
               <ul className="divide-y divide-slate-100">
                 {veri.cariler.map((c) => (

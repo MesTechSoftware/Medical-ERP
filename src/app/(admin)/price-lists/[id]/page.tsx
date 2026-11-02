@@ -24,24 +24,25 @@ const KUTU = `w-full ${KONTROL_TEK_SATIR}`;
 export default async function PriceListDetailPage({ params }: { params: Promise<{ id: string }> }) {
   await requireAdmin();
   const { id } = await params;
-  const liste = await prisma.priceList.findUnique({
-    where: { id },
-    include: {
-      items: {
-        orderBy: [{ product: { name: "asc" } }, { minQuantity: "asc" }, { validFrom: "asc" }],
-        include: { product: { select: { name: true, code: true } } },
+  const [liste, urunler, matris] = await Promise.all([
+    prisma.priceList.findUnique({
+      where: { id },
+      include: {
+        items: {
+          orderBy: [{ product: { name: "asc" } }, { minQuantity: "asc" }, { validFrom: "asc" }],
+          include: { product: { select: { name: true, code: true } } },
+        },
       },
-    },
-  });
-  if (!liste) notFound();
-  const [urunler, matris] = await Promise.all([
+    }),
     prisma.product.findMany({
       where: { status: "AKTIF" },
       orderBy: { name: "asc" },
       select: { id: true, name: true, code: true },
     }),
-    baremMatrisi(liste.id, bugun()),
+    // Bilinmeyen kimlikte boş matris döner; sayfa aşağıda 404 verir.
+    baremMatrisi(id, bugun()),
   ]);
+  if (!liste) notFound();
 
   return (
     <div>
