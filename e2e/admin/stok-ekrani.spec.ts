@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { sorgu } from "../helpers";
+import { sorgu, yumusakGezinmeIsareti } from "../helpers";
 
 /** Ü-20 — stok ekranı: KPI kartları, hareket süzgeci, işlemi yapan, sütun seçici, boş durum, mevcut stok (B-4-8 · B-4-10 · B-4-11 · B-4-12). */
 
@@ -52,13 +52,15 @@ test("yeni girişte işlemi yapan kullanıcı adı görünür (B-4-8)", async ({
   await expect(satir).toContainText("+2");
 });
 
-test("Filtrele formu tür süzgeci uygular; × ile kalkar", async ({ page }) => {
+test("Filtrele formu tür süzgeci uygular, sayfayı yeniden yüklemez; × ile kalkar", async ({ page }) => {
   await page.goto("/stock");
   await page.getByText("Filtrele", { exact: true }).click();
   const form = page.getByRole("form", { name: "Hareket süzgeci" });
   await form.getByLabel("Tür").selectOption({ label: "Stok girişi" });
+  const yumusak = await yumusakGezinmeIsareti(page);
   await form.getByRole("button", { name: "Uygula" }).click();
   await expect(page).toHaveURL(/tur=giris/);
+  expect(await yumusak()).toBe(true);
   await expect(page.getByRole("list", { name: "Etkin süzgeçler" }).getByText("Tür: Stok girişi")).toBeVisible();
   await expect(satirlar(page).first()).toBeVisible();
   const turler = await satirlar(page).locator("td[data-sutun='tur']").allInnerTexts();

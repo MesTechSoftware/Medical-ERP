@@ -1,3 +1,4 @@
+import Form from "next/form";
 import Link from "next/link";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import { Ikon } from "@/components/Ikon";
@@ -10,39 +11,42 @@ export function donemAciklamasi(anahtar: string): string {
 
 /**
  * Rapor dönemi (X-1 §(2)): varsayılan içinde bulunulan aydır; "tüm zamanlar" ayrı,
- * bilinçli bir seçimdir. JS'siz GET formu — dönem URL'dedir.
+ * bilinçli bir seçimdir. GET formu — dönem URL'dedir; `next/form` istemci tarafında gezer, JS'siz de
+ * çalışır. Dönem değişince form yeniden kurulur: "Tüm zamanlar"dan sonra ay alanı eski değerde kalmaz.
  */
 export default function DonemSecici({ anahtar, yol }: { anahtar: string; yol: string }) {
   const tum = anahtar === "tum";
   return (
-    <form method="get" action={yol} className="mb-6 flex flex-wrap items-end gap-2">
-      <div>
-        <label htmlFor="donem" className="mb-1 block text-xs text-slate-500">
-          Dönem (ay)
-        </label>
-        <input
-          id="donem"
-          name="donem"
-          type="month"
-          defaultValue={tum ? "" : anahtar}
-          className={KONTROL_TEK_SATIR}
-        />
-      </div>
-      <button
-        type="submit"
-        className={buton("ikincil")}
-      >
-        <Ikon ad="filtrele" />
-        Göster
-      </button>
-      <Link
-        href={`${yol}?donem=tum`}
-        className={buton(tum ? "birincil" : "ikincil")}
-      >
-        <Ikon ad="tumZamanlar" />
-        Tüm zamanlar
-      </Link>
-      <p className="w-full text-xs text-slate-500">{donemAciklamasi(anahtar)}</p>
-    </form>
+    <div key={anahtar}>
+      <Form action={yol} className="mb-6 flex flex-wrap items-end gap-2">
+        <div>
+          <label htmlFor="donem" className="mb-1 block text-xs text-slate-500">
+            Dönem (ay)
+          </label>
+          <input
+            id="donem"
+            name="donem"
+            type="month"
+            defaultValue={tum ? "" : anahtar}
+            className={KONTROL_TEK_SATIR}
+          />
+        </div>
+        <button
+          type="submit"
+          className={buton("ikincil")}
+        >
+          <Ikon ad="filtrele" />
+          Göster
+        </button>
+        <Link
+          href={`${yol}?donem=tum`}
+          className={buton(tum ? "birincil" : "ikincil")}
+        >
+          <Ikon ad="tumZamanlar" />
+          Tüm zamanlar
+        </Link>
+        <p className="w-full text-xs text-slate-500">{donemAciklamasi(anahtar)}</p>
+      </Form>
+    </div>
   );
 }

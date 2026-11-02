@@ -1,3 +1,4 @@
+import Form from "next/form";
 import Link from "next/link";
 
 import { DetayPaneli, KayitYokPaneli } from "@/components/denetim/DetayPaneli";
@@ -43,85 +44,89 @@ export default async function DenetimKaydiSayfasi({
         description="Sistemdeki işlemlerin değiştirilemez kaydı; her kayıt zincirle mühürlüdür. Salt okunur."
       />
 
-      <form
-        method="get"
-        aria-label="Denetim kaydı süzgeci"
-        className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
-      >
-        <div className="text-sm">
-          <label htmlFor="denetim-baslangic" className="mb-1 block font-medium text-slate-700">
-            Başlangıç
-          </label>
-          <input type="date" id="denetim-baslangic" name="baslangic" defaultValue={suzgec.baslangic ?? ""} className={KONTROL_TEK_SATIR} />
-        </div>
-        <div className="text-sm">
-          <label htmlFor="denetim-bitis" className="mb-1 block font-medium text-slate-700">
-            Bitiş
-          </label>
-          <input type="date" id="denetim-bitis" name="bitis" defaultValue={suzgec.bitis ?? ""} className={KONTROL_TEK_SATIR} />
-        </div>
-        <div className="text-sm">
-          <label htmlFor="denetim-kullanici" className="mb-1 block font-medium text-slate-700">
-            Kullanıcı
-          </label>
-          <select id="denetim-kullanici" name="kullanici" defaultValue={suzgec.kullanici ?? ""} className={KONTROL_TEK_SATIR}>
-            <option value="">Tümü</option>
-            <option value={SISTEM}>Sistem / anonim</option>
-            {kullanicilar.map((k) => (
-              <option key={k.id} value={k.id}>
-                {k.name}
-                {k.isActive ? "" : " (pasif)"}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="text-sm">
-          <label htmlFor="denetim-modul" className="mb-1 block font-medium text-slate-700">
-            Modül
-          </label>
-          <select id="denetim-modul" name="modul" defaultValue={suzgec.modul ?? ""} className={KONTROL_TEK_SATIR}>
-            <option value="">Tümü</option>
-            {Object.entries(MODUL_ETIKETI).map(([deger, etiket]) => (
-              <option key={deger} value={deger}>
-                {etiket}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="text-sm">
-          <label htmlFor="denetim-tur" className="mb-1 block font-medium text-slate-700">
-            İşlem türü
-          </label>
-          <select id="denetim-tur" name="tur" defaultValue={suzgec.tur ?? ""} className={KONTROL_TEK_SATIR}>
-            <option value="">Tümü</option>
-            {Object.entries(ISLEM_TURU_ETIKETI).map(([deger, etiket]) => (
-              <option key={deger} value={deger}>
-                {etiket}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="text-sm">
-          <label htmlFor="denetim-olay" className="mb-1 block font-medium text-slate-700">
-            Olay
-          </label>
-          <select id="denetim-olay" name="olay" defaultValue={suzgec.olay ?? ""} className={KONTROL_TEK_SATIR}>
-            <option value="">Tümü</option>
-            {Object.entries(AUDIT_ACTION_LABELS).map(([deger, etiket]) => (
-              <option key={deger} value={deger}>
-                {etiket}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button type="submit" className={buton("birincil", { form: true })}>
-          <Ikon ad="filtrele" />
-          Filtrele
-        </button>
-        <Link href="/audit-logs" className="text-sm font-medium text-slate-500 hover:text-slate-800">
-          Temizle
-        </Link>
-      </form>
+      {/* `next/form` istemci tarafında gezer; süzgeç değişince form yeniden kurulur, yoksa Temizle'den
+          sonra <select>'ler eski değeri gösterirdi (React denetimsiz alanı sıfırlamaz). */}
+      <div key={denetimAdresi(suzgec)}>
+        <Form
+          action="/audit-logs"
+          aria-label="Denetim kaydı süzgeci"
+          className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+        >
+          <div className="text-sm">
+            <label htmlFor="denetim-baslangic" className="mb-1 block font-medium text-slate-700">
+              Başlangıç
+            </label>
+            <input type="date" id="denetim-baslangic" name="baslangic" defaultValue={suzgec.baslangic ?? ""} className={KONTROL_TEK_SATIR} />
+          </div>
+          <div className="text-sm">
+            <label htmlFor="denetim-bitis" className="mb-1 block font-medium text-slate-700">
+              Bitiş
+            </label>
+            <input type="date" id="denetim-bitis" name="bitis" defaultValue={suzgec.bitis ?? ""} className={KONTROL_TEK_SATIR} />
+          </div>
+          <div className="text-sm">
+            <label htmlFor="denetim-kullanici" className="mb-1 block font-medium text-slate-700">
+              Kullanıcı
+            </label>
+            <select id="denetim-kullanici" name="kullanici" defaultValue={suzgec.kullanici ?? ""} className={KONTROL_TEK_SATIR}>
+              <option value="">Tümü</option>
+              <option value={SISTEM}>Sistem / anonim</option>
+              {kullanicilar.map((k) => (
+                <option key={k.id} value={k.id}>
+                  {k.name}
+                  {k.isActive ? "" : " (pasif)"}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="text-sm">
+            <label htmlFor="denetim-modul" className="mb-1 block font-medium text-slate-700">
+              Modül
+            </label>
+            <select id="denetim-modul" name="modul" defaultValue={suzgec.modul ?? ""} className={KONTROL_TEK_SATIR}>
+              <option value="">Tümü</option>
+              {Object.entries(MODUL_ETIKETI).map(([deger, etiket]) => (
+                <option key={deger} value={deger}>
+                  {etiket}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="text-sm">
+            <label htmlFor="denetim-tur" className="mb-1 block font-medium text-slate-700">
+              İşlem türü
+            </label>
+            <select id="denetim-tur" name="tur" defaultValue={suzgec.tur ?? ""} className={KONTROL_TEK_SATIR}>
+              <option value="">Tümü</option>
+              {Object.entries(ISLEM_TURU_ETIKETI).map(([deger, etiket]) => (
+                <option key={deger} value={deger}>
+                  {etiket}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="text-sm">
+            <label htmlFor="denetim-olay" className="mb-1 block font-medium text-slate-700">
+              Olay
+            </label>
+            <select id="denetim-olay" name="olay" defaultValue={suzgec.olay ?? ""} className={KONTROL_TEK_SATIR}>
+              <option value="">Tümü</option>
+              {Object.entries(AUDIT_ACTION_LABELS).map(([deger, etiket]) => (
+                <option key={deger} value={deger}>
+                  {etiket}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button type="submit" className={buton("birincil", { form: true })}>
+            <Ikon ad="filtrele" />
+            Filtrele
+          </button>
+          <Link href="/audit-logs" className="text-sm font-medium text-slate-500 hover:text-slate-800">
+            Temizle
+          </Link>
+        </Form>
+      </div>
 
       <Card>
         <div className="tablo-kutusu">

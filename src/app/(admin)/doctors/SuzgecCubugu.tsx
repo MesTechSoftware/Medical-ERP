@@ -1,3 +1,4 @@
+import Form from "next/form";
 import Link from "next/link";
 import { Ikon } from "@/components/Ikon";
 import { EtkinSuzgecler } from "@/components/liste/EtkinSuzgecler";
@@ -35,8 +36,9 @@ function Alan({ id, etiket, children }: { id: string; etiket: string; children: 
 }
 
 /**
- * Cari listesinin süzgeç çubuğu (spec Ü-18 §3.2): hızlı sekmeler, Filtrele paneli (JS'siz GET formu),
- * etkin süzgeç etiketleri ve sütun menüsünün yuvası. Süzgeç adres çubuğundadır.
+ * Cari listesinin süzgeç çubuğu (spec Ü-18 §3.2): hızlı sekmeler, Filtrele paneli (GET formu; `next/form`
+ * istemci tarafında gezer, JS'siz de çalışır), etkin süzgeç etiketleri ve sütun menüsünün yuvası. Süzgeç
+ * adres çubuğundadır.
  */
 export function SuzgecCubugu({
   suzgec,
@@ -64,8 +66,7 @@ export function SuzgecCubugu({
               <Ikon ad="filtrele" />
               {sayi > 0 ? `Filtrele · ${sayi}` : "Filtrele"}
             </summary>
-            <form
-              method="get"
+            <Form
               action="/doctors"
               aria-label="Cari süzgeci"
               className="absolute right-0 z-20 mt-2 grid w-[min(56rem,calc(100vw-2rem))] gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-lg sm:grid-cols-2 lg:grid-cols-4"
@@ -140,7 +141,7 @@ export function SuzgecCubugu({
                   Temizle
                 </Link>
               </div>
-            </form>
+            </Form>
           </details>
           {sutunMenusu}
         </div>

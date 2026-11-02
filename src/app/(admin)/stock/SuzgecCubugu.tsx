@@ -1,3 +1,4 @@
+import Form from "next/form";
 import Link from "next/link";
 import { Ikon } from "@/components/Ikon";
 import { EtkinSuzgecler } from "@/components/liste/EtkinSuzgecler";
@@ -20,8 +21,9 @@ function Alan({ id, etiket, children }: { id: string; etiket: string; children: 
 }
 
 /**
- * Hareket geçmişinin süzgeç çubuğu (spec Ü-20 §3.3): tarih kısayolları, Filtrele paneli (JS'siz GET
- * formu), etkin süzgeç etiketleri ve sütun menüsünün yuvası. Süzgeç adres çubuğundadır.
+ * Hareket geçmişinin süzgeç çubuğu (spec Ü-20 §3.3): tarih kısayolları, Filtrele paneli (GET formu;
+ * `next/form` istemci tarafında gezer, JS'siz de çalışır), etkin süzgeç etiketleri ve sütun menüsünün
+ * yuvası. Süzgeç adres çubuğundadır.
  */
 export function SuzgecCubugu({
   suzgec,
@@ -50,8 +52,7 @@ export function SuzgecCubugu({
               <Ikon ad="filtrele" />
               {etiketler.length > 0 ? `Filtrele · ${etiketler.length}` : "Filtrele"}
             </summary>
-            <form
-              method="get"
+            <Form
               action="/stock"
               aria-label="Hareket süzgeci"
               className="absolute right-0 z-20 mt-2 grid w-[min(36rem,calc(100vw-2rem))] gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-lg sm:grid-cols-2"
@@ -101,7 +102,7 @@ export function SuzgecCubugu({
                   Temizle
                 </Link>
               </div>
-            </form>
+            </Form>
           </details>
           {sutunMenusu}
         </div>

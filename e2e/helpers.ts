@@ -16,6 +16,15 @@ export function unique(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e4)}`;
 }
 
+/**
+ * Sonraki gezinmenin istemci tarafında kaldığını denetler: işaret pencerede durur, tam sayfa
+ * yüklemesi onu siler. Dönen fonksiyon gezinmeden sonra çağrılır.
+ */
+export async function yumusakGezinmeIsareti(page: Page): Promise<() => Promise<boolean>> {
+  await page.evaluate(() => ((window as unknown as { __yumusak?: boolean }).__yumusak = true));
+  return () => page.evaluate(() => (window as unknown as { __yumusak?: boolean }).__yumusak === true);
+}
+
 /** Login formunu doldurup gönderir ve yönlenmeyi bekler. */
 export async function login(
   page: Page,

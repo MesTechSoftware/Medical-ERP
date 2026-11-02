@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { sorgu } from "../helpers";
+import { sorgu, yumusakGezinmeIsareti } from "../helpers";
 
 /** Ü-18 — cari listesi: yeni sütunlar, rozetler, eksik fatura vurgusu, boş durum (A-12-5 · A-13-3). */
 
@@ -77,9 +77,12 @@ test("Filtrele: bölge + satıcı birlikte süzer; etiket × ile kalkar", async 
   const form = page.getByRole("form", { name: "Cari süzgeci" });
   await form.getByLabel("Bölge").selectOption("Marmara");
   await form.getByLabel("Sorumlu satıcı").selectOption(s.id);
+  const yumusak = await yumusakGezinmeIsareti(page);
   await form.getByRole("button", { name: "Uygula" }).click();
 
   await expect(page).toHaveURL(/bolge=Marmara/);
+  // Uygula sayfayı yeniden yüklemez (istemci gezinmesi).
+  expect(await yumusak()).toBe(true);
   await expect(page).toHaveURL(new RegExp(`satici=${s.id}`));
   await expect(page.getByText("Filtrele · 2")).toBeVisible();
   for (const d of beklenen) await expect(page.getByRole("link", { name: new RegExp(d.fullName) })).toBeVisible();
