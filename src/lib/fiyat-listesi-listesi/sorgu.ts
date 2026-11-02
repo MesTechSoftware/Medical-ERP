@@ -59,7 +59,7 @@ const LISTE_SECIMI = { id: true, code: true, name: true, _count: { select: { doc
 type ListeKaydi = Prisma.PriceListGetPayload<{ select: typeof LISTE_SECIMI }>;
 
 /** Listelerin bugün geçerli satırlarından ürün/barem sayıları — tek okuma. */
-async function satirSayilari(listeIdler: string[], gun: Date): Promise<Map<string, { urun: number; barem: number }>> {
+async function satirSayilari(listeIdler: string[], gun: Date): Promise<Map<string, { urun: number; barem: number; satir: number }>> {
   if (listeIdler.length === 0) return new Map();
   const satirlar = await prisma.priceListItem.findMany({
     where: { priceListId: { in: listeIdler }, ...gecerliSatir(gun) },
@@ -72,7 +72,7 @@ async function satirSayilari(listeIdler: string[], gun: Date): Promise<Map<strin
     if (s.minQuantity > 1) g.barem += 1;
     gruplar.set(s.priceListId, g);
   }
-  return new Map([...gruplar].map(([id, g]) => [id, { urun: new Set(g.urunler).size, barem: g.barem }]));
+  return new Map([...gruplar].map(([id, g]) => [id, { urun: new Set(g.urunler).size, barem: g.barem, satir: g.urunler.length }]));
 }
 
 function satir(l: ListeKaydi, sayi: { urun: number; barem: number } | undefined): ListeSatiri {
@@ -143,9 +143,8 @@ export async function fiyatListesiKpileri(gun: Date = bugun()): Promise<ListeKpi
 export async function fiyatListesiPaneli(id: string, gun: Date = bugun()): Promise<ListePaneli | null> {
   const liste = await prisma.priceList.findUnique({ where: { id }, select: LISTE_SECIMI });
   if (!liste) return null;
-  const [sayilar, gecerliSatirSayisi, toplamSatir, tarihliSatir, matris, cariler] = await Promise.all([
+  const [sayilar, toplamSatir, tarihliSatir, matris, cariler] = await Promise.all([
     satirSayilari([id], gun),
-    prisma.priceListItem.count({ where: { priceListId: id, ...gecerliSatir(gun) } }),
     prisma.priceListItem.count({ where: { priceListId: id } }),
     prisma.priceListItem.count({ where: { priceListId: id, OR: [{ validFrom: { not: null } }, { validTo: { not: null } }] } }),
     baremMatrisi(id, gun),
@@ -158,7 +157,7 @@ export async function fiyatListesiPaneli(id: string, gun: Date = bugun()): Promi
   ]);
   return {
     liste: satir(liste, sayilar.get(id)),
-    gecerliSatir: gecerliSatirSayisi,
+    gecerliSatir: sayilar.get(id)?.satir ?? 0,
     toplamSatir,
     tarihliSatir,
     matris,

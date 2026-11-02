@@ -72,7 +72,7 @@ export async function cozumleListeFiyatlari(
   const sonuc = new Map<string, FiyatSonucu>();
   if (urunIdler.length === 0) return sonuc;
   const fiyatListesiId = await varsayilanListeId(db);
-  const fiyatlar = fiyatListesiId ? await listedenFiyatlar(fiyatListesiId, urunIdler, kosul, db) : new Map<string, { fiyat: Decimal; minQuantity: number }>();
+  const fiyatlar = fiyatListesiId ? await listedenFiyatlar(fiyatListesiId, urunIdler, kosul, db) : new Map<string, ListeSecimi>();
   for (const id of urunIdler) {
     const listeFiyat = fiyatlar.get(id)?.fiyat;
     sonuc.set(
@@ -105,13 +105,16 @@ export function gecerliSatir(gun: Date): Prisma.PriceListItemWhereInput {
   };
 }
 
+/** Seçilen satırın fiyatı ve eşiği. */
+type ListeSecimi = { fiyat: Decimal; minQuantity: number };
+
 /** Listede, `kosul`da geçerli satırlardan ürün başına en yüksek `min_adet`'linin fiyatı ve eşiği (B-5, B-6). */
 async function listedenFiyatlar(
   fiyatListesiId: string,
   urunIdler: readonly string[],
   kosul: FiyatKosulu,
   db: Db
-): Promise<Map<string, { fiyat: Decimal; minQuantity: number }>> {
+): Promise<Map<string, ListeSecimi>> {
   const satirlar = await db.priceListItem.findMany({
     where: {
       priceListId: fiyatListesiId,
@@ -122,15 +125,18 @@ async function listedenFiyatlar(
     orderBy: { minQuantity: "desc" },
     select: { productId: true, listPrice: true, minQuantity: true },
   });
-  const fiyatlar = new Map<string, { fiyat: Decimal; minQuantity: number }>();
+  const fiyatlar = new Map<string, ListeSecimi>();
   for (const s of satirlar) {
     if (!fiyatlar.has(s.productId)) fiyatlar.set(s.productId, { fiyat: new Decimal(s.listPrice), minQuantity: s.minQuantity });
   }
   return fiyatlar;
 }
 
-/** Matris hücresi: o eşik miktarında seçilen liste fiyatı; alt eşikten geliyorsa `devralinan`. Satır yoksa `null`. */
-export type BaremHucresi = { fiyat: Decimal; devralinan: boolean } | null;
+/**
+ * Matris hücresi: o eşik miktarında seçilen liste fiyatı ve seçilen satırın eşiği (`kaynakEsik`); alt
+ * eşikten geliyorsa `devralinan`. Satır yoksa `null`.
+ */
+export type BaremHucresi = { fiyat: Decimal; kaynakEsik: number; devralinan: boolean } | null;
 export type BaremMatrisi = {
   esikler: number[];
   urunler: { id: string; name: string; code: string; hucreler: BaremHucresi[] }[];
@@ -158,7 +164,7 @@ export async function baremMatrisi(fiyatListesiId: string, gun: Date, db: Db = p
       ...u,
       hucreler: esikler.map((esik, i) => {
         const sec = secimler[i].get(u.id);
-        return sec ? { fiyat: sec.fiyat, devralinan: sec.minQuantity !== esik } : null;
+        return sec ? { fiyat: sec.fiyat, kaynakEsik: sec.minQuantity, devralinan: sec.minQuantity !== esik } : null;
       }),
     })),
   };

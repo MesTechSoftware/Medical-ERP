@@ -163,6 +163,7 @@ describe("barem matrisi — fiyat seçiminin tek yolundan (X-10-5)", () => {
     expect(m.urunler.map((u) => u.name)).toEqual(["Balon", "Stent"]);
     expect(m.urunler[1].hucreler.map(ozet)).toEqual(["100.00", "90.00", "80.00"]);
     expect(m.urunler[0].hucreler.map(ozet)).toEqual([null, "70.00", "70.00*"]);
+    expect(m.urunler[0].hucreler.map((h) => h?.kaynakEsik ?? null)).toEqual([null, 10, 10]);
   });
 
   it("her hücre listeye atanmış carinin cozumleBirimFiyat sonucuna eşittir", async () => {
