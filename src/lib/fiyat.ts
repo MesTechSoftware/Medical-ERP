@@ -140,6 +140,7 @@ export type BaremMatrisi = {
  * Listenin `gun`deki barem matrisi (spec Ü-21 §3.6, X-10-5): satırlar bugün geçerli satırı olan ürünler
  * (ada göre), sütunlar bu satırların farklı `min_adet`'leri. Her hücre `listedenFiyatlar` ile seçilir —
  * `cozumleBirimFiyat()`'ın kullandığı yol; ikinci bir seçim kuralı yazılmaz. Salt okunur gösterimdir.
+ * Bedeli eşik başına bir sorgudur (liste başına birkaç eşik); bellekte seçim ikinci kural olurdu.
  */
 export async function baremMatrisi(fiyatListesiId: string, gun: Date, db: Db = prisma): Promise<BaremMatrisi> {
   const satirlar = await db.priceListItem.findMany({

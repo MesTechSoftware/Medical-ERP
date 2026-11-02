@@ -39,6 +39,8 @@ export type ListeKpileri = {
 
 export type ListePaneli = {
   liste: ListeSatiri;
+  /** Bugün geçerli satır sayısı. */
+  gecerliSatir: number;
   toplamSatir: number;
   tarihliSatir: number;
   matris: BaremMatrisi;
@@ -57,40 +59,43 @@ const LISTE_SECIMI = { id: true, code: true, name: true, _count: { select: { doc
 type ListeKaydi = Prisma.PriceListGetPayload<{ select: typeof LISTE_SECIMI }>;
 
 /** Listelerin bugün geçerli satırlarından ürün/barem sayıları — tek okuma. */
-async function satirSayilari(listeIdler: string[], gun: Date): Promise<Map<string, { urunler: string[]; barem: number }>> {
+async function satirSayilari(listeIdler: string[], gun: Date): Promise<Map<string, { urun: number; barem: number }>> {
+  if (listeIdler.length === 0) return new Map();
   const satirlar = await prisma.priceListItem.findMany({
     where: { priceListId: { in: listeIdler }, ...gecerliSatir(gun) },
     select: { priceListId: true, productId: true, minQuantity: true },
   });
-  const sayilar = new Map<string, { urunler: string[]; barem: number }>();
-  for (const s of satirlar) {
-    const k = sayilar.get(s.priceListId) ?? { urunler: [], barem: 0 };
-    if (!k.urunler.includes(s.productId)) k.urunler.push(s.productId);
-    if (s.minQuantity > 1) k.barem += 1;
-    sayilar.set(s.priceListId, k);
+  const sayilar = new Map<string, { urun: number; barem: number }>();
+  for (const id of listeIdler) {
+    const kendi = satirlar.filter((s) => s.priceListId === id);
+    if (kendi.length === 0) continue;
+    sayilar.set(id, { urun: new Set(kendi.map((s) => s.productId)).size, barem: kendi.filter((s) => s.minQuantity > 1).length });
   }
   return sayilar;
 }
 
-function satir(l: ListeKaydi, sayi: { urunler: string[]; barem: number } | undefined): ListeSatiri {
+function satir(l: ListeKaydi, sayi: { urun: number; barem: number } | undefined): ListeSatiri {
   return {
     id: l.id,
     code: l.code,
     name: l.name,
     varsayilan: l.code === policy.pricing.varsayilanFiyatListesiKodu,
-    urunSayisi: sayi?.urunler.length ?? 0,
+    urunSayisi: sayi?.urun ?? 0,
     baremSayisi: sayi?.barem ?? 0,
     cariSayisi: l._count.doctors,
-    aktif: (sayi?.urunler.length ?? 0) > 0,
+    aktif: (sayi?.urun ?? 0) > 0,
   };
 }
 
-/** Süzülmüş ve sayfalanmış liste, koda göre. */
+/**
+ * Süzülmüş ve sayfalanmış liste, koda göre. `gun` sayfada bir kez okunur ve üç sorguya da geçer: kart ile
+ * sekme aynı günü saymalı (X-10-6).
+ */
 export async function fiyatListeleri(
   s: ListeSuzgeci,
-  sayfa: { skip: number; take: number }
+  sayfa: { skip: number; take: number },
+  gun: Date = bugun()
 ): Promise<{ satirlar: ListeSatiri[]; toplam: number }> {
-  const gun = bugun();
   const where = listeKosulu(s, gun);
   const [listeler, toplam] = await Promise.all([
     prisma.priceList.findMany({ where, orderBy: [{ code: "asc" }], skip: sayfa.skip, take: sayfa.take, select: LISTE_SECIMI }),
@@ -100,16 +105,25 @@ export async function fiyatListeleri(
   return { satirlar: listeler.map((l) => satir(l, sayilar.get(l.id))), toplam };
 }
 
-/** KPI (spec §3.2) — süzgeçten bağımsız. */
-export async function fiyatListesiKpileri(): Promise<ListeKpileri> {
-  const gun = bugun();
-  const [toplam, aktif, ozelListeliCari, aktifCari, aktifUrunler, varsayilan] = await Promise.all([
+/**
+ * KPI (spec §3.2) — süzgeçten bağımsız. "Özel listeli" cari varsayılan dışında bir listeye atanmış aktif
+ * caridir; varsayılana açıkça atanmış cari varsayılanı kullananlardadır.
+ *
+ * Fiyatsız ürün bütün aktif ürünleri fiyat seçiminin tek yolundan geçirir (ürün ekranıyla aynı ölçek;
+ * katalog binler mertebesinde). Büyürse `fiyat.ts`'e sayım yardımcısı eklenir.
+ */
+export async function fiyatListesiKpileri(gun: Date = bugun()): Promise<ListeKpileri> {
+  const varsayilan = await prisma.priceList.findUnique({
+    where: { code: policy.pricing.varsayilanFiyatListesiKodu },
+    select: { id: true },
+  });
+  const ozel = varsayilan ? { notIn: [varsayilan.id] } : { not: null };
+  const [toplam, aktif, ozelListeliCari, aktifCari, aktifUrunler] = await Promise.all([
     prisma.priceList.count(),
     prisma.priceList.count({ where: listeKosulu({ durum: "aktif" }, gun) }),
-    prisma.doctor.count({ where: { status: "AKTIF", priceListId: { not: null } } }),
+    prisma.doctor.count({ where: { status: "AKTIF", priceListId: ozel } }),
     prisma.doctor.count({ where: { status: "AKTIF" } }),
     prisma.product.findMany({ where: { status: "AKTIF" }, select: { id: true } }),
-    prisma.priceList.findUnique({ where: { code: policy.pricing.varsayilanFiyatListesiKodu }, select: { id: true } }),
   ]);
   // Satıcının sipariş giremeyeceği ürün: fiyat seçiminin tek yolu `HATA` döner (X-10 §(3)).
   const fiyatlar = await cozumleListeFiyatlari(aktifUrunler.map((u) => u.id), { miktar: 1, gun });
@@ -123,13 +137,16 @@ export async function fiyatListesiKpileri(): Promise<ListeKpileri> {
   };
 }
 
-/** Yan panel verisi (spec §3.5); kayıt yoksa `null`. */
-export async function fiyatListesiPaneli(id: string): Promise<ListePaneli | null> {
+/**
+ * Yan panel verisi (spec §3.5); kayıt yoksa `null`. Ürün ve barem sayıları matristen türer: tarih
+ * çakışması yasak olduğundan (B-5) bugün geçerli her `min_adet > 1` satırı kendi eşiğinde devralınmamış
+ * tek hücredir.
+ */
+export async function fiyatListesiPaneli(id: string, gun: Date = bugun()): Promise<ListePaneli | null> {
   const liste = await prisma.priceList.findUnique({ where: { id }, select: LISTE_SECIMI });
   if (!liste) return null;
-  const gun = bugun();
-  const [sayilar, toplamSatir, tarihliSatir, matris, cariler] = await Promise.all([
-    satirSayilari([id], gun),
+  const [gecerliSatirSayisi, toplamSatir, tarihliSatir, matris, cariler] = await Promise.all([
+    prisma.priceListItem.count({ where: { priceListId: id, ...gecerliSatir(gun) } }),
     prisma.priceListItem.count({ where: { priceListId: id } }),
     prisma.priceListItem.count({ where: { priceListId: id, OR: [{ validFrom: { not: null } }, { validTo: { not: null } }] } }),
     baremMatrisi(id, gun),
@@ -140,8 +157,10 @@ export async function fiyatListesiPaneli(id: string): Promise<ListePaneli | null
       select: { id: true, fullName: true, status: true },
     }),
   ]);
+  const barem = matris.urunler.flatMap((u) => u.hucreler.filter((h, i) => h && !h.devralinan && matris.esikler[i] > 1)).length;
   return {
-    liste: satir(liste, sayilar.get(id)),
+    liste: satir(liste, matris.urunler.length > 0 ? { urun: matris.urunler.length, barem } : undefined),
+    gecerliSatir: gecerliSatirSayisi,
     toplamSatir,
     tarihliSatir,
     matris,

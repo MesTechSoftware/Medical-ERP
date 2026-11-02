@@ -61,7 +61,7 @@ Sayımlar süzgeçten bağımsızdır. "Bugün" İstanbul günüdür (`bugun()`)
 |---|---|---|---|
 | Toplam liste | `priceList.count()` | — | `/price-lists` |
 | Aktif liste | bugün geçerli (`validFrom <= bugün < validTo`, boş uç süresiz) en az bir satırı olan liste | — | `?durum=aktif` |
-| Özel listeli cari | `status: AKTIF` ve `priceListId` dolu cari | `ikincilMetrik`: "N cari varsayılanı kullanır" | — |
+| Özel listeli cari | `status: AKTIF` ve varsayılan dışında bir listeye atanmış cari (varsayılana açıkça atanmış cari varsayılanı kullananlardadır) | `ikincilMetrik`: "N cari varsayılanı kullanır" | — |
 | Fiyatsız ürün | aktif ürünlerden varsayılan listede 1 adet için bugün fiyatı çözülemeyenler (`cozumleListeFiyatlari`, `HATA`) | — | varsayılan listenin paneli (`?detay=<id>`); liste yoksa bağlantı yok |
 
 - Fiyatsız ürün > 0 ise uyarı tonunda (satıcı o ürünle sipariş giremez — X-10 §(3), `SERT`).

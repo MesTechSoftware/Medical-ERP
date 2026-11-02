@@ -35,6 +35,7 @@ describe("aktif / boş sınıflaması ve KPI (X-10-6)", () => {
     await satir(l2.id, a.id, 1, null, bugun()); // bugün hariç biter
     await satir(l3.id, a.id, 1, gunEkle(bugun(), 1)); // yarın başlar
 
+    expect((await fiyatListeleri({ durum: "aktif" }, SAYFA, gunEkle(bugun(), 1))).satirlar.map((l) => l.code)).toEqual(["L1", "L3"]);
     const aktif = await fiyatListeleri({ durum: "aktif" }, SAYFA);
     const bos = await fiyatListeleri({ durum: "bos" }, SAYFA);
     expect(aktif.satirlar.map((l) => l.code)).toEqual(["L1"]);
@@ -58,12 +59,13 @@ describe("aktif / boş sınıflaması ve KPI (X-10-6)", () => {
     await cari("Dr. B", l1.id);
     await cari("Dr. C", l1.id, "PASIF");
     await cari("Dr. D", null);
+    await cari("Dr. E", ref.liste.id); // varsayılana açıkça atanmış: özel liste değildir
 
     const [s] = (await fiyatListeleri({ durum: "aktif" }, SAYFA)).satirlar;
     expect(s).toMatchObject({ code: "L1", urunSayisi: 2, baremSayisi: 1, cariSayisi: 3, aktif: true, varsayilan: false });
     const k = await fiyatListesiKpileri();
     expect(k.ozelListeliCari).toBe(2);
-    expect(k.varsayilanKullanan).toBe(1);
+    expect(k.varsayilanKullanan).toBe(2);
   });
 
   it("varsayılan liste rozeti ve sıralama koda göre", async () => {
@@ -115,6 +117,7 @@ describe("yan panel (spec §3.5)", () => {
     expect(p!.cariler).toHaveLength(20);
     expect(p!.cariler[0]).toMatchObject({ fullName: "Dr. 01", pasif: true });
     expect(p!.cariler[19].fullName).toBe("Dr. 20");
+    expect(p!.gecerliSatir).toBe(2);
     expect(p!.toplamSatir).toBe(3);
     expect(p!.tarihliSatir).toBe(2);
     expect(p!.matris.esikler).toEqual([1, 10]);
