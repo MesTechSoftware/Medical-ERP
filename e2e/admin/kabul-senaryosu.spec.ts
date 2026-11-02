@@ -149,11 +149,11 @@ test("kabul senaryosu (F-11)", async ({ page, browser }) => {
 
   // 11 — bayi: liste, cari, sipariş, sevk, tahsilat
   const listeKodu = `KBL${ek}`;
-  await page.goto("/price-lists");
+  await page.goto("/price-lists/new");
   await page.getByLabel("Kod").fill(listeKodu);
   await page.getByLabel("Ad").fill("Kabul bayi");
   await page.getByRole("button", { name: "Liste Oluştur" }).click();
-  await page.getByRole("link", { name: listeKodu }).click();
+  await expect(page.getByRole("heading", { name: `${listeKodu} — Kabul bayi` })).toBeVisible();
   await page.getByLabel("Ürün").selectOption({ label: `${urunAdi} (${urunKodu})` });
   await page.getByLabel(/Liste fiyatı/).fill("600");
   await page.getByRole("button", { name: "Kaydet" }).click();
