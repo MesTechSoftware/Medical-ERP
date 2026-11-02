@@ -63,8 +63,8 @@ export function KullaniciPaneli({ veri, kapatAdresi, yonetici }: { veri: Veri; k
               <Satir ad="E-posta">{u.email}</Satir>
               {u.phone && <Satir ad="Telefon">{u.phone}</Satir>}
               <Satir ad="Açılış">{formatDate(u.createdAt)}</Satir>
-              {yonetici && satici && (
-                <Satir ad="Prim oranı">{u.primOrani ? `%${u.primOrani}` : `varsayılan (%${policy.finance.primOraniVarsayilan})`}</Satir>
+              {veri.prim && (
+                <Satir ad="Prim oranı">{veri.prim.oran ? `%${veri.prim.oran}` : `varsayılan (%${policy.finance.primOraniVarsayilan})`}</Satir>
               )}
             </dl>
           </Bolum>
@@ -117,7 +117,10 @@ export function KullaniciPaneli({ veri, kapatAdresi, yonetici }: { veri: Veri; k
                         </Link>
                         <span className="ml-2 text-slate-500">{formatDate(s.orderDate)}</span>
                       </span>
-                      <StatusBadge status={s.status} />
+                      <span className="flex items-center gap-1">
+                        {s.stage === "TEKLIF" && <StatusChip ton="notr">Teklif</StatusChip>}
+                        <StatusBadge status={s.status} />
+                      </span>
                     </li>
                   ))}
                 </ul>

@@ -21,7 +21,8 @@ export function KpiKartlari({ sayilar, gorenRol }: { sayilar: KullaniciKpileri; 
             <KpiCard etiket="Aktif kullanıcı" varyant="birincil" iyiYon="notr" bosDavranisi="sifir" adet={sayilar.aktifKullanici} karsilastirma={ANLIK} />
           </Link>
         )}
-        <Link href={kullaniciAdresi({ ...BOS_SUZGEC, durum: "aktif", rol: "SATICI" })} className={KART}>
+        {/* OPERASYON'un kapsamı zaten satıcılar; ona rol süzgeci yoktur (spec §3.3). */}
+        <Link href={kullaniciAdresi({ ...BOS_SUZGEC, durum: "aktif", rol: gorenRol === "YONETICI" ? "SATICI" : null })} className={KART}>
           <KpiCard
             etiket="Aktif satıcı"
             varyant={gorenRol === "YONETICI" ? "ikincil" : "birincil"}
