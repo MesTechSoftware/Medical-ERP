@@ -19,9 +19,9 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   workers: 1,
-  // CI'da ilerleme log'da görünsün (html yalnız sonda yazar); asılı kalan koşu 15 dakikada düşer.
+  // CI'da ilerleme log'da görünsün (html yalnız sonda yazar); asılı kalan koşu 25 dakikada düşer (paket tek işçiyle 12–15 dk sürüyor).
   reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "html",
-  globalTimeout: process.env.CI ? 15 * 60_000 : 0,
+  globalTimeout: process.env.CI ? 25 * 60_000 : 0,
 
   use: {
     baseURL,
