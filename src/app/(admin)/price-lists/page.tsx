@@ -6,6 +6,7 @@ import Pagination from "@/components/Pagination";
 import { SutunSecici } from "@/components/liste/SutunSecici";
 import { gizliSutunlariCoz } from "@/lib/liste/sutunlar";
 import { getPagination, pageCount } from "@/lib/pagination";
+import { bugun } from "@/lib/zaman";
 import { fiyatListeleri, fiyatListesiKpileri, fiyatListesiPaneli } from "@/lib/fiyat-listesi-listesi/sorgu";
 import { SUTUNLAR, SUTUN_CEREZI } from "@/lib/fiyat-listesi-listesi/sutunlar";
 import { listeAdresi, suzgecCoz, type Parametreler } from "@/lib/fiyat-listesi-listesi/suzgec";
@@ -27,10 +28,12 @@ export default async function PriceListsPage({ searchParams }: { searchParams: P
   const gizli = gizliSutunlariCoz(SUTUNLAR, (await cookies()).get(SUTUN_CEREZI)?.value);
   const adres = listeAdresi(suzgec, yer);
 
+  // Gün bir kez okunur: "Aktif liste" kartı ile Aktif sekmesi aynı günü sayar (X-10-6).
+  const gun = bugun();
   const [liste, sayilar, panel] = await Promise.all([
-    fiyatListeleri(suzgec, { skip, take }),
-    fiyatListesiKpileri(),
-    detay ? fiyatListesiPaneli(detay) : null,
+    fiyatListeleri(suzgec, { skip, take }, gun),
+    fiyatListesiKpileri(gun),
+    detay ? fiyatListesiPaneli(detay, gun) : null,
   ]);
 
   // Sayfa dışı adres son sayfaya gider; boş durum "hiç kayıt yok" demesin.

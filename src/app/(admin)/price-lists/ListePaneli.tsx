@@ -59,7 +59,9 @@ export function ListePaneli({ veri, kapatAdresi }: { veri: ListePaneliVerisi; ka
               <Satir ad="Bugün geçerli">
                 {l.urunSayisi} ürün · {l.baremSayisi} barem satırı
               </Satir>
-              <Satir ad="Toplam satır">{veri.toplamSatir}</Satir>
+              <Satir ad="Satır">
+                {veri.gecerliSatir} bugün geçerli / {veri.toplamSatir} toplam
+              </Satir>
               {veri.tarihliSatir > 0 && (
                 <Satir ad="Tarihli satır">
                   {veri.tarihliSatir} <span className="text-slate-500">· içe aktarımdan gelir</span>
