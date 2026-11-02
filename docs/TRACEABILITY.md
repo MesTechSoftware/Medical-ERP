@@ -6,7 +6,7 @@
 > Kod yeri, kriter metninde anılan fonksiyonun tanımlandığı dosyadır. Eski PRD matrisi (8 Ağustos 2026)
 > `docs/arsiv/TRACEABILITY_PRD_V2.md`'dedir.
 
-**Özet:** 140 KANITLI · 0 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.0** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
+**Özet:** 140 KANITLI · 2 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %1.4** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
 
 | Kriter | Karar | Durum | Kod yeri | Test | Kriter metni |
 |---|---|---|---|---|---|
@@ -137,6 +137,8 @@
 | X-10-2 | X-10 | KANITLI | — | `src/app/(admin)/price-lists/price-lists.itest.ts`<br>`e2e/admin/fiyat-listesi.spec.ts`<br>`src/lib/yetki.test.ts` | Fiyat listesi ekranı yalnız `YONETICI`'dedir: liste başlığı (kod — 2–32 karakter, büyük harfe çevrilir, `UNIQUE` — ve ad) ve satırlar (ür… |
 | X-10-3 | X-10 | KANITLI | — | `src/lib/cari.itest.ts`<br>`e2e/admin/cari.spec.ts` | Cariye fiyat listesi ataması cari formundadır ve yalnız `YONETICI` yapar; boş bırakılırsa varsayılan liste geçerlidir; tanınmayan liste `… |
 | X-10-4 | X-10 | KANITLI | `src/lib/fiyat.ts` | `src/lib/fiyat.itest.ts`<br>`src/lib/urun-listesi/sorgu.itest.ts` | Ürün listesi ve panelindeki liste fiyatı varsayılan listedendir; `cozumleListeFiyatlari` her ürün için `cozumleBirimFiyat(urun, null, …)`… |
+| X-10-5 | X-10 | TESTSIZ | `src/lib/fiyat.ts` | — | Barem matrisinin her hücresi, o liste, ürün, eşik miktarı ve gün için `cozumleBirimFiyat`'ın seçtiği liste fiyatına eşittir (listeye atan… |
+| X-10-6 | X-10 | TESTSIZ | `src/lib/fiyat.ts` | — | Fiyat listesi ekranının "Aktif liste" kartı `durum=aktif` süzgecinin satır sayısına eşittir; "Fiyatsız ürün" kartı, aktif ürünlerden vars… |
 | X-11-1 | X-11 | KANITLI | — | `src/app/(admin)/collections/collections.itest.ts`<br>`src/lib/sevkiyat.itest.ts`<br>`src/lib/tek-cagri.test.ts` | Borç ya da alacak doğuran her olay tek cari hareket satırı yazar: tutar pozitif, yön ayrı, kaynak belgenin numarasıyla ve belgeyle aynı t… |
 | X-11-2 | X-11 | KANITLI | — | `src/app/(admin)/doctors/cari-hareket.itest.ts`<br>`e2e/admin/vade-farki.spec.ts` | Elle ters kayıt yalnız `ACILIS` ve `VADE_FARKI` hareketinde, yalnız `YONETICI` ve gerekçeyle yapılır: `TERS_KAYIT` ters yönde, aynı tutar… |
 | X-12-1 | X-12 | KANITLI | — | `src/lib/ice-aktarim/ice-aktarim.itest.ts`<br>`e2e/admin/ice-aktarim.spec.ts` | Parti geri alma yalnız `YONETICI`, gerekçe zorunlu, tek transaction; koşul partinin **tamamına** bakar (C-3 §(6)): bir kayıt bile belgeye… |
