@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { sorgu } from "../helpers";
+import { sorgu, yumusakGezinmeIsareti } from "../helpers";
 
 /** Ü-20 — stok ekranı: KPI kartları, hareket süzgeci, işlemi yapan, sütun seçici, boş durum, mevcut stok (B-4-8 · B-4-10 · B-4-11 · B-4-12). */
 
@@ -52,13 +52,19 @@ test("yeni girişte işlemi yapan kullanıcı adı görünür (B-4-8)", async ({
   await expect(satir).toContainText("+2");
 });
 
-test("Filtrele formu tür süzgeci uygular; × ile kalkar", async ({ page }) => {
+test("Filtrele formu tür süzgeci uygular, sayfayı yeniden yüklemez; × ile kalkar", async ({ page }) => {
   await page.goto("/stock");
   await page.getByText("Filtrele", { exact: true }).click();
   const form = page.getByRole("form", { name: "Hareket süzgeci" });
   await form.getByLabel("Tür").selectOption({ label: "Stok girişi" });
+  const yumusak = await yumusakGezinmeIsareti(page);
   await form.getByRole("button", { name: "Uygula" }).click();
   await expect(page).toHaveURL(/tur=giris/);
+  expect(await yumusak()).toBe(true);
+  // Süzgeç değişmeden Uygula: adres aynı kalır, panel yine kapanır.
+  await page.getByText(/^Filtrele/).click();
+  await form.getByRole("button", { name: "Uygula" }).click();
+  await expect(form).toBeHidden();
   await expect(page.getByRole("list", { name: "Etkin süzgeçler" }).getByText("Tür: Stok girişi")).toBeVisible();
   await expect(satirlar(page).first()).toBeVisible();
   const turler = await satirlar(page).locator("td[data-sutun='tur']").allInnerTexts();
@@ -173,4 +179,52 @@ test("stok düzeltmede Satırı sil kırmızıdır", async ({ page }) => {
   await expect(sil).toHaveClass(/(^|\s)text-negative(\s|$)/);
   await sil.click();
   await expect(page.getByRole("button", { name: "Satırı sil" })).toHaveCount(0);
+});
+
+test("form sunucunun uyguladığı süzgeci gösterir: ters tarihler düzeltilir (istemci gezinmesi)", async ({ page }) => {
+  await page.goto("/stock?baslangic=2026-03-01&bitis=2026-05-01");
+  await page.getByText(/^Filtrele/).click();
+  const form = page.getByRole("form", { name: "Hareket süzgeci" });
+  await form.getByLabel("Başlangıç").fill("2026-05-01");
+  await form.getByLabel("Bitiş").fill("2026-03-01");
+  await form.getByRole("button", { name: "Uygula" }).click();
+  await expect(page).toHaveURL(/baslangic=2026-05-01/);
+  await page.getByText(/^Filtrele/).click();
+  await expect(form.getByLabel("Başlangıç")).toHaveValue("2026-03-01");
+  await expect(form.getByLabel("Bitiş")).toHaveValue("2026-05-01");
+
+  // Aynı ters tarihler yeniden: adres değişmez, form yine düzeltilmiş süzgeci gösterir.
+  await form.getByLabel("Başlangıç").fill("2026-05-01");
+  await form.getByLabel("Bitiş").fill("2026-03-01");
+  await form.getByRole("button", { name: "Uygula" }).click();
+  await page.getByText(/^Filtrele/).click();
+  await expect(form.getByLabel("Başlangıç")).toHaveValue("2026-03-01");
+  await expect(form.getByLabel("Bitiş")).toHaveValue("2026-05-01");
+});
+
+test("aynı adrese varan eylemde açılır paneller kapanır, form sıfırlanır: Temizle, değişmemiş sütun tercihi", async ({ page }) => {
+  await page.goto("/stock");
+  await page.getByText(/^Filtrele/).click();
+  const suzgec = page.getByRole("form", { name: "Hareket süzgeci" });
+  // Gönderilmemiş seçim: Temizle aynı adrese gider; form yine yeniden kurulur, seçim sıfırlanır.
+  await suzgec.getByLabel("Yön").selectOption("GIRIS");
+  await suzgec.getByRole("link", { name: "Temizle" }).click();
+  await expect(suzgec).toBeHidden();
+  await page.getByText(/^Filtrele/).click();
+  await expect(suzgec.getByLabel("Yön")).toHaveValue("");
+  await page.getByText(/^Filtrele/).click();
+  // Dışarıdan süzgeç değişikliği (hızlı sekme): panel kapanır.
+  await page.getByText(/^Filtrele/).click();
+  await page.getByRole("link", { name: "Bugün", exact: true }).click();
+  await expect(page).toHaveURL(/baslangic=/);
+  await expect(suzgec).toBeHidden();
+  await page.getByText("Sütunlar", { exact: true }).click();
+  const sutunlar = page.getByRole("form", { name: "Görünür sütunlar" });
+  await sutunlar.getByRole("button", { name: "Kaydet" }).click();
+  await expect(sutunlar).toBeHidden();
+  // Sütunlar menüsü de dışarıdan süzgeç değişikliğinde kapanır.
+  await page.getByText("Sütunlar", { exact: true }).click();
+  await page.getByRole("link", { name: "Tümü", exact: true }).click();
+  await expect(page).not.toHaveURL(/baslangic=/);
+  await expect(sutunlar).toBeHidden();
 });

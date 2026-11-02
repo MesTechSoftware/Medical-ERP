@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { sorgu } from "../helpers";
+import { sorgu, yumusakGezinmeIsareti } from "../helpers";
 
 /** X-18-6 / X-18-7 — denetim kaydı: süzgeçli liste, sağdan detay paneli, maskeli alan bazlı fark. */
 
@@ -74,8 +74,10 @@ test("süzgeç formu adres çubuğuna yazılır; Daha eski ve Daha yeni sayfalar
   const form = page.getByRole("form", { name: "Denetim kaydı süzgeci" });
   await form.getByLabel("Kullanıcı").selectOption({ label: "Sistem / anonim" });
   await form.getByLabel("Olay").selectOption({ label: "Giriş başarısız" });
+  const yumusak = await yumusakGezinmeIsareti(page);
   await form.getByRole("button", { name: "Filtrele" }).click();
   await expect(page).toHaveURL(/kullanici=sistem/);
+  expect(await yumusak()).toBe(true);
   await expect(page).toHaveURL(/olay=AUTH_LOGIN_FAILURE/);
   await expect(form.getByLabel("Olay")).toHaveValue("AUTH_LOGIN_FAILURE");
 
@@ -94,4 +96,9 @@ test("süzgeç formu adres çubuğuna yazılır; Daha eski ve Daha yeni sayfalar
   await page.getByRole("link", { name: "Daha yeni" }).click();
   await expect(page).toHaveURL(/sonra=\d+/);
   expect(await kimlikler()).toEqual(ilk);
+
+  // Temizle süzgeci kaldırır; form da yeniden kurulur, eski seçimi göstermez.
+  await page.getByRole("link", { name: "Temizle" }).click();
+  await expect(page).toHaveURL(/\/audit-logs$/);
+  await expect(form.getByLabel("Olay")).toHaveValue("");
 });

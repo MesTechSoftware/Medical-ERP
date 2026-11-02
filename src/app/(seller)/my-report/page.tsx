@@ -5,6 +5,7 @@ import { BRUT, MATRAH } from "@/lib/taban";
 import { simdi } from "@/lib/zaman";
 import { ciroOzeti, getSellerReports, saticiTahsilatOzeti } from "@/lib/reports-service";
 import DonemSecici from "@/components/DonemSecici";
+import { ilk, type Parametreler } from "@/lib/liste/parametreler";
 import SaticiRaporTablosu from "@/components/SaticiRaporTablosu";
 import { PageHeader, Card } from "@/components/ui";
 import { KovaOzeti } from "@/components/kpi/KovaOzeti";
@@ -20,11 +21,13 @@ import { KpiSatiri } from "@/components/kpi/KpiSatiri";
 export default async function MyReportPage({
   searchParams,
 }: {
-  searchParams: Promise<{ donem?: string }>;
+  searchParams: Promise<Parametreler>;
 }) {
   const session = await requireSeller();
   const an = simdi();
-  const donem = donemCoz((await searchParams).donem, an);
+  const params = await searchParams;
+  // Tekrarlanan `donem` dizi gelir; ilk değer okunur.
+  const donem = donemCoz(ilk(params, "donem") ?? undefined, an);
   const k = karsilastirmaAraliklari(donem, an);
   const aylar = sonAylar(6, donemBitisAyi(donem, an), an);
   const not = karsilastirmaNotu(k.devamEdiyor);

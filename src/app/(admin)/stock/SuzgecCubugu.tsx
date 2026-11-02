@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Ikon } from "@/components/Ikon";
 import { EtkinSuzgecler } from "@/components/liste/EtkinSuzgecler";
 import { HizliSekmeler } from "@/components/liste/HizliSekmeler";
+import { AcilirPanel } from "@/components/liste/AcilirPanel";
+import { SuzgecFormu } from "@/components/liste/SuzgecFormu";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import { HAREKET_TURLERI } from "@/lib/stok-hareket-turu";
 import { etkinSekme, etkinSuzgecler, hizliSekmeler, sekmeAdresi, stokAdresi, type StokSuzgeci } from "@/lib/stok-listesi/suzgec";
@@ -20,8 +22,9 @@ function Alan({ id, etiket, children }: { id: string; etiket: string; children: 
 }
 
 /**
- * Hareket geçmişinin süzgeç çubuğu (spec Ü-20 §3.3): tarih kısayolları, Filtrele paneli (JS'siz GET
- * formu), etkin süzgeç etiketleri ve sütun menüsünün yuvası. Süzgeç adres çubuğundadır.
+ * Hareket geçmişinin süzgeç çubuğu (spec Ü-20 §3.3): tarih kısayolları, Filtrele paneli (GET formu;
+ * `next/form` istemci tarafında gezer, JS'siz de çalışır), etkin süzgeç etiketleri ve sütun menüsünün
+ * yuvası. Süzgeç adres çubuğundadır.
  */
 export function SuzgecCubugu({
   suzgec,
@@ -44,15 +47,15 @@ export function SuzgecCubugu({
           sekmeler={sekmeler.map((f) => ({ etiket: f.etiket, adres: sekmeAdresi(suzgec, f.tarih), etkin: f.etiket === etkin }))}
         />
         <div className="ml-auto flex flex-wrap items-start gap-2">
-          {/* Süzgeç değişince form yeniden kurulur: yumuşak gezinmede <select> eski değerini korur (React). */}
-          <details key={stokAdresi(suzgec)} className="relative">
+          {/* Uygulanan süzgeç değişince panel kapalı, form yeni değerlerle kurulur. */}
+          <AcilirPanel key={stokAdresi(suzgec)} className="relative">
             <summary className={`${buton("ikincil")} cursor-pointer list-none`}>
               <Ikon ad="filtrele" />
               {etiketler.length > 0 ? `Filtrele · ${etiketler.length}` : "Filtrele"}
             </summary>
-            <form
-              method="get"
+            <SuzgecFormu
               action="/stock"
+              anahtar={stokAdresi(suzgec)}
               aria-label="Hareket süzgeci"
               className="absolute right-0 z-20 mt-2 grid w-[min(36rem,calc(100vw-2rem))] gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-lg sm:grid-cols-2"
             >
@@ -96,13 +99,13 @@ export function SuzgecCubugu({
                   <Ikon ad="filtrele" />
                   Uygula
                 </button>
-                <Link href="/stock" className={buton("metin")}>
+                <Link href="/stock" scroll={false} className={buton("metin")}>
                   <Ikon ad="vazgec" />
                   Temizle
                 </Link>
               </div>
-            </form>
-          </details>
+            </SuzgecFormu>
+          </AcilirPanel>
           {sutunMenusu}
         </div>
       </div>

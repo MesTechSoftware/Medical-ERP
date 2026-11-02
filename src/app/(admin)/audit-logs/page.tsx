@@ -4,6 +4,7 @@ import { DetayPaneli, KayitYokPaneli } from "@/components/denetim/DetayPaneli";
 import { ImlecSayfalama } from "@/components/denetim/ImlecSayfalama";
 import { IslemTuruRozeti } from "@/components/denetim/IslemTuruRozeti";
 import { Ikon } from "@/components/Ikon";
+import { SuzgecFormu } from "@/components/liste/SuzgecFormu";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import { Card, EmptyRow, PageHeader } from "@/components/ui";
 import { AUDIT_ACTION_LABELS, ISLEM_TURU_ETIKETI, MODUL_ETIKETI } from "@/lib/denetim/olaylar";
@@ -43,8 +44,9 @@ export default async function DenetimKaydiSayfasi({
         description="Sistemdeki işlemlerin değiştirilemez kaydı; her kayıt zincirle mühürlüdür. Salt okunur."
       />
 
-      <form
-        method="get"
+      <SuzgecFormu
+        action="/audit-logs"
+        anahtar={denetimAdresi(suzgec)}
         aria-label="Denetim kaydı süzgeci"
         className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
       >
@@ -118,10 +120,10 @@ export default async function DenetimKaydiSayfasi({
           <Ikon ad="filtrele" />
           Filtrele
         </button>
-        <Link href="/audit-logs" className="text-sm font-medium text-slate-500 hover:text-slate-800">
+        <Link href="/audit-logs" scroll={false} className="text-sm font-medium text-slate-500 hover:text-slate-800">
           Temizle
         </Link>
-      </form>
+      </SuzgecFormu>
 
       <Card>
         <div className="tablo-kutusu">

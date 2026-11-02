@@ -10,6 +10,7 @@ export function EtkinSuzgecler({ etiketler }: { etiketler: readonly { anahtar: s
         <li key={e.anahtar}>
           <Link
             href={e.kaldirAdresi}
+            scroll={false}
             aria-label={`Kaldır: ${e.etiket}`}
             className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200"
           >

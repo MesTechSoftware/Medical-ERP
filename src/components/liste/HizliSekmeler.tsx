@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-/** Liste ekranlarının hızlı süzgeç hapları (Ü-18 kalıbı); etkin sekme `aria-current`. */
+/** Liste ekranlarının hızlı süzgeç hapları (Ü-18 kalıbı); etkin sekme `aria-current`. Süzgeç kaydırmayı yerinde bırakır. */
 export function HizliSekmeler({ sekmeler }: { sekmeler: readonly { etiket: string; adres: string; etkin: boolean }[] }) {
   return (
     <nav aria-label="Hızlı süzgeçler" className="flex flex-wrap gap-2">
@@ -8,6 +8,7 @@ export function HizliSekmeler({ sekmeler }: { sekmeler: readonly { etiket: strin
         <Link
           key={f.etiket}
           href={f.adres}
+          scroll={false}
           aria-current={f.etkin ? "page" : undefined}
           className={
             "inline-flex h-(--toolbar-h) items-center rounded-full px-3 text-sm font-medium transition " +

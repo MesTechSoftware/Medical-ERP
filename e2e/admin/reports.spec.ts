@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { yumusakGezinmeIsareti } from "../helpers";
 
 /**
  * Faz F — raporlar.
@@ -52,9 +53,28 @@ test("dönem zorunludur: varsayılan içinde bulunulan ay, tüm zamanlar ayrı s
   await page.getByRole("link", { name: "Tüm zamanlar" }).click();
   await expect(page).toHaveURL(/donem=tum/);
   await expect(page.getByText("Tüm zamanlar gösteriliyor.")).toBeVisible();
+  // Ay alanı seçili dönemi gösterir; tüm zamanlarda boştur.
+  await expect(page.locator("#donem")).toHaveValue("");
 
   await page.locator("#donem").fill("2026-03");
+  const yumusak = await yumusakGezinmeIsareti(page);
   await page.getByRole("button", { name: "Göster" }).click();
   await expect(page).toHaveURL(/donem=2026-03/);
+  // Göster sayfayı yeniden yüklemez (istemci gezinmesi).
+  expect(await yumusak()).toBe(true);
   await expect(page.getByText("2026-03 ayı gösteriliyor.")).toBeVisible();
+});
+
+test("dönem alanı uygulanan dönemi gösterir: boş ay varsayılana döner; tekrarlanan donem çökertmez", async ({ page }) => {
+  const buAy = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul", year: "numeric", month: "2-digit" })
+    .format(new Date())
+    .slice(0, 7);
+  await page.goto("/reports");
+  await page.locator("#donem").fill("");
+  await page.getByRole("button", { name: "Göster" }).click();
+  await expect(page).toHaveURL(/donem=$/);
+  await expect(page.locator("#donem")).toHaveValue(buAy);
+
+  await page.goto("/reports?donem=2026-01&donem=2026-02");
+  await expect(page.getByText("2026-01 ayı gösteriliyor.")).toBeVisible();
 });

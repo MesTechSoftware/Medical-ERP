@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import { Ikon } from "@/components/Ikon";
+import { SuzgecFormu } from "@/components/liste/SuzgecFormu";
 
 /** Seçicinin altındaki açıklama — iskelet (`DonemSeciciIskeleti`) aynı metni kullanır. */
 export function donemAciklamasi(anahtar: string): string {
@@ -10,12 +11,13 @@ export function donemAciklamasi(anahtar: string): string {
 
 /**
  * Rapor dönemi (X-1 §(2)): varsayılan içinde bulunulan aydır; "tüm zamanlar" ayrı,
- * bilinçli bir seçimdir. JS'siz GET formu — dönem URL'dedir.
+ * bilinçli bir seçimdir. GET formu — dönem URL'dedir; `SuzgecFormu` istemci tarafında gezer, JS'siz de
+ * çalışır ve ay alanını hep uygulanan dönemle gösterir.
  */
 export default function DonemSecici({ anahtar, yol }: { anahtar: string; yol: string }) {
   const tum = anahtar === "tum";
   return (
-    <form method="get" action={yol} className="mb-6 flex flex-wrap items-end gap-2">
+    <SuzgecFormu action={yol} anahtar={anahtar} className="mb-6 flex flex-wrap items-end gap-2">
       <div>
         <label htmlFor="donem" className="mb-1 block text-xs text-slate-500">
           Dönem (ay)
@@ -37,12 +39,13 @@ export default function DonemSecici({ anahtar, yol }: { anahtar: string; yol: st
       </button>
       <Link
         href={`${yol}?donem=tum`}
+        scroll={false}
         className={buton(tum ? "birincil" : "ikincil")}
       >
         <Ikon ad="tumZamanlar" />
         Tüm zamanlar
       </Link>
       <p className="w-full text-xs text-slate-500">{donemAciklamasi(anahtar)}</p>
-    </form>
+    </SuzgecFormu>
   );
 }
