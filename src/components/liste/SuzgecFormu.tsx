@@ -1,7 +1,7 @@
 "use client";
 
 import Form from "next/form";
-import { startTransition, useState } from "react";
+import { Fragment, startTransition, useState } from "react";
 import { sekmeIciBaglantiTiklamasi } from "@/components/liste/AcilirPanel";
 
 type Ozellikler = Omit<React.ComponentProps<"form">, "action" | "method" | "onClick" | "onSubmit"> & {
@@ -18,21 +18,23 @@ type Ozellikler = Omit<React.ComponentProps<"form">, "action" | "method" | "onCl
  * yeniden kurulur: uygulanan süzgeç değişince (sekme, süzgeç etiketi, geri) ve her gönderimde ya da
  * içindeki bağlantıda (Temizle, Tüm zamanlar) — aynı adrese varılsa bile alanlar sunucunun uyguladığı
  * değeri gösterir. Sayaç gezinmeyle aynı geçişte artar; form yeni değerler gelince bir kez kurulur.
+ * Anahtar sarmalayıcıdadır: `next/form` string `action`lı `<Form>`a `key` verilmesini desteklemez.
  */
 export function SuzgecFormu({ action, anahtar, ...ozellikler }: Ozellikler) {
   const [kurulum, setKurulum] = useState(0);
   const yenidenKur = () => startTransition(() => setKurulum((k) => k + 1));
   return (
-    <Form
-      key={`${anahtar}#${kurulum}`}
-      {...ozellikler}
-      action={action}
-      prefetch={false}
-      scroll={false}
-      onSubmit={yenidenKur}
-      onClick={(e) => {
-        if (sekmeIciBaglantiTiklamasi(e)) yenidenKur();
-      }}
-    />
+    <Fragment key={`${anahtar}#${kurulum}`}>
+      <Form
+        {...ozellikler}
+        action={action}
+        prefetch={false}
+        scroll={false}
+        onSubmit={yenidenKur}
+        onClick={(e) => {
+          if (sekmeIciBaglantiTiklamasi(e)) yenidenKur();
+        }}
+      />
+    </Fragment>
   );
 }

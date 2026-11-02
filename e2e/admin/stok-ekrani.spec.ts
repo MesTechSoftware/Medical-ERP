@@ -222,4 +222,9 @@ test("aynı adrese varan eylemde açılır paneller kapanır, form sıfırlanır
   const sutunlar = page.getByRole("form", { name: "Görünür sütunlar" });
   await sutunlar.getByRole("button", { name: "Kaydet" }).click();
   await expect(sutunlar).toBeHidden();
+  // Sütunlar menüsü de dışarıdan süzgeç değişikliğinde kapanır.
+  await page.getByText("Sütunlar", { exact: true }).click();
+  await page.getByRole("link", { name: "Tümü", exact: true }).click();
+  await expect(page).not.toHaveURL(/baslangic=/);
+  await expect(sutunlar).toBeHidden();
 });

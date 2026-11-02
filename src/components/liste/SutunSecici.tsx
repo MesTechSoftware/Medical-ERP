@@ -19,8 +19,8 @@ export function SutunSecici<K extends string>({
   donus: string;
 }) {
   return (
-    // Kaydedince menü yeni tercihle yeniden kurulur (yönlendirme yumuşak gezinmedir).
-    <AcilirPanel key={[...gizli].join(",")} className="relative">
+    // Kaydedince menü yeni tercihle, süzgeç dışarıdan değişince yeni adresle yeniden kurulur (yumuşak gezinme).
+    <AcilirPanel key={`${[...gizli].join(",")}#${donus}`} className="relative">
       <summary className={`${buton("ikincil")} cursor-pointer list-none`}>
         <Ikon ad="duzenle" />
         Sütunlar
