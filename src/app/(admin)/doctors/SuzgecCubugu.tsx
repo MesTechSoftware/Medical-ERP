@@ -8,6 +8,7 @@ import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import {
   HIZLI_SEKMELER,
   SAHIPSIZ,
+  SUZGEC_ALANLARI,
   ayniSuzgec,
   doktorAdresi,
   etkinSayisi,
@@ -61,8 +62,6 @@ export function SuzgecCubugu({
           sekmeler={HIZLI_SEKMELER.map((f) => ({ etiket: f.etiket, adres: doktorAdresi(f.suzgec), etkin: ayniSuzgec(suzgec, f.suzgec) }))}
         />
         <div className="ml-auto flex flex-wrap items-start gap-2">
-          {/* Sayfa bu bileşeni süzgeç alanlarının ham değeriyle anahtarlar: yumuşak gezinmede <select> eski
-              değerini korurdu (React). */}
           <AcilirPanel className="relative">
             <summary className={`${buton("ikincil")} cursor-pointer list-none`}>
               <Ikon ad="filtrele" />
@@ -70,6 +69,7 @@ export function SuzgecCubugu({
             </summary>
             <SuzgecFormu
               action="/doctors"
+              alanlar={SUZGEC_ALANLARI}
               aria-label="Cari süzgeci"
               className="absolute right-0 z-20 mt-2 grid w-[min(56rem,calc(100vw-2rem))] gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-lg sm:grid-cols-2 lg:grid-cols-4"
             >

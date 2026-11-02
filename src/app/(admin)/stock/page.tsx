@@ -5,11 +5,11 @@ import { PageHeader, Card } from "@/components/ui";
 import Pagination from "@/components/Pagination";
 import { SutunSecici } from "@/components/liste/SutunSecici";
 import { gizliSutunlariCoz } from "@/lib/liste/sutunlar";
-import { ilk, sorguMetni, type Parametreler } from "@/lib/liste/parametreler";
+import { ilk, type Parametreler } from "@/lib/liste/parametreler";
 import { getPagination, pageCount } from "@/lib/pagination";
 import { konsinyedekiMal, mevcutStok, stokHareketleri, stokKpileri } from "@/lib/stok-listesi/sorgu";
 import { SUTUNLAR, SUTUN_CEREZI } from "@/lib/stok-listesi/sutunlar";
-import { SUZGEC_ALANLARI, bosDurum, stokAdresi, suzgecCoz } from "@/lib/stok-listesi/suzgec";
+import { bosDurum, stokAdresi, suzgecCoz } from "@/lib/stok-listesi/suzgec";
 import { requireStaff } from "@/lib/session";
 import { bugun, yerelGunMetni } from "@/lib/zaman";
 import StockEntryForm from "./StockEntryForm";
@@ -194,7 +194,6 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
               Hareket Geçmişi
             </h2>
             <SuzgecCubugu
-              key={sorguMetni(params, SUZGEC_ALANLARI)}
               suzgec={suzgec}
               bugun={gun}
               urunler={urunSuzgeci}

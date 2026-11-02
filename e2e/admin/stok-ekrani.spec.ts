@@ -192,6 +192,14 @@ test("form sunucunun uyguladığı süzgeci gösterir: ters tarihler düzeltilir
   await page.getByText(/^Filtrele/).click();
   await expect(form.getByLabel("Başlangıç")).toHaveValue("2026-03-01");
   await expect(form.getByLabel("Bitiş")).toHaveValue("2026-05-01");
+
+  // Aynı ters tarihler yeniden: adres değişmez, form yine düzeltilmiş süzgeci gösterir.
+  await form.getByLabel("Başlangıç").fill("2026-05-01");
+  await form.getByLabel("Bitiş").fill("2026-03-01");
+  await form.getByRole("button", { name: "Uygula" }).click();
+  await page.getByText(/^Filtrele/).click();
+  await expect(form.getByLabel("Başlangıç")).toHaveValue("2026-03-01");
+  await expect(form.getByLabel("Bitiş")).toHaveValue("2026-05-01");
 });
 
 test("aynı adrese varan eylemde açılır paneller kapanır, form sıfırlanır: Temizle, değişmemiş sütun tercihi", async ({ page }) => {

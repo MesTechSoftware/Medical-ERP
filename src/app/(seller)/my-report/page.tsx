@@ -5,7 +5,7 @@ import { BRUT, MATRAH } from "@/lib/taban";
 import { simdi } from "@/lib/zaman";
 import { ciroOzeti, getSellerReports, saticiTahsilatOzeti } from "@/lib/reports-service";
 import DonemSecici from "@/components/DonemSecici";
-import { ilk, sorguMetni, type Parametreler } from "@/lib/liste/parametreler";
+import { ilk, type Parametreler } from "@/lib/liste/parametreler";
 import SaticiRaporTablosu from "@/components/SaticiRaporTablosu";
 import { PageHeader, Card } from "@/components/ui";
 import { KovaOzeti } from "@/components/kpi/KovaOzeti";
@@ -43,7 +43,7 @@ export default async function MyReportPage({
   return (
     <div>
       <PageHeader title="Raporum" description="Dönem cirom, hakedişim ve tahsilatım" />
-      <DonemSecici key={sorguMetni(params, ["donem"])} anahtar={donem.anahtar} yol="/my-report" />
+      <DonemSecici anahtar={donem.anahtar} yol="/my-report" />
       <KpiSatiri>
         <KpiCard
           etiket="Cirom"

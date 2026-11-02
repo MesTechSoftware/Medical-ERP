@@ -36,19 +36,6 @@ export function secenek<T extends string>(metin: string | null, gecerli: readonl
   return gecerli.find((g) => g === metin) ?? null;
 }
 
-/**
- * Adresin ham sorgu metni (normalize edilmez); `adlar` verilirse yalnız o parametreler, o sırayla.
- * Süzgeç formları süzgeç alanlarıyla anahtarlanır: alan değeri adreste değişince yeniden kurulur,
- * sunucunun düzelttiği ya da yok saydığı girdi formda kalmaz. Yok ile boş (`ad=`) ayrıdır.
- */
-export function sorguMetni(p: Parametreler, adlar?: readonly string[]): string {
-  const q = new URLSearchParams();
-  for (const [ad, deger] of adlar ? adlar.map((a) => [a, p[a]] as const) : Object.entries(p)) {
-    for (const d of Array.isArray(deger) ? deger : deger === undefined ? [] : [deger]) q.append(ad, d);
-  }
-  return q.toString();
-}
-
 /** Kayıt kimliği (cuid ve benzeri): harf, rakam, tire; en çok 64 karakter. */
 export function kimlik(metin: string | null): string | null {
   return metin !== null && KIMLIK.test(metin) ? metin : null;

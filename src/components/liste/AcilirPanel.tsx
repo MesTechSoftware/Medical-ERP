@@ -1,10 +1,14 @@
 "use client";
 
-/** Bağlantıya bu sekmede gezinen düz tıklama mı (yeni sekme/pencere açan değiştirici tuşlar hariç)? */
+/**
+ * Bu sekmede gezinen düz bağlantı tıklaması mı? Değiştirici tuşlu tıklama, `target="_blank"` ve `download`
+ * bağlantısı sayfayı yerinde bırakır. `defaultPrevented` bakılmaz: Next `Link` istemci gezinmesi için
+ * her tıklamada onu çağırır.
+ */
 export function sekmeIciBaglantiTiklamasi(e: React.MouseEvent): boolean {
-  // `defaultPrevented` bakılmaz: Next `Link` istemci gezinmesi için her tıklamada onu çağırır.
   if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return false;
-  return e.target instanceof Element && e.target.closest("a") !== null;
+  const a = e.target instanceof Element ? e.target.closest("a") : null;
+  return a !== null && a.target !== "_blank" && !a.hasAttribute("download");
 }
 
 /**

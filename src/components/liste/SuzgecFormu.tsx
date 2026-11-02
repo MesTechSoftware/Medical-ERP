@@ -1,26 +1,40 @@
 "use client";
 
 import Form from "next/form";
+import { useSearchParams } from "next/navigation";
+import { startTransition, useState } from "react";
 import { sekmeIciBaglantiTiklamasi } from "@/components/liste/AcilirPanel";
+import { alanSorgusu } from "@/lib/liste/alan-sorgusu";
 
-type Ozellikler = Omit<React.ComponentProps<"form">, "action" | "method" | "onClick"> & { action: string };
+type Ozellikler = Omit<React.ComponentProps<"form">, "action" | "method" | "onClick" | "onSubmit"> & {
+  action: string;
+  /** Formun alan adları (`name`); form bunların adresteki ham değeriyle yeniden kurulur. */
+  alanlar: readonly string[];
+};
 
 /**
  * Liste süzgeçlerinin GET formu: `next/form` istemci tarafında gezer — sayfa yeniden yüklenmez, kaydırma
  * yerinde kalır; hedef hep parametreli olduğundan önceden yükleme yapılmaz. JS'siz düz GET formudur.
- * Form, çağıran yerde süzgeç alanlarının ham değeriyle anahtarlanır (`sorguMetni`); aynı adrese giden
- * bir bağlantı (Temizle, Tüm zamanlar) onu yeniden kurmaz, bu yüzden tıklamada alanlar sunucunun
- * uyguladığı değerlere döner.
+ *
+ * Alanlar denetimsizdir (`defaultValue`); React yumuşak gezinmede onları güncellemez. Form bu yüzden
+ * yeniden kurulur: kendi alanları adreste değişince (sekme, süzgeç etiketi) ve her gönderimde ya da
+ * içindeki bağlantıda (Temizle, Tüm zamanlar) — aynı adrese varılsa bile alanlar sunucunun uyguladığı
+ * değeri gösterir. Sayaç gezinmeyle aynı geçişte artar; form yeni değerler gelince bir kez kurulur.
  */
-export function SuzgecFormu({ action, ...ozellikler }: Ozellikler) {
+export function SuzgecFormu({ action, alanlar, ...ozellikler }: Ozellikler) {
+  const sp = useSearchParams();
+  const [kurulum, setKurulum] = useState(0);
+  const yenidenKur = () => startTransition(() => setKurulum((k) => k + 1));
   return (
     <Form
+      key={`${alanSorgusu(sp, alanlar)}#${kurulum}`}
       {...ozellikler}
       action={action}
       prefetch={false}
       scroll={false}
+      onSubmit={yenidenKur}
       onClick={(e) => {
-        if (sekmeIciBaglantiTiklamasi(e)) e.currentTarget.reset();
+        if (sekmeIciBaglantiTiklamasi(e)) yenidenKur();
       }}
     />
   );

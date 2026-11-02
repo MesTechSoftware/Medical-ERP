@@ -6,7 +6,7 @@ import { kpiGetir } from "@/lib/kpi/getir";
 import { cubukOranlari } from "@/lib/kpi/olcek";
 import { simdi } from "@/lib/zaman";
 import DonemSecici from "@/components/DonemSecici";
-import { ilk, sorguMetni, type Parametreler } from "@/lib/liste/parametreler";
+import { ilk, type Parametreler } from "@/lib/liste/parametreler";
 import SaticiRaporTablosu from "@/components/SaticiRaporTablosu";
 import {
   ciroOzeti,
@@ -59,7 +59,7 @@ export default async function ReportsPage({
         description="Ciro ve performans"
       />
 
-      <DonemSecici key={sorguMetni(params, ["donem"])} anahtar={donem.anahtar} yol="/reports" />
+      <DonemSecici anahtar={donem.anahtar} yol="/reports" />
 
       {/* FR-60: kanal karşılaştırması C5'te söküldü (X-8) */}
       <KpiSatiri>
