@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { prisma } from "@/lib/db";
-import { cozumleBirimFiyat, cozumleListeFiyatlari } from "@/lib/fiyat";
+import { baremMatrisi, cozumleBirimFiyat, cozumleListeFiyatlari } from "@/lib/fiyat";
 import { referansVeri, yeniDoktorVerisi } from "../../test/integration/referans";
 
 // `cozumleBirimFiyat()` tamamı — B-5-1 (tarih), B-6-1 (barem), X-10-1 (liste seçimi).
@@ -144,5 +144,56 @@ describe("cozumleListeFiyatlari — toplu ≡ tekli (X-10-4)", () => {
 
   it("boş liste boş harita", async () => {
     expect((await cozumleListeFiyatlari([], { miktar: 1, gun: gun("2026-10-20") })).size).toBe(0);
+  });
+});
+
+describe("barem matrisi — fiyat seçiminin tek yolundan (X-10-5)", () => {
+  const ozet = (h: { fiyat: { toFixed(n: number): string }; devralinan: boolean } | null) =>
+    h ? `${h.fiyat.toFixed(2)}${h.devralinan ? "*" : ""}` : null;
+
+  it("eşikler küçükten büyüğe; hücre o miktardaki seçimdir, alt eşikten gelen devralınmış, eşiğe kadar satır yoksa boş", async () => {
+    const b = await prisma.product.create({ data: { name: "Balon", code: "MED-002", taxRateId: s.kdv20.id } });
+    await satir("100", 1);
+    await satir("90", 10);
+    await satir("80", 50);
+    await prisma.priceListItem.create({ data: { priceListId: s.liste.id, productId: b.id, listPrice: "70", minQuantity: 10 } });
+
+    const m = await baremMatrisi(s.liste.id, gun("2026-10-20"));
+    expect(m.esikler).toEqual([1, 10, 50]);
+    expect(m.urunler.map((u) => u.name)).toEqual(["Balon", "Stent"]);
+    expect(m.urunler[1].hucreler.map(ozet)).toEqual(["100.00", "90.00", "80.00"]);
+    expect(m.urunler[0].hucreler.map(ozet)).toEqual([null, "70.00", "70.00*"]);
+  });
+
+  it("her hücre listeye atanmış carinin cozumleBirimFiyat sonucuna eşittir", async () => {
+    const ozel = await prisma.priceList.create({ data: { code: "OZEL", name: "Özel" } });
+    const b = await prisma.product.create({ data: { name: "Balon", code: "MED-002", taxRateId: s.kdv20.id } });
+    await satir("100", 1, undefined, undefined, ozel.id);
+    await satir("95", 5, undefined, undefined, ozel.id);
+    await satir("60", 20, "2026-10-01", undefined, ozel.id);
+    await prisma.priceListItem.create({ data: { priceListId: ozel.id, productId: b.id, listPrice: "40", minQuantity: 5 } });
+    const doktor = await prisma.doctor.create({ data: { ...yeniDoktorVerisi(), priceListId: ozel.id } });
+
+    const t = gun("2026-10-20");
+    const m = await baremMatrisi(ozel.id, t);
+    expect(m.esikler).toEqual([1, 5, 20]);
+    for (const u of m.urunler) {
+      for (const [i, esik] of m.esikler.entries()) {
+        const r = await cozumleBirimFiyat(u.id, doktor.id, { miktar: esik, gun: t });
+        const h = u.hucreler[i];
+        expect(h ? h.fiyat.toFixed(4) : "FIYAT_COZUMLENEMEDI").toBe(r.durum === "TAMAM" ? r.listeFiyat.toFixed(4) : r.neden);
+      }
+    }
+  });
+
+  it("tarihli satır yalnız geçerli olduğu günde sayılır; bugün geçerli satırı olmayan liste boştur", async () => {
+    await satir("100", 1, undefined, "2026-10-20"); // 20.10 hariç biter
+    await satir("90", 10, "2026-10-21"); // 21.10'da başlar
+    expect(await baremMatrisi(s.liste.id, gun("2026-10-20"))).toEqual({ esikler: [], urunler: [] });
+    const yarin = await baremMatrisi(s.liste.id, gun("2026-10-21"));
+    expect(yarin.esikler).toEqual([10]);
+    expect(yarin.urunler[0].hucreler.map(ozet)).toEqual(["90.00"]);
+    const dun = await baremMatrisi(s.liste.id, gun("2026-10-19"));
+    expect(dun.esikler).toEqual([1]);
   });
 });
