@@ -3,11 +3,12 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/db";
 import { HAREKET_TURLERI } from "@/lib/stok-hareket-turu";
 import { BOS_SUZGEC, type StokSuzgeci } from "@/lib/stok-listesi/suzgec";
-import { konsinyedekiMal, stokHareketleri, stokKpileri } from "@/lib/stok-listesi/sorgu";
+import { hesaplaStok } from "@/lib/stok";
+import { konsinyedekiMal, mevcutStok, stokHareketleri, stokKpileri } from "@/lib/stok-listesi/sorgu";
 import { bugun, yerelGunAraligi, yerelGunMetni } from "@/lib/zaman";
 import { referansVeri, yeniDoktorVerisi } from "../../../test/integration/referans";
 
-// Stok ekranı sorguları — KABUL_KRITERLERI B-4-8, B-4-10.
+// Stok ekranı sorguları — KABUL_KRITERLERI B-4-8, B-4-10, B-4-11, B-4-12.
 
 const HEPSI = { skip: 0, take: 1000 };
 
@@ -81,6 +82,20 @@ describe("stokHareketleri — süzgeç", () => {
     expect((await liste({ tur: "duzeltme", yon: "CIKIS" })).toplam).toBe(1);
     expect((await liste({ yon: "CIKIS" })).toplam).toBe(2);
   });
+
+  it("ürün süzgeci liste ve sayıyı o ürüne indirir; öbür süzgeçlerle birleşir (B-4-12)", async () => {
+    const [a, b] = await Promise.all([urun("U1"), urun("U2")]);
+    const aGiris = await hareket({ productId: a.id, quantity: 5 });
+    const aCikis = await hareket({ productId: a.id, type: "CIKIS", quantity: 2 });
+    await hareket({ productId: b.id, quantity: 7 });
+
+    const sadeceA = await liste({ urunId: a.id });
+    expect(sadeceA.toplam).toBe(2);
+    expect(sadeceA.satirlar.map((s) => s.id).sort()).toEqual([aGiris.id, aCikis.id].sort());
+    expect((await liste({ urunId: a.id, yon: "CIKIS" })).satirlar.map((s) => s.id)).toEqual([aCikis.id]);
+    expect((await liste({ urunId: a.id, baslangic: "2020-01-01", bitis: "2020-01-01" })).toplam).toBe(0);
+    expect((await liste({})).toplam).toBe(3);
+  });
 });
 
 describe("stokHareketleri — satır", () => {
@@ -140,6 +155,32 @@ describe("stokKpileri", () => {
     expect(k.stoktaki).toBe(2);
     expect(k.toplamAdet).toBe(56);
     expect(k.kritik).toBe(2);
+  });
+});
+
+describe("mevcutStok (B-4-11)", () => {
+  it("her aktif ürün bir satır; depo + konsinye = toplam = hesaplaStok; pasif konum sayılır", async () => {
+    const doktor = await prisma.doctor.create({ data: yeniDoktorVerisi() });
+    const kns = await prisma.stockLocation.create({ data: { code: "KNS-M", name: "Konsinye M", type: "KONSINYE", doctorId: doktor.id } });
+    const doktor2 = await prisma.doctor.create({ data: yeniDoktorVerisi("Dr. Pasif") });
+    const pasifKns = await prisma.stockLocation.create({
+      data: { code: "KNS-P", name: "Konsinye P", type: "KONSINYE", doctorId: doktor2.id, isActive: false },
+    });
+    const [b, a, sifir, pasif] = await Promise.all([urun("MB"), urun("MA"), urun("MS"), urun("MP", "PASIF")]);
+    await hareket({ productId: a.id, quantity: 40 });
+    await hareket({ productId: a.id, type: "CIKIS", quantity: 6 });
+    await hareket({ productId: a.id, locationId: kns.id, quantity: 6 });
+    await hareket({ productId: a.id, locationId: pasifKns.id, quantity: 2 });
+    await hareket({ productId: b.id, quantity: 3 });
+    await hareket({ productId: pasif.id, quantity: 9 });
+
+    const satirlar = await mevcutStok();
+    expect(satirlar).toEqual([
+      { id: a.id, name: "Ürün MA", code: "MA", depo: 34, konsinye: 8, toplam: 42 },
+      { id: b.id, name: "Ürün MB", code: "MB", depo: 3, konsinye: 0, toplam: 3 },
+      { id: sifir.id, name: "Ürün MS", code: "MS", depo: 0, konsinye: 0, toplam: 0 },
+    ]);
+    for (const s of satirlar) expect(s.toplam).toBe(await hesaplaStok(s.id));
   });
 });
 

@@ -6,7 +6,7 @@
 > Kod yeri, kriter metninde anılan fonksiyonun tanımlandığı dosyadır. Eski PRD matrisi (8 Ağustos 2026)
 > `docs/arsiv/TRACEABILITY_PRD_V2.md`'dedir.
 
-**Özet:** 138 KANITLI · 0 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.0** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
+**Özet:** 140 KANITLI · 0 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.0** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
 
 | Kriter | Karar | Durum | Kod yeri | Test | Kriter metni |
 |---|---|---|---|---|---|
@@ -82,6 +82,8 @@
 | B-4-8 | B-4 | KANITLI | `src/lib/stok.ts` | `src/lib/stok.itest.ts`<br>`src/lib/stok-hareketi-yapan.itest.ts`<br>`e2e/admin/stok-ekrani.spec.ts` | Her stok hareketi işlemi yapan kullanıcıyı taşır; `stokHareketiYaz` kullanıcısız hareket yazmaz. Eski hareketler kaynak belgenin sahibind… |
 | B-4-9 | B-4 | KANITLI | `src/lib/stok.ts` | `src/lib/stok.itest.ts` | `konumStoklari` her konum ve ürün için `hesaplaStok(urun, konum)` ile aynıdır. |
 | B-4-10 | B-4 | KANITLI | — | `src/lib/stok-hareket-turu.test.ts`<br>`src/lib/stok-listesi/sorgu.itest.ts`<br>`e2e/admin/stok-ekrani.spec.ts` | Stok ekranının bugün giriş/çıkış kartı, tıklanınca açılan listenin satır sayısına eşittir; hareket türü süzgeci ve tür etiketi aynı sınıf… |
+| B-4-11 | B-4 | KANITLI | `src/lib/stok-listesi/sorgu.ts`<br>`src/lib/stok.ts` | `src/lib/stok-listesi/sorgu.itest.ts`<br>`e2e/admin/stok-ekrani.spec.ts` | Stok ekranının mevcut stok kartında (`mevcutStok`) her aktif ürün (stoğu sıfır olan dahil) bir satırdır; depo ve konsinye sütunları o tür… |
+| B-4-12 | B-4 | KANITLI | `src/lib/stok-listesi/sorgu.ts` | `src/lib/stok-listesi/suzgec.test.ts`<br>`src/lib/stok-listesi/sorgu.itest.ts`<br>`e2e/admin/stok-ekrani.spec.ts` | Hareket geçmişinin ürün süzgeci (`hareketKosulu`) listeyi ve toplam sayıyı yalnız o ürünün hareketlerine indirir; tarih, tür ve yön süzge… |
 | B-5-1 | B-5 | KANITLI | — | `src/lib/fiyat.itest.ts`<br>`src/lib/kisitlar.itest.ts` | Fiyat satırı belge gününde geçerliyse seçilir: aralık yarı açıktır (`gecerli_baslangic` dahil, `gecerli_bitis` hariç), boş uç süresizdir.… |
 | B-6-1 | B-6 | KANITLI | — | `src/lib/fiyat.itest.ts`<br>`src/app/(seller)/my-orders/orders.itest.ts` | Barem `min_adet` alt sınır satırlarıyla kurulur, üst sınır yoktur: satır miktarını karşılayan **en yüksek** `min_adet`'li satır seçilir;… |
 | B-7-1 | B-7 | KANITLI | `src/lib/session.ts` | `src/lib/stok-duzeltme.itest.ts`<br>`e2e/admin/stok-duzeltme.spec.ts`<br>`src/lib/yetki.test.ts`<br>`e2e/operasyon/operasyon.spec.ts` | Stok düzeltme (`DZL`) yalnız `YONETICI`'dedir (action `requireAdmin`, servis başka rolde teknik hata). Belge çok satırlıdır: ürün · konum… |

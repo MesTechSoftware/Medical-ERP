@@ -1,4 +1,5 @@
 import type { Prisma } from "@/generated/prisma/client";
+import type { StockLocationType } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import { aktifUrunStoklari, konumStoklari } from "@/lib/stok";
 import { stokDurumu } from "@/lib/stok-durumu";
@@ -34,6 +35,7 @@ export function hareketKosulu(s: StokSuzgeci): Prisma.StockMovementWhereInput {
     ...(s.baslangic || s.bitis ? { createdAt } : {}),
     ...(s.yon ? { type: s.yon } : {}),
     ...(s.tur ? turKosulu(s.tur) : {}),
+    ...(s.urunId ? { productId: s.urunId } : {}),
   };
 }
 
@@ -115,6 +117,32 @@ export async function stokKpileri(
     bugunGiris,
     bugunCikis,
   };
+}
+
+export type MevcutStokSatiri = { id: string; name: string; code: string; depo: number; konsinye: number; toplam: number };
+
+/**
+ * Mevcut stok kartı (B-4-11): her aktif ürün, stoğu sıfır olan dahil, ürün adıyla. Depo ve konsinye o
+ * türdeki bütün konumların toplamıdır — pasif konum dahil, böylece toplam `hesaplaStok` ile aynıdır.
+ * "Konsinyedeki Mal" yalnız aktif konsinye konumlarını listeler; pasif konumda mal kaldıysa iki kart ayrışır.
+ */
+export async function mevcutStok(): Promise<MevcutStokSatiri[]> {
+  const [urunler, konumlar] = await Promise.all([
+    prisma.product.findMany({ where: { status: "AKTIF" }, orderBy: { name: "asc" }, select: { id: true, name: true, code: true } }),
+    prisma.stockLocation.findMany({ select: { id: true, type: true } }),
+  ]);
+  const stoklar = await konumStoklari(konumlar.map((k) => k.id));
+  // Konum türü başına toplam; yeni bir tür eklenirse bu kayıt derlenmez.
+  const tur: Record<StockLocationType, Map<string, number>> = { DEPO: new Map(), KONSINYE: new Map() };
+  for (const k of konumlar) {
+    const hedef = tur[k.type];
+    for (const [urunId, miktar] of stoklar.get(k.id)!) hedef.set(urunId, (hedef.get(urunId) ?? 0) + miktar);
+  }
+  return urunler.map((u) => {
+    const depo = tur.DEPO.get(u.id) ?? 0;
+    const konsinye = tur.KONSINYE.get(u.id) ?? 0;
+    return { ...u, depo, konsinye, toplam: depo + konsinye };
+  });
 }
 
 /**

@@ -105,7 +105,7 @@ export default function DuzeltmeFormu({
             </div>
           </div>
           {satirlar.length > 1 && (
-            <button type="button" onClick={() => setSatirlar((ss) => ss.filter((x) => x.key !== s.key))} className="inline-flex items-center justify-center gap-1 text-xs text-slate-400 hover:text-negative dokunmatik:min-h-11 dokunmatik:min-w-11">
+            <button type="button" onClick={() => setSatirlar((ss) => ss.filter((x) => x.key !== s.key))} className="inline-flex items-center justify-center gap-1 text-xs text-negative hover:underline dokunmatik:min-h-11 dokunmatik:min-w-11">
               <Ikon ad="sil" />
               Satırı sil
             </button>

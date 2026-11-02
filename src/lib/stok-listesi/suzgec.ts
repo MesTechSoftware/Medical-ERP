@@ -1,11 +1,11 @@
 import { HAREKET_TURLERI, type HareketTuruKodu } from "@/lib/stok-hareket-turu";
-import { aralikEtiketi, gun, ilk, secenek, type Parametreler } from "@/lib/liste/parametreler";
+import { aralikEtiketi, gun, ilk, kimlik, secenek, type Parametreler } from "@/lib/liste/parametreler";
 import { gunEkle } from "@/lib/zaman";
 
 /**
  * Stok ekranının hareket süzgeci (spec Ü-20 §3.3); adres çubuğunda durur. Geçersiz değer yok sayılır.
  * Günler İstanbul günüdür (`YYYY-AA-GG`); aralığa çevirme `sorgu.ts`'tedir. `urun` formun önseçimidir,
- * süzgeç onu taşımaz. Saf modül.
+ * süzgeç onu taşımaz; ürün süzgeci `urunId`'dir (B-4-12). Saf modül.
  */
 
 export type StokSuzgeci = {
@@ -13,9 +13,10 @@ export type StokSuzgeci = {
   bitis: string | null;
   tur: HareketTuruKodu | null;
   yon: "GIRIS" | "CIKIS" | null;
+  urunId: string | null;
 };
 
-export const BOS_SUZGEC: StokSuzgeci = { baslangic: null, bitis: null, tur: null, yon: null };
+export const BOS_SUZGEC: StokSuzgeci = { baslangic: null, bitis: null, tur: null, yon: null, urunId: null };
 
 type Tarih = Pick<StokSuzgeci, "baslangic" | "bitis">;
 
@@ -30,6 +31,7 @@ export function suzgecCoz(p: Parametreler): StokSuzgeci {
     bitis,
     tur: secenek(ilk(p, "tur"), TUR_KODLARI),
     yon: secenek(ilk(p, "yon"), ["GIRIS", "CIKIS"] as const),
+    urunId: kimlik(ilk(p, "urunId")),
   };
 }
 
@@ -40,6 +42,7 @@ export function stokAdresi(s: StokSuzgeci, ek: { page?: number; per?: number } =
   if (s.bitis) p.set("bitis", s.bitis);
   if (s.tur) p.set("tur", s.tur);
   if (s.yon) p.set("yon", s.yon);
+  if (s.urunId) p.set("urunId", s.urunId);
   if (ek.page !== undefined && ek.page > 1) p.set("page", String(ek.page));
   if (ek.per !== undefined) p.set("per", String(ek.per));
   const q = p.toString();
@@ -67,14 +70,19 @@ export function etkinSekme<E extends string>(sekmeler: readonly { etiket: E; tar
   return sekmeler.find((f) => f.tarih.baslangic === s.baslangic && f.tarih.bitis === s.bitis)?.etiket ?? null;
 }
 
-/** Sekmenin adresi: tarihleri yazar, tür ve yönü korur; sayfa düşer. */
+/** Sekmenin adresi: tarihleri yazar, öbür süzgeçleri korur; sayfa düşer. */
 export function sekmeAdresi(s: StokSuzgeci, tarih: Tarih): string {
   return stokAdresi({ ...s, ...tarih });
 }
 
-/** Etkin süzgeçlerin etiketleri, her biri o alanı düşüren adresle. */
-export function etkinSuzgecler(s: StokSuzgeci): { anahtar: "tarih" | "tur" | "yon"; etiket: string; kaldirAdresi: string }[] {
-  const liste: { anahtar: "tarih" | "tur" | "yon"; etiket: string; kaldirAdresi: string }[] = [];
+type Anahtar = "tarih" | "tur" | "yon" | "urun";
+
+/** Etkin süzgeçlerin etiketleri, her biri o alanı düşüren adresle; bilinmeyen ürünü sayfa adresten düşürür. */
+export function etkinSuzgecler(
+  s: StokSuzgeci,
+  urunAdi: (id: string) => string | undefined
+): { anahtar: Anahtar; etiket: string; kaldirAdresi: string }[] {
+  const liste: { anahtar: Anahtar; etiket: string; kaldirAdresi: string }[] = [];
   if (s.baslangic || s.bitis) {
     liste.push({
       anahtar: "tarih",
@@ -89,10 +97,14 @@ export function etkinSuzgecler(s: StokSuzgeci): { anahtar: "tarih" | "tur" | "yo
   if (s.yon) {
     liste.push({ anahtar: "yon", etiket: `Yön: ${s.yon === "GIRIS" ? "Giriş" : "Çıkış"}`, kaldirAdresi: stokAdresi({ ...s, yon: null }) });
   }
+  const ad = s.urunId ? urunAdi(s.urunId) : undefined;
+  if (ad !== undefined) {
+    liste.push({ anahtar: "urun", etiket: `Ürün: ${ad}`, kaldirAdresi: stokAdresi({ ...s, urunId: null }) });
+  }
   return liste;
 }
 
 /** Sonuç boşken gösterilecek açıklamanın türü (spec §3.6). */
 export function bosDurum(s: StokSuzgeci): "hic-kayit" | "suzgecli" {
-  return s.baslangic || s.bitis || s.tur || s.yon ? "suzgecli" : "hic-kayit";
+  return s.baslangic || s.bitis || s.tur || s.yon || s.urunId ? "suzgecli" : "hic-kayit";
 }
