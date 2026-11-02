@@ -127,25 +127,29 @@ test("mevcut stok kartı: her aktif ürün; depo + konsinye = toplam = hareket t
     const hucreler = kart.locator(`tr[data-urun="${b.id}"] td`);
     await expect(hucreler.nth(1)).toHaveText(String(b.depo));
     await expect(hucreler.nth(2)).toHaveText(String(b.konsinye));
-    await expect(hucreler.nth(3)).toContainText(String(b.depo + b.konsinye));
+    // Toplam hücresi durum etiketi + sayıdır; sayı tam eşleşir.
+    await expect(hucreler.nth(3)).toHaveText(new RegExp(`^(Tükendi|Kritik)?\\s*${b.depo + b.konsinye}$`));
   }
 });
 
 test("Filtrele formu ürün süzgeci uygular; sekme korur, × ile kalkar (B-4-12)", async ({ page }) => {
+  // Süzgeç, girişi az önce yapılan ürünü seçer: en az bir satır vardır.
   await stokGirisi(page, `E2E ürün süzgeci ${Date.now()}`);
+  const girisFormu = page.locator("form").filter({ has: page.getByRole("button", { name: "Stok Girişi Ekle" }) });
+  const urunId = await girisFormu.getByLabel("Ürün").locator("option").nth(1).getAttribute("value");
   await page.getByText("Filtrele", { exact: true }).click();
   const form = page.getByRole("form", { name: "Hareket süzgeci" });
   const secim = form.getByLabel("Ürün");
-  await secim.selectOption({ index: 1 });
-  const urunId = await secim.inputValue();
+  await secim.selectOption(urunId!);
   const etiket = (await secim.locator("option:checked").innerText()).trim();
   await form.getByRole("button", { name: "Uygula" }).click();
   await expect(page).toHaveURL(new RegExp(`urunId=${urunId}`));
   await expect(page.getByRole("list", { name: "Etkin süzgeçler" }).getByText(`Ürün: ${etiket}`)).toBeVisible();
 
   const [{ adet }] = await sorgu<{ adet: number }>(`SELECT count(*)::int AS adet FROM "StockMovement" WHERE "productId" = $1`, [urunId]);
+  expect(adet).toBeGreaterThan(0);
   await page.goto(`/stock?urunId=${urunId}&per=100`);
-  await expect(satirlar(page)).toHaveCount(adet);
+  await expect(satirlar(page)).toHaveCount(Math.min(adet, 100));
   for (const href of await satirlar(page).getByRole("link").evaluateAll((l) => l.map((a) => a.getAttribute("href")))) {
     expect(href).toBe(`/products?detay=${urunId}`);
   }

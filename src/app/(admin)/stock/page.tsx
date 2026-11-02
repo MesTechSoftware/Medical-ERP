@@ -74,10 +74,14 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
   };
 
   const products = tumUrunler.filter((p) => p.status === "AKTIF").map(({ id, name, code }) => ({ id, name, code }));
-  const urunSuzgeci = tumUrunler.map((p) => ({ value: p.id, label: `${p.name} (${p.code})${p.status === "AKTIF" ? "" : " · pasif"}` }));
+  const secenek = (p: { id: string; name: string; code: string }) => ({ value: p.id, label: `${p.name} (${p.code})` });
+  const urunSecenekleri = products.map(secenek);
+  const urunSuzgeci = tumUrunler.map((p) => {
+    const o = secenek(p);
+    return p.status === "AKTIF" ? o : { ...o, label: `${o.label} · pasif` };
+  });
   const depolar = konumlar.filter((k) => k.type === "DEPO");
   const konsinyeler = konumlar.filter((k) => k.type === "KONSINYE");
-  const urunSecenekleri = products.map((p) => ({ value: p.id, label: `${p.name} (${p.code})` }));
 
   return (
     <div>

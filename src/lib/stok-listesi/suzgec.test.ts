@@ -90,8 +90,12 @@ describe("etkin süzgeçler ve boş durum", () => {
     expect(etkinSuzgecler({ ...BOS_SUZGEC, yon: "CIKIS" }, urunAdi)[0].etiket).toBe("Yön: Çıkış");
   });
 
-  it("bilinmeyen ürün kimliğinin etiketi çizilmez", () => {
-    expect(etkinSuzgecler({ ...BOS_SUZGEC, urunId: "yok" }, urunAdi)).toEqual([]);
+  it("bilinmeyen ürün kimliği de etiketlenir ve kaldırılabilir", () => {
+    expect(etkinSuzgecler({ ...BOS_SUZGEC, urunId: "yok", yon: "GIRIS" }, urunAdi)[1]).toEqual({
+      anahtar: "urun",
+      etiket: "Ürün: bulunamadı",
+      kaldirAdresi: "/stock?yon=GIRIS",
+    });
   });
 
   it("boş durum türü", () => {
