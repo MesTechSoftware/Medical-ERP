@@ -37,14 +37,22 @@ test("onay bekleyenler: yönetici karar notuyla onaylar, talep listeden düşer 
     [blokId, s.siparisId, operasyon.id]
   );
 
-  await page.goto("/approvals");
-  const kart = page.locator(`[data-blok-id="${blokId}"]`);
-  await expect(kart).toContainText("Negatif stok");
-  await expect(kart).toContainText(s.documentNo);
-  await expect(kart).toContainText("Acil vaka");
+  // Karar yan paneldedir (Ü-25 §3.5): talep, bağlam ve form.
+  await page.goto(`/approvals?detay=${blokId}`);
+  const panel = page.getByRole("dialog");
+  await expect(panel).toContainText("Negatif stok");
+  await expect(panel).toContainText(s.documentNo);
+  await expect(panel).toContainText("Acil vaka");
+  const kart = panel.locator(`[data-blok-id="${blokId}"]`);
   await kart.getByLabel("Karar notu").fill("Uygun, sevk edilsin");
   await kart.getByRole("button", { name: "Onayla" }).click();
   await expect(kart).toHaveCount(0);
+
+  // Karar verilen talep Bekleyen listesinden düşer; aynı arama Tümü'nde onu bulur.
+  await page.goto(`/approvals?durum=tumu&q=${s.documentNo}`);
+  await expect(page.getByRole("table", { name: "Onay talepleri" }).getByText(s.documentNo)).toBeVisible();
+  await page.goto(`/approvals?q=${s.documentNo}`);
+  await expect(page.getByRole("table", { name: "Onay talepleri" }).getByText(s.documentNo)).toHaveCount(0);
 
   const [blok] = await sorgu<{ decision: string; decisionNote: string }>(
     `SELECT decision::text, "decisionNote" FROM "ApprovalBlock" WHERE id = $1`,
