@@ -82,7 +82,8 @@ test("sayfalama ve filtre hapları dokunmatikte en az 44 px; telefonda kısa bi�
     await expect(sayfalama.getByText(/toplam \d+ kayıt/)).toBeHidden();
   }
   for (const ad of ["Tümü", "Bekliyor", "İptal"]) {
-    await dokunmaHedefi(page.getByRole("link", { name: ad, exact: true }), `hap: ${ad}`);
+    // KPI kartları da aynı adı taşır (Ü-23); hap sekme bölgesindedir.
+    await dokunmaHedefi(page.getByRole("navigation", { name: "Hızlı süzgeçler" }).getByRole("link", { name: ad, exact: true }), `hap: ${ad}`);
   }
 });
 

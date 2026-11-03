@@ -64,7 +64,7 @@ test("Filtrele: satıcı süzgeci etiketlenir, satırlar o satıcının; × ile 
 
 test("yan panel: kalemler, sevkiyat (takip no) ve toplam detay sayfasıyla aynı (A-3-2)", async ({ page }) => {
   const [o] = await sorgu<{ id: string; documentNo: string }>(
-    `SELECT o.id, o."documentNo" FROM "Order" o WHERE o.status = 'KARGOLANDI' AND EXISTS (SELECT 1 FROM "Shipment" s WHERE s."orderId" = o.id) ORDER BY o."orderDate" DESC LIMIT 1`
+    `SELECT o.id, o."documentNo" FROM "Order" o WHERE o.status = 'KARGOLANDI' AND EXISTS (SELECT 1 FROM "Shipment" s WHERE s."orderId" = o.id AND s."trackingNumber" IS NOT NULL AND s."carrierId" IS NOT NULL) ORDER BY o."orderDate" DESC LIMIT 1`
   );
   await page.goto(`/orders?detay=${o.id}`);
   const panel = page.getByRole("dialog");
