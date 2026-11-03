@@ -26,8 +26,8 @@ export const SATICISIZ = "yok";
 
 const METIN_SINIRI = 100;
 
-/** Sekme sırası ve etiketleri (bugünkü sekmelerle aynı metin). */
-const DURUMLAR: readonly { kod: SiparisDurumu; etiket: string }[] = [
+/** Sekme sırası ve etiketleri (bugünkü sekmelerle aynı metin); KPI kartları da buradan okur. */
+export const DURUMLAR: readonly { kod: SiparisDurumu; etiket: string }[] = [
   { kod: "BEKLIYOR", etiket: "Bekliyor" },
   { kod: "HAZIRLANIYOR", etiket: "Hazırlanıyor" },
   { kod: "KARGOLANDI", etiket: "Kargolandı" },
@@ -95,11 +95,23 @@ export function kartAdresi(durum: OrderStatus, a: { baslangic: string | null; bi
 }
 
 /**
+ * Metin aramasının Türkçe varyantları. Veritabanı `en_US` yerelinde büyük/küçük harf katlarken `I`'yı
+ * `i`'ye indirir, `ı`'yı katlamaz: "kılıç" "KILIÇ"ı, "ışık" "Işık"ı bulmaz. Varyantlar bu iki kalıbı
+ * kapsar — bütün harfleri büyük kayıt (bütün ı→I) ve büyük I ile başlayan kelime (kelime başı ı→I).
+ */
+export function metinVaryantlari(q: string): string[] {
+  const kucuk = q.toLocaleLowerCase("tr");
+  const varyantlar = [q, kucuk, kucuk.replace(/ı/g, "I"), kucuk.replace(/(^|[^\p{L}])ı/gu, "$1I")];
+  return varyantlar.filter((v, i) => varyantlar.indexOf(v) === i);
+}
+
+/**
  * Dashboard "Sipariş durumları" diliminin adresi: dashboard aralığını (yarı açık, an) İstanbul günlerine
  * çevirir — bitiş dışlayıcı olduğundan son gün `bitis − 1 ms`'nin günüdür. Sayı listeyle aynıdır (A-5-8).
  */
 export function dagilimAdresi(durum: OrderStatus, aralik: { baslangic: Date; bitis: Date }): string {
-  return kartAdresi(durum, { baslangic: yerelGunMetni(aralik.baslangic), bitis: yerelGunMetni(new Date(aralik.bitis.getTime() - 1)) });
+  const son = new Date(Math.max(aralik.baslangic.getTime(), aralik.bitis.getTime() - 1));
+  return kartAdresi(durum, { baslangic: yerelGunMetni(aralik.baslangic), bitis: yerelGunMetni(son) });
 }
 
 type Anahtar = "durum" | "tarih" | "satici" | "q";

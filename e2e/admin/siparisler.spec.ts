@@ -43,6 +43,10 @@ test("teklif kartlara girmez; Teklif sekmesinde çipiyle listelenir (A-5-8)", as
     const satir = satirlar(page).first();
     await expect(satir).toContainText(no);
     await expect(satir.getByText("Teklif", { exact: true })).toBeVisible();
+    // Teklifin durum sütunu "Bekliyor" demez: Bekliyor sekmesi ve kartı teklifi saymaz.
+    await expect(satir.getByText("Bekliyor", { exact: true })).toHaveCount(0);
+    await page.getByText("Filtrele", { exact: true }).waitFor();
+    await expect(page.getByText("Filtrele · 1")).toHaveCount(0);
   } finally {
     await sorgu(`DELETE FROM "Order" WHERE "documentNo" = $1`, [no]);
   }

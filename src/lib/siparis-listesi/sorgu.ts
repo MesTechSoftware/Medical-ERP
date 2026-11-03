@@ -8,7 +8,7 @@ import { takipLinki } from "@/lib/kargo";
 import { belgeOnayDurumlari } from "@/lib/onay-blogu";
 import type { BelgeTutari } from "@/lib/satir-tutarlari";
 import { kalemMiktarlari, SIPARIS_SATIRI, siparisToplami, siparisTutarlari } from "@/lib/siparis";
-import { SATICISIZ, type SiparisSuzgeci } from "@/lib/siparis-listesi/suzgec";
+import { metinVaryantlari, SATICISIZ, type SiparisSuzgeci } from "@/lib/siparis-listesi/suzgec";
 import { TUM_ZAMANLAR, yerelGunAraligi } from "@/lib/zaman";
 
 /**
@@ -36,8 +36,13 @@ export function siparisKosulu(s: SiparisSuzgeci): Prisma.OrderWhereInput {
   if (s.satici === SATICISIZ) ve.push({ sellerId: null });
   else if (s.satici) ve.push({ sellerId: s.satici });
   if (s.q) {
-    const icerir = { contains: s.q, mode: "insensitive" as const };
-    ve.push({ OR: [{ documentNo: icerir }, { doctor: { fullName: icerir } }, { doctor: { clinic: icerir } }] });
+    // Türkçe I/ı varyantları (`metinVaryantlari`): veritabanı yereli ı'yı katlamaz.
+    ve.push({
+      OR: metinVaryantlari(s.q).flatMap((v) => {
+        const icerir = { contains: v, mode: "insensitive" as const };
+        return [{ documentNo: icerir }, { doctor: { fullName: icerir } }, { doctor: { clinic: icerir } }];
+      }),
+    });
   }
   return { AND: ve };
 }

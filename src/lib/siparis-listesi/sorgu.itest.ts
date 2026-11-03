@@ -112,6 +112,17 @@ describe("liste süzgeçleri", () => {
     expect(satir.satici).toBe("Ayşe");
   });
 
+  it("metin araması Türkçe I/ı/İ'yi bulur: büyük harfli klinik, baş harfi I olan ad", async () => {
+    await siparis({ orderDate: kasim(3), documentNo: "SIP-KILIC", cari: { clinic: "KILIÇ TIP MERKEZİ" } });
+    await siparis({ orderDate: kasim(3), documentNo: "SIP-ISIK", cari: { fullName: "Dr. Işık Ilgaz" } });
+    const belgeler = async (q: string) => (await siparisListesi(S({ q }), SAYFA)).satirlar.map((r) => r.documentNo).sort();
+    expect(await belgeler("kılıç")).toEqual(["SIP-KILIC"]);
+    expect(await belgeler("merkezi")).toEqual(["SIP-KILIC"]);
+    expect(await belgeler("ışık")).toEqual(["SIP-ISIK"]);
+    expect(await belgeler("IŞIK")).toEqual(["SIP-ISIK"]);
+    expect(await belgeler("ılgaz")).toEqual(["SIP-ISIK"]);
+  });
+
   it("aynı anda açılan siparişlerde sayfalama kararlıdır (orderDate desc, id desc)", async () => {
     const an = kasim(3);
     for (let i = 0; i < 4; i++) await siparis({ orderDate: an });

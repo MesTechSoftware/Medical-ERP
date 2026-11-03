@@ -20,6 +20,14 @@ const SINIF: Partial<Record<SiparisSutunu, string>> = {
 };
 const BASLIK: Partial<Record<SiparisSutunu, string>> = { tutar: tabanli("Tutar", SATIR_TABANI.toplam) };
 
+/**
+ * Durum rozeti: teklif (iptal edilmemişse) "Teklif" yazar, "Bekliyor" demez — Bekliyor sekmesi ve kartı
+ * yalnız onaylı siparişi sayar (A-5-8).
+ */
+export function DurumRozeti({ stage, status }: { stage: SiparisSatiri["stage"]; status: SiparisSatiri["status"] }) {
+  return stage === "TEKLIF" && status !== "IPTAL" ? <StatusChip ton="notr">Teklif</StatusChip> : <StatusBadge status={status} />;
+}
+
 /** Sevk sütunu: hiç sevk yoksa "—", yoksa "sevk / adet" (bedelsiz dahil, A-3-2). */
 export function sevkMetni(sevk: number, adet: number): string {
   return sevk === 0 ? "—" : `${sevk} / ${adet}`;
@@ -96,7 +104,6 @@ export function SiparisTablosu({
                       <span>{o.cari.fullName}</span>
                       <Ikon ad="sonraki" />
                     </Link>
-                    {o.stage === "TEKLIF" && <StatusChip ton="notr">Teklif</StatusChip>}
                     <OnayEtiketi durum={o.onay} />
                   </div>
                 </td>
@@ -109,7 +116,7 @@ export function SiparisTablosu({
                 )}
                 {acik("sevk") && <td className="sayi whitespace-nowrap">{sevkMetni(o.sevk, o.adet)}</td>}
                 <td>
-                  <StatusBadge status={o.status} />
+                  <DurumRozeti stage={o.stage} status={o.status} />
                 </td>
                 <td className="text-right">
                   <Link href={`/orders/${o.id}`} className={buton("metin")}>

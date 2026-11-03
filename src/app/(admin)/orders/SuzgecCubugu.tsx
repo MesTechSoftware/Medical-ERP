@@ -31,11 +31,13 @@ export function SuzgecCubugu({
   sutunMenusu,
 }: {
   suzgec: SiparisSuzgeci;
-  per: string | undefined;
+  per: number | undefined;
   saticilar: readonly { id: string; name: string; isActive: boolean }[];
   sutunMenusu?: React.ReactNode;
 }) {
   const etiketler = etkinSuzgecler(suzgec, (id) => saticilar.find((s) => s.id === id)?.name);
+  // Durum sekmeden seçilir; Filtrele sayacı yalnız panelin alanlarını sayar.
+  const paneldekiler = etiketler.filter((e) => e.anahtar !== "durum").length;
   return (
     <div className="mb-4 space-y-3">
       <div className="flex flex-wrap items-start gap-2">
@@ -45,7 +47,7 @@ export function SuzgecCubugu({
           <AcilirPanel key={siparisAdresi(suzgec)} className="relative">
             <summary className={`${buton("ikincil")} cursor-pointer list-none`}>
               <Ikon ad="filtrele" />
-              {etiketler.length > 0 ? `Filtrele · ${etiketler.length}` : "Filtrele"}
+              {paneldekiler > 0 ? `Filtrele · ${paneldekiler}` : "Filtrele"}
             </summary>
             <SuzgecFormu
               action="/orders"

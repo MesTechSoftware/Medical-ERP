@@ -5,7 +5,7 @@ import { KpiSatiri } from "@/components/kpi/KpiSatiri";
 import type { KpiSonucu } from "@/lib/kpi/getir";
 import { aralikEtiketi } from "@/lib/liste/parametreler";
 import type { SiparisKpileri } from "@/lib/siparis-listesi/sorgu";
-import { kartAdresi, type kpiAraligi } from "@/lib/siparis-listesi/suzgec";
+import { DURUMLAR, kartAdresi, type kpiAraligi } from "@/lib/siparis-listesi/suzgec";
 
 const KART = "block h-full rounded-xl transition hover:opacity-90";
 
@@ -16,14 +16,10 @@ export function kpiDonemNotu(a: Aralik): string {
   return a.varsayilan ? "Bu ay" : aralikEtiketi(a.baslangic, a.bitis);
 }
 
-/** Durum kartları, sekmelerle aynı sıra ve metin. */
-export const DURUM_KARTLARI: readonly { durum: OrderStatus; etiket: string }[] = [
-  { durum: "BEKLIYOR", etiket: "Bekliyor" },
-  { durum: "HAZIRLANIYOR", etiket: "Hazırlanıyor" },
-  { durum: "KARGOLANDI", etiket: "Kargolandı" },
-  { durum: "TESLIM_EDILDI", etiket: "Teslim Edildi" },
-  { durum: "IPTAL", etiket: "İptal" },
-];
+/** Durum kartları: sekmelerle aynı sıra ve metin (tek kaynak `DURUMLAR`), teklif hariç (A-5-8). */
+export const DURUM_KARTLARI: readonly { durum: OrderStatus; etiket: string }[] = DURUMLAR.flatMap((d) =>
+  d.kod === "TEKLIF" ? [] : [{ durum: d.kod, etiket: d.etiket }]
+);
 
 /**
  * Siparişler ekranının üst kartları (spec Ü-23 §3.2; 6 kart ADR-010 eki): aralıkta açılan onaylı

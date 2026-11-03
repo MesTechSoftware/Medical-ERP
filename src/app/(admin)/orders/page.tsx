@@ -46,8 +46,11 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
     redirect(siparisAdresi(suzgec, { ...yer, page: pageCount(liste.toplam, perPage), ...(detay ? { detay } : {}) }));
   }
 
-  // Sayfalama süzgeci ve sayfa boyunu korur.
-  const sayfaParametreleri = { ...Object.fromEntries(new URL(siparisAdresi(suzgec), "http://x").searchParams), per };
+  // Sayfalama süzgeci ve (çözülmüş) sayfa boyunu korur — tablo ve panel bağlantılarıyla aynı değer.
+  const sayfaParametreleri = {
+    ...Object.fromEntries(new URL(siparisAdresi(suzgec), "http://x").searchParams),
+    per: yer.per === undefined ? undefined : String(yer.per),
+  };
 
   return (
     <div>
@@ -61,7 +64,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
 
       <SuzgecCubugu
         suzgec={suzgec}
-        per={per}
+        per={yer.per}
         saticilar={saticilar}
         sutunMenusu={<SutunSecici sutunlar={SUTUNLAR} gizli={gizli} action={sutunlariKaydet} donus={adres} />}
       />

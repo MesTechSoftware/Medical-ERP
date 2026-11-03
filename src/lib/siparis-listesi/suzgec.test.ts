@@ -7,6 +7,7 @@ import {
   hizliSekmeler,
   kartAdresi,
   kpiAraligi,
+  metinVaryantlari,
   siparisAdresi,
   suzgecCoz,
   type SiparisSuzgeci,
@@ -84,6 +85,11 @@ describe("KPI aralığı ve kart adresi (A-5-8)", () => {
     expect(dagilimAdresi("IPTAL", aralik)).toBe("/orders?durum=IPTAL&baslangic=2026-11-01&bitis=2026-11-03");
   });
 
+  it("dashboard aralığı gece yarısında sıfır uzunluktaysa tek gün yazılır (bitiş başlangıçtan önce düşmez)", () => {
+    const an = new Date("2026-11-02T21:00:00Z"); // 3 Kasım 00:00 İstanbul
+    expect(dagilimAdresi("BEKLIYOR", { baslangic: an, bitis: an })).toBe("/orders?durum=BEKLIYOR&baslangic=2026-11-03&bitis=2026-11-03");
+  });
+
   it("kart adresi kullandığı aralığı yazar", () => {
     expect(kartAdresi("BEKLIYOR", { baslangic: "2026-11-01", bitis: "2026-11-03" })).toBe(
       "/orders?durum=BEKLIYOR&baslangic=2026-11-01&bitis=2026-11-03"
@@ -110,5 +116,15 @@ describe("etkin süzgeç etiketleri ve boş durum", () => {
   it("boş durum türü", () => {
     expect(bosDurum(BOS_SUZGEC)).toBe("hic-kayit");
     expect(bosDurum(S({ q: "x" }))).toBe("suzgecli");
+  });
+});
+
+describe("metin araması Türkçe I/ı (veritabanı en_US yerelinde I→i katlar, ı'yı katlamaz)", () => {
+  it("girilen, Türkçe küçük harf, bütün ı→I ve kelime başı ı→I varyantları; tekrar yok", () => {
+    expect(metinVaryantlari("kılıç")).toEqual(["kılıç", "kIlIç"]);
+    expect(metinVaryantlari("IŞIK")).toEqual(["IŞIK", "ışık", "IşIk", "Işık"]);
+    expect(metinVaryantlari("ılgaz")).toEqual(["ılgaz", "Ilgaz"]);
+    expect(metinVaryantlari("SIP-1")).toEqual(["SIP-1", "sıp-1", "sIp-1"]);
+    expect(metinVaryantlari("merkez")).toEqual(["merkez"]);
   });
 });

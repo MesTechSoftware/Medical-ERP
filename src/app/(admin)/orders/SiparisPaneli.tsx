@@ -4,10 +4,11 @@ import { Ikon } from "@/components/Ikon";
 import { OnayEtiketi } from "@/components/OnayEtiketi";
 import { buton } from "@/components/stil";
 import { Tutar } from "@/components/Tutar";
-import { LinkButton, StatusBadge, StatusChip } from "@/components/ui";
+import { LinkButton, StatusChip } from "@/components/ui";
 import { formatDate, formatDateTime, formatGun } from "@/lib/format";
 import type { SiparisPaneli as Veri } from "@/lib/siparis-listesi/sorgu";
 import { SATIR_TABANI, tabanli } from "@/lib/taban";
+import { DurumRozeti } from "./SiparisTablosu";
 
 const BASLIK = "siparis-paneli-baslik";
 const BAGLANTI = "text-link underline decoration-link/40 underline-offset-4 hover:decoration-link";
@@ -45,8 +46,7 @@ export function SiparisPaneli({ veri, kapatAdresi }: { veri: Veri; kapatAdresi: 
               {o.documentNo}
             </h2>
             <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
-              <StatusBadge status={o.status} />
-              {o.stage === "TEKLIF" && <StatusChip ton="notr">Teklif</StatusChip>}
+              <DurumRozeti stage={o.stage} status={o.status} />
               <OnayEtiketi durum={o.onay} />
             </div>
           </div>
