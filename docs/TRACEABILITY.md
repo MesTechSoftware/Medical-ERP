@@ -6,7 +6,7 @@
 > Kod yeri, kriter metninde anılan fonksiyonun tanımlandığı dosyadır. Eski PRD matrisi (8 Ağustos 2026)
 > `docs/arsiv/TRACEABILITY_PRD_V2.md`'dedir.
 
-**Özet:** 142 KANITLI · 0 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.0** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
+**Özet:** 144 KANITLI · 0 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.0** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
 
 | Kriter | Karar | Durum | Kod yeri | Test | Kriter metni |
 |---|---|---|---|---|---|
@@ -98,6 +98,7 @@
 | D-1-1 | D-1 | KANITLI | `src/lib/olaylar.ts` | `src/lib/olaylar.itest.ts` | Bildirim olay noktaları akışlarda çağrılır, işleyicileri boştur (`notifications.enabled = false`): `onBlokAcildi` (blok yazılınca), `onBl… |
 | D-2-1 | D-2 | KANITLI | — | `src/lib/yetki.test.ts`<br>`e2e/operasyon/operasyon.spec.ts` | Roller üç değerli kapalı katalogdur. `OPERASYON` giriş yapar; ana sayfası Dashboard'dur. Sipariş hazırlama, teslim ve iptal, kargolama, t… |
 | D-2-2 | D-2 | KANITLI | — | `e2e/operasyon/operasyon.spec.ts` | `OPERASYON` ürün listesini ve yan panelini görür; Yeni Ürün, Düzenle ve Sil görmez. |
+| D-2-3 | D-2 | KANITLI | — | `src/lib/kullanici-listesi/sorgu.itest.ts`<br>`src/lib/kullanici-listesi/suzgec.test.ts` | Kullanıcılar ekranında OPERASYON yalnız satıcıları görür: liste, KPI ve yan panel aynı kapsam koşulundandır; OPERASYON'a yönetici/operasy… |
 | D-3-1 | D-3 | KANITLI | `src/lib/kargo.ts` | `src/lib/kargo.test.ts`<br>`src/lib/sevkiyat.itest.ts` | Sevkiyat kargo firmasını (tanım tablosu), takip numarasını (elle, isteğe bağlı) ve gönderi gününü (otomatik, sevk günü) taşır. Takip link… |
 | D-4-1 | D-4 | KANITLI | — | `src/lib/reports-service.itest.ts` | Hakediş yalnız satırın matrahı ve satıra donmuş oranla hesaplanır; satıcının dönem cirosu, hedefi ya da kotası oranı değiştirmez — aynı s… |
 | D-5-1 | D-5 | KANITLI | `src/lib/disa-aktarim.ts`<br>`src/lib/satir-tutarlari.ts` | `src/lib/disa-aktarim.itest.ts`<br>`src/lib/disa-aktarim-yazici.test.ts`<br>`e2e/admin/disa-aktarim.spec.ts`<br>`src/lib/yetki.test.ts`<br>`e2e/operasyon/operasyon.spec.ts` | Dışa aktarım yalnız `calistirDisaAktarim()` ile çalışır ve `{ kolonlar, satirlar }` döner; format katmanı (XLSX, CSV) iş kavramı tanımaz.… |
@@ -156,6 +157,7 @@
 | X-17-3 | X-17 | KANITLI | — | `e2e/admin/doctor-transfer.spec.ts` | Devir cari listesinden **çoklu seçimle** yapılır; gerekçe bir kez girilir, her doktora ayrı iz satırı düşer. Seçimsiz ya da gerekçesiz de… |
 | X-17-4 | X-17 | KANITLI | — | `src/lib/sahiplik.itest.ts`<br>`e2e/admin/seller-deactivation.spec.ts` | Doktoru olan bir `SATICI` pasifleştirilirken portföy seçimi (**tek bir aktif satıcıya devret** ya da **sahipsiz bırak**) ve gerekçe zorun… |
 | X-17-5 | X-17 | KANITLI | — | `e2e/admin/doctor-transfer.spec.ts` | Cari listesinde **"Sahipsiz" süzgeci** yalnız sahipsiz `DOKTOR` carilerini listeler. Sahipsiz uyarısındaki sayı bütün sahipsiz `DOKTOR`'l… |
+| X-17-6 | X-17 | KANITLI | — | `src/lib/kullanici-listesi/sorgu.itest.ts` | Portföy aktif carilerdir: "Portföysüz aktif satıcı" kartı, aktif satıcılardan sorumlu olduğu aktif carisi olmayanların sayısıdır ve `port… |
 | X-18-1 | X-18 | KANITLI | — | `src/lib/denetim/zincir.itest.ts`<br>`src/lib/denetim/degismezlik.test.ts` | Denetim kaydı ve mührü değiştirilemez: `AuditLog` ve `AuditLogSeal` üzerinde `UPDATE`, `DELETE` ve `TRUNCATE` veritabanında reddedilir ("… |
 | X-18-2 | X-18 | KANITLI | — | `src/lib/denetim/zincir.itest.ts`<br>`src/lib/denetim/zincir.test.ts` | Her denetim kaydı commit anında, kaydın içeriğinin ve bir önceki mührün SHA-256 özetiyle mühürlenir; zincir sırası boşluksuzdur ve verita… |
 | X-18-3 | X-18 | KANITLI | — | `src/lib/audit.itest.ts`<br>`src/lib/denetim/olaylar.test.ts`<br>`src/lib/denetim/baglam-ayristir.test.ts`<br>`e2e/admin/users.spec.ts` | Her kayıt UUID kimlik, milisaniye hassasiyetli UTC zaman, aktörün o anki rolünü, işlem türünü (Ekleme · Güncelleme · Silme · Oturum) ve m… |
