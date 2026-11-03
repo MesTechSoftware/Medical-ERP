@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { sorgu, stoksuzSiparis } from "../helpers";
+import { sorgu, stoksuzSiparis, sevkKartiAc } from "../helpers";
 
 /**
  * A-8 — negatif stok onayı ekrandan (A-8 eki 20.10.2026): gerekçe diyaloğu, yöneticinin
@@ -8,8 +8,7 @@ import { sorgu, stoksuzSiparis } from "../helpers";
 
 test("yönetici stoksuz ürünü gerekçeyle kısmen sevk eder; girilen miktar diyalogdan sonra korunur (A-8-8)", async ({ page }) => {
   const s = await stoksuzSiparis();
-  await page.goto("/shipping");
-  const kart = page.locator("[data-sevk-karti]").filter({ hasText: s.doktorAdi });
+  const kart = await sevkKartiAc(page, s.doktorAdi);
   await kart.locator(`#miktar_${s.kalemId}`).fill("1");
   await kart.getByRole("button", { name: "Kargola" }).click();
 

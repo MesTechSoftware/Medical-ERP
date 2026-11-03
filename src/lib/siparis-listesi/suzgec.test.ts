@@ -7,7 +7,6 @@ import {
   hizliSekmeler,
   kartAdresi,
   kpiAraligi,
-  metinVaryantlari,
   siparisAdresi,
   suzgecCoz,
   type SiparisSuzgeci,
@@ -116,15 +115,5 @@ describe("etkin süzgeç etiketleri ve boş durum", () => {
   it("boş durum türü", () => {
     expect(bosDurum(BOS_SUZGEC)).toBe("hic-kayit");
     expect(bosDurum(S({ q: "x" }))).toBe("suzgecli");
-  });
-});
-
-describe("metin araması Türkçe I/ı (veritabanı en_US yerelinde I→i katlar, ı'yı katlamaz)", () => {
-  it("girilen, Türkçe küçük harf, bütün ı→I ve kelime başı ı→I varyantları; tekrar yok", () => {
-    expect(metinVaryantlari("kılıç")).toEqual(["kılıç", "kIlIç"]);
-    expect(metinVaryantlari("IŞIK")).toEqual(["IŞIK", "ışık", "IşIk", "Işık"]);
-    expect(metinVaryantlari("ılgaz")).toEqual(["ılgaz", "Ilgaz"]);
-    expect(metinVaryantlari("SIP-1")).toEqual(["SIP-1", "sıp-1", "sIp-1"]);
-    expect(metinVaryantlari("merkez")).toEqual(["merkez"]);
   });
 });

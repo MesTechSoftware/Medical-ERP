@@ -157,6 +157,55 @@ export function SatirHatalari({ bildirimler }: { bildirimler: IslemSonucu["bildi
   );
 }
 
+/** Toplu işlemde bir belgenin sonucu (toplu kargo, A-3-3). */
+export type TopluSonucSatiri = {
+  siparisId: string;
+  belge: string | null;
+  cari: string | null;
+  durum: "SEVK_EDILDI" | "ONAYA_GONDERILDI" | "HATA" | "TEKNIK";
+  sevkiyat: string | null;
+  /** Teknik hatanın log referansı (X-3 §(2)); hata gövdesi gösterilmez. */
+  referans: string | null;
+  tamamlandi: boolean;
+  sonucDurumu: IslemSonucu["durum"] | null;
+  bildirimler: IslemSonucu["bildirimler"];
+};
+
+/**
+ * Toplu kargonun sipariş başına sonucu (spec Ü-24 §3.3): yazılan sevkiyat, onaya gönderilen ya da
+ * yazılmayan sipariş nedeniyle. Bildirimlerin metni buradadır (X-4-2); hiçbiri atılmaz.
+ */
+export function TopluKargoSonucListesi({ satirlar }: { satirlar: readonly TopluSonucSatiri[] }) {
+  if (satirlar.length === 0) return null;
+  return (
+    <section role="status" aria-label="Toplu kargo sonucu" className="rounded-lg border border-slate-200 p-3">
+      <h3 className="mb-2 text-sm font-semibold text-slate-900">Toplu kargo sonucu</h3>
+      <ul className="divide-y divide-slate-100 text-sm">
+        {satirlar.map((r) => {
+          const metin = r.bildirimler.map(bildirimMetni).join(" ");
+          return (
+            <li key={r.siparisId} className="flex flex-wrap items-baseline gap-x-2 py-1.5">
+              <span className="font-medium text-slate-900">{r.belge ?? "Sipariş bulunamadı"}</span>
+              {r.cari && <span className="text-slate-500">{r.cari}</span>}
+              <span className={r.durum === "SEVK_EDILDI" ? "text-positive" : r.durum === "ONAYA_GONDERILDI" ? "text-critical" : "text-negative"}>
+                {r.durum === "SEVK_EDILDI"
+                  ? `${r.sevkiyat} yazıldı${r.tamamlandi ? " — sipariş kargolandı" : ""}`
+                  : r.durum === "TEKNIK"
+                    ? `Teknik bir hata oluştu; sipariş yazılmadı. Referans: ${r.referans}`
+                    : r.durum === "ONAYA_GONDERILDI"
+                    ? `Onaya gönderildi: ${metin}`
+                    : r.sonucDurumu === "ONAY_GEREKLI"
+                      ? `Onay gerekli: ${metin} — Kısmi sevk panelinden gerekçeyle gönderin.`
+                      : metin}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
 /**
  * Alansız tek düğmeli işlem formu (durum geçişi, silme, sevk): action'ın sonucu formun
  * içinde aynı desenle gösterilir. Form, action'dan sonra sıfırlanmaz: `YUMUSAK` diyaloğu

@@ -46,7 +46,7 @@ describe("tek dönüş sözleşmesi (X-4-1)", () => {
         const ad = parca.match(/^(\w+)/)![1];
         if (ad === "logoutAction") continue; // iş kuralı yok; daima /login'e yönlendirir
         const donus = parca.match(/\)\s*:\s*Promise<(\w+)>\s*\{/)?.[1];
-        expect(["IslemSonucu", "UserFormState", "DisaAktarimSonucu", "IceAktarimSonucu"], `${relative(SRC, yol)}#${ad}`).toContain(donus);
+        expect(["IslemSonucu", "UserFormState", "DisaAktarimSonucu", "IceAktarimSonucu", "TopluKargoSonucu"], `${relative(SRC, yol)}#${ad}`).toContain(donus);
       }
     }
     expect(readFileSync(join(SRC, "app", "(admin)", "users", "actions.ts"), "utf8")).toMatch(
@@ -56,6 +56,9 @@ describe("tek dönüş sözleşmesi (X-4-1)", () => {
       /export type DisaAktarimSonucu = IslemSonucu & \{/
     );
     expect(readFileSync(join(SRC, "lib", "ice-aktarim", "index.ts"), "utf8")).toMatch(/export type IceAktarimSonucu = IslemSonucu & \{/);
+    expect(readFileSync(join(SRC, "app", "(admin)", "shipping", "actions.ts"), "utf8")).toMatch(
+      /export type TopluKargoSonucu = IslemSonucu & \{/
+    );
   });
 
   it("eski biçim kalmadı: error/ok alanı, ?error= yönlendirmesi, metinli IsHatasi yok", () => {

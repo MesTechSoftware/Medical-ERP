@@ -2,20 +2,26 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/db";
 import { requireStaff } from "@/lib/session";
-import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
-import { IsHatasi } from "@/lib/hata";
-import { sevkiyatYaz } from "@/lib/sevkiyat";
-import { onayaGonderildi, yumusak, type IslemSonucu } from "@/lib/sonuc";
+import { topluSecimCoz, TOPLU_SINIR } from "@/lib/kargo-listesi/suzgec";
+import { siparisiSevkEt, topluKargo, type TopluSatirSonucu } from "@/lib/sevk-et";
+import type { TopluSonucSatiri } from "@/components/Sonuc";
+import { basarili, engel, onayaGonderildi, type IslemSonucu } from "@/lib/sonuc";
 
 const KALEM = "miktar_";
 
+function yenile() {
+  revalidatePath("/shipping");
+  revalidatePath("/orders");
+  revalidatePath("/dashboard");
+  revalidatePath("/stock");
+}
+
 /**
- * HAZIRLANIYOR siparişin sevkiyatı (A-3): kalem başına sevk miktarı, kargo bilgisi ve
- * isteğe bağlı müşteri irsaliye numarası (C-1 §(2), salt kayıt). Borç, prim ve stok çıkışı
- * `sevkiyatYaz()`'da aynı transaction'da doğar. Bütün kalemler sevk edilince sipariş KARGOLANDI olur.
+ * HAZIRLANIYOR siparişin sevkiyatı (A-3) — kısmi sevk panelinin kart formu: kalem başına sevk miktarı, kargo
+ * bilgisi ve isteğe bağlı müşteri irsaliye numarası (C-1 §(2), salt kayıt). Yazım `siparisiSevkEt`'tedir.
  * Negatif stokta gerekçe diyaloğu döner; yönetici dışındaki rolün gerekçesi siparişi onaya gönderir (A-8).
+ * Sipariş hâlâ kargo bekliyorsa panel güncel kalanla açık kalır (spec Ü-24 §3.4).
  */
 export async function shipOrder(orderId: string, _prev: unknown, formData: FormData): Promise<IslemSonucu> {
   const session = await requireStaff();
@@ -29,45 +35,59 @@ export async function shipOrder(orderId: string, _prev: unknown, formData: FormD
       return { siparisKalemiId: k.slice(KALEM.length), miktar: /^\d+$/.test(v) ? parseInt(v, 10) : NaN };
     });
 
-  let sonuc: Awaited<ReturnType<typeof sevkiyatYaz>>;
-  try {
-    sonuc = await prisma.$transaction(async (tx) => {
-      const sevk = await sevkiyatYaz(tx, {
-        siparisId: orderId,
-        kalemler,
-        carrierId: metin("carrierId"),
-        trackingNumber: metin("trackingNumber"),
-        externalDispatchNo: metin("externalDispatchNo"),
-        yapan: { id: session.user.id, rol: session.user.role },
-        gerekce: metin("gerekce"),
-      });
-      if (sevk.durum === "ONAYA_GONDERILDI") return sevk;
-      await createAuditLog(
-        {
-          actorId: session.user.id,
-          action: AUDIT_ACTIONS.ORDER_STATUS_CHANGE,
-          entityType: "Order",
-          entityId: orderId,
-          after: { sevkiyat: sevk.documentNo, kalemler, tamamlandi: sevk.tamamlandi },
-        },
-        tx
-      );
-      return sevk;
-    });
-  } catch (e) {
-    if (e instanceof IsHatasi) return e.sonuc;
-    throw e;
-  }
+  const sonuc = await siparisiSevkEt({
+    siparisId: orderId,
+    kalemler,
+    carrierId: metin("carrierId"),
+    trackingNumber: metin("trackingNumber"),
+    externalDispatchNo: metin("externalDispatchNo"),
+    yapan: { id: session.user.id, rol: session.user.role },
+    gerekce: metin("gerekce"),
+  });
 
+  if (sonuc.durum === "HATA") return sonuc.sonuc;
   if (sonuc.durum === "ONAYA_GONDERILDI") {
     revalidatePath("/shipping");
     revalidatePath("/approvals");
-    return onayaGonderildi(sonuc.ihlaller.map((i) => yumusak(i.kuralKodu, i.parametreler)));
+    return onayaGonderildi(sonuc.bildirimler);
   }
+  yenile();
+  redirect(sonuc.tamamlandi ? "/shipping" : `/shipping?kismi=${encodeURIComponent(orderId)}`);
+}
 
-  revalidatePath("/shipping");
-  revalidatePath("/orders");
-  revalidatePath("/dashboard");
-  revalidatePath("/stock");
-  redirect("/shipping");
+/** Toplu kargoda bir siparişin sonucu; tip ve metin `TopluKargoSonucListesi`'ndedir (X-4-2). */
+export type TopluKargoSatiri = TopluSonucSatiri;
+export type TopluKargoSonucu = IslemSonucu & { satirlar: TopluKargoSatiri[] };
+
+function satir(r: TopluSatirSonucu): TopluKargoSatiri {
+  const s = r.sonuc;
+  return {
+    siparisId: r.siparisId,
+    belge: r.documentNo,
+    cari: r.cari,
+    durum: s.durum,
+    sevkiyat: s.durum === "SEVK_EDILDI" ? s.documentNo : null,
+    referans: s.durum === "TEKNIK" ? s.referans : null,
+    tamamlandi: s.durum === "SEVK_EDILDI" && s.tamamlandi,
+    sonucDurumu: s.durum === "HATA" ? s.sonuc.durum : null,
+    bildirimler: s.durum === "HATA" ? s.sonuc.bildirimler : s.durum === "ONAYA_GONDERILDI" ? s.bildirimler : [],
+  };
+}
+
+/**
+ * Toplu kargo (12-A, A-3-3): seçilen siparişlerin kalanlarının tamamı, ortak firma, satır başına takip ve
+ * irsaliye; her sipariş ayrı işlem, sonuç sipariş başına (`satirlar`). Başarılı olanlar tablodan düşer.
+ */
+export async function topluKargola(_prev: TopluKargoSonucu | null, formData: FormData): Promise<TopluKargoSonucu> {
+  const session = await requireStaff();
+  const secim = topluSecimCoz(formData);
+  if ("hata" in secim) {
+    const sonuc = secim.hata === "SECIM_YOK" ? engel("TOPLU_SECIM_YOK") : engel("TOPLU_SINIR_ASILDI", { sinir: TOPLU_SINIR });
+    return { ...sonuc, satirlar: [] };
+  }
+  const carrierId = String(formData.get("carrierId") ?? "").trim() || null;
+  const sonuclar = await topluKargo(secim.secimler, carrierId, { id: session.user.id, rol: session.user.role });
+  yenile();
+  revalidatePath("/approvals");
+  return { ...basarili(), satirlar: sonuclar.map(satir) };
 }

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { sevkKartiAc } from "../helpers";
 import { Client } from "pg";
 
 /**
@@ -46,14 +47,17 @@ test("kısmi sevkiyat: 3'ün 1'i sevk edilir, borç yazılır, sipariş beklemed
     [kalemId, siparisId, urun.id]
   );
 
-  await page.goto("/shipping");
-  const kart = page.locator("[data-sevk-karti]").filter({ hasText: doktorAdi });
+  const kart = await sevkKartiAc(page, doktorAdi);
   await expect(kart.getByText("kalan 3/3")).toBeVisible();
   await kart.locator(`#miktar_${kalemId}`).fill("1");
   await kart.getByRole("button", { name: "Kargola" }).click();
 
-  await expect(page).toHaveURL(/\/shipping$/);
+  // Kısmi sevkten sonra panel güncel kalanla açık kalır (Ü-24 §3.4).
+  await expect(page).toHaveURL(/\/shipping\?kismi=[^&]+$/);
   await expect(page.locator("[data-sevk-karti]").filter({ hasText: doktorAdi }).getByText("kalan 2/3")).toBeVisible();
+  // Panel güncel kalanla yeniden kurulur: girilen miktar ve takip no kalmaz.
+  await expect(page.locator("[data-sevk-karti]").locator('input[name^="miktar_"]')).toHaveValue("2");
+  await expect(page.locator("[data-sevk-karti]").getByLabel("Takip Numarası")).toHaveValue("");
   const [borc] = await sorgu<{ amount: string; type: string }>(
     `SELECT amount::text, type FROM "LedgerEntry" WHERE "doctorId" = $1`,
     [doktorId]

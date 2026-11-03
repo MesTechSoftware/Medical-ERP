@@ -270,3 +270,15 @@ export async function kpiKartlariTasmaz(page: Page) {
   );
   expect(tasan, "içeriği taşan KPI kartı").toEqual([]);
 }
+
+/**
+ * Kargo ekranında siparişin kısmi sevk panelini açar (Ü-24 §3.4): metni taşıyan bekleyen satırının
+ * "Kısmi sevk" bağlantısı; panelde bugünkü kart formu (`data-sevk-karti`) vardır.
+ */
+export async function sevkKartiAc(page: Page, metin: string) {
+  await page.goto("/shipping");
+  await page.locator("tr[data-kargo-satiri]").filter({ hasText: metin }).getByRole("link", { name: "Kısmi sevk" }).click();
+  const kart = page.locator("[data-sevk-karti]").filter({ hasText: metin });
+  await expect(kart).toBeVisible();
+  return kart;
+}

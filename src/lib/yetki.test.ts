@@ -22,6 +22,7 @@ const ACTION_YETKISI: Record<string, "requireAdmin" | "requireStaff" | "requireS
   "(admin)/stock/actions.ts#addTransfer": "requireStaff", // B-4
   "(admin)/stock/actions.ts#addStockAdjustment": "requireAdmin", // B-7: yalnız YONETICI (D-2 §(2))
   "(admin)/shipping/actions.ts#shipOrder": "requireStaff",
+  "(admin)/shipping/actions.ts#topluKargola": "requireStaff", // 12-A: toplu kargo (D-2 §(1))
   "(admin)/collections/actions.ts#recordCollection": "requireStaff",
   "(admin)/collections/actions.ts#cancelCollection": "requireStaff",
   "(admin)/stock/actions.ts#addStockEntry": "requireStaff",

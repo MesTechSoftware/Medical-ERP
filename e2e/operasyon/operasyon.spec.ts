@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { Client } from "pg";
-import { sorgu, stoksuzSiparis } from "../helpers";
+import { sorgu, stoksuzSiparis, sevkKartiAc } from "../helpers";
 
 /**
  * D-2-1 — OPERASYON ekran matrisi (D-2 §(1) ve 17.10 eki). Oturum `auth.setup.ts`'te
@@ -160,8 +160,7 @@ test("stok girişi yapar (stok hareketi — D-2 §(1))", async ({ page }) => {
 
 test("stoksuz sevkiyatta gerekçe siparişi onaya gönderir; sevkiyat yazılmaz (A-8-9)", async ({ page }) => {
   const s = await stoksuzSiparis();
-  await page.goto("/shipping");
-  const kart = page.locator("[data-sevk-karti]").filter({ hasText: s.doktorAdi });
+  const kart = await sevkKartiAc(page, s.doktorAdi);
   await kart.getByRole("button", { name: "Kargola" }).click();
   const diyalog = kart.getByRole("dialog");
   await expect(diyalog).toContainText("işlem sonrası stok -2 adet olur.");

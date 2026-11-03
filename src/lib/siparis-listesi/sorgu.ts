@@ -8,7 +8,8 @@ import { takipLinki } from "@/lib/kargo";
 import { belgeOnayDurumlari } from "@/lib/onay-blogu";
 import type { BelgeTutari } from "@/lib/satir-tutarlari";
 import { kalemMiktarlari, SIPARIS_SATIRI, siparisToplami, siparisTutarlari } from "@/lib/siparis";
-import { metinVaryantlari, SATICISIZ, type SiparisSuzgeci } from "@/lib/siparis-listesi/suzgec";
+import { metinVaryantlari } from "@/lib/liste/metin";
+import { SATICISIZ, type SiparisSuzgeci } from "@/lib/siparis-listesi/suzgec";
 import { TUM_ZAMANLAR, yerelGunAraligi } from "@/lib/zaman";
 
 /**
