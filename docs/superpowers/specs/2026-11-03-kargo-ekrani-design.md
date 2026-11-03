@@ -60,7 +60,7 @@ role göre değişir (A-8: yönetici sevk eder, operasyon onaya gönderir) — `
 | Kart | Tanım | Tıklayınca |
 |---|---|---|
 | Kargo bekleyen (birincil) | `stage ONAYLI`, `status HAZIRLANIYOR` sipariş sayısı; ikincil metrik "N adet kalan" (kalemlerin `kalan` toplamı) | bağlantı değil (tablo hemen altında) |
-| Onay bekleyen | kargo bekleyenlerden `belgeOnayDurumlari("SIP")` BEKLIYOR ya da RED olanlar; > 0 ise uyarı tonu | `/approvals` |
+| Onay bekleyen | kargo bekleyenlerden `belgeOnayDurumlari("SIP")` BEKLIYOR ya da RED olanlar; > 0 ise uyarı tonu | YONETICI: `/approvals` (onay ekranı yalnız yöneticinin, `requireAdmin`); OPERASYON: bağlantı değil |
 | Bugün kargolanan | `shippedAt` bugünün İstanbul gününde olan sevkiyat sayısı | sevkiyat listesi `?baslangic=<bugün>&bitis=<bugün>` (kart = satır) |
 | Teslim bekleyen | `stage ONAYLI`, `status KARGOLANDI` sipariş sayısı | `/orders?durum=KARGOLANDI` (kart = satır) |
 
@@ -207,6 +207,6 @@ Tek PR `revize/kargo-ekrani`: spec · plan · Ü-24 · kriterler · `liste/metin
 | 4 | Alt liste | sevkiyat satırları, süzgeçli ve sayfalı | bugünkü "son 30 sipariş" |
 | 5 | Sevkiyat paneli | yok; sipariş bağlantısı Siparişler panelini açar | ayrı sevkiyat paneli |
 | 6 | Kısmi sevk sonrası | panel güncel kalanla açık kalır; tamamlandıysa kapanır | her zaman `/shipping` (bugünkü) |
-| 7 | KPI tıklama | Onay bekleyen → `/approvals`, Bugün kargolanan → liste süzgeci, Teslim bekleyen → Siparişler `durum=KARGOLANDI` | hepsi bağlantısız |
+| 7 | KPI tıklama | Onay bekleyen → `/approvals` (yalnız yönetici), Bugün kargolanan → liste süzgeci, Teslim bekleyen → Siparişler `durum=KARGOLANDI` | hepsi bağlantısız |
 | 8 | Toplu sınır | 100 sipariş | sınırsız (uzun istek; tek eylem süresi) |
 | 9 | Türkçe varyantlar | ortak `liste/metin.ts` | modül başına kopya |
