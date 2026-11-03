@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui";
 import { buton } from "@/components/stil";
 import { BOYUT_SINIFI, type GrafikBoyutu } from "@/components/grafik/ortak";
-import { KPI_YERLESIMI } from "@/components/kpi/KpiSatiri";
+import { kartSinifi, kpiYerlesimi } from "@/components/kpi/KpiSatiri";
 import { DEGER_BOYU, DEGER_SATIRI, type KpiVaryanti } from "@/components/kpi/KpiCard";
 import { ALAN, YERLESIM } from "@/components/dashboard/yerlesim";
 
@@ -123,12 +123,12 @@ function SatirCubugu({ className }: { className: string }) {
  * Kartlar veriye bakmadan birebir eşleşir (e2e kart kart ölçer).
  */
 export function KpiSatiriIskeleti({ kartlar }: { kartlar: readonly KpiIskeletYapisi[] }) {
-  const yer = KPI_YERLESIMI[kartlar.length as 1 | 2 | 3 | 4];
+  const yer = kpiYerlesimi(kartlar.length);
   return (
     <div aria-hidden="true" className="@container mb-6">
       <div data-kpi-satiri={kartlar.length} className={`grid gap-4 ${yer.kap}`}>
         {kartlar.map((k, i) => (
-          <div key={i} className={`min-w-0 ${i === 0 ? yer.birincil : ""}`}>
+          <div key={i} className={`min-w-0 ${kartSinifi(yer, i)}`}>
             <div className="@container flex h-full flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="text-xs font-medium uppercase">
                 <MetinCubugu>{k.etiket}</MetinCubugu>

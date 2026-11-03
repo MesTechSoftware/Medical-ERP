@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   BOS_SUZGEC,
   bosDurum,
+  dagilimAdresi,
   etkinSuzgecler,
   hizliSekmeler,
   kartAdresi,
@@ -75,6 +76,12 @@ describe("KPI aralığı ve kart adresi (A-5-8)", () => {
 
   it("metin ve satıcı süzgeci aralığı değiştirmez", () => {
     expect(kpiAraligi(S({ satici: "u-1", q: "x", durum: "IPTAL" }), "2026-11-03").varsayilan).toBe(true);
+  });
+
+  it("dashboard dağılım dilimi aralığın İstanbul günlerini yazar; bitiş dışlayıcıdır (son gün dahil yazılır)", () => {
+    // 1 Kasım 00:00 İstanbul = 31.10 21:00 UTC; [1 Kasım, 4 Kasım) → 01–03 Kasım.
+    const aralik = { baslangic: new Date("2026-10-31T21:00:00Z"), bitis: new Date("2026-11-03T21:00:00Z") };
+    expect(dagilimAdresi("IPTAL", aralik)).toBe("/orders?durum=IPTAL&baslangic=2026-11-01&bitis=2026-11-03");
   });
 
   it("kart adresi kullandığı aralığı yazar", () => {

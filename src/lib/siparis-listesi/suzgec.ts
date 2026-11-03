@@ -1,5 +1,6 @@
 import type { OrderStatus } from "@/generated/prisma/enums";
 import { aralikEtiketi, gun, ilk, kimlik, secenek, type Parametreler } from "@/lib/liste/parametreler";
+import { yerelGunMetni } from "@/lib/zaman";
 
 /**
  * Sipariş listesinin süzgeci (spec Ü-23 §3.3); adres çubuğunda durur. Geçersiz değer yok sayılır.
@@ -91,6 +92,14 @@ export function kpiAraligi(s: SiparisSuzgeci, bugun: string): { baslangic: strin
 /** Durum kartının adresi: kartın saydığı aralığı yazar, satır sayısı kartla aynı olur (A-5-8). */
 export function kartAdresi(durum: OrderStatus, a: { baslangic: string | null; bitis: string | null }): string {
   return siparisAdresi({ ...BOS_SUZGEC, durum, baslangic: a.baslangic, bitis: a.bitis });
+}
+
+/**
+ * Dashboard "Sipariş durumları" diliminin adresi: dashboard aralığını (yarı açık, an) İstanbul günlerine
+ * çevirir — bitiş dışlayıcı olduğundan son gün `bitis − 1 ms`'nin günüdür. Sayı listeyle aynıdır (A-5-8).
+ */
+export function dagilimAdresi(durum: OrderStatus, aralik: { baslangic: Date; bitis: Date }): string {
+  return kartAdresi(durum, { baslangic: yerelGunMetni(aralik.baslangic), bitis: yerelGunMetni(new Date(aralik.bitis.getTime() - 1)) });
 }
 
 type Anahtar = "durum" | "tarih" | "satici" | "q";
