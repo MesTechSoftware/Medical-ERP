@@ -198,10 +198,11 @@ PROJE_DURUMU arayüz bölümü · DEVAM_PROMPTU. KARARLAR değişmez.
 
 ## 8. Teslim
 
+Tek PR (kullanıcı 03.11.2026: "tek PR'la bitir"):
+
 | PR | Dal | İçerik |
 |---|---|---|
-| D1 | `revize/siparisler-d1-veri` | spec · plan · Ü-23 · kriterler · `kalemMiktarlari` · `siparis-listesi/` saf modüller + sorgular · testler; ekran değişmez |
-| D2 | `revize/siparisler-d2-ekran` | KPI · sekmeler · Filtrele · tablo · sütun seçici · sayfalama · panel · iskelet · dashboard bağlantısı · e2e · belgeler |
+| Ü-23 | `revize/siparisler-ekrani` | spec · plan · Ü-23 · kriterler · `kalemMiktarlari` · `siparis-listesi/` saf modüller + sorgular · KPI · sekmeler · Filtrele · tablo · sütun seçici · sayfalama · panel · iskelet · dashboard bağlantısı · birim/entegrasyon/e2e testleri · belgeler |
 
 ## 9. Önerilen seçimler
 
