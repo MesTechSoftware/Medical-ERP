@@ -10,6 +10,7 @@ import { kpiGetir } from "@/lib/kpi/getir";
 import { cubukOranlari, medyanGun } from "@/lib/kpi/olcek";
 import { ciroOzeti, enCokSevkEdilenler, tahsilatToplamlari } from "@/lib/reports-service";
 import { seritKutulari } from "@/lib/sayfa-ozetleri";
+import { dagilimAdresi } from "@/lib/siparis-listesi/suzgec";
 import { requireStaff } from "@/lib/session";
 import { aktifUrunStoklari } from "@/lib/stok";
 import { simdi } from "@/lib/zaman";
@@ -187,7 +188,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                   etiket: durumEtiketi(s),
                   adet: dagilim.deger[s],
                   ton: DILIM_TONU[s],
-                  href: `/orders?status=${s}`,
+                  href: dagilimAdresi(s, r.simdi),
                 }))}
                 bosMetin="Bu aralıkta sipariş yok"
               />
