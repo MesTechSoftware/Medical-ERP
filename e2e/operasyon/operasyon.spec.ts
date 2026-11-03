@@ -81,8 +81,23 @@ test("ürünleri ve satıcıları salt okur — ekleme/düzenleme/silme yok", as
   await expect(page.getByText("admin@medikal.local")).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Yeni Kullanıcı" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Düzenle" })).toHaveCount(0);
+  // D-2-3: kapsamına göre KPI ve sekme; panelde prim oranı ve son işlemler yok; yönetici paneli açılmaz.
+  const kartlar = page.getByRole("region", { name: "Kullanıcı sayıları" });
+  await expect(kartlar.getByText("Aktif kullanıcı")).toHaveCount(0);
+  await expect(kartlar.getByText("Aktif satıcı", { exact: true })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Hızlı süzgeçler" }).getByRole("link", { name: "Satıcılar" })).toHaveCount(0);
 
   const [satici] = await query<{ id: string }>(`SELECT id FROM "User" WHERE email = 'ahmet@medikal.local'`);
+  await page.getByRole("link", { name: "Ahmet Yılmaz" }).click();
+  const panel = page.getByRole("dialog");
+  await expect(panel.getByRole("heading", { name: "Ahmet Yılmaz" })).toBeVisible();
+  await expect(panel.getByText("Prim oranı")).toHaveCount(0);
+  await expect(panel.getByRole("region", { name: "Son işlemler" })).toHaveCount(0);
+  await expect(panel.getByRole("link", { name: "Düzenle" })).toHaveCount(0);
+  const [yonetici] = await query<{ id: string }>(`SELECT id FROM "User" WHERE email = 'admin@medikal.local'`);
+  await page.goto(`/users?detay=${yonetici.id}`);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+
   await page.goto(`/users/${satici.id}`);
   await expect(page.getByRole("heading", { name: "Ahmet Yılmaz" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Düzenle" })).toHaveCount(0);
