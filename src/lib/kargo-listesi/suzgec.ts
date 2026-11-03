@@ -1,5 +1,4 @@
 import { aralikEtiketi, gun, ilk, kimlik, secenek, type Parametreler } from "@/lib/liste/parametreler";
-import { gunEkle } from "@/lib/zaman";
 
 /**
  * Kargo ekranının süzgeçleri (spec Ü-24 §3.5) ve toplu kargo seçimi (§3.3). Sevkiyat listesinin süzgeci
@@ -19,7 +18,7 @@ export type KargoSuzgeci = {
 export const BOS_SUZGEC: KargoSuzgeci = { baslangic: null, bitis: null, firma: null, durum: null, q: null };
 export const FIRMASIZ = "yok";
 /** Toplu kargoda bir istekte en çok sipariş (tek eylemin süresi). */
-export const TOPLU_SINIR = 100;
+export const TOPLU_SINIR = 50;
 
 const METIN_SINIRI = 100;
 const IRSALIYE_SINIRI = 32; // C-1: müşterinin irsaliye no'su (`VarChar(32)`)
@@ -65,25 +64,8 @@ export function kargoAdresi(s: KargoSuzgeci, ek: { page?: number; per?: number; 
 
 type Tarih = Pick<KargoSuzgeci, "baslangic" | "bitis">;
 
-function gunOnce(metin: string, adet: number): string {
-  const [yil, ay, g] = metin.split("-").map((p) => parseInt(p, 10));
-  return gunEkle(new Date(Date.UTC(yil, ay - 1, g)), -adet).toISOString().slice(0, 10);
-}
-
-/** Tarih kısayolları (stok ekranıyla aynı); `bugun` İstanbul günü. */
-export function hizliSekmeler(bugun: string): { etiket: "Tümü" | "Bugün" | "Son 7 gün" | "Bu ay"; tarih: Tarih }[] {
-  return [
-    { etiket: "Tümü", tarih: { baslangic: null, bitis: null } },
-    { etiket: "Bugün", tarih: { baslangic: bugun, bitis: bugun } },
-    { etiket: "Son 7 gün", tarih: { baslangic: gunOnce(bugun, 6), bitis: bugun } },
-    { etiket: "Bu ay", tarih: { baslangic: `${bugun.slice(0, 8)}01`, bitis: bugun } },
-  ];
-}
-
-/** Süzgecin tarihine uyan ilk sekme. */
-export function etkinSekme<E extends string>(sekmeler: readonly { etiket: E; tarih: Tarih }[], s: KargoSuzgeci): E | null {
-  return sekmeler.find((f) => f.tarih.baslangic === s.baslangic && f.tarih.bitis === s.bitis)?.etiket ?? null;
-}
+/** Tarih kısayolları ortak modüldedir (`liste/tarih-sekmeleri.ts`). */
+export { tarihSekmeleri as hizliSekmeler, etkinTarihSekmesi as etkinSekme } from "@/lib/liste/tarih-sekmeleri";
 
 /** Sekmenin adresi: tarihleri yazar, öbür süzgeçleri korur; sayfa düşer. */
 export function sekmeAdresi(s: KargoSuzgeci, tarih: Tarih): string {

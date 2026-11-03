@@ -95,7 +95,7 @@ yeniden doğrular), firma ortak, takip ve irsaliye o satırın, `gerekce: null`.
 | `ONAY_GEREKLI` (negatif stok, gerekçe yok) | "Onay gerekli: <bildirim> — Kısmi sevk panelinden gerekçeyle gönderin." |
 | `SERT` (`ONAY_BEKLIYOR`, `ONAY_REDDEDILDI`, `SIPARIS_DURUMU_UYGUN_DEGIL`, `SEVK_MIKTARI_ASILDI`, …) | sözlük metni (`bildirimMetni`) |
 
-Seçim yoksa "Kargolanacak sipariş seçin." (SERT, form kutusunda). Seçim en çok 100 sipariş. Başarılı
+Seçim yoksa "Kargolanacak sipariş seçin." (SERT, form kutusunda). Seçim en çok 50 sipariş (tek istekte ~50 ayrı transaction; gözden geçirmede 100'den indirildi). Başarılı
 olanlar tablodan düşer (sayfa yeniden doğrulanır); sonuç listesi ekranda kalır.
 
 ### 3.4 Kısmi sevk paneli
@@ -151,7 +151,7 @@ Sıralama `shippedAt desc, id desc`. Çerez `kargo-sutunlar`, `path=/shipping`. 
 - **`src/lib/kargo-listesi/suzgec.ts`** (saf): `KargoSuzgeci = { baslangic, bitis, firma, durum, q }`,
   `suzgecCoz(p) → { suzgec, kismi }`, `kargoAdresi(s, { page, per, kismi })`, `hizliSekmeler(bugun)`,
   `etkinSekme`, `sekmeAdresi`, `etkinSuzgecler(s, firmaAdi)`, `bosDurum`, `topluSecimCoz(formData) →
-  { siparisId, takip, irsaliye }[]` (en çok 100, tekrar yok, kimlik biçimi), `TOPLU_SINIR = 100`.
+  { siparisId, takip, irsaliye }[]` (en çok 50, tekrar yok, kimlik biçimi), `TOPLU_SINIR = 50`.
 - **`src/lib/kargo-listesi/sutunlar.ts`** (saf): `SUTUNLAR`, `SUTUN_CEREZI = "kargo-sutunlar"`, `SUTUN_YOLU = "/shipping"`.
 - **`src/lib/kargo-listesi/sorgu.ts`:** `kargoBekleyenler()` (satır: kimlik, belge no, tarih, cari, satıcı,
   toplam, kalemler `{ id, urun, kod, adet, kalan }`, `kalanKalem`, `kalanAdet`, `adet`, onay), `kargoKpileri(bugun)`,
@@ -161,7 +161,7 @@ Sıralama `shippedAt desc, id desc`. Çerez `kargo-sutunlar`, `path=/shipping`. 
 ## 5. Hata davranışı
 
 Geçersiz süzgeç değeri yok sayılır; bilinmeyen firma kimliği adresten düşer. `kismi` kargo bekleyen
-olmayan siparişi göstermez. Toplu işlemde: seçimsiz gönderim SERT; 100'den fazla seçim SERT ("En çok 100
+olmayan siparişi göstermez. Toplu işlemde: seçimsiz gönderim SERT; 50'den fazla seçim SERT ("En çok 50
 sipariş"); bir siparişin hatası (transaction geri alınır) öbürlerini durdurmaz. Sayfa dışı `page` son sayfaya.
 KPI sorgusu hata verirse yalnız kartlar düşer (`kpiGetir`).
 
@@ -208,5 +208,5 @@ Tek PR `revize/kargo-ekrani`: spec · plan · Ü-24 · kriterler · `liste/metin
 | 5 | Sevkiyat paneli | yok; sipariş bağlantısı Siparişler panelini açar | ayrı sevkiyat paneli |
 | 6 | Kısmi sevk sonrası | panel güncel kalanla açık kalır; tamamlandıysa kapanır | her zaman `/shipping` (bugünkü) |
 | 7 | KPI tıklama | Onay bekleyen → `/approvals` (yalnız yönetici), Bugün kargolanan → liste süzgeci, Teslim bekleyen → Siparişler `durum=KARGOLANDI` | hepsi bağlantısız |
-| 8 | Toplu sınır | 100 sipariş | sınırsız (uzun istek; tek eylem süresi) |
+| 8 | Toplu sınır | 50 sipariş | sınırsız (uzun istek; tek eylem süresi) |
 | 9 | Türkçe varyantlar | ortak `liste/metin.ts` | modül başına kopya |

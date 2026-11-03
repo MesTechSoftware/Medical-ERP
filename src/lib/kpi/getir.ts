@@ -9,7 +9,8 @@ export type KpiSonucu<T> = { tamam: true; deger: T } | { tamam: false; referans:
  * Bir KPI'ın verisini getirir; sorgu hata verirse yalnız o kart düşer, sayfa çökmez. X-3 ile:
  * hata yutulmaz ve başarı dönmez — kart sabit metin ("Yüklenemedi") ve referans gösterir, aynı
  * referans container log'una teknik hata satırı olarak yazılır (X-3 §(2)/(4)/(6); mesaj ve
- * `meta` yazılmaz). Uygulamada teknik hatanın ekrana referansla düşürüldüğü tek kapsül budur.
+ * `meta` yazılmaz). Uygulamada teknik hatanın ekrana referansla düşürüldüğü tek kapsül budur; toplu
+ * kargo da sipariş başına bunu kullanır (`topluKargo`, Ü-24).
  */
 export async function kpiGetir<T>(
   getir: () => Promise<T>,

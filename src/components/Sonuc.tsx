@@ -162,8 +162,10 @@ export type TopluSonucSatiri = {
   siparisId: string;
   belge: string | null;
   cari: string | null;
-  durum: "SEVK_EDILDI" | "ONAYA_GONDERILDI" | "HATA";
+  durum: "SEVK_EDILDI" | "ONAYA_GONDERILDI" | "HATA" | "TEKNIK";
   sevkiyat: string | null;
+  /** Teknik hatanın log referansı (X-3 §(2)); hata gövdesi gösterilmez. */
+  referans: string | null;
   tamamlandi: boolean;
   sonucDurumu: IslemSonucu["durum"] | null;
   bildirimler: IslemSonucu["bildirimler"];
@@ -188,7 +190,9 @@ export function TopluKargoSonucListesi({ satirlar }: { satirlar: readonly TopluS
               <span className={r.durum === "SEVK_EDILDI" ? "text-positive" : r.durum === "ONAYA_GONDERILDI" ? "text-critical" : "text-negative"}>
                 {r.durum === "SEVK_EDILDI"
                   ? `${r.sevkiyat} yazıldı${r.tamamlandi ? " — sipariş kargolandı" : ""}`
-                  : r.durum === "ONAYA_GONDERILDI"
+                  : r.durum === "TEKNIK"
+                    ? `Teknik bir hata oluştu; sipariş yazılmadı. Referans: ${r.referans}`
+                    : r.durum === "ONAYA_GONDERILDI"
                     ? `Onaya gönderildi: ${metin}`
                     : r.sonucDurumu === "ONAY_GEREKLI"
                       ? `Onay gerekli: ${metin} Kısmi sevk panelinden gerekçeyle gönderin.`

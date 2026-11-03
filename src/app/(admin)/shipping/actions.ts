@@ -4,8 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireStaff } from "@/lib/session";
 import { topluSecimCoz, TOPLU_SINIR } from "@/lib/kargo-listesi/suzgec";
-import { siparisiSevkEt, topluKargo, type SevkSonucu, type TopluSatirSonucu } from "@/lib/sevk-et";
-import { basarili, engel, onayaGonderildi, type Bildirim, type IslemSonucu } from "@/lib/sonuc";
+import { siparisiSevkEt, topluKargo, type TopluSatirSonucu } from "@/lib/sevk-et";
+import type { TopluSonucSatiri } from "@/components/Sonuc";
+import { basarili, engel, onayaGonderildi, type IslemSonucu } from "@/lib/sonuc";
 
 const KALEM = "miktar_";
 
@@ -54,19 +55,8 @@ export async function shipOrder(orderId: string, _prev: unknown, formData: FormD
   redirect(sonuc.tamamlandi ? "/shipping" : `/shipping?kismi=${encodeURIComponent(orderId)}`);
 }
 
-/** Toplu kargoda bir siparişin sonucu; metin `TopluKargoSonucListesi`'ndedir (X-4-2). */
-export type TopluKargoSatiri = {
-  siparisId: string;
-  belge: string | null;
-  cari: string | null;
-  durum: SevkSonucu["durum"];
-  /** Başarıda yazılan sevkiyatın numarası. */
-  sevkiyat: string | null;
-  tamamlandi: boolean;
-  /** Başarısızlıkta sonucun durumu (`ONAY_GEREKLI` negatif stok, `ENGELLENDI` diğerleri). */
-  sonucDurumu: IslemSonucu["durum"] | null;
-  bildirimler: Bildirim[];
-};
+/** Toplu kargoda bir siparişin sonucu; tip ve metin `TopluKargoSonucListesi`'ndedir (X-4-2). */
+export type TopluKargoSatiri = TopluSonucSatiri;
 export type TopluKargoSonucu = IslemSonucu & { satirlar: TopluKargoSatiri[] };
 
 function satir(r: TopluSatirSonucu): TopluKargoSatiri {
@@ -77,6 +67,7 @@ function satir(r: TopluSatirSonucu): TopluKargoSatiri {
     cari: r.cari,
     durum: s.durum,
     sevkiyat: s.durum === "SEVK_EDILDI" ? s.documentNo : null,
+    referans: s.durum === "TEKNIK" ? s.referans : null,
     tamamlandi: s.durum === "SEVK_EDILDI" && s.tamamlandi,
     sonucDurumu: s.durum === "HATA" ? s.sonuc.durum : null,
     bildirimler: s.durum === "HATA" ? s.sonuc.bildirimler : s.durum === "ONAYA_GONDERILDI" ? s.bildirimler : [],
@@ -98,6 +89,5 @@ export async function topluKargola(_prev: TopluKargoSonucu | null, formData: For
   const sonuclar = await topluKargo(secim.secimler, carrierId, { id: session.user.id, rol: session.user.role });
   yenile();
   revalidatePath("/approvals");
-  const satirlar = sonuclar.map(satir);
-  return { ...basarili({ yazilan: satirlar.filter((r) => r.durum === "SEVK_EDILDI").length, secilen: satirlar.length }), satirlar };
+  return { ...basarili(), satirlar: sonuclar.map(satir) };
 }

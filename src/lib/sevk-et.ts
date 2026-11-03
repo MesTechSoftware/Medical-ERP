@@ -2,6 +2,7 @@ import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/db";
 import { IsHatasi } from "@/lib/hata";
 import { sevkiyatYaz, type SevkiyatGirdisi } from "@/lib/sevkiyat";
+import { kpiGetir } from "@/lib/kpi/getir";
 import { kalemMiktarlari } from "@/lib/siparis";
 import type { TopluSecim } from "@/lib/kargo-listesi/suzgec";
 import { sert, yumusak, type Bildirim, type IslemSonucu } from "@/lib/sonuc";
@@ -42,13 +43,21 @@ export async function siparisiSevkEt(g: SevkiyatGirdisi): Promise<SevkSonucu> {
   }
 }
 
-export type TopluSatirSonucu = { siparisId: string; documentNo: string | null; cari: string | null; sonuc: SevkSonucu };
+/** Toplu kargoda bir siparişin sonucu; teknik hata (X-3) yalnız o siparişi düşürür, referansla döner. */
+export type TopluSatirSonucu = {
+  siparisId: string;
+  documentNo: string | null;
+  cari: string | null;
+  sonuc: SevkSonucu | { durum: "TEKNIK"; referans: string };
+};
 
 /**
  * Toplu kargo (12-A, A-3-3): seçim sırasıyla, her sipariş **ayrı** `siparisiSevkEt` — kalanı olan her kalem
  * kalanının tamamıyla; firma ortak, takip ve irsaliye satırın; gerekçe yok (negatif stokta onay gereken
  * sipariş yazılmaz, kısmi panelden gerekçeyle gönderilir). Bir siparişin sonucu öbürlerini etkilemez.
- * Kalan kilit dışında okunur; `sevkiyatYaz` kilit altında yeniden doğrular.
+ * Kalan kilit dışında okunur; `sevkiyatYaz` kilit altında yeniden doğrular. Beklenmeyen (teknik) hata
+ * yutulmaz: `kpiGetir` kapsülüyle log satırına referansla yazılır, sipariş "teknik hata" sonucuyla döner ve
+ * sıradaki siparişe geçilir (X-3 §(2)/(4); spec §5: bir siparişin hatası öbürlerini durdurmaz).
  */
 export async function topluKargo(
   secimler: readonly TopluSecim[],
@@ -76,19 +85,28 @@ export async function topluKargo(
       });
       continue;
     }
-    const sonuc = await siparisiSevkEt({
+    const r = await kpiGetir(
+      () =>
+        siparisiSevkEt({
+          siparisId: o.id,
+          kalemler: o.items.flatMap((k) => {
+            const { kalan } = kalemMiktarlari(k);
+            return kalan > 0 ? [{ siparisKalemiId: k.id, miktar: kalan }] : [];
+          }),
+          carrierId,
+          trackingNumber: secim.takip,
+          externalDispatchNo: secim.irsaliye,
+          yapan,
+          gerekce: null,
+        }),
+      { yol: "/shipping", kullaniciId: yapan.id }
+    );
+    sonuclar.push({
       siparisId: o.id,
-      kalemler: o.items.flatMap((k) => {
-        const { kalan } = kalemMiktarlari(k);
-        return kalan > 0 ? [{ siparisKalemiId: k.id, miktar: kalan }] : [];
-      }),
-      carrierId,
-      trackingNumber: secim.takip,
-      externalDispatchNo: secim.irsaliye,
-      yapan,
-      gerekce: null,
+      documentNo: o.documentNo,
+      cari: o.doctor.fullName,
+      sonuc: r.tamam ? r.deger : { durum: "TEKNIK", referans: r.referans },
     });
-    sonuclar.push({ siparisId: o.id, documentNo: o.documentNo, cari: o.doctor.fullName, sonuc });
   }
   return sonuclar;
 }

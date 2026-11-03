@@ -7,7 +7,8 @@ import { FIRMASIZ, type KargoSuzgeci } from "@/lib/kargo-listesi/suzgec";
 import { metinVaryantlari } from "@/lib/liste/metin";
 import { belgeOnayDurumlari } from "@/lib/onay-blogu";
 import { kalemMiktarlari, SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
-import { gunleriAraliga } from "@/lib/siparis-listesi/sorgu";
+import { gunleriAraliga, siparisKosulu } from "@/lib/siparis-listesi/sorgu";
+import { BOS_SUZGEC as BOS_SIPARIS } from "@/lib/siparis-listesi/suzgec";
 
 /**
  * Kargo ekranı sorguları (spec Ü-24 §4). Kargo bekleyen = onaylı ve hazırlanıyor; kalan
@@ -79,7 +80,8 @@ export type KargoKpileri = { bekleyen: number; bekleyenAdet: number; onayBekleye
 export async function kargoKpileri(bugun: string, bekleyenler: readonly BekleyenSatir[]): Promise<KargoKpileri> {
   const [bugunKargolanan, teslimBekleyen] = await Promise.all([
     prisma.shipment.count({ where: sevkiyatKosulu({ baslangic: bugun, bitis: bugun, firma: null, durum: null, q: null }) }),
-    prisma.order.count({ where: { stage: "ONAYLI", status: "KARGOLANDI" } }),
+    // Siparişler ekranının `durum=KARGOLANDI` süzgeciyle aynı koşul (D-3-2: kart = satır).
+    prisma.order.count({ where: siparisKosulu({ ...BOS_SIPARIS, durum: "KARGOLANDI" }) }),
   ]);
   return {
     bekleyen: bekleyenler.length,

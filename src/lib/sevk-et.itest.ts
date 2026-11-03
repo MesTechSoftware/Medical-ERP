@@ -1,8 +1,8 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { prisma } from "@/lib/db";
 import { degistirDoktorSahibi } from "@/lib/sahiplik";
-import { siparisiSevkEt, topluKargo, type SevkSonucu } from "@/lib/sevk-et";
+import { siparisiSevkEt, topluKargo, type SevkSonucu, type TopluSatirSonucu } from "@/lib/sevk-et";
 import { referansVeri, yeniDoktorVerisi } from "../../test/integration/referans";
 
 // A-3-3 — sevk çekirdeği: kart formu ve toplu kargo aynı yoldan; toplu kargoda her sipariş ayrı işlem.
@@ -54,7 +54,7 @@ async function siparis(kalemler: { urun?: string; miktar: number; bedelsiz?: boo
 }
 
 const yonetici = () => ({ id: s.yonetici.id, rol: "YONETICI" as const });
-const kodlar = (r: SevkSonucu) => (r.durum === "HATA" ? r.sonuc.bildirimler.map((b) => b.kural_kodu) : []);
+const kodlar = (r: SevkSonucu | TopluSatirSonucu["sonuc"]) => (r.durum === "HATA" ? r.sonuc.bildirimler.map((b) => b.kural_kodu) : []);
 
 describe("siparisiSevkEt — tek sipariş", () => {
   it("başarı: SVK yazılır ve denetim kaydı bırakılır", async () => {
@@ -180,4 +180,24 @@ describe("topluKargo (A-3-3)", () => {
     expect(kodlar(sonuc[1].sonuc)).toEqual(["SIPARIS_DURUMU_UYGUN_DEGIL"]);
     expect(sonuc[1].documentNo).toBeNull();
   });
+
+  it("teknik hata (X-3) yalnız o siparişi düşürür: referansla döner, öbür sipariş yazılır", async () => {
+    const bozuk = await siparis([{ miktar: 1 }]);
+    const normal = await siparis([{ miktar: 1 }]);
+    const hata = vi.spyOn(console, "error").mockImplementation(() => {});
+    const sonuc = await topluKargo(
+      [
+        // İrsaliye kolonu 32 karakterdir; ekran kırpar, doğrudan çağrı veritabanı hatası üretir.
+        { siparisId: bozuk.id, takip: null, irsaliye: "X".repeat(40) },
+        { siparisId: normal.id, takip: null, irsaliye: null },
+      ],
+      null,
+      yonetici()
+    );
+    hata.mockRestore();
+    expect(sonuc[0].sonuc).toEqual({ durum: "TEKNIK", referans: expect.stringMatching(/^[0-9a-f]{8}$/) });
+    expect(sonuc[1].sonuc.durum).toBe("SEVK_EDILDI");
+    expect(await prisma.shipment.count({ where: { orderId: bozuk.id } })).toBe(0);
+  });
 });
+

@@ -1,6 +1,5 @@
 import { HAREKET_TURLERI, type HareketTuruKodu } from "@/lib/stok-hareket-turu";
 import { aralikEtiketi, gun, ilk, kimlik, secenek, type Parametreler } from "@/lib/liste/parametreler";
-import { gunEkle } from "@/lib/zaman";
 
 /**
  * Stok ekranının hareket süzgeci (spec Ü-20 §3.3); adres çubuğunda durur. Geçersiz değer yok sayılır.
@@ -49,26 +48,8 @@ export function stokAdresi(s: StokSuzgeci, ek: { page?: number; per?: number } =
   return q ? `/stock?${q}` : "/stock";
 }
 
-/** Takvim gününden `adet` gün önce; takvim günü UTC parçalarıyla taşınır, saat dilimine bakılmaz. */
-function gunOnce(metin: string, adet: number): string {
-  const [yil, ay, g] = metin.split("-").map((p) => parseInt(p, 10));
-  return gunEkle(new Date(Date.UTC(yil, ay - 1, g)), -adet).toISOString().slice(0, 10);
-}
-
-/** Tarih kısayolları; `bugun` İstanbul günüdür (sayfa `yerelGunMetni(bugun())` verir). */
-export function hizliSekmeler(bugun: string): { etiket: "Tümü" | "Bugün" | "Son 7 gün" | "Bu ay"; tarih: Tarih }[] {
-  return [
-    { etiket: "Tümü", tarih: { baslangic: null, bitis: null } },
-    { etiket: "Bugün", tarih: { baslangic: bugun, bitis: bugun } },
-    { etiket: "Son 7 gün", tarih: { baslangic: gunOnce(bugun, 6), bitis: bugun } },
-    { etiket: "Bu ay", tarih: { baslangic: `${bugun.slice(0, 8)}01`, bitis: bugun } },
-  ];
-}
-
-/** Süzgecin tarihine uyan ilk sekme; ayın 1'inde "Bugün" ile "Bu ay" aynı aralıktır, yalnız ilki etkindir. */
-export function etkinSekme<E extends string>(sekmeler: readonly { etiket: E; tarih: Tarih }[], s: StokSuzgeci): E | null {
-  return sekmeler.find((f) => f.tarih.baslangic === s.baslangic && f.tarih.bitis === s.bitis)?.etiket ?? null;
-}
+/** Tarih kısayolları ortak modüldedir (`liste/tarih-sekmeleri.ts`). */
+export { tarihSekmeleri as hizliSekmeler, etkinTarihSekmesi as etkinSekme } from "@/lib/liste/tarih-sekmeleri";
 
 /** Sekmenin adresi: tarihleri yazar, öbür süzgeçleri korur; sayfa düşer. */
 export function sekmeAdresi(s: StokSuzgeci, tarih: Tarih): string {

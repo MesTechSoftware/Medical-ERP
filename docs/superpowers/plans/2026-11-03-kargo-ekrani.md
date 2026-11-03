@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - Yeni karar/ADR yok. `sevkiyatYaz`, `/orders/[id]`, `/approvals` değişmez. KPI satırı 4 kart (ADR-010).
-- Toplu kargo: her sipariş **ayrı transaction**, `gerekce: null`, miktar = kalan (`kalemMiktarlari`), firma ortak, takip/irsaliye satır başına; en çok `TOPLU_SINIR = 100`; irsaliye ≤ 32 karakter (C-1).
+- Toplu kargo: her sipariş **ayrı transaction**, `gerekce: null`, miktar = kalan (`kalemMiktarlari`), firma ortak, takip/irsaliye satır başına; en çok `TOPLU_SINIR = 50` (gözden geçirmede 100'den indirildi); irsaliye ≤ 32 karakter (C-1).
 - Form alan adları: `secili` (çoklu, sipariş kimliği), `takip_<siparisId>`, `irsaliye_<siparisId>`, `carrierId`.
 - Sevkiyat listesi adresi: `baslangic`, `bitis` (`shippedAt` İstanbul günü), `firma` (kimlik | `yok`), `durum` (`KARGOLANDI`|`TESLIM_EDILDI`), `q` (≤ 100), `page`, `per`, `kismi`. Çerez `kargo-sutunlar`, `path=/shipping`. Sıralama `shippedAt desc, id desc`.
 - Onay bekleyen KPI yalnız YONETICI'de `/approvals` bağlantısı (`requireAdmin`).
@@ -45,7 +45,7 @@
 **Produces:**
 ```ts
 export type KargoSuzgeci = { baslangic: string | null; bitis: string | null; firma: string | null; durum: "KARGOLANDI" | "TESLIM_EDILDI" | null; q: string | null };
-export const BOS_SUZGEC: KargoSuzgeci; export const FIRMASIZ = "yok"; export const TOPLU_SINIR = 100;
+export const BOS_SUZGEC: KargoSuzgeci; export const FIRMASIZ = "yok"; export const TOPLU_SINIR = 50;
 export function suzgecCoz(p: Parametreler): { suzgec: KargoSuzgeci; kismi: string | null };
 export function kargoAdresi(s: KargoSuzgeci, ek?: { page?: number; per?: number; kismi?: string }): string; // sıra: baslangic, bitis, firma, durum, q, page, per, kismi
 export function hizliSekmeler(bugun: string): { etiket: "Tümü" | "Bugün" | "Son 7 gün" | "Bu ay"; tarih: { baslangic: string | null; bitis: string | null } }[];

@@ -55,6 +55,9 @@ test("kısmi sevkiyat: 3'ün 1'i sevk edilir, borç yazılır, sipariş beklemed
   // Kısmi sevkten sonra panel güncel kalanla açık kalır (Ü-24 §3.4).
   await expect(page).toHaveURL(/\/shipping\?kismi=[^&]+$/);
   await expect(page.locator("[data-sevk-karti]").filter({ hasText: doktorAdi }).getByText("kalan 2/3")).toBeVisible();
+  // Panel güncel kalanla yeniden kurulur: girilen miktar ve takip no kalmaz.
+  await expect(page.locator("[data-sevk-karti]").locator('input[name^="miktar_"]')).toHaveValue("2");
+  await expect(page.locator("[data-sevk-karti]").getByLabel("Takip Numarası")).toHaveValue("");
   const [borc] = await sorgu<{ amount: string; type: string }>(
     `SELECT amount::text, type FROM "LedgerEntry" WHERE "doctorId" = $1`,
     [doktorId]
