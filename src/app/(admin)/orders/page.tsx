@@ -11,7 +11,7 @@ import { getPagination, pageCount } from "@/lib/pagination";
 import { gunleriAraliga, saticiSecenekleri, siparisKpileri, siparisListesi, siparisPaneli } from "@/lib/siparis-listesi/sorgu";
 import { SUTUNLAR, SUTUN_CEREZI } from "@/lib/siparis-listesi/sutunlar";
 import { kpiAraligi, SATICISIZ, siparisAdresi, suzgecCoz, type Parametreler } from "@/lib/siparis-listesi/suzgec";
-import { bugun, yerelGunMetni } from "@/lib/zaman";
+import { simdi, yerelGunMetni } from "@/lib/zaman";
 import { KpiKartlari } from "./KpiKartlari";
 import { SiparisPaneli } from "./SiparisPaneli";
 import { SiparisTablosu } from "./SiparisTablosu";
@@ -27,7 +27,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   const yer = { page, per: per ? perPage : undefined };
   const gizli = gizliSutunlariCoz(SUTUNLAR, (await cookies()).get(SUTUN_CEREZI)?.value);
   const adres = siparisAdresi(suzgec, yer);
-  const aralik = kpiAraligi(suzgec, yerelGunMetni(bugun()));
+  const aralik = kpiAraligi(suzgec, yerelGunMetni(simdi()));
 
   const [liste, kpi, panel, saticilar] = await Promise.all([
     siparisListesi(suzgec, { skip, take }),

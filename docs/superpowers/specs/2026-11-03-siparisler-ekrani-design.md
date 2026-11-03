@@ -113,12 +113,12 @@ bandındadır; burada kartlar nötrdür.
 |---|---|---|
 | Tarih | `formatDate(orderDate)` | hayır |
 | Belge no | `documentNo` (`SIP-…`) | evet |
-| Cari | ad (panel bağlantısı `?detay=<id>`) + teklifse `StatusChip ton="notr"` "Teklif" + `OnayEtiketi` (A-8: onay bekliyor / reddedildi) | hayır |
+| Cari | ad (panel bağlantısı `?detay=<id>`) + `OnayEtiketi` (A-8: onay bekliyor / reddedildi) | hayır |
 | Klinik | `doctor.clinic` (`oncelik-dusuk`) | evet |
 | Satıcı | `seller.name` ya da "—" (`oncelik-dusuk`) | evet |
 | Tutar | `siparisToplami(items).toplam` — KDV dahil (bugünkü sütun) | evet |
 | Sevk | sevk edilen / sipariş adedi (bedelsiz dahil): hiç yoksa "—", kısmiyse "3 / 5", tamamsa "5 / 5" | evet |
-| Durum | `StatusBadge` | hayır |
+| Durum | `StatusBadge`; teklifte durum adı yerine "Teklif" / "Teklif (iptal)" çipi (durum sekmeleri yalnız onaylıyı sayar) | hayır |
 | İşlem | Detay (`/orders/<id>`) | hayır |
 
 Sıralama `orderDate desc, id desc` (aynı andaki siparişlerde sayfalama kararlı). Çerez `siparis-sutunlar`,

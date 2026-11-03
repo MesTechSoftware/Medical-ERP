@@ -21,11 +21,12 @@ const SINIF: Partial<Record<SiparisSutunu, string>> = {
 const BASLIK: Partial<Record<SiparisSutunu, string>> = { tutar: tabanli("Tutar", SATIR_TABANI.toplam) };
 
 /**
- * Durum rozeti: teklif (iptal edilmemişse) "Teklif" yazar, "Bekliyor" demez — Bekliyor sekmesi ve kartı
- * yalnız onaylı siparişi sayar (A-5-8).
+ * Durum rozeti: teklif "Teklif" (iptal edildiyse "Teklif (iptal)") yazar, onaylı durum adını taşımaz —
+ * durum sekmeleri ve kartları yalnız onaylı siparişi sayar; teklif Teklif sekmesindedir (A-5-8).
  */
 export function DurumRozeti({ stage, status }: { stage: SiparisSatiri["stage"]; status: SiparisSatiri["status"] }) {
-  return stage === "TEKLIF" && status !== "IPTAL" ? <StatusChip ton="notr">Teklif</StatusChip> : <StatusBadge status={status} />;
+  if (stage === "TEKLIF") return <StatusChip ton="notr">{status === "IPTAL" ? "Teklif (iptal)" : "Teklif"}</StatusChip>;
+  return <StatusBadge status={status} />;
 }
 
 /** Sevk sütunu: hiç sevk yoksa "—", yoksa "sevk / adet" (bedelsiz dahil, A-3-2). */
@@ -35,7 +36,7 @@ export function sevkMetni(sevk: number, adet: number): string {
 
 /**
  * Sipariş tablosu (spec Ü-23 §3.4). Gizli sütunun başlığı ve hücresi çizilmez. Cari adı yan paneli açar;
- * teklif ve onay bloğu (A-8) çipleri adın yanındadır.
+ * onay bloğu (A-8) çipi adın yanında, teklif işareti Durum sütunundadır (`DurumRozeti`).
  */
 export function SiparisTablosu({
   satirlar,

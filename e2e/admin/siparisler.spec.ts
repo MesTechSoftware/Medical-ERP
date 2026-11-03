@@ -45,6 +45,11 @@ test("teklif kartlara girmez; Teklif sekmesinde çipiyle listelenir (A-5-8)", as
     await expect(satir.getByText("Teklif", { exact: true })).toBeVisible();
     // Teklifin durum sütunu "Bekliyor" demez: Bekliyor sekmesi ve kartı teklifi saymaz.
     await expect(satir.getByText("Bekliyor", { exact: true })).toHaveCount(0);
+    // İptal edilen teklif de "İptal Edildi" demez: İptal sekmesi ve kartı yalnız onaylı siparişi sayar.
+    await sorgu(`UPDATE "Order" SET status = 'IPTAL' WHERE "documentNo" = $1`, [no]);
+    await page.reload();
+    await expect(satirlar(page).first().getByText("Teklif (iptal)", { exact: true })).toBeVisible();
+    await expect(satirlar(page).first().getByText("İptal Edildi", { exact: true })).toHaveCount(0);
     await page.getByText("Filtrele", { exact: true }).waitFor();
     await expect(page.getByText("Filtrele · 1")).toHaveCount(0);
   } finally {
