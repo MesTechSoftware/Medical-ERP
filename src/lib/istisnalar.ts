@@ -3,6 +3,7 @@ import { EKSIK_FATURA_BILGISI } from "@/lib/cari";
 import { prisma } from "@/lib/db";
 import { SAHIPSIZ_DOKTOR } from "@/lib/sahiplik";
 import { stokDurumu } from "@/lib/stok-durumu";
+import { BOS_SUZGEC, onayAdresi } from "@/lib/onay-listesi/suzgec";
 
 /** Karar bekleyen onay bloğunun istisna sayıldığı yaş, saat (brief §3.1). */
 export const ESKI_ONAY_SAATI = 24;
@@ -43,7 +44,8 @@ export async function istisnalar(rol: Role, stoklar: readonly { stok: number }[]
       ton: "uyari",
       adet: eskiOnay,
       metin: `onay ${ESKI_ONAY_SAATI} saatten uzun süredir bekliyor`,
-      href: "/approvals",
+      // Onay ekranının "24 saatten eski" süzgeci: aynı koşul, sayı = satır (A-8-11).
+      href: onayAdresi({ ...BOS_SUZGEC, eski: true }),
       eylem: "Onaylara git",
     },
     {

@@ -1,113 +1,79 @@
-import Link from "next/link";
-import { prisma } from "@/lib/db";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/session";
-import { formatDateTime } from "@/lib/format";
-import type { BlokKuralKodu } from "@/lib/onay-blogu";
-import { BLOK_KURAL_ADI } from "@/lib/sozluk";
-import { PageHeader, Card, StatusBadge } from "@/components/ui";
-import { IslemFormu } from "@/components/Sonuc";
-import { blokKarari } from "./actions";
-import { KONTROL_COK_SATIR, buton } from "@/components/stil";
-import { Ikon } from "@/components/Ikon";
+import { PageHeader } from "@/components/ui";
+import Pagination from "@/components/Pagination";
+import { SutunSecici } from "@/components/liste/SutunSecici";
+import { kpiGetir } from "@/lib/kpi/getir";
+import { gizliSutunlariCoz } from "@/lib/liste/sutunlar";
+import { ilk } from "@/lib/liste/parametreler";
+import { acanSecenekleri, onayKpileri, onayListesi, onayPaneli } from "@/lib/onay-listesi/sorgu";
+import { SUTUNLAR, SUTUN_CEREZI } from "@/lib/onay-listesi/sutunlar";
+import { onayAdresi, suzgecCoz, type Parametreler } from "@/lib/onay-listesi/suzgec";
+import { getPagination, pageCount } from "@/lib/pagination";
+import { simdi, yerelGunMetni } from "@/lib/zaman";
+import { KpiKartlari } from "./KpiKartlari";
+import { OnayPaneli } from "./OnayPaneli";
+import { OnayTablosu } from "./OnayTablosu";
+import { SuzgecCubugu } from "./SuzgecCubugu";
+import { sutunlariKaydet } from "./sutunEylemi";
 
 /**
- * Onay bekleyenler (A-8): karar verilmemiş bloklar, en eskisi önce. Bugün tek kural
- * `NEGATIF_STOK`'tur ve blok siparişe bağlıdır (A-8 eki 20.10.2026).
+ * Onay bekleyenler (A-8, spec Ü-25): bekleyen talepler en eskisi önce; verilmiş kararlar geçmiş sekmelerinde.
+ * Karar yalnız yöneticinindir; karar formu yan paneldedir (not zorunlu).
  */
-export default async function ApprovalsPage() {
-  await requireAdmin();
+export default async function ApprovalsPage({ searchParams }: { searchParams: Promise<Parametreler> }) {
+  const session = await requireAdmin();
+  const params = await searchParams;
+  const an = simdi();
+  const bugun = yerelGunMetni(an);
+  const per = ilk(params, "per") ?? undefined;
+  const { page, perPage, skip, take } = getPagination({ page: ilk(params, "page") ?? undefined, per });
+  const { suzgec, detay } = suzgecCoz(params);
+  const yer = { page, per: per ? perPage : undefined };
+  const gizli = gizliSutunlariCoz(SUTUNLAR, (await cookies()).get(SUTUN_CEREZI)?.value);
+  const adres = onayAdresi(suzgec, yer);
 
-  const bloklar = await prisma.approvalBlock.findMany({
-    where: { decision: null },
-    orderBy: [{ openedAt: "asc" }, { id: "asc" }],
-  });
-  const [siparisler, acanlar] = await Promise.all([
-    prisma.order.findMany({
-      where: { id: { in: bloklar.filter((b) => b.documentType === "SIP").map((b) => b.documentId) } },
-      select: { id: true, documentNo: true, status: true, doctor: { select: { fullName: true } } },
-    }),
-    prisma.user.findMany({
-      where: { id: { in: bloklar.map((b) => b.openedById) } },
-      select: { id: true, name: true },
-    }),
+  const kullanicilar = await acanSecenekleri();
+  // Seçeneklerde olmayan açan süzgeci (eski yer imi, elle yazılmış kimlik) adresten düşer.
+  if (suzgec.acan && !kullanicilar.some((u) => u.id === suzgec.acan)) {
+    redirect(onayAdresi({ ...suzgec, acan: null }, { ...yer, ...(detay ? { detay } : {}) }));
+  }
+
+  const [liste, kpi, panel] = await Promise.all([
+    onayListesi(suzgec, { skip, take }, an),
+    kpiGetir(() => onayKpileri(bugun, an), { yol: "/approvals", kullaniciId: session.user.id }),
+    detay ? onayPaneli(detay) : null,
   ]);
-  const siparis = new Map(siparisler.map((o) => [o.id, o]));
-  const acan = new Map(acanlar.map((u) => [u.id, u.name]));
+  // Sayfa dışı adres son sayfaya gider; boş durum "hiç kayıt yok" demesin.
+  if (liste.satirlar.length === 0 && liste.toplam > 0) {
+    redirect(onayAdresi(suzgec, { ...yer, page: pageCount(liste.toplam, perPage), ...(detay ? { detay } : {}) }));
+  }
+
+  const sayfaParametreleri = {
+    ...Object.fromEntries(new URL(onayAdresi(suzgec), "http://x").searchParams),
+    per: yer.per === undefined ? undefined : String(yer.per),
+  };
 
   return (
     <div>
       <PageHeader title="Onay Bekleyenler" description="Gerekçeyle onaya gönderilen işlemler. Karar notu zorunludur." />
 
-      <Card>
-        {bloklar.length === 0 ? (
-          <p className="py-6 text-center text-sm text-slate-400">Onay bekleyen işlem yok.</p>
-        ) : (
-          <div className="space-y-3">
-            {bloklar.map((b) => {
-              const o = siparis.get(b.documentId);
-              return (
-                <div key={b.id} data-blok-id={b.id} className="rounded-lg border border-slate-200 p-3">
-                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-sm">
-                    <div>
-                      <span className="font-medium text-slate-900">
-                        {BLOK_KURAL_ADI[b.ruleCode as BlokKuralKodu] ?? b.ruleCode}
-                      </span>
-                      {o && (
-                        <>
-                          {" · "}
-                          <Link href={`/orders/${o.id}`} className="text-slate-700 hover:underline">
-                            {o.documentNo}
-                          </Link>
-                          <span className="ml-2 text-slate-500">{o.doctor.fullName}</span>
-                        </>
-                      )}
-                    </div>
-                    {o && <StatusBadge status={o.status} />}
-                  </div>
-                  <p className="mb-3 text-sm text-slate-700">
-                    <span className="text-slate-500">
-                      {acan.get(b.openedById) ?? "—"} · {formatDateTime(b.openedAt)}:
-                    </span>{" "}
-                    {b.openReason}
-                  </p>
-                  <IslemFormu action={blokKarari.bind(null, b.id)} className="space-y-2">
-                    <label htmlFor={`not_${b.id}`} className="block text-xs text-slate-500">
-                      Karar notu
-                    </label>
-                    <textarea
-                      id={`not_${b.id}`}
-                      name="not"
-                      required
-                      rows={2}
-                      className={`w-full ${KONTROL_COK_SATIR}`}
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        type="submit"
-                        name="karar"
-                        value="ONAY"
-                        className={buton("birincil")}
-                      >
-                        <Ikon ad="onayla" />
-                        Onayla
-                      </button>
-                      <button
-                        type="submit"
-                        name="karar"
-                        value="RED"
-                        className={buton("olumsuz-cerceve")}
-                      >
-                        <Ikon ad="reddet" />
-                        Reddet
-                      </button>
-                    </div>
-                  </IslemFormu>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </Card>
+      <KpiKartlari sonuc={kpi} bugun={bugun} an={an} />
+
+      <SuzgecCubugu
+        suzgec={suzgec}
+        per={yer.per}
+        kullanicilar={kullanicilar}
+        sutunMenusu={<SutunSecici sutunlar={SUTUNLAR} gizli={gizli} action={sutunlariKaydet} donus={adres} />}
+      />
+
+      <OnayTablosu satirlar={liste.satirlar} gizli={gizli} suzgec={suzgec} yer={yer} />
+
+      <Pagination page={page} totalPages={pageCount(liste.toplam, perPage)} total={liste.toplam} basePath="/approvals" params={sayfaParametreleri} />
+
+      {/* Bulunmayan talep için panel açılmaz (spec §5). */}
+      {panel && <OnayPaneli key={panel.blok.id} veri={panel} kapatAdresi={adres} />}
     </div>
   );
 }
