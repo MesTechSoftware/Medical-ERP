@@ -104,7 +104,7 @@ describe("görsel tasarım sistemi (ADR-009)", () => {
     expect(ihlal).toEqual([]);
   });
 
-  it("KPI kartları kurala uyar: dosya başına ≤ 4 (Siparişler 6, ADR-010 eki); iyiYon ve bosDavranisi yazılı; satırın ilk kartı birincil", () => {
+  it("KPI kartları kurala uyar: dosya başına ≤ 4; iyiYon ve bosDavranisi yazılı; satırın ilk kartı birincil", () => {
     const ekranlar = [...dosyalar(join(SRC, "app"), /\.tsx$/), ...dosyalar(join(SRC, "components"), /\.tsx$/)].filter(
       (y) => !y.includes(join("components", "kpi"))
     );
@@ -113,9 +113,7 @@ describe("görsel tasarım sistemi (ADR-009)", () => {
       const k = readFileSync(y, "utf8");
       const kartlar = [...k.matchAll(/<KpiCard\b[\s\S]*?\/>/g)].map((m) => m[0]);
       const yer = relative(SRC, y);
-      // ADR-010 eki (03.11.2026): Siparişler ekranı 6 kart taşır; başka ekranlarda sınır 4.
-      const sinir = yer === join("app", "(admin)", "orders", "KpiKartlari.tsx") ? 6 : 4;
-      if (kartlar.length > sinir) ihlal.push(`${yer}: ${kartlar.length} KpiCard`);
+      if (kartlar.length > 4) ihlal.push(`${yer}: ${kartlar.length} KpiCard`);
       for (const kart of kartlar) {
         if (!/\biyiYon=/.test(kart) || !/\bbosDavranisi=/.test(kart)) ihlal.push(`${yer}: iyiYon/bosDavranisi eksik`);
       }

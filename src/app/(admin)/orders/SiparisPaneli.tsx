@@ -81,6 +81,7 @@ export function SiparisPaneli({ veri, kapatAdresi }: { veri: Veri; kapatAdresi: 
                     <th className="sayi">Sevk</th>
                     <th className="sayi">Kalan</th>
                     <th className="sayi">İade</th>
+                    <th className="sayi">{tabanli("Birim fiyat", SATIR_TABANI.matrah)}</th>
                     <th className="sayi">{tabanli("Tutar", SATIR_TABANI.matrah)}</th>
                   </tr>
                 </thead>
@@ -98,6 +99,7 @@ export function SiparisPaneli({ veri, kapatAdresi }: { veri: Veri; kapatAdresi: 
                       <td className="sayi">{k.sevk}</td>
                       <td className="sayi">{k.kalan}</td>
                       <td className="sayi">{k.iade}</td>
+                      <td className="sayi">{k.bedelsiz ? "—" : <Tutar deger={k.birimFiyat} taban={SATIR_TABANI.matrah} baslikta />}</td>
                       <td className="sayi">{k.bedelsiz ? "—" : <Tutar deger={k.matrah} taban={SATIR_TABANI.matrah} baslikta />}</td>
                     </tr>
                   ))}

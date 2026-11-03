@@ -6,15 +6,15 @@ import { prisma } from "@/lib/db";
 import type { Aralik } from "@/lib/donem";
 import { takipLinki } from "@/lib/kargo";
 import { belgeOnayDurumlari } from "@/lib/onay-blogu";
-import { hesaplaSatirTutarlari, type BelgeTutari } from "@/lib/satir-tutarlari";
-import { kalemMiktarlari, SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
+import type { BelgeTutari } from "@/lib/satir-tutarlari";
+import { kalemMiktarlari, SIPARIS_SATIRI, siparisToplami, siparisTutarlari } from "@/lib/siparis";
 import { SATICISIZ, type SiparisSuzgeci } from "@/lib/siparis-listesi/suzgec";
 import { TUM_ZAMANLAR, yerelGunAraligi } from "@/lib/zaman";
 
 /**
  * Siparişler ekranı sorguları (spec Ü-23 §4). Süzgeç tek `where` üreticisindedir; durum kartı ile
  * açtığı listenin sayısı aynıdır (A-5-8). KPI dashboard'un dağılımıyla tek yoldur (`siparisDagilimi`).
- * Kalem miktarları `kalemMiktarlari`'ndan, tutar `siparisToplami`'ndan (A-3-2).
+ * Kalem miktarları `kalemMiktarlari`'ndan, tutar `siparisToplami` / `siparisTutarlari`'ndan (A-3-2).
  */
 
 /** İstanbul gün metinlerini yarı açık aralığa çevirir; boş uç `TUM_ZAMANLAR`'ın ucudur. */
@@ -59,15 +59,22 @@ export type SiparisSatiri = {
   onay: "BEKLIYOR" | "RED" | undefined;
 };
 
+/** Liste satırı: tablonun çizdiği alanlar ve tutar/sevk için kalem değerleri. */
 const SATIR_SECIMI = {
   id: true,
   documentNo: true,
   orderDate: true,
   stage: true,
   status: true,
-  paymentTermDays: true,
   doctor: { select: { id: true, fullName: true, clinic: true } },
   seller: { select: { name: true } },
+  items: { select: { ...SIPARIS_SATIRI, shipmentItems: { select: { quantity: true } }, returnItems: { select: { quantity: true } } } },
+} satisfies Prisma.OrderSelect;
+
+/** Panel: liste satırı + vade ve kalem ayrıntısı (ürün, iade). */
+const PANEL_SECIMI = {
+  ...SATIR_SECIMI,
+  paymentTermDays: true,
   items: {
     orderBy: { id: "asc" },
     select: {
@@ -82,8 +89,7 @@ const SATIR_SECIMI = {
 
 type HamSiparis = Prisma.OrderGetPayload<{ select: typeof SATIR_SECIMI }>;
 
-function satir(o: HamSiparis, onay: SiparisSatiri["onay"]): SiparisSatiri {
-  const miktarlar = o.items.map(kalemMiktarlari);
+function satir(o: HamSiparis, onay: SiparisSatiri["onay"], toplam: Decimal = siparisToplami(o.items).toplam): SiparisSatiri {
   return {
     id: o.id,
     documentNo: o.documentNo,
@@ -92,8 +98,8 @@ function satir(o: HamSiparis, onay: SiparisSatiri["onay"]): SiparisSatiri {
     status: o.status,
     cari: o.doctor,
     satici: o.seller?.name ?? null,
-    toplam: siparisToplami(o.items).toplam,
-    sevk: miktarlar.reduce((t, m) => t + m.sevk, 0),
+    toplam,
+    sevk: o.items.reduce((t, k) => t + kalemMiktarlari(k).sevk, 0),
     adet: o.items.reduce((t, k) => t + k.quantity, 0),
     onay,
   };
@@ -150,9 +156,9 @@ export type SiparisPaneli = {
 };
 
 export async function siparisPaneli(id: string): Promise<SiparisPaneli | null> {
-  const o = await prisma.order.findUnique({ where: { id }, select: SATIR_SECIMI });
-  if (!o) return null;
-  const [sevkiyatlar, iadeler, onay] = await Promise.all([
+  // Dört okuma yalnız kimliğe bağlıdır; tek turda gider, sipariş yoksa sonuç atılır.
+  const [o, sevkiyatlar, iadeler, onay] = await Promise.all([
+    prisma.order.findUnique({ where: { id }, select: PANEL_SECIMI }),
     prisma.shipment.findMany({
       where: { orderId: id },
       orderBy: [{ createdAt: "asc" }, { id: "asc" }],
@@ -173,11 +179,11 @@ export async function siparisPaneli(id: string): Promise<SiparisPaneli | null> {
     }),
     belgeOnayDurumlari("SIP", [id]),
   ]);
-  const hesap = hesaplaSatirTutarlari(
-    o.items.map((k) => ({ birimFiyat: k.unitPrice, listeFiyat: k.listPrice, kdvOrani: k.vatRate, miktar: k.quantity, bedelsiz: k.isFree }))
-  );
+  if (!o) return null;
+  // Satır matrahı ve belge toplamı tek hesaptan; liste satırının toplamıyla aynı yol (A-3-2).
+  const tutarlar = siparisTutarlari(o.items);
   return {
-    siparis: { ...satir(o, onay.get(id)), paymentTermDays: o.paymentTermDays },
+    siparis: { ...satir(o, onay.get(id), tutarlar.toplam.toplam), paymentTermDays: o.paymentTermDays },
     kalemler: o.items.map((k, i) => ({
       id: k.id,
       urun: k.product.name,
@@ -185,10 +191,10 @@ export async function siparisPaneli(id: string): Promise<SiparisPaneli | null> {
       adet: k.quantity,
       ...kalemMiktarlari(k),
       birimFiyat: k.unitPrice,
-      matrah: hesap.satirlar[i].matrah,
+      matrah: tutarlar.satirlar[i].matrah,
       bedelsiz: k.isFree,
     })),
-    tutar: hesap.toplam,
+    tutar: tutarlar.toplam,
     sevkiyatlar: sevkiyatlar.map((v) => ({
       id: v.id,
       documentNo: v.documentNo,

@@ -46,7 +46,7 @@
      - dosya başına en çok 4 kart;
      - `iyiYon` ve `bosDavranisi` yazılı;
      - satırın ilk kartı birincil.
-   - **Ek (03.11.2026, kullanıcı kararı):** Siparişler ekranı (Ü-23) **6 kart** taşır: Toplam (birincil) ve beş durum ayrı kart. `KpiSatiri`'nın 6 kartlık yerleşimi yalnız bunun içindir: dar satırda 2 kolon (birincil ve son kart tam satır), 576 px'ten 6 birim (birincil tam satır, 3 + 2), 1200 px'ten 7 birim tek satır (birincil 2 birim; ikincil içerik alanı ≥ ~150 px). Başka ekranlarda sınır 4'tür; `tasarim.test.ts` istisnayı dosya adıyla tanır.
+   - **Ek (03.11.2026, kullanıcı kararı):** Siparişler ekranı (Ü-23) **6 kart** taşır: Toplam (birincil) ve beş durum ayrı kart. `KpiSatiri`'nın 6 kartlık yerleşimi yalnız bunun içindir: dar satırda 2 kolon (birincil ve son kart tam satır), 576 px'ten 6 birim (birincil tam satır, 3 + 2), 1200 px'ten 7 birim tek satır (birincil 2 birim; ikincil içerik alanı ≥ ~150 px). Başka ekranlarda sınır 4'tür; `KpiSatiri` 5 ve 7+ kartı çalışma anında reddeder (`kpi.test.ts`).
 3. **Ciro serisi aynı hesap yolundan gelir.**
    - `ciroOzeti()` ve `saticiCiroSerileri()` `reports-service.ts`'tedir.
    - Aralıkların birleşimindeki sevk ve iade satırlarını **bir kez**, `getCiroTotal()` ile aynı okuyucularla (sayılan belgeler süzgeci) çeker.

@@ -16,10 +16,12 @@ test("Bekliyor kartı aralığıyla süzgeci açar; kart sayısı satır sayıs�
   const kart = kpi(page).getByRole("link", { name: /^Bekliyor/ });
   const deger = await sayi(kart);
   expect(deger).toBeGreaterThan(0);
-  expect(deger).toBeLessThanOrEqual(25);
   await kart.click();
   await expect(page).toHaveURL(/durum=BEKLIYOR&baslangic=\d{4}-\d{2}-01&bitis=\d{4}-\d{2}-\d{2}/);
   await expect(etkinler(page).getByText("Durum: Bekliyor")).toBeVisible();
+  await expect(satirlar(page)).toHaveCount(Math.min(deger, 25));
+  // Sayfa boyunu aşan aylarda da sayı tutar: aynı süzgeç tek sayfada.
+  await page.goto(`${page.url()}&per=100`);
   await expect(satirlar(page)).toHaveCount(deger);
 });
 
@@ -70,6 +72,7 @@ test("yan panel: kalemler, sevkiyat (takip no) ve toplam detay sayfasıyla aynı
   const panel = page.getByRole("dialog");
   await expect(panel.getByRole("heading", { name: o.documentNo })).toBeVisible();
   await expect(panel.getByRole("region", { name: "Kalemler" }).getByRole("columnheader", { name: "Kalan" })).toBeVisible();
+  await expect(panel.getByRole("region", { name: "Kalemler" }).getByRole("columnheader", { name: /^Birim fiyat/ })).toBeVisible();
   await expect(panel.getByRole("region", { name: "Sevkiyatlar" })).toContainText(/SVK-.*/);
   await expect(panel.getByRole("region", { name: "Sevkiyatlar" })).toContainText("Takip:");
   const toplam = para(await panel.getByRole("region", { name: "Tutarlar" }).getByText(/Genel toplam/).locator("..").innerText());
@@ -126,6 +129,7 @@ test("dashboard 'Sipariş durumları' dilimi aynı sayıyı açar (A-5-8)", asyn
   const deger = Number((await dilim.innerText()).split("\n").map((s) => s.trim()).find((s) => /^\d+$/.test(s)));
   await dilim.click();
   await expect(page).toHaveURL(/\/orders\?durum=BEKLIYOR&baslangic=\d{4}-\d{2}-01&bitis=/);
+  await page.goto(`${page.url()}&per=100`);
   await expect(satirlar(page)).toHaveCount(deger);
   expect(await sayi(kpi(page).getByRole("link", { name: /^Bekliyor/ }))).toBe(deger);
 });
