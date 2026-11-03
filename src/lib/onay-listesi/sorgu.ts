@@ -156,7 +156,7 @@ export type OnayPaneli = {
   negatifStok: { urun: string; kod: string; kalan: number; depo: number; yetmiyor: boolean }[] | null;
   /** BEDELSIZ_ONAYI (SIP): bedelsiz satırlar. */
   bedelsiz: { urun: string; adet: number; sebep: FreeReason; not: string | null }[] | null;
-  oncekiler: { id: string; ruleCode: string; decision: "ONAY" | "RED" | null; kararVeren: string | null; decisionNote: string | null; openedAt: Date }[];
+  oncekiler: { id: string; ruleCode: string; decision: "ONAY" | "RED" | null; kararVeren: string | null; decisionNote: string | null; decidedAt: Date | null }[];
 };
 
 export async function onayPaneli(id: string): Promise<OnayPaneli | null> {
@@ -189,7 +189,8 @@ export async function onayPaneli(id: string): Promise<OnayPaneli | null> {
           },
         })
       : null,
-    b.ruleCode === "NEGATIF_STOK" && b.documentType === "SIP" ? varsayilanDepoId() : null,
+    // Aktif depo yoksa (yapılandırma hatası) bağlam boş kalır; panel ve sayfa açılır.
+    b.ruleCode === "NEGATIF_STOK" && b.documentType === "SIP" ? varsayilanDepoId().catch(() => null) : null,
   ]);
   const [blok, ...oncekiler] = await satirlar([b, ...onceki]);
 
@@ -224,7 +225,7 @@ export async function onayPaneli(id: string): Promise<OnayPaneli | null> {
       decision: o.decision,
       kararVeren: o.kararVeren,
       decisionNote: o.decisionNote,
-      openedAt: o.openedAt,
+      decidedAt: o.decidedAt,
     })),
   };
 }

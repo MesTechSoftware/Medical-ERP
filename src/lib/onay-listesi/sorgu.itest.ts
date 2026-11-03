@@ -161,7 +161,7 @@ describe("karar paneli (A-8-12)", () => {
     const p = (await onayPaneli(b.id))!;
     expect(p.bedelsiz).toEqual([expect.objectContaining({ adet: 1, sebep: "PROMOSYON", not: null })]);
     expect(p.negatifStok).toBeNull();
-    expect(p.oncekiler).toEqual([expect.objectContaining({ id: onceki.id, decision: "RED", decisionNote: "kongre yok", kararVeren: "Yönetici" })]);
+    expect(p.oncekiler).toEqual([expect.objectContaining({ id: onceki.id, decision: "RED", decisionNote: "kongre yok", kararVeren: "Yönetici", decidedAt: new Date(AN.getTime() - 4 * SAAT) })]);
     expect(p.blok.decision).toBeNull();
   });
 
@@ -171,6 +171,20 @@ describe("karar paneli (A-8-12)", () => {
     const o = await siparis({ kalemler: [{ miktar: 3, urun: urun.id }, { miktar: 3, urun: urun.id, bedelsiz: true }] });
     const b = await blok({ belge: o.id, acildi: new Date(AN.getTime() - SAAT) });
     expect((await onayPaneli(b.id))!.negatifStok).toEqual([{ urun: "Kateter", kod: urun.code, kalan: 6, depo: 5, yetmiyor: true }]);
+  });
+
+  it("aktif depo yoksa panel açılır, stok bağlamı boş (sayfa çökmez)", async () => {
+    const o = await siparis();
+    const b = await blok({ belge: o.id, acildi: new Date(AN.getTime() - SAAT) });
+    const depolar = await prisma.stockLocation.findMany({ where: { type: "DEPO", isActive: true }, select: { id: true } });
+    await prisma.stockLocation.updateMany({ where: { id: { in: depolar.map((d) => d.id) } }, data: { isActive: false } });
+    try {
+      const p = await onayPaneli(b.id);
+      expect(p?.blok.id).toBe(b.id);
+      expect(p?.negatifStok).toBeNull();
+    } finally {
+      await prisma.stockLocation.updateMany({ where: { id: { in: depolar.map((d) => d.id) } }, data: { isActive: true } });
+    }
   });
 
   it("önceki kararlar yalnız karar verilmiş bloklardır", async () => {

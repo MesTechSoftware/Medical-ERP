@@ -123,7 +123,7 @@ export function OnayPaneli({ veri, kapatAdresi }: { veri: Veri; kapatAdresi: str
               <ul className="divide-y divide-slate-100 text-sm">
                 {veri.oncekiler.map((o) => (
                   <li key={o.id} className="flex flex-wrap items-baseline gap-2 py-1.5">
-                    <span className="text-slate-500">{formatDateTime(o.openedAt)}</span>
+                    {o.decidedAt && <span className="text-slate-500">{formatDateTime(o.decidedAt)}</span>}
                     <span>{kuralAdi(o.ruleCode)}</span>
                     <KararRozeti karar={o.decision} />
                     {o.kararVeren && <span className="text-slate-500">{o.kararVeren}</span>}

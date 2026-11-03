@@ -48,6 +48,12 @@ test("onay bekleyenler: yönetici karar notuyla onaylar, talep listeden düşer 
   await kart.getByRole("button", { name: "Onayla" }).click();
   await expect(kart).toHaveCount(0);
 
+  // Karar verilen talep Bekleyen listesinden düşer; aynı arama Tümü'nde onu bulur.
+  await page.goto(`/approvals?durum=tumu&q=${s.documentNo}`);
+  await expect(page.getByRole("table", { name: "Onay talepleri" }).getByText(s.documentNo)).toBeVisible();
+  await page.goto(`/approvals?q=${s.documentNo}`);
+  await expect(page.getByRole("table", { name: "Onay talepleri" }).getByText(s.documentNo)).toHaveCount(0);
+
   const [blok] = await sorgu<{ decision: string; decisionNote: string }>(
     `SELECT decision::text, "decisionNote" FROM "ApprovalBlock" WHERE id = $1`,
     [blokId]

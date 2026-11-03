@@ -6,9 +6,6 @@ import { stokDurumu } from "@/lib/stok-durumu";
 import { onayKosulu } from "@/lib/onay-listesi/sorgu";
 import { BOS_SUZGEC, ESKI_ONAY_SAATI, onayAdresi } from "@/lib/onay-listesi/suzgec";
 
-/** Karar bekleyen onay bloğunun istisna sayıldığı yaş, saat (brief §3.1). */
-export { ESKI_ONAY_SAATI } from "@/lib/onay-listesi/suzgec";
-
 export type IstisnaKodu = "tukenen" | "kritik" | "eskiOnay" | "faturaEksik" | "sahipsiz";
 
 export type Istisna = {
