@@ -124,3 +124,13 @@ export function topluSecimCoz(f: { getAll(ad: string): unknown[]; get(ad: string
     })),
   };
 }
+
+/**
+ * "Tümünü seç": ilk `sinir` kutu seçili değilse onları seçer, gerisini bırakır (toplu işlem en çok `sinir`
+ * sipariş alır); seçiliyse hepsini temizler. Girdi ve çıktı etkin kutuların sırasıdır.
+ */
+export function tumunuSecDurumu(secili: readonly boolean[], sinir: number = TOPLU_SINIR): boolean[] {
+  const ilkler = secili.slice(0, sinir);
+  if (ilkler.length > 0 && ilkler.every(Boolean)) return secili.map(() => false);
+  return secili.map((_, i) => i < sinir);
+}

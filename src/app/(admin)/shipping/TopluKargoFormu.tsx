@@ -4,6 +4,7 @@ import { startTransition, useActionState, useRef } from "react";
 import { Ikon } from "@/components/Ikon";
 import { SonucGosterimi, TopluKargoSonucListesi } from "@/components/Sonuc";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
+import { TOPLU_SINIR, tumunuSecDurumu } from "@/lib/kargo-listesi/suzgec";
 import { topluKargola, type TopluKargoSonucu } from "./actions";
 
 /**
@@ -22,8 +23,7 @@ export function TopluKargoFormu({
   const form = useRef<HTMLFormElement>(null);
   const tumunuSec = () => {
     const kutular = [...(form.current?.querySelectorAll<HTMLInputElement>('input[name="secili"]:not(:disabled)') ?? [])];
-    const hepsi = kutular.every((k) => k.checked);
-    for (const k of kutular) k.checked = !hepsi;
+    tumunuSecDurumu(kutular.map((k) => k.checked)).forEach((d, i) => (kutular[i].checked = d));
   };
   return (
     <form
@@ -36,6 +36,9 @@ export function TopluKargoFormu({
         startTransition(() => formAction(veri));
       }}
     >
+      {/* Sonuç tablonun üstünde (spec §3.3): uzun kuyrukta düğmelerin altında kaybolmaz. */}
+      <SonucGosterimi sonuc={sonuc} />
+      {sonuc && <TopluKargoSonucListesi satirlar={sonuc.satirlar} />}
       {children}
       <div className="flex flex-wrap items-end gap-2">
         <div className="min-w-[200px] flex-1 sm:flex-none">
@@ -53,15 +56,13 @@ export function TopluKargoFormu({
         </div>
         <button type="button" onClick={tumunuSec} className={buton("ikincil")}>
           <Ikon ad="onayla" />
-          Tümünü seç
+          {`Tümünü seç (en çok ${TOPLU_SINIR})`}
         </button>
         <button type="submit" disabled={bekliyor} className={buton("birincil")}>
           <Ikon ad="kargola" />
           Seçilenleri kargola
         </button>
       </div>
-      <SonucGosterimi sonuc={sonuc} />
-      {sonuc && <TopluKargoSonucListesi satirlar={sonuc.satirlar} />}
     </form>
   );
 }

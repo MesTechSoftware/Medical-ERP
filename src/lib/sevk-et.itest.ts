@@ -177,6 +177,8 @@ describe("topluKargo (A-3-3)", () => {
     );
     // Kalan sıfır olan (tamamlanmış) sipariş sevk edilmez; durumu artık uygun değil.
     expect(sonuc.map((r) => r.sonuc.durum)).toEqual(["HATA", "HATA"]);
+    // Kalanı kalmamış sipariş "kalem giriniz" demez; artık kargo beklemediğini söyler.
+    expect(kodlar(sonuc[0].sonuc)).toEqual(["SIPARIS_DURUMU_UYGUN_DEGIL"]);
     expect(kodlar(sonuc[1].sonuc)).toEqual(["SIPARIS_DURUMU_UYGUN_DEGIL"]);
     expect(sonuc[1].documentNo).toBeNull();
   });

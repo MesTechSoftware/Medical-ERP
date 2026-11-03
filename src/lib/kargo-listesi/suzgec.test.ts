@@ -9,6 +9,7 @@ import {
   sekmeAdresi,
   suzgecCoz,
   topluSecimCoz,
+  tumunuSecDurumu,
   TOPLU_SINIR,
   type KargoSuzgeci,
 } from "./suzgec";
@@ -102,5 +103,14 @@ describe("toplu kargo seçimi (A-3-3)", () => {
     const alanlar = Array.from({ length: TOPLU_SINIR + 1 }, (_, i): [string, string] => ["secili", `o-${i}`]);
     expect(topluSecimCoz(form(alanlar))).toEqual({ hata: "SINIR_ASILDI" });
     expect("secimler" in topluSecimCoz(form(alanlar.slice(0, TOPLU_SINIR)))).toBe(true);
+  });
+});
+
+describe("Tümünü seç (toplu sınır)", () => {
+  it("hepsi seçili değilse ilk TOPLU_SINIR kutuyu seçer, gerisini bırakır; hepsi seçiliyse temizler", () => {
+    expect(tumunuSecDurumu([false, true, false], 2)).toEqual([true, true, false]);
+    expect(tumunuSecDurumu(Array(TOPLU_SINIR + 5).fill(false))).toEqual([...Array(TOPLU_SINIR).fill(true), ...Array(5).fill(false)]);
+    expect(tumunuSecDurumu([true, true], 2)).toEqual([false, false]);
+    expect(tumunuSecDurumu([true, true, false], 2)).toEqual([false, false, false]);
   });
 });

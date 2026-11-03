@@ -85,14 +85,20 @@ export async function topluKargo(
       });
       continue;
     }
+    const kalemler = o.items.flatMap((k) => {
+      const { kalan } = kalemMiktarlari(k);
+      return kalan > 0 ? [{ siparisKalemiId: k.id, miktar: kalan }] : [];
+    });
+    if (kalemler.length === 0) {
+      // Kalanı kalmamış (başkası tamamen sevk etmiş) sipariş artık kargo beklemiyordur.
+      sonuclar.push({ siparisId: o.id, documentNo: o.documentNo, cari: o.doctor.fullName, sonuc: { durum: "HATA", sonuc: new IsHatasi([sert("SIPARIS_DURUMU_UYGUN_DEGIL")]).sonuc } });
+      continue;
+    }
     const r = await kpiGetir(
       () =>
         siparisiSevkEt({
           siparisId: o.id,
-          kalemler: o.items.flatMap((k) => {
-            const { kalan } = kalemMiktarlari(k);
-            return kalan > 0 ? [{ siparisKalemiId: k.id, miktar: kalan }] : [];
-          }),
+          kalemler,
           carrierId,
           trackingNumber: secim.takip,
           externalDispatchNo: secim.irsaliye,

@@ -195,7 +195,7 @@ export function TopluKargoSonucListesi({ satirlar }: { satirlar: readonly TopluS
                     : r.durum === "ONAYA_GONDERILDI"
                     ? `Onaya gönderildi: ${metin}`
                     : r.sonucDurumu === "ONAY_GEREKLI"
-                      ? `Onay gerekli: ${metin} Kısmi sevk panelinden gerekçeyle gönderin.`
+                      ? `Onay gerekli: ${metin} — Kısmi sevk panelinden gerekçeyle gönderin.`
                       : metin}
               </span>
             </li>
