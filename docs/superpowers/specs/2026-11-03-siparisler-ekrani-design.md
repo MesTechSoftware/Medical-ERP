@@ -59,7 +59,7 @@ farkı yoktur. Prim gösterilmez.
 
 ### 3.2 KPI kartları
 
-Kartlar **aralıkta açılan onaylı siparişlerin bugünkü durumlarını** sayar (`stage = ONAYLI`, `orderDate`
+6 kart ADR-010'un 4 kart sınırına istisnadır (kullanıcı kararı 03.11.2026, ADR-010 eki); yerleşim dar satırda 2 kolon, 576 px'ten 6 birim (birincil tam satır, 3 + 2), 1200 px'ten tek satır. Etiketler sekmelerle aynıdır ("Teslim Edildi", "İptal"). Kartlar **aralıkta açılan onaylı siparişlerin bugünkü durumlarını** sayar (`stage = ONAYLI`, `orderDate`
 aralıkta). Bu tanım dashboard'un "Sipariş durumları" dağılımıyla aynıdır ve tek fonksiyondan okunur
 (`siparisDagilimi(aralik)`, `src/lib/dashboard.ts`). Teklif sayılmaz (A-5).
 
