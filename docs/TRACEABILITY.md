@@ -6,7 +6,7 @@
 > Kod yeri, kriter metninde anılan fonksiyonun tanımlandığı dosyadır. Eski PRD matrisi (8 Ağustos 2026)
 > `docs/arsiv/TRACEABILITY_PRD_V2.md`'dedir.
 
-**Özet:** 148 KANITLI · 0 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.0** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
+**Özet:** 149 KANITLI · 1 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.7** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
 
 | Kriter | Karar | Durum | Kod yeri | Test | Kriter metni |
 |---|---|---|---|---|---|
@@ -55,6 +55,8 @@
 | A-8-8 | A-8 | KANITLI | — | `src/lib/sevkiyat.itest.ts`<br>`e2e/admin/onay.spec.ts` | `YONETICI` gerekçeyle sevk eder: sevkiyat yazılır, siparişe (`SIP`) bağlı `NEGATIF_STOK` bloğu aynı işlemde `ONAY` alır. Ekrandan girilen… |
 | A-8-9 | A-8 | KANITLI | — | `src/lib/sevkiyat.itest.ts`<br>`e2e/operasyon/operasyon.spec.ts` | Diğer rol gerekçe yazarsa sevkiyat, numara ve hareket yazılmaz; yalnız açık blok yazılır, sonuç "onaya gönderildi"dir. Kararı verilmemiş… |
 | A-8-10 | A-8 | KANITLI | — | `src/lib/sevkiyat.itest.ts`<br>`e2e/admin/onay.spec.ts`<br>`src/lib/yetki.test.ts` | `RED`'den sonra stok hâlâ yetmiyorsa gerekçesiz sevk yeniden `ONAY_GEREKLI` döner, yeni gerekçe yeni blok açar (eski blok iz olarak kalır… |
+| A-8-11 | A-8 | KANITLI | `src/lib/istisnalar.ts` | `src/lib/onay-listesi/suzgec.test.ts` | Onay ekranı bekleyen talepleri en eskisi önce listeler; "24 saatten eski" kartı, dashboard'un "onay 24 saatten uzun süredir bekliyor" ist… |
+| A-8-12 | A-8 | TESTSIZ | `src/lib/siparis.ts` | — | Onay panelinde negatif stok talebinin bağlamı kalem başına sevk edilecek miktar (`kalemMiktarlari` kalanı) ve sevkiyatın denetlediği depo… |
 | A-9-1 | A-9 | KAPSAM DIŞI | — | — | — |
 | A-10-1 | A-10 | KANITLI | — | `src/app/(seller)/my-orders/orders.itest.ts` | İskonto tavanı ve taban fiyat reddi yoktur: liste altı ve liste üstü birim fiyat kabul edilir; liste ve birim fiyat ayrı donar. |
 | A-11-1 | A-11 | KANITLI | — | `src/app/(admin)/collections/collections.itest.ts`<br>`src/lib/satir-tutarlari.test.ts` | Tahsilatta ödeme yöntemi zorunludur; komisyon oranı yöntemden kayda kopyalanır ve donar, komisyon tutarı oran × tutar (2 hane, yarım sıfı… |
