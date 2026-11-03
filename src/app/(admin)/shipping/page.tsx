@@ -1,242 +1,83 @@
-import Link from "next/link";
-import { prisma } from "@/lib/db";
-import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
-import { formatDate, formatDateTime } from "@/lib/format";
-import { PageHeader, Card, StatusBadge, EmptyRow } from "@/components/ui";
-import { IslemFormu } from "@/components/Sonuc";
-import { shipOrder } from "./actions";
-import { Tutar } from "@/components/Tutar";
-import { SATIR_TABANI } from "@/lib/taban";
-import { takipLinki } from "@/lib/kargo";
-import { belgeOnayDurumlari } from "@/lib/onay-blogu";
-import { OnayEtiketi } from "@/components/OnayEtiketi";
-import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
-import { Ikon } from "@/components/Ikon";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { requireStaff } from "@/lib/session";
+import { PageHeader, Card } from "@/components/ui";
+import Pagination from "@/components/Pagination";
+import { SutunSecici } from "@/components/liste/SutunSecici";
+import { kpiGetir } from "@/lib/kpi/getir";
+import { firmaSecenekleri, kargoBekleyenler, kargoKpileri, kismiSecimi, sevkiyatListesi } from "@/lib/kargo-listesi/sorgu";
+import { SUTUNLAR, SUTUN_CEREZI } from "@/lib/kargo-listesi/sutunlar";
+import { FIRMASIZ, kargoAdresi, suzgecCoz, type Parametreler } from "@/lib/kargo-listesi/suzgec";
+import { gizliSutunlariCoz } from "@/lib/liste/sutunlar";
+import { ilk } from "@/lib/liste/parametreler";
+import { getPagination, pageCount } from "@/lib/pagination";
+import { simdi, yerelGunMetni } from "@/lib/zaman";
+import { BekleyenTablosu } from "./BekleyenTablosu";
+import { KismiPanel } from "./KismiPanel";
+import { KpiKartlari } from "./KpiKartlari";
+import { SevkiyatTablosu } from "./SevkiyatTablosu";
+import { SuzgecCubugu } from "./SuzgecCubugu";
+import { sutunlariKaydet } from "./sutunEylemi";
 
-export default async function ShippingPage() {
-  const [pending, shipped, carriers] = await Promise.all([
-    prisma.order.findMany({
-      where: { status: "HAZIRLANIYOR" },
-      orderBy: { orderDate: "asc" },
-      include: {
-        seller: { select: { name: true } },
-        doctor: { select: { fullName: true, clinic: true } },
-        items: {
-          orderBy: { id: "asc" },
-          select: {
-            ...SIPARIS_SATIRI,
-            id: true,
-            product: { select: { name: true, code: true } },
-            shipmentItems: { select: { quantity: true } },
-          },
-        },
-      },
-    }),
-    prisma.order.findMany({
-      where: { status: { in: ["KARGOLANDI", "TESLIM_EDILDI"] } },
-      orderBy: { orderDate: "desc" },
-      take: 30,
-      include: {
-        seller: { select: { name: true } },
-        doctor: { select: { fullName: true, clinic: true } },
-        shipments: {
-          orderBy: { createdAt: "desc" },
-          take: 1,
-          include: { carrier: { select: { name: true, trackingUrlTemplate: true } } },
-        },
-      },
-    }),
-    // Kargo firması tanım tablosudur (D-3); yönetim ekranı 1B'dedir.
-    prisma.carrier.findMany({
-      where: { isActive: true },
-      orderBy: { sortOrder: "asc" },
-      select: { id: true, name: true },
-    }),
-  ]);
-  // A-8: onay bekleyen ya da reddedilen sipariş sevk edilemez (negatif stok, bedelsiz satır).
-  const onayDurumu = await belgeOnayDurumlari("SIP", pending.map((o) => o.id));
+export default async function ShippingPage({ searchParams }: { searchParams: Promise<Parametreler> }) {
+  const session = await requireStaff();
+  const params = await searchParams;
+  const per = ilk(params, "per") ?? undefined;
+  const { page, perPage, skip, take } = getPagination({ page: ilk(params, "page") ?? undefined, per });
+  const { suzgec, kismi } = suzgecCoz(params);
+  const yer = { page, per: per ? perPage : undefined };
+  const gizli = gizliSutunlariCoz(SUTUNLAR, (await cookies()).get(SUTUN_CEREZI)?.value);
+  const adres = kargoAdresi(suzgec, yer);
+  const bugun = yerelGunMetni(simdi());
+
+  const [bekleyenler, liste, firmalar] = await Promise.all([kargoBekleyenler(), sevkiyatListesi(suzgec, { skip, take }), firmaSecenekleri()]);
+  const kpi = await kpiGetir(() => kargoKpileri(bugun, bekleyenler), { yol: "/shipping", kullaniciId: session.user.id });
+
+  // Seçeneklerde olmayan firma süzgeci (eski yer imi, elle yazılmış kimlik) adresten düşer.
+  if (suzgec.firma && suzgec.firma !== FIRMASIZ && !firmalar.some((f) => f.id === suzgec.firma)) {
+    redirect(kargoAdresi({ ...suzgec, firma: null }, { ...yer, ...(kismi ? { kismi } : {}) }));
+  }
+  // Sayfa dışı adres son sayfaya gider; boş durum "hiç kayıt yok" demesin.
+  if (liste.satirlar.length === 0 && liste.toplam > 0) {
+    redirect(kargoAdresi(suzgec, { ...yer, page: pageCount(liste.toplam, perPage), ...(kismi ? { kismi } : {}) }));
+  }
+
+  const aktifFirmalar = firmalar.filter((f) => f.isActive);
+  const panel = kismiSecimi(bekleyenler, kismi);
+  const sayfaParametreleri = {
+    ...Object.fromEntries(new URL(kargoAdresi(suzgec), "http://x").searchParams),
+    per: yer.per === undefined ? undefined : String(yer.per),
+  };
 
   return (
     <div>
-      <PageHeader
-        title="Kargo"
-        description="Hazırlanan siparişleri kargoya verin"
-      />
+      <PageHeader title="Kargo" description="Hazırlanan siparişleri kargoya verin" />
+
+      <KpiKartlari sonuc={kpi} bugun={bugun} yonetici={session.user.role === "YONETICI"} />
 
       <div className="mb-6">
         <Card>
-          <h2 className="mb-4 text-sm font-semibold text-slate-900">
-            Kargo Bekleyenler ({pending.length})
-          </h2>
-          {pending.length === 0 ? (
-            <p className="py-6 text-center text-sm text-slate-400">
-              Kargo bekleyen sipariş yok.
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {pending.map((o) => (
-                <div
-                  key={o.id}
-                  data-sevk-karti={o.id}
-                  className="rounded-lg border border-slate-200 p-3"
-                >
-                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <Link
-                        href={`/orders/${o.id}`}
-                        className="font-medium text-slate-900 hover:underline"
-                      >
-                        {o.doctor.fullName}
-                      </Link>
-                      <span className="ml-2 text-sm text-slate-500">
-                        {[o.doctor.clinic, o.seller?.name].filter(Boolean).join(" · ")} ·{" "}
-                        {formatDate(o.orderDate)}
-                      </span>
-                    </div>
-                    <span className="flex items-center gap-2 text-sm font-medium tabular-nums text-slate-900">
-                      <OnayEtiketi durum={onayDurumu.get(o.id)} />
-                      <Tutar deger={siparisToplami(o.items).toplam} taban={SATIR_TABANI.toplam} />
-                    </span>
-                  </div>
-                  <IslemFormu
-                    action={shipOrder.bind(null, o.id)}
-                    className="flex flex-wrap items-end gap-2"
-                  >
-                    {/* A-3: kısmi sevkiyat — her kalemin kalan miktarı varsayılandır; 0 bu sevkiyatta gönderilmez. */}
-                    <div className="w-full space-y-1">
-                      {o.items.map((i) => {
-                        const kalan = i.quantity - i.shipmentItems.reduce((t, s) => t + s.quantity, 0);
-                        return (
-                          <div key={i.id} className="flex items-center justify-between gap-3 text-sm">
-                            <label htmlFor={`miktar_${i.id}`} className="text-slate-700">
-                              {i.product.name}
-                              <span className="ml-1 text-xs text-slate-400">
-                                {i.product.code} · kalan {kalan}/{i.quantity}
-                              </span>
-                            </label>
-                            <input
-                              id={`miktar_${i.id}`}
-                              name={`miktar_${i.id}`}
-                              type="number"
-                              min={0}
-                              max={kalan}
-                              defaultValue={kalan}
-                              className={`w-20 sayi ${KONTROL_TEK_SATIR}`}
-                            />
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <div className="flex-1 min-w-[160px]">
-                      <label className="mb-1 block text-xs text-slate-500">
-                        Kargo Firması
-                      </label>
-                      <select
-                        name="carrierId"
-                        defaultValue=""
-                        className={`w-full ${KONTROL_TEK_SATIR}`}
-                      >
-                        <option value="">Seçiniz...</option>
-                        {carriers.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="flex-1 min-w-[160px]">
-                      <label className="mb-1 block text-xs text-slate-500">
-                        Takip Numarası
-                      </label>
-                      <input
-                        name="trackingNumber"
-                        placeholder="Örn: TR123456789"
-                        className={`w-full ${KONTROL_TEK_SATIR}`}
-                      />
-                    </div>
-                    <div className="flex-1 min-w-[160px]">
-                      <label htmlFor={`irsaliye_${o.id}`} className="mb-1 block text-xs text-slate-500">
-                        İrsaliye No (isteğe bağlı)
-                      </label>
-                      <input
-                        id={`irsaliye_${o.id}`}
-                        name="externalDispatchNo"
-                        maxLength={32}
-                        className={`w-full ${KONTROL_TEK_SATIR}`}
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      className={buton("birincil")}
-                    >
-                      <Ikon ad="kargola" />
-                      Kargola
-                    </button>
-                  </IslemFormu>
-                </div>
-              ))}
-            </div>
-          )}
+          <h2 className="mb-4 text-sm font-semibold text-slate-900">Kargo Bekleyenler ({bekleyenler.length})</h2>
+          <BekleyenTablosu satirlar={bekleyenler} firmalar={aktifFirmalar} kismiAdresi={(id) => kargoAdresi(suzgec, { ...yer, kismi: id })} />
         </Card>
       </div>
 
       <Card>
-        <h2 className="mb-4 text-sm font-semibold text-slate-900">
-          Kargolanan Siparişler
-        </h2>
-        <div className="tablo-kutusu">
-          <table className="veri-tablosu">
-            <thead>
-              <tr>
-                <th>Doktor</th>
-                <th className="oncelik-dusuk">Satıcı</th>
-                <th className="oncelik-dusuk">Kargo</th>
-                <th>Takip No</th>
-                <th>Tarih</th>
-                <th>Durum</th>
-              </tr>
-            </thead>
-            <tbody>
-              {shipped.length === 0 && (
-                <EmptyRow colSpan={6} text="Henüz kargolanan sipariş yok." />
-              )}
-              {shipped.map((o) => (
-                <tr key={o.id}>
-                  <td className="font-medium text-slate-900">
-                    {o.doctor.fullName}
-                  </td>
-                  <td className="text-slate-500 oncelik-dusuk">{o.seller?.name ?? "—"}</td>
-                  <td className="text-slate-700 oncelik-dusuk">
-                    {o.shipments[0]?.carrier?.name ?? "—"}
-                  </td>
-                  <td className="text-slate-700">
-                    {/* D-3: takip linki firmanın şablonundan; şablon yoksa yalnız numara. */}
-                    {(() => {
-                      const sv = o.shipments[0];
-                      const link = takipLinki(sv?.carrier?.trackingUrlTemplate, sv?.trackingNumber);
-                      return link ? (
-                        <a href={link} target="_blank" rel="noopener noreferrer" className="underline hover:text-slate-900">
-                          {sv?.trackingNumber}
-                        </a>
-                      ) : (
-                        (sv?.trackingNumber ?? "—")
-                      );
-                    })()}
-                  </td>
-                  <td className="whitespace-nowrap text-slate-500">
-                    {o.shipments[0]?.shippedAt
-                      ? formatDateTime(o.shipments[0].shippedAt)
-                      : "—"}
-                  </td>
-                  <td>
-                    <StatusBadge status={o.status} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <h2 className="mb-4 text-sm font-semibold text-slate-900">Sevkiyatlar</h2>
+        <SuzgecCubugu
+          suzgec={suzgec}
+          bugun={bugun}
+          per={yer.per}
+          firmalar={firmalar}
+          sutunMenusu={<SutunSecici sutunlar={SUTUNLAR} gizli={gizli} action={sutunlariKaydet} donus={adres} />}
+        />
+        <SevkiyatTablosu satirlar={liste.satirlar} gizli={gizli} suzgec={suzgec} />
       </Card>
+
+      <Pagination page={page} totalPages={pageCount(liste.toplam, perPage)} total={liste.toplam} basePath="/shipping" params={sayfaParametreleri} />
+
+      {/* Kargo bekleyen olmayan sipariş için panel açılmaz (spec §3.4). */}
+      {panel && <KismiPanel key={panel.id} r={panel} firmalar={aktifFirmalar} kapatAdresi={adres} />}
     </div>
   );
 }
