@@ -6,7 +6,7 @@
 > Kod yeri, kriter metninde anılan fonksiyonun tanımlandığı dosyadır. Eski PRD matrisi (8 Ağustos 2026)
 > `docs/arsiv/TRACEABILITY_PRD_V2.md`'dedir.
 
-**Özet:** 146 KANITLI · 2 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %1.4** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
+**Özet:** 147 KANITLI · 1 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.7** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
 
 | Kriter | Karar | Durum | Kod yeri | Test | Kriter metni |
 |---|---|---|---|---|---|
@@ -32,7 +32,7 @@
 | A-2-2 | A-2 | KANITLI | — | `src/app/(seller)/my-orders/orders.itest.ts`<br>`src/lib/sevkiyat.itest.ts`<br>`e2e/seller/orders.spec.ts` | Numune onaysız kaydolur. Diğer sebepler gerekçesiz `ONAY_GEREKLI` · `YUMUSAK` `BEDELSIZ_ONAYI` döner (sipariş ve numara yazılmaz); gerekç… |
 | A-3-1 | A-3 | KANITLI | `src/lib/satir-tutarlari.ts` | `src/lib/sevkiyat.itest.ts`<br>`src/app/(seller)/my-orders/orders.itest.ts`<br>`e2e/admin/sevkiyat.spec.ts` | Bir sipariş satırına birden çok sevkiyat bağlanabilir; sevkiyat yalnız `ONAYLI` · `HAZIRLANIYOR` siparişte, kalem başına kalan miktarı aş… |
 | A-3-2 | A-3 | KANITLI | `src/lib/siparis.ts` | `src/lib/siparis.test.ts`<br>`src/lib/siparis-listesi/sorgu.itest.ts` | Siparişler ekranında kalem başına sevk edilen, kalan (sipariş − sevk) ve iade edilen miktar tek fonksiyondan okunur; iade kalanı değiştir… |
-| A-3-3 | A-3 | TESTSIZ | — | — | Toplu kargo seçilen her siparişin kalan adetlerinin tamamını **ayrı işlemle** sevk eder: kargo firması ortak, takip ve irsaliye numarası… |
+| A-3-3 | A-3 | KANITLI | `src/lib/sevk-et.ts` | `src/lib/sevk-et.itest.ts`<br>`src/lib/kargo-listesi/suzgec.test.ts` | Toplu kargo seçilen her siparişin kalan adetlerinin tamamını **ayrı işlemle** sevk eder: kargo firması ortak, takip ve irsaliye numarası… |
 | A-4-1 | A-4 | KANITLI | — | `src/lib/stok-transfer.itest.ts`<br>`e2e/admin/konsinye.spec.ts` | `KonsinyeCikis` (`KNS`) malı depodan doktorun konsinye konumuna taşır; konum doktor başına tektir ve ilk çıkışta açılır (veritabanında `U… |
 | A-5-1 | A-5 | KANITLI | — | `src/lib/sayilan-belgeler.itest.ts` | `TEKLIF` aşamasındaki siparişin satırları sayılan sipariş ve sayılan sevk satırı kümesine girmez. |
 | A-5-2 | A-5 | KANITLI | — | `src/lib/sayilan-belgeler.itest.ts` | `IPTAL` durumundaki sipariş sayılmaz (X-6 §(9), K-1). |
