@@ -6,7 +6,7 @@
 > Kod yeri, kriter metninde anılan fonksiyonun tanımlandığı dosyadır. Eski PRD matrisi (8 Ağustos 2026)
 > `docs/arsiv/TRACEABILITY_PRD_V2.md`'dedir.
 
-**Özet:** 147 KANITLI · 1 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.7** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
+**Özet:** 148 KANITLI · 0 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.0** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
 
 | Kriter | Karar | Durum | Kod yeri | Test | Kriter metni |
 |---|---|---|---|---|---|
@@ -103,7 +103,7 @@
 | D-2-2 | D-2 | KANITLI | — | `e2e/operasyon/operasyon.spec.ts` | `OPERASYON` ürün listesini ve yan panelini görür; Yeni Ürün, Düzenle ve Sil görmez. |
 | D-2-3 | D-2 | KANITLI | — | `src/lib/kullanici-listesi/sorgu.itest.ts`<br>`src/lib/kullanici-listesi/suzgec.test.ts`<br>`e2e/operasyon/operasyon.spec.ts` | Kullanıcılar ekranında OPERASYON yalnız satıcıları görür: liste, KPI ve yan panel aynı kapsam koşulundandır; OPERASYON'a yönetici/operasy… |
 | D-3-1 | D-3 | KANITLI | `src/lib/kargo.ts` | `src/lib/kargo.test.ts`<br>`src/lib/sevkiyat.itest.ts` | Sevkiyat kargo firmasını (tanım tablosu), takip numarasını (elle, isteğe bağlı) ve gönderi gününü (otomatik, sevk günü) taşır. Takip link… |
-| D-3-2 | D-3 | TESTSIZ | — | — | Kargo ekranının sevkiyat listesi gönderi anını (`shippedAt`) İstanbul günüyle süzer; "Bugün kargolanan" kartı bugünün süzgecinin satır sa… |
+| D-3-2 | D-3 | KANITLI | — | `src/lib/kargo-listesi/sorgu.itest.ts` | Kargo ekranının sevkiyat listesi gönderi anını (`shippedAt`) İstanbul günüyle süzer; "Bugün kargolanan" kartı bugünün süzgecinin satır sa… |
 | D-4-1 | D-4 | KANITLI | — | `src/lib/reports-service.itest.ts` | Hakediş yalnız satırın matrahı ve satıra donmuş oranla hesaplanır; satıcının dönem cirosu, hedefi ya da kotası oranı değiştirmez — aynı s… |
 | D-5-1 | D-5 | KANITLI | `src/lib/disa-aktarim.ts`<br>`src/lib/satir-tutarlari.ts` | `src/lib/disa-aktarim.itest.ts`<br>`src/lib/disa-aktarim-yazici.test.ts`<br>`e2e/admin/disa-aktarim.spec.ts`<br>`src/lib/yetki.test.ts`<br>`e2e/operasyon/operasyon.spec.ts` | Dışa aktarım yalnız `calistirDisaAktarim()` ile çalışır ve `{ kolonlar, satirlar }` döner; format katmanı (XLSX, CSV) iş kavramı tanımaz.… |
 | D-5-2 | D-5 | KANITLI | — | `src/lib/disa-aktarim.itest.ts`<br>`src/lib/tek-cagri.test.ts` | Her dışa aktarım veritabanındaki kütüğe yazılır: zaman, kullanıcı kimliği, veri seti kodu, parametreler (dönem/gün, biçim), satır sayısı.… |
