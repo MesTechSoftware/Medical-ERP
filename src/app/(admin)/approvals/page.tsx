@@ -34,17 +34,16 @@ export default async function ApprovalsPage({ searchParams }: { searchParams: Pr
   const gizli = gizliSutunlariCoz(SUTUNLAR, (await cookies()).get(SUTUN_CEREZI)?.value);
   const adres = onayAdresi(suzgec, yer);
 
-  const kullanicilar = await acanSecenekleri();
-  // Seçeneklerde olmayan açan süzgeci (eski yer imi, elle yazılmış kimlik) adresten düşer.
-  if (suzgec.acan && !kullanicilar.some((u) => u.id === suzgec.acan)) {
-    redirect(onayAdresi({ ...suzgec, acan: null }, { ...yer, ...(detay ? { detay } : {}) }));
-  }
-
-  const [liste, kpi, panel] = await Promise.all([
+  const [kullanicilar, liste, kpi, panel] = await Promise.all([
+    acanSecenekleri(),
     onayListesi(suzgec, { skip, take }, an),
     kpiGetir(() => onayKpileri(bugun, an), { yol: "/approvals", kullaniciId: session.user.id }),
     detay ? onayPaneli(detay) : null,
   ]);
+  // Seçeneklerde olmayan açan süzgeci (eski yer imi, elle yazılmış kimlik) adresten düşer.
+  if (suzgec.acan && !kullanicilar.some((u) => u.id === suzgec.acan)) {
+    redirect(onayAdresi({ ...suzgec, acan: null }, { ...yer, ...(detay ? { detay } : {}) }));
+  }
   // Sayfa dışı adres son sayfaya gider; boş durum "hiç kayıt yok" demesin.
   if (liste.satirlar.length === 0 && liste.toplam > 0) {
     redirect(onayAdresi(suzgec, { ...yer, page: pageCount(liste.toplam, perPage), ...(detay ? { detay } : {}) }));

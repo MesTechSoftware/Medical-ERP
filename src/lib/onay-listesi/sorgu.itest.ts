@@ -107,7 +107,7 @@ describe("kartlar ve süzgeç (A-8-11)", () => {
     expect(onaylar.satirlar.map((r) => r.id)).toEqual([eskiAcilmis.id]);
     expect(k.bugunRed).toBe(1);
     expect(redler.satirlar[0]).toMatchObject({ id: red.id, decision: "RED", decisionNote: "stok yok", kararVeren: "Yönetici" });
-    // Geçmiş sekmesi olay anı desc: önce bugünkü red, sonra bugünkü onay, sonra dünkü onay.
+    // Tümü sekmesi açılış anı desc (Prisma'da olay anı coalesce sıralaması yok — spec §3.4).
     expect((await onayListesi(S({ durum: "tumu" }), SAYFA, AN)).satirlar[0].id).toBe(red.id);
   });
 
@@ -137,7 +137,8 @@ describe("kartlar ve süzgeç (A-8-11)", () => {
 
 describe("karar paneli (A-8-12)", () => {
   it("negatif stok: kalem başına kalan ve varsayılan depo stoğu; tamamen sevk edilmiş kalem yetiyor sayılır", async () => {
-    const o = await siparis({ kalemler: [{ miktar: 5 }, { miktar: 2 }] });
+    const ikinci = await prisma.product.create({ data: { name: "Kılavuz", code: `KL-${no}`, taxRateId: ref.kdv20.id } });
+    const o = await siparis({ kalemler: [{ miktar: 5 }, { miktar: 2, urun: ikinci.id }] });
     await prisma.stockMovement.create({ data: { productId: o.items[0].productId, locationId: ref.depo.id, type: "GIRIS", quantity: 2 } });
     // ikinci kalem tamamen sevk edilmiş
     await prisma.shipment.create({ data: { documentNo: `SVK-ON-${no}`, orderId: o.id, items: { create: [{ orderItemId: o.items[1].id, quantity: 2 }] } } });
@@ -162,6 +163,21 @@ describe("karar paneli (A-8-12)", () => {
     expect(p.negatifStok).toBeNull();
     expect(p.oncekiler).toEqual([expect.objectContaining({ id: onceki.id, decision: "RED", decisionNote: "kongre yok", kararVeren: "Yönetici" })]);
     expect(p.blok.decision).toBeNull();
+  });
+
+  it("negatif stok ürün başına toplanır (sevkiyatın denetimi gibi): aynı ürünün iki kalemi 3 + 3, depo 5 → yetmiyor", async () => {
+    const urun = await prisma.product.create({ data: { name: "Kateter", code: `KT-${no}`, taxRateId: ref.kdv20.id } });
+    await prisma.stockMovement.create({ data: { productId: urun.id, locationId: ref.depo.id, type: "GIRIS", quantity: 5 } });
+    const o = await siparis({ kalemler: [{ miktar: 3, urun: urun.id }, { miktar: 3, urun: urun.id, bedelsiz: true }] });
+    const b = await blok({ belge: o.id, acildi: new Date(AN.getTime() - SAAT) });
+    expect((await onayPaneli(b.id))!.negatifStok).toEqual([{ urun: "Kateter", kod: urun.code, kalan: 6, depo: 5, yetmiyor: true }]);
+  });
+
+  it("önceki kararlar yalnız karar verilmiş bloklardır", async () => {
+    const o = await siparis();
+    await blok({ belge: o.id, kural: "BEDELSIZ_ONAYI", acildi: new Date(AN.getTime() - 3 * SAAT) });
+    const b = await blok({ belge: o.id, acildi: new Date(AN.getTime() - SAAT) });
+    expect((await onayPaneli(b.id))!.oncekiler).toEqual([]);
   });
 
   it("bulunmayan blok → null", async () => {

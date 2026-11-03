@@ -91,15 +91,15 @@ Bilinmeyen açan kimliği adresten düşer.
 | Karar zamanı | `formatDateTime(decidedAt)` ya da "—" | evet |
 | İşlem | "İncele" → panel (`?detay=`) | hayır |
 
-Sıralama: bekleyen sekmesinde `openedAt asc, id asc` (en eski önce, bugünkü gibi); öbür sekmelerde olay anı
-`desc` (kararlıda `decidedAt`, açıkta `openedAt`), sonra `id desc`. Çerez `onay-sutunlar`, `path=/approvals`.
+Sıralama: bekleyen sekmesinde `openedAt asc, id asc` (en eski önce, bugünkü gibi); Onaylanan/Reddedilen'de
+`decidedAt desc`; Tümü'de `openedAt desc` (Prisma olay anı coalesce sıralaması yapmaz); sonra `id desc`. Çerez `onay-sutunlar`, `path=/approvals`.
 
 ### 3.5 Yan panel
 
 1. **Talep:** kural, belge (bağlantı), cari, sipariş durumu (SIP), açan · açılış zamanı, gerekçe (tam).
 2. **Karar bağlamı (yalnız SIP):**
-   - `NEGATIF_STOK`: kalemler — ürün, sevk edilecek (kalan, `kalemMiktarlari`), varsayılan depodaki stok
-     (`hesaplaStoklar`, sevkiyatın denetlediği konum), "yetmiyor" çipi stok < kalan ise.
+   - `NEGATIF_STOK`: ürün başına — sevk edilecek (kalemlerin kalanı toplanır, `kalemMiktarlari`; sevkiyatın
+     denetimi gibi), varsayılan depodaki stok (`hesaplaStoklar`), "yetmiyor" çipi stok < kalan ise.
    - `BEDELSIZ_ONAYI`: bedelsiz satırlar — ürün, adet, sebep (`BEDELSIZ_SEBEP_ADI`), açıklama.
 3. **Önceki kararlar:** aynı belgenin bu bloktan önceki blokları (kural, karar, karar veren, not).
 4. **Karar** (yalnız açık blokta): karar notu (zorunlu) + Onayla / Reddet (`blokKarari`, bugünkü eylem);
@@ -134,8 +134,8 @@ KPI sorgusu hata verirse yalnız kartlar düşer (`kpiGetir`).
   "onay 24 saatten uzun süredir bekliyor" istisnası ve `eski=1` süzgecinin satır sayısı aynı koşuldan
   (`ESKI_ONAY_SAATI`) sayılır. Verilmiş kararlar geçmişte notu, vereni ve zamanıyla görünür; "Bugün onaylanan /
   reddedilen" kartları karar anının İstanbul gününden sayar ve açtıkları süzgecin satır sayısına eşittir.
-- **A-8-12:** Onay panelinde negatif stok talebinin bağlamı kalem başına sevk edilecek miktar (`kalemMiktarlari`
-  kalanı) ve sevkiyatın denetlediği depodaki stoktur; bedelsiz onay talebinde bedelsiz satırlar sebebiyle
+- **A-8-12:** Onay panelinde negatif stok talebinin bağlamı ürün başına toplanmış sevk edilecek miktar
+  (`kalemMiktarlari` kalanı; sevkiyatın denetimi gibi) ve sevkiyatın denetlediği depodaki stoktur; bedelsiz onay talebinde bedelsiz satırlar sebebiyle
   gösterilir. Karar formu yalnız açık blokta vardır; kararlı blokta karar, veren, zaman ve not okunur.
 
 | Katman | Dosya | Neyi doğrular |

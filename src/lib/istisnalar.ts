@@ -3,10 +3,11 @@ import { EKSIK_FATURA_BILGISI } from "@/lib/cari";
 import { prisma } from "@/lib/db";
 import { SAHIPSIZ_DOKTOR } from "@/lib/sahiplik";
 import { stokDurumu } from "@/lib/stok-durumu";
-import { BOS_SUZGEC, onayAdresi } from "@/lib/onay-listesi/suzgec";
+import { onayKosulu } from "@/lib/onay-listesi/sorgu";
+import { BOS_SUZGEC, ESKI_ONAY_SAATI, onayAdresi } from "@/lib/onay-listesi/suzgec";
 
 /** Karar bekleyen onay bloğunun istisna sayıldığı yaş, saat (brief §3.1). */
-export const ESKI_ONAY_SAATI = 24;
+export { ESKI_ONAY_SAATI } from "@/lib/onay-listesi/suzgec";
 
 export type IstisnaKodu = "tukenen" | "kritik" | "eskiOnay" | "faturaEksik" | "sahipsiz";
 
@@ -28,9 +29,9 @@ export type Istisna = {
  * `decision: null`. Onay ekranı yöneticinindir: OPERASYON onay istisnasını görmez. Kişi adı yoktur.
  */
 export async function istisnalar(rol: Role, stoklar: readonly { stok: number }[], an: Date): Promise<Istisna[]> {
-  const esik = new Date(an.getTime() - ESKI_ONAY_SAATI * 3_600_000);
   const [eskiOnay, faturaEksik, sahipsiz] = await Promise.all([
-    rol === "YONETICI" ? prisma.approvalBlock.count({ where: { decision: null, openedAt: { lt: esik } } }) : 0,
+    // Onay ekranının `eski` süzgeciyle aynı koşul (tek `where` üreticisi, A-8-11).
+    rol === "YONETICI" ? prisma.approvalBlock.count({ where: onayKosulu({ ...BOS_SUZGEC, eski: true }, an) }) : 0,
     prisma.doctor.count({ where: EKSIK_FATURA_BILGISI }),
     prisma.doctor.count({ where: SAHIPSIZ_DOKTOR }),
   ]);

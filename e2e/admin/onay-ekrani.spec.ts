@@ -28,13 +28,16 @@ test("24 saatten eski kartı süzgeci açar; kart = satır (A-8-11)", async ({ p
   await kart.click();
   await expect(page).toHaveURL(/\/approvals\?eski=1$/);
   await expect(page.getByRole("list", { name: "Etkin süzgeçler" }).getByText("24 saatten eski")).toBeVisible();
+  // Kart sayısı sayfa boyunu aşabilir: aynı süzgeç tek sayfada.
+  await page.goto(`${page.url()}&per=100`);
   await expect(satirlar(page)).toHaveCount(deger);
 });
 
 test("panelde negatif stok bağlamı; notla red → Reddedilen sekmesinde not görünür (A-8-12)", async ({ page }) => {
   const s = await stoksuzSiparis();
   const blokId = await blokAc(s.siparisId, 1);
-  await page.goto("/approvals");
+  // Bekleyenler en eski önce: yeni talep sonraki sayfada olabilir, belge numarasıyla süzülür.
+  await page.goto(`/approvals?q=${s.documentNo}`);
   await satirlar(page).filter({ hasText: s.documentNo }).getByRole("link", { name: "İncele" }).click();
   const panel = page.getByRole("dialog");
   const stok = panel.getByRole("region", { name: "Stok durumu" });

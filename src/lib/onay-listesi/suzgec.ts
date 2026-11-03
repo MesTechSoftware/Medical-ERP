@@ -24,6 +24,9 @@ export const BOS_SUZGEC: OnaySuzgeci = { durum: "bekleyen", baslangic: null, bit
 
 const METIN_SINIRI = 100;
 
+/** "Eski onay" sınırı, saat (D-1 brief): dashboard istisnası, KPI ve `eski` süzgeci bu sabitle sayar. */
+export const ESKI_ONAY_SAATI = 24;
+
 const SEKMELER: readonly { durum: OnayDurumu; etiket: "Bekleyen" | "Onaylanan" | "Reddedilen" | "Tümü" }[] = [
   { durum: "bekleyen", etiket: "Bekleyen" },
   { durum: "ONAY", etiket: "Onaylanan" },

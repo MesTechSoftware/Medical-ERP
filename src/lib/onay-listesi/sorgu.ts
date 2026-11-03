@@ -1,9 +1,8 @@
 import type { Prisma } from "@/generated/prisma/client";
 import type { FreeReason, OrderStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
-import { ESKI_ONAY_SAATI } from "@/lib/istisnalar";
 import { metinVaryantlari } from "@/lib/liste/metin";
-import { BOS_SUZGEC, type OnaySuzgeci } from "@/lib/onay-listesi/suzgec";
+import { BOS_SUZGEC, ESKI_ONAY_SAATI, type OnaySuzgeci } from "@/lib/onay-listesi/suzgec";
 import { kalemMiktarlari } from "@/lib/siparis";
 import { gunleriAraliga } from "@/lib/siparis-listesi/sorgu";
 import { hesaplaStoklar, varsayilanDepoId } from "@/lib/stok";
@@ -37,16 +36,21 @@ export function onayKosulu(s: OnaySuzgeci, an: Date, qBelgeleri: readonly string
   return { AND: ve };
 }
 
-/** Metni taşıyan belgelerin kimlikleri: SIP/KNS numarası ya da carisi, TRF/DZL numarası (Türkçe varyantlı). */
+/**
+ * Metni taşıyan belgelerin kimlikleri: SIP/KNS numarası ya da carisi, TRF/DZL numarası (Türkçe varyantlı).
+ * Arama yalnız onay bloğu olan belgelerde yapılır: geniş bir metin bütün siparişleri döndürmez, liste sınırlı kalır.
+ */
 async function metinBelgeleri(q: string): Promise<string[]> {
+  const bloklu = (await prisma.approvalBlock.findMany({ distinct: ["documentId"], select: { documentId: true } })).map((b) => b.documentId);
+  const kapsam = { id: { in: bloklu } };
   const icerir = metinVaryantlari(q).map((v) => ({ contains: v, mode: "insensitive" as const }));
   const noVeCari = icerir.flatMap((c) => [{ documentNo: c }, { doctor: { fullName: c } }]);
   const yalnizNo = icerir.map((c) => ({ documentNo: c }));
   const [sip, kns, trf, dzl] = await Promise.all([
-    prisma.order.findMany({ where: { OR: noVeCari }, select: { id: true } }),
-    prisma.consignmentIssue.findMany({ where: { OR: noVeCari }, select: { id: true } }),
-    prisma.stockTransfer.findMany({ where: { OR: yalnizNo }, select: { id: true } }),
-    prisma.stockAdjustment.findMany({ where: { OR: yalnizNo }, select: { id: true } }),
+    prisma.order.findMany({ where: { ...kapsam, OR: noVeCari }, select: { id: true } }),
+    prisma.consignmentIssue.findMany({ where: { ...kapsam, OR: noVeCari }, select: { id: true } }),
+    prisma.stockTransfer.findMany({ where: { ...kapsam, OR: yalnizNo }, select: { id: true } }),
+    prisma.stockAdjustment.findMany({ where: { ...kapsam, OR: yalnizNo }, select: { id: true } }),
   ]);
   return [...sip, ...kns, ...trf, ...dzl].map((r) => r.id);
 }
@@ -148,7 +152,7 @@ export async function onayKpileri(bugun: string, an: Date): Promise<OnayKpileri>
 export type OnayPaneli = {
   blok: OnaySatiri;
   siparisDurumu: OrderStatus | null;
-  /** NEGATIF_STOK (SIP): kalem başına kalan sevk ve sevkiyatın denetlediği depodaki stok. */
+  /** NEGATIF_STOK (SIP): ürün başına kalan sevk (sevkiyatın denetimi gibi toplanır) ve depodaki stok. */
   negatifStok: { urun: string; kod: string; kalan: number; depo: number; yetmiyor: boolean }[] | null;
   /** BEDELSIZ_ONAYI (SIP): bedelsiz satırlar. */
   bedelsiz: { urun: string; adet: number; sebep: FreeReason; not: string | null }[] | null;
@@ -158,10 +162,10 @@ export type OnayPaneli = {
 export async function onayPaneli(id: string): Promise<OnayPaneli | null> {
   const b = await prisma.approvalBlock.findUnique({ where: { id } });
   if (!b) return null;
-  const [[blok], onceki, siparis] = await Promise.all([
-    satirlar([b]),
+  const [onceki, siparis, depoId] = await Promise.all([
+    // Önceki kararlar: aynı belgenin bu bloktan önce açılmış ve kararı verilmiş blokları.
     prisma.approvalBlock.findMany({
-      where: { documentType: b.documentType, documentId: b.documentId, id: { not: b.id }, openedAt: { lte: b.openedAt } },
+      where: { documentType: b.documentType, documentId: b.documentId, id: { not: b.id }, openedAt: { lte: b.openedAt }, decision: { not: null } },
       orderBy: [{ openedAt: "asc" }, { id: "asc" }],
     }),
     b.documentType === "SIP"
@@ -185,16 +189,23 @@ export async function onayPaneli(id: string): Promise<OnayPaneli | null> {
           },
         })
       : null,
+    b.ruleCode === "NEGATIF_STOK" && b.documentType === "SIP" ? varsayilanDepoId() : null,
   ]);
-  const oncekiler = await satirlar(onceki);
+  const [blok, ...oncekiler] = await satirlar([b, ...onceki]);
 
   let negatifStok: OnayPaneli["negatifStok"] = null;
-  if (siparis && b.ruleCode === "NEGATIF_STOK") {
-    const stok = await hesaplaStoklar([...new Set(siparis.items.map((k) => k.productId))], await varsayilanDepoId());
-    negatifStok = siparis.items.map((k) => {
-      const { kalan } = kalemMiktarlari(k);
-      const depo = stok.get(k.productId) ?? 0;
-      return { urun: k.product.name, kod: k.product.code, kalan, depo, yetmiyor: kalan > 0 && depo < kalan };
+  if (siparis && depoId) {
+    // Sevkiyatın negatif stok denetimi ürün başına toplar (`negatifStokOnizle`); panel de öyle.
+    const urunler = new Map<string, { urun: string; kod: string; kalan: number }>();
+    for (const k of siparis.items) {
+      const u = urunler.get(k.productId) ?? { urun: k.product.name, kod: k.product.code, kalan: 0 };
+      u.kalan += kalemMiktarlari(k).kalan;
+      urunler.set(k.productId, u);
+    }
+    const stok = await hesaplaStoklar([...urunler.keys()], depoId);
+    negatifStok = [...urunler].map(([id, u]) => {
+      const depo = stok.get(id) ?? 0;
+      return { ...u, depo, yetmiyor: u.kalan > 0 && depo < u.kalan };
     });
   }
   const bedelsiz: OnayPaneli["bedelsiz"] =
