@@ -117,3 +117,18 @@ describe("etkin süzgeç etiketleri ve boş durum", () => {
     expect(bosDurum(S({ q: "x" }))).toBe("suzgecli");
   });
 });
+
+describe("Siparişlerim yolu (Ü-31)", () => {
+  it("adres, sekmeler, kart ve etiketler `/my-orders`'ı yazar; varsayılan `/orders` kalır", () => {
+    const s = S({ durum: "BEKLIYOR", q: "x" });
+    expect(siparisAdresi(s, { page: 2, detay: "o-1" }, "/my-orders")).toBe("/my-orders?durum=BEKLIYOR&q=x&page=2&detay=o-1");
+    expect(siparisAdresi(BOS_SUZGEC, {}, "/my-orders")).toBe("/my-orders");
+    expect(hizliSekmeler(s, "/my-orders")[0].adres).toBe("/my-orders?q=x");
+    expect(kartAdresi("KARGOLANDI", { baslangic: "2026-11-01", bitis: "2026-11-05" }, "/my-orders")).toBe(
+      "/my-orders?durum=KARGOLANDI&baslangic=2026-11-01&bitis=2026-11-05"
+    );
+    expect(etkinSuzgecler(s, () => undefined, "/my-orders").map((e) => e.kaldirAdresi)).toEqual(["/my-orders?q=x", "/my-orders?durum=BEKLIYOR"]);
+    expect(siparisAdresi(s)).toBe("/orders?durum=BEKLIYOR&q=x");
+  });
+});
+

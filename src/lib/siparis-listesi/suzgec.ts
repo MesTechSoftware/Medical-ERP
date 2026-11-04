@@ -39,6 +39,12 @@ const DURUM_KODLARI = DURUMLAR.map((d) => d.kod);
 
 export type { Parametreler };
 
+/**
+ * Listenin ekranı: yönetici `/orders` (bütün siparişler), satıcı `/my-orders` (yalnız kendi siparişleri,
+ * X-13 — kapsam sorgudadır, `sorgu.ts`). Adres üreticileri bu yolu yazar; varsayılan yönetici ekranıdır.
+ */
+export type SiparisYolu = "/orders" | "/my-orders";
+
 export function suzgecCoz(p: Parametreler): { suzgec: SiparisSuzgeci; detay: string | null } {
   let baslangic = gun(ilk(p, "baslangic"));
   let bitis = gun(ilk(p, "bitis"));
@@ -57,7 +63,11 @@ export function suzgecCoz(p: Parametreler): { suzgec: SiparisSuzgeci; detay: str
 }
 
 /** Süzgeci koruyan liste adresi; sayfa, sayfa boyu ve panel isteğe bağlı. */
-export function siparisAdresi(s: SiparisSuzgeci, ek: { page?: number; per?: number; detay?: string } = {}): string {
+export function siparisAdresi(
+  s: SiparisSuzgeci,
+  ek: { page?: number; per?: number; detay?: string } = {},
+  yol: SiparisYolu = "/orders"
+): string {
   const p = new URLSearchParams();
   if (s.durum) p.set("durum", s.durum);
   if (s.baslangic) p.set("baslangic", s.baslangic);
@@ -68,14 +78,14 @@ export function siparisAdresi(s: SiparisSuzgeci, ek: { page?: number; per?: numb
   if (ek.per !== undefined) p.set("per", String(ek.per));
   if (ek.detay !== undefined) p.set("detay", ek.detay);
   const q = p.toString();
-  return q ? `/orders?${q}` : "/orders";
+  return q ? `${yol}?${q}` : yol;
 }
 
 /** Durum sekmeleri: yalnız `durum`'u yazar, öbür süzgeçleri korur; sayfa düşer. */
-export function hizliSekmeler(s: SiparisSuzgeci): readonly { etiket: string; adres: string; etkin: boolean }[] {
+export function hizliSekmeler(s: SiparisSuzgeci, yol: SiparisYolu = "/orders"): readonly { etiket: string; adres: string; etkin: boolean }[] {
   return [{ kod: null, etiket: "Tümü" }, ...DURUMLAR].map((d) => ({
     etiket: d.etiket,
-    adres: siparisAdresi({ ...s, durum: d.kod }),
+    adres: siparisAdresi({ ...s, durum: d.kod }, {}, yol),
     etkin: s.durum === d.kod,
   }));
 }
@@ -90,8 +100,8 @@ export function kpiAraligi(s: SiparisSuzgeci, bugun: string): { baslangic: strin
 }
 
 /** Durum kartının adresi: kartın saydığı aralığı yazar, satır sayısı kartla aynı olur (A-5-8). */
-export function kartAdresi(durum: OrderStatus, a: { baslangic: string | null; bitis: string | null }): string {
-  return siparisAdresi({ ...BOS_SUZGEC, durum, baslangic: a.baslangic, bitis: a.bitis });
+export function kartAdresi(durum: OrderStatus, a: { baslangic: string | null; bitis: string | null }, yol: SiparisYolu = "/orders"): string {
+  return siparisAdresi({ ...BOS_SUZGEC, durum, baslangic: a.baslangic, bitis: a.bitis }, {}, yol);
 }
 
 /**
@@ -108,25 +118,27 @@ type Anahtar = "durum" | "tarih" | "satici" | "q";
 /** Etkin süzgeçlerin etiketleri, her biri o alanı düşüren adresle; adı bilinmeyen satıcı etiketlenmez. */
 export function etkinSuzgecler(
   s: SiparisSuzgeci,
-  saticiAdi: (id: string) => string | undefined
+  saticiAdi: (id: string) => string | undefined,
+  yol: SiparisYolu = "/orders"
 ): { anahtar: Anahtar; etiket: string; kaldirAdresi: string }[] {
   const liste: { anahtar: Anahtar; etiket: string; kaldirAdresi: string }[] = [];
+  const adres = (d: SiparisSuzgeci) => siparisAdresi(d, {}, yol);
   if (s.durum) {
     const etiket = DURUMLAR.find((d) => d.kod === s.durum)!.etiket;
-    liste.push({ anahtar: "durum", etiket: `Durum: ${etiket}`, kaldirAdresi: siparisAdresi({ ...s, durum: null }) });
+    liste.push({ anahtar: "durum", etiket: `Durum: ${etiket}`, kaldirAdresi: adres({ ...s, durum: null }) });
   }
   if (s.baslangic || s.bitis) {
     liste.push({
       anahtar: "tarih",
       etiket: `Tarih: ${aralikEtiketi(s.baslangic, s.bitis)}`,
-      kaldirAdresi: siparisAdresi({ ...s, baslangic: null, bitis: null }),
+      kaldirAdresi: adres({ ...s, baslangic: null, bitis: null }),
     });
   }
   const ad = s.satici === SATICISIZ ? "Satıcısız (bayi)" : s.satici ? saticiAdi(s.satici) : undefined;
   if (ad !== undefined) {
-    liste.push({ anahtar: "satici", etiket: `Satıcı: ${ad}`, kaldirAdresi: siparisAdresi({ ...s, satici: null }) });
+    liste.push({ anahtar: "satici", etiket: `Satıcı: ${ad}`, kaldirAdresi: adres({ ...s, satici: null }) });
   }
-  if (s.q) liste.push({ anahtar: "q", etiket: `Ara: ${s.q}`, kaldirAdresi: siparisAdresi({ ...s, q: null }) });
+  if (s.q) liste.push({ anahtar: "q", etiket: `Ara: ${s.q}`, kaldirAdresi: adres({ ...s, q: null }) });
   return liste;
 }
 
