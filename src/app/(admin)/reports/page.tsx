@@ -1,31 +1,39 @@
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/session";
-import { Tutar } from "@/components/Tutar";
-import { BRUT, MATRAH, tabanli } from "@/lib/taban";
+import { BRUT, MATRAH } from "@/lib/taban";
 import { donemBitisAyi, donemCoz, karsilastirmaAraliklari, karsilastirmaNotu, sonAylar } from "@/lib/donem";
 import { kpiGetir } from "@/lib/kpi/getir";
-import { cubukOranlari } from "@/lib/kpi/olcek";
 import { simdi } from "@/lib/zaman";
 import DonemSecici from "@/components/DonemSecici";
 import { ilk, type Parametreler } from "@/lib/liste/parametreler";
 import SaticiRaporTablosu from "@/components/SaticiRaporTablosu";
+import Pagination from "@/components/Pagination";
+import { SutunSecici } from "@/components/liste/SutunSecici";
+import { gizliSutunlariCoz } from "@/lib/liste/sutunlar";
+import { getPagination, pageCount } from "@/lib/pagination";
+import { doktorSiralamasi, saticiSecenekleri } from "@/lib/rapor-listesi/sorgu";
+import { SUTUNLAR, SUTUN_CEREZI } from "@/lib/rapor-listesi/sutunlar";
+import { korunanlar, raporAdresi, saticiAdresi, suzgecCoz } from "@/lib/rapor-listesi/suzgec";
+import { DoktorSiralamasi } from "./DoktorSiralamasi";
+import { sutunlariKaydet } from "./sutunEylemi";
 import {
   ciroOzeti,
-  getDoctorReports,
   getSellerReports,
   saticiCiroSerileri,
   tahsilatToplamlari,
 } from "@/lib/reports-service";
-import { PageHeader, Card, EmptyRow } from "@/components/ui";
+import { PageHeader, Card } from "@/components/ui";
 import { KovaOzeti } from "@/components/kpi/KovaOzeti";
 import { KpiCard } from "@/components/kpi/KpiCard";
 import { KpiSatiri } from "@/components/kpi/KpiSatiri";
-import { OranCubugu } from "@/components/grafik/BarMicro";
 
 /**
  * FR-62/FR-63/FR-60: Raporlar. KDV toggle'ı C6'da söküldü (GÇ-9, Ü-3 §(3)):
  * ciro daima KDV hariç (matrah), tahsilat daima KDV dahil (brüt); her
  * tutarın tabanı başlığında yazılıdır (Ü-3 §(6)/(7)).
  * KPI'lar seçili döneme bağlıdır (K-4); karşılaştırma K-1, "tüm zamanlar"da yoktur (ADR-010).
+ * Doktor ciro sıralaması dönemin bütün cirolu carileridir; süzgeç ve sütun seçici (spec Ü-27, X-1-2).
  */
 export default async function ReportsPage({
   searchParams,
@@ -41,16 +49,34 @@ export default async function ReportsPage({
   const aylar = sonAylar(6, donemBitisAyi(donem, an), an);
   const baglam = { yol: "/reports", kullaniciId: session.user.id };
   const not = karsilastirmaNotu(k.devamEdiyor);
+  const suzgec = suzgecCoz(params);
+  const per = ilk(params, "per") ?? undefined;
+  const { page, perPage, skip, take } = getPagination({ page: ilk(params, "page") ?? undefined, per });
+  const yer = { page, per: per ? perPage : undefined };
+  const gizli = gizliSutunlariCoz(SUTUNLAR, (await cookies()).get(SUTUN_CEREZI)?.value);
 
   const sellers = await getSellerReports(session.user, donem.aralik);
-  const [doctors, ozet, tahsilat, seriler] = await Promise.all([
-    getDoctorReports(donem.aralik, 25),
+  const [saticilar, siralama, ozet, tahsilat, seriler] = await Promise.all([
+    saticiSecenekleri(),
+    doktorSiralamasi(donem.aralik, suzgec, { skip, take }),
     kpiGetir(() => ciroOzeti({ kovalar: aylar, ...k }, { tur: "sirket" }), baglam),
     kpiGetir(() => tahsilatToplamlari(k.onceki ? [k.simdi, k.onceki] : [k.simdi]), baglam),
     saticiCiroSerileri(aylar, sellers.map((s) => s.sellerId)),
   ]);
   const karsilastir = <T,>(onceki: T | null | undefined) => (k.onceki ? { onceki: onceki ?? null, not } : undefined);
-  const doktorOranlari = cubukOranlari(doctors.map((d) => d.ciro));
+  // Seçeneklerde olmayan satıcı (eski yer imi, elle yazılmış kimlik) adresten düşer.
+  if (suzgec.satici && suzgec.satici !== "sahipsiz" && !saticilar.some((u) => u.id === suzgec.satici)) {
+    redirect(raporAdresi({ ...suzgec, satici: null }, yer));
+  }
+  // Sayfa dışı adres son sayfaya gider.
+  if (siralama.satirlar.length === 0 && siralama.toplam > 0) {
+    redirect(raporAdresi(suzgec, { ...yer, page: pageCount(siralama.toplam, perPage) }));
+  }
+  const adres = raporAdresi(suzgec, yer);
+  const sayfaParametreleri = {
+    ...Object.fromEntries(new URL(raporAdresi(suzgec), "http://x").searchParams),
+    per: yer.per === undefined ? undefined : String(yer.per),
+  };
 
   return (
     <div>
@@ -59,7 +85,7 @@ export default async function ReportsPage({
         description="Ciro ve performans"
       />
 
-      <DonemSecici anahtar={donem.anahtar} yol="/reports" />
+      <DonemSecici anahtar={donem.anahtar} yol="/reports" korunan={korunanlar(suzgec)} />
 
       {/* FR-60: kanal karşılaştırması C5'te söküldü (X-8) */}
       <KpiSatiri>
@@ -119,49 +145,20 @@ export default async function ReportsPage({
         <h2 className="mb-4 text-sm font-semibold text-slate-900">
           Satıcı Performansı
         </h2>
-        <SaticiRaporTablosu satirlar={sellers} seriler={{ aylar, degerler: seriler }} />
+        <SaticiRaporTablosu satirlar={sellers} seriler={{ aylar, degerler: seriler }} saticiBaglantisi={(id) => saticiAdresi(suzgec, id)} />
       </Card>
 
-      {/* FR-63: doktor ciro sıralaması */}
+      {/* FR-63: doktor ciro sıralaması (Ü-27: bütün cirolu cariler, süzgeç, sayfalama) */}
       <div className="mt-6">
-        <Card>
-          <h2 className="mb-4 text-sm font-semibold text-slate-900">
-            Doktor Ciro Sıralaması (dönem, ilk 25)
-          </h2>
-          <div className="tablo-kutusu">
-            <table className="veri-tablosu">
-              <thead>
-                <tr>
-                  <th>Doktor</th>
-                  <th className="oncelik-dusuk">Satıcı</th>
-                  <th className="sayi">{tabanli("Ciro", MATRAH)}</th>
-                  <th>Lidere göre</th>
-                </tr>
-              </thead>
-              <tbody>
-                {doctors.length === 0 && (
-                  <EmptyRow colSpan={4} text="Doktor yok." />
-                )}
-                {doctors.map((d, i) => (
-                  <tr key={d.doctorId}>
-                    <td className="font-medium text-slate-900">
-                      {d.fullName}
-                    </td>
-                    <td className="text-slate-500 oncelik-dusuk">
-                      {d.sellerName ?? "—"}
-                    </td>
-                    <td className="sayi">
-                      <Tutar deger={d.ciro} taban={MATRAH} baslikta />
-                    </td>
-                    <td>
-                      <OranCubugu oran={doktorOranlari[i]} className="w-24" />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+        <DoktorSiralamasi
+          satirlar={siralama.satirlar}
+          suzgec={suzgec}
+          per={yer.per}
+          saticilar={saticilar}
+          gizli={gizli}
+          sutunMenusu={<SutunSecici sutunlar={SUTUNLAR} gizli={gizli} action={sutunlariKaydet} donus={adres} />}
+        />
+        <Pagination page={page} totalPages={pageCount(siralama.toplam, perPage)} total={siralama.toplam} basePath="/reports" params={sayfaParametreleri} />
       </div>
     </div>
   );
