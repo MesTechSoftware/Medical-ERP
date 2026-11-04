@@ -5,7 +5,7 @@ import { veriOku } from "@/lib/aktivite-sablonlari";
 import { prisma } from "@/lib/db";
 import { alanFarklari, type AlanFarki } from "@/lib/denetim/fark";
 import { kisaOzet } from "@/lib/denetim/ozet";
-import { SISTEM, type DenetimSuzgeci, type Imlec } from "@/lib/denetim/suzgec";
+import { SISTEM, kartAdresleri, suzgecCoz, type DenetimSuzgeci, type Imlec } from "@/lib/denetim/suzgec";
 import { kaydiDogrula, type KayitDurumu } from "@/lib/denetim/zincir";
 import { yerelGunAraligi } from "@/lib/zaman";
 
@@ -37,7 +37,8 @@ export type DenetimSatiri = {
 /** `dahaYeni`/`dahaEski`: o yönde satır varsa imlecin değeri (sayfanın ilk/son sırası). */
 export type DenetimSayfasi = { satirlar: DenetimSatiri[]; dahaYeni: number | null; dahaEski: number | null };
 
-function kosul(s: DenetimSuzgeci): Prisma.AuditLogWhereInput {
+/** Listenin süzgeç koşulu; KPI kartları da bundan sayar (X-18-8). */
+export function denetimKosulu(s: DenetimSuzgeci): Prisma.AuditLogWhereInput {
   const baslangic = s.baslangic ? yerelGunAraligi(s.baslangic)?.baslangic : undefined;
   const bitis = s.bitis ? yerelGunAraligi(s.bitis)?.bitis : undefined;
   return {
@@ -77,7 +78,7 @@ const yenisi = (k: Konum): Prisma.AuditLogWhereInput => ({
 });
 
 export async function denetimListesi(s: DenetimSuzgeci, imlec: Imlec, boyut = SAYFA_BOYU): Promise<DenetimSayfasi> {
-  const where = kosul(s);
+  const where = denetimKosulu(s);
   // İmleç satırının zamanı benzersiz `seq` indeksinden; bulunmazsa (bozuk adres) ilk sayfa.
   const uc = imlec ? await prisma.auditLog.findUnique({ where: { seq: imlec.seq }, select: { createdAt: true, seq: true } }) : null;
   const eskiye = !uc || imlec?.yon === "once";
@@ -156,4 +157,17 @@ export async function denetimKaydi(id: string): Promise<DenetimDetayi | null> {
 /** Kullanıcı süzgecinin seçenekleri: pasif kullanıcılar dahil (geçmiş kayıtları vardır). */
 export function kullaniciSecenekleri() {
   return prisma.user.findMany({ select: { id: true, name: true, isActive: true }, orderBy: { name: "asc" } });
+}
+
+export type DenetimKpileri = { bugun: number; yediGun: number; basarisiz: number; silme: number };
+
+/**
+ * KPI kartları (spec Ü-28 §3.1): her kart, açtığı adresin süzgecini (`kartAdresleri` → `suzgecCoz`) listenin
+ * koşuluyla sayar — kart = satır (X-18-8).
+ */
+export async function denetimKpileri(bugun: string): Promise<DenetimKpileri> {
+  const adres = kartAdresleri(bugun);
+  const say = (yol: string) => prisma.auditLog.count({ where: denetimKosulu(suzgecCoz(Object.fromEntries(new URL(yol, "http://x").searchParams)).suzgec) });
+  const [b, y, ba, si] = await Promise.all([say(adres.bugun), say(adres.yediGun), say(adres.basarisiz), say(adres.silme)]);
+  return { bugun: b, yediGun: y, basarisiz: ba, silme: si };
 }
