@@ -6,7 +6,7 @@ import { test, expect } from "@playwright/test";
  * Hata kritik segmentte (tahsilat) yakalanır; menü yerinde kalır, ayrıntı ekrana yazılmaz.
  */
 test("teknik hata sabit metin + referans gösterir, ayrıntı sızdırmaz, menü kalır (X-3-1)", async ({ page }) => {
-  await page.goto("/collections");
+  await page.goto("/collections/new");
   await page.waitForLoadState("networkidle"); // hidrasyon formu yeniden kurmadan önce DOM'a dokunma
   const doktor = page.getByLabel("Doktor");
   await doktor.evaluate((el: HTMLSelectElement) => {

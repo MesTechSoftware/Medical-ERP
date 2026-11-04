@@ -74,7 +74,7 @@ export async function recordCollection(
  * FR-29: Tahsilat iptali. Tahsilat `IPTAL` işaretlenir ve cari hareketi `TERS_KAYIT` ile çevrilir
  * (X-11 §(5), §0.2): hareket silinmez, bakiye ters hareketle geri döner. İşaret koşullu yazılır —
  * eşzamanlı iki iptalden yalnız biri ters kayıt yazar. 1B-7b öncesi kaydedilmiş, cari hareketi
- * olmayan tahsilatta çevrilecek satır yoktur.
+ * olmayan tahsilatta çevrilecek satır yoktur. Gerekçe zorunludur (X-18-5, A-11-3).
  */
 export async function cancelCollection(
   _prev: unknown,
@@ -82,8 +82,10 @@ export async function cancelCollection(
 ): Promise<IslemSonucu> {
   const session = await requireStaff();
   const paymentId = (formData.get("paymentId") as string)?.trim();
-  const reason = ((formData.get("reason") as string) || "").trim() || null;
+  const reason = ((formData.get("reason") as string) || "").trim();
   if (!paymentId) return engel("TAHSILAT_BULUNAMADI");
+  // X-18-5: tahsilat iptali gerekçe isteyen akıştır; gerekçe kaydın `cancelReason` alanına yazılır.
+  if (!reason) return engel("GEREKCE_ZORUNLU", {}, "reason");
 
   const before = await prisma.doctorPayment.findUnique({
     where: { id: paymentId },

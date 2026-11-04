@@ -51,7 +51,7 @@ test("🔴 tahsilat kaydedilir ve iptal edilir — kayıt silinmez (FR-29)", asy
 }) => {
   const doctor = await pickDoctor();
 
-  await page.goto("/collections");
+  await page.goto("/collections/new");
   await page.getByLabel("Doktor").selectOption(doctor.id);
   await page.getByLabel("Tutar — KDV dahil (₺)").fill("50,25");
   await page.getByLabel("Yöntem").selectOption(await havaleId());
@@ -68,30 +68,30 @@ test("🔴 tahsilat kaydedilir ve iptal edilir — kayıt silinmez (FR-29)", asy
   expect(created).toBeTruthy();
   expect(created.documentNo).toMatch(/^THS-\d{4}-\d{6}$/); // A-14
 
+  // İptal tahsilat panelinden, gerekçeyle (Ü-26 §3.5, X-18-5).
   page.on("dialog", (d) => d.accept());
-  await page.reload();
-  await page
-    .locator(`form[data-payment-id="${created.id}"] button`)
-    .click();
+  await page.goto(`/collections?detay=${created.id}`);
+  const form = page.getByRole("dialog").locator(`form[data-payment-id="${created.id}"]`);
+  await form.getByLabel("Gerekçe").fill("Dekont hatalı");
+  await form.getByRole("button", { name: "Tahsilatı iptal et" }).click();
 
-  // Durumu VERİTABANINDAN doğrula (ekrandaki "İptal" metni "İptal Et"
-  // butonuyla da eşleşiyor; zayıf assertion gerçek kanıt sayılmaz).
+  // Durumu VERİTABANINDAN doğrula.
   await expect
     .poll(async () => {
-      const [row] = await query<{ status: string }>(
-        `SELECT status FROM "DoctorPayment" WHERE id = $1`,
+      const [row] = await query<{ status: string; cancelReason: string | null }>(
+        `SELECT status, "cancelReason" FROM "DoctorPayment" WHERE id = $1`,
         [created.id]
       );
-      return row.status;
+      return row;
     })
-    .toBe("IPTAL");
+    .toEqual({ status: "IPTAL", cancelReason: "Dekont hatalı" });
 });
 
 test("geçersiz tutar sunucuda reddedilir", async ({ page }) => {
   const doctor = await pickDoctor();
   const before = await paymentCount(doctor.id);
 
-  await page.goto("/collections");
+  await page.goto("/collections/new");
   await page.getByLabel("Doktor").selectOption(doctor.id);
   await page.getByLabel("Tutar — KDV dahil (₺)").fill("0");
   await page.getByLabel("Yöntem").selectOption(await havaleId());

@@ -1,130 +1,81 @@
-import { prisma } from "@/lib/db";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { requireStaff } from "@/lib/session";
-import { Tutar } from "@/components/Tutar";
-import { BRUT, tabanli } from "@/lib/taban";
-import { formatDate } from "@/lib/format";
-import { PageHeader, Card, EmptyRow } from "@/components/ui";
+import { LinkButton, PageHeader } from "@/components/ui";
 import Pagination from "@/components/Pagination";
+import { SutunSecici } from "@/components/liste/SutunSecici";
+import { kpiGetir } from "@/lib/kpi/getir";
+import { gizliSutunlariCoz } from "@/lib/liste/sutunlar";
+import { ilk } from "@/lib/liste/parametreler";
 import { getPagination, pageCount } from "@/lib/pagination";
-import CollectionForm from "./CollectionForm";
-import CancelCollection from "./CancelCollection";
+import { tahsilatKpileri, tahsilatListesi, tahsilatPaneli } from "@/lib/tahsilat-listesi/sorgu";
+import { SUTUNLAR, SUTUN_CEREZI } from "@/lib/tahsilat-listesi/sutunlar";
+import { kpiAraligi, suzgecCoz, tahsilatAdresi, type Parametreler } from "@/lib/tahsilat-listesi/suzgec";
+import { simdi, yerelGunMetni } from "@/lib/zaman";
+import { KpiKartlari } from "./KpiKartlari";
+import { SuzgecCubugu } from "./SuzgecCubugu";
+import { TahsilatPaneli } from "./TahsilatPaneli";
+import { TahsilatTablosu } from "./TahsilatTablosu";
+import { sutunlariKaydet } from "./sutunEylemi";
 
-export default async function CollectionsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ page?: string; per?: string }>;
-}) {
-  await requireStaff();
-  const { page, perPage, skip, take } = getPagination(await searchParams);
+/**
+ * Tahsilatlar (spec Ü-26): dönemin tahsilatı ve yöntem kırılımı, süzgeçli liste ve toplamı, tahsilat paneli
+ * (donmuş komisyon, carinin bakiyesi, gerekçeli iptal). Yeni tahsilat `/collections/new`'dedir.
+ */
+export default async function CollectionsPage({ searchParams }: { searchParams: Promise<Parametreler> }) {
+  const session = await requireStaff();
+  const params = await searchParams;
+  const bugun = yerelGunMetni(simdi());
+  const per = ilk(params, "per") ?? undefined;
+  const { page, perPage, skip, take } = getPagination({ page: ilk(params, "page") ?? undefined, per });
+  const { suzgec, detay } = suzgecCoz(params);
+  const yer = { page, per: per ? perPage : undefined };
+  const gizli = gizliSutunlariCoz(SUTUNLAR, (await cookies()).get(SUTUN_CEREZI)?.value);
+  const adres = tahsilatAdresi(suzgec, yer);
+  const aralik = kpiAraligi(suzgec, bugun);
 
-  const [doctors, payments, total, paymentMethods] = await Promise.all([
-    prisma.doctor.findMany({
-      where: { status: "AKTIF" },
-      orderBy: { fullName: "asc" },
-      select: { id: true, fullName: true, clinic: true },
-    }),
-    prisma.doctorPayment.findMany({
-      orderBy: { paidAt: "desc" },
-      skip,
-      take,
-      include: {
-        doctor: { select: { fullName: true } },
-        paymentMethod: { select: { name: true } },
-      },
-    }),
-    prisma.doctorPayment.count(),
-    prisma.paymentMethod.findMany({
-      where: { isActive: true },
-      orderBy: { sortOrder: "asc" },
-      select: { id: true, name: true },
-    }),
+  const [liste, kpi, panel] = await Promise.all([
+    tahsilatListesi(suzgec, { skip, take }),
+    kpiGetir(() => tahsilatKpileri(aralik), { yol: "/collections", kullaniciId: session.user.id }),
+    detay ? tahsilatPaneli(detay) : null,
   ]);
+  // Sayfa dışı adres son sayfaya gider; boş durum "hiç kayıt yok" demesin.
+  if (liste.satirlar.length === 0 && liste.toplam > 0) {
+    redirect(tahsilatAdresi(suzgec, { ...yer, page: pageCount(liste.toplam, perPage), ...(detay ? { detay } : {}) }));
+  }
+
+  const sayfaParametreleri = {
+    ...Object.fromEntries(new URL(tahsilatAdresi(suzgec), "http://x").searchParams),
+    per: yer.per === undefined ? undefined : String(yer.per),
+  };
 
   return (
     <div>
       <PageHeader
         title="Tahsilatlar"
-        description="Doktorlardan yapılan tahsilatlar"
+        description="Carilerden yapılan tahsilatlar ve iptalleri."
+        action={
+          <LinkButton href="/collections/new" ikon="yeni">
+            Yeni Tahsilat
+          </LinkButton>
+        }
       />
 
-      <Card>
-        <h2 className="mb-4 text-sm font-semibold text-slate-900">
-          Yeni Tahsilat
-        </h2>
-        <CollectionForm
-          doctors={doctors.map((d) => ({
-            id: d.id,
-            label: d.clinic ? `${d.fullName} — ${d.clinic}` : d.fullName,
-          }))}
-          paymentMethods={paymentMethods}
-        />
-      </Card>
+      <KpiKartlari sonuc={kpi} aralik={aralik} />
 
-      <div className="mt-6">
-        <Card>
-          <h2 className="mb-4 text-sm font-semibold text-slate-900">
-            Tahsilat Geçmişi
-          </h2>
-          <div className="tablo-kutusu">
-            <table className="veri-tablosu">
-              <thead>
-                <tr>
-                  <th>Tarih</th>
-                  <th>Doktor</th>
-                  <th className="oncelik-dusuk">Yöntem</th>
-                  <th className="oncelik-dusuk">Referans</th>
-                  <th className="sayi">{tabanli("Tutar", BRUT)}</th>
-                  <th>Durum</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {payments.length === 0 && (
-                  <EmptyRow colSpan={7} text="Henüz tahsilat kaydı yok." />
-                )}
-                {payments.map((p) => {
-                  const cancelled = p.status === "IPTAL";
-                  return (
-                    <tr
-                      key={p.id}
-                      className={cancelled ? "text-slate-400 line-through" : undefined}
-                    >
-                      <td className="whitespace-nowrap">
-                        {formatDate(p.paidAt)}
-                      </td>
-                      <td className="text-slate-900">
-                        {p.doctor.fullName}
-                      </td>
-                      <td className="text-slate-500 oncelik-dusuk">
-                        {p.paymentMethod.name}
-                      </td>
-                      <td className="text-slate-500 oncelik-dusuk">
-                        {p.referenceNo ?? "—"}
-                      </td>
-                      <td className="sayi">
-                        <Tutar deger={p.amount} taban={BRUT} baslikta />
-                      </td>
-                      <td>
-                        {cancelled ? "İptal" : "Aktif"}
-                      </td>
-                      <td className="text-right">
-                        {!cancelled && <CancelCollection paymentId={p.id} />}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-      </div>
-
-      <Pagination
-        page={page}
-        totalPages={pageCount(total, perPage)}
-        total={total}
-        basePath="/collections"
+      <SuzgecCubugu
+        suzgec={suzgec}
+        bugun={bugun}
+        per={yer.per}
+        sutunMenusu={<SutunSecici sutunlar={SUTUNLAR} gizli={gizli} action={sutunlariKaydet} donus={adres} />}
       />
+
+      <TahsilatTablosu satirlar={liste.satirlar} ozet={liste.ozet} gizli={gizli} suzgec={suzgec} yer={yer} />
+
+      <Pagination page={page} totalPages={pageCount(liste.toplam, perPage)} total={liste.toplam} basePath="/collections" params={sayfaParametreleri} />
+
+      {/* Bulunmayan tahsilat için panel açılmaz (spec §5). */}
+      {panel && <TahsilatPaneli key={panel.id} veri={panel} kapatAdresi={adres} />}
     </div>
   );
 }
