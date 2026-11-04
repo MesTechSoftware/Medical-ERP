@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { BOS_SUZGEC, denetimAdresi, suzgecCoz } from "@/lib/denetim/suzgec";
+import { BOS_SUZGEC, SISTEM, bosDurum, denetimAdresi, etkinSuzgecler, kartAdresleri, suzgecCoz, tarihSekmesiAdresi } from "@/lib/denetim/suzgec";
 
 // X-18-6: süzgeçler ve imleç adres çubuğunda durur; geçersiz değer yok sayılır.
 
@@ -49,5 +49,32 @@ describe("denetimAdresi", () => {
 
   it("süzgeçsiz adres sade kalır", () => {
     expect(denetimAdresi(BOS_SUZGEC)).toBe("/audit-logs");
+  });
+});
+
+describe("ekran yardımcıları (Ü-28)", () => {
+  it("kart adresleri: bugün, son 7 gün, bugün başarısız giriş, bugün silme (X-18-8)", () => {
+    expect(kartAdresleri("2026-11-04")).toEqual({
+      bugun: "/audit-logs?baslangic=2026-11-04&bitis=2026-11-04",
+      yediGun: "/audit-logs?baslangic=2026-10-29&bitis=2026-11-04",
+      basarisiz: "/audit-logs?baslangic=2026-11-04&bitis=2026-11-04&olay=AUTH_LOGIN_FAILURE",
+      silme: "/audit-logs?baslangic=2026-11-04&bitis=2026-11-04&tur=SILME",
+    });
+  });
+
+  it("tarih sekmesi öbür süzgeçleri korur; imleç adrese hiç yazılmaz", () => {
+    const s = { ...BOS_SUZGEC, modul: "STOK" as const };
+    expect(tarihSekmesiAdresi(s, { baslangic: "2026-11-04", bitis: "2026-11-04" })).toBe("/audit-logs?baslangic=2026-11-04&bitis=2026-11-04&modul=STOK");
+  });
+
+  it("etiketler ve kaldırma adresleri; adı bilinmeyen kullanıcı etiketsiz; boş durum", () => {
+    const s = { ...BOS_SUZGEC, baslangic: "2026-11-01", bitis: "2026-11-04", kullanici: "u-1", modul: "STOK" as const, tur: "SILME" as const, olay: "AUTH_LOGIN_FAILURE" as const };
+    const e = etkinSuzgecler(s, (id) => (id === "u-1" ? "Ayşe" : undefined));
+    expect(e.map((x) => x.etiket)).toEqual(["Tarih: 01.11.2026 – 04.11.2026", "Kullanıcı: Ayşe", "Modül: Stok", "Tür: Silme", "Olay: Giriş başarısız"]);
+    expect(e[1].kaldirAdresi).toBe("/audit-logs?baslangic=2026-11-01&bitis=2026-11-04&modul=STOK&tur=SILME&olay=AUTH_LOGIN_FAILURE");
+    expect(etkinSuzgecler({ ...BOS_SUZGEC, kullanici: SISTEM }, () => undefined).map((x) => x.etiket)).toEqual(["Kullanıcı: Sistem / anonim"]);
+    expect(etkinSuzgecler({ ...BOS_SUZGEC, kullanici: "u-9" }, () => undefined)).toEqual([]);
+    expect(bosDurum(BOS_SUZGEC)).toBe("hic-kayit");
+    expect(bosDurum({ ...BOS_SUZGEC, tur: "SILME" })).toBe("suzgecli");
   });
 });
