@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { prisma } from "@/lib/db";
 import { degistirDoktorSahibi } from "@/lib/sahiplik";
-import { doktorSiralamasi } from "@/lib/rapor-listesi/sorgu";
+import { doktorSiralamasi, saticiSecenekleri } from "@/lib/rapor-listesi/sorgu";
 import { BOS_SUZGEC, SAHIPSIZ, type RaporSuzgeci } from "@/lib/rapor-listesi/suzgec";
 import { referansVeri, yeniDoktorVerisi } from "../../../test/integration/referans";
 
@@ -106,5 +106,27 @@ describe("doktor ciro sıralaması (X-1-2)", () => {
     const r = await doktorSiralamasi(EKIM, BOS_SUZGEC, { skip: 2, take: 2 });
     expect(ozet(r).map((x) => x[1])).toEqual([3, 4]);
     expect(r.toplam).toBe(4);
+  });
+
+  it("ASCII büyük I ile yazılmış ad küçük harfli aramada bulunur", async () => {
+    const f = await doktor("DR. ISMAIL KAYA", null);
+    await sevk(f.id, "10", new Date("2026-10-10T09:00:00Z"));
+    expect((await doktorSiralamasi(EKIM, S({ q: "ismail" }), SAYFA)).satirlar.map((s) => s.doctorId)).toEqual([f.id]);
+  });
+
+  it("eşit ciro ve eşit adda sıra kimliğe göre sabittir", async () => {
+    const x = await doktor("Dr. Aynı", null);
+    const y = await doktor("Dr. Aynı", null);
+    await sevk(y.id, "120", new Date("2026-10-10T09:00:00Z"));
+    await sevk(x.id, "120", new Date("2026-10-10T09:00:00Z"));
+    const sira = (await doktorSiralamasi(EKIM, S({ q: "aynı" }), SAYFA)).satirlar.map((s) => s.doctorId);
+    expect(sira).toEqual([x.id, y.id].sort());
+  });
+
+  it("satıcı seçenekleri carisi olan eski satıcıyı da içerir", async () => {
+    const terfi = await prisma.user.create({ data: { name: "Terfi", email: `t${no}@medikal.local`, passwordHash: "x", role: "SATICI" } });
+    await doktor("Dr. Terfi Carisi", terfi.id);
+    await prisma.user.update({ where: { id: terfi.id }, data: { role: "YONETICI" } });
+    expect((await saticiSecenekleri()).map((u) => u.id)).toContain(terfi.id);
   });
 });

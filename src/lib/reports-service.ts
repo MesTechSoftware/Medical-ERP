@@ -201,8 +201,8 @@ export async function getDoctorReports(donem: Donem, limit = 50): Promise<Doctor
     ciro: net(doktorSevk.get(d.id) ?? [], doktorIade.get(d.id) ?? []).matrah,
   }));
 
-  // Eşit ciroda ada göre: sıra numarası sayfadan sayfaya kaymasın (Ü-27).
-  rows.sort((a, b) => b.ciro.comparedTo(a.ciro) || a.fullName.localeCompare(b.fullName, "tr"));
+  // Eşit ciroda ada, sonra kimliğe göre: sıra numarası istekten isteğe ve sayfadan sayfaya kaymasın (Ü-27).
+  rows.sort((a, b) => b.ciro.comparedTo(a.ciro) || a.fullName.localeCompare(b.fullName, "tr") || a.doctorId.localeCompare(b.doctorId));
   return rows.slice(0, limit);
 }
 

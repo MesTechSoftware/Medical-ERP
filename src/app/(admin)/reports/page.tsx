@@ -14,7 +14,7 @@ import { gizliSutunlariCoz } from "@/lib/liste/sutunlar";
 import { getPagination, pageCount } from "@/lib/pagination";
 import { doktorSiralamasi, saticiSecenekleri } from "@/lib/rapor-listesi/sorgu";
 import { SUTUNLAR, SUTUN_CEREZI } from "@/lib/rapor-listesi/sutunlar";
-import { korunanlar, raporAdresi, saticiAdresi, suzgecCoz } from "@/lib/rapor-listesi/suzgec";
+import { SAHIPSIZ, korunanlar, raporAdresi, saticiAdresi, suzgecCoz } from "@/lib/rapor-listesi/suzgec";
 import { DoktorSiralamasi } from "./DoktorSiralamasi";
 import { sutunlariKaydet } from "./sutunEylemi";
 import {
@@ -55,19 +55,20 @@ export default async function ReportsPage({
   const yer = { page, per: per ? perPage : undefined };
   const gizli = gizliSutunlariCoz(SUTUNLAR, (await cookies()).get(SUTUN_CEREZI)?.value);
 
+  // Seçeneklerde olmayan satıcı (eski yer imi, elle yazılmış kimlik) ağır sorgulardan önce adresten düşer.
+  const saticilar = await saticiSecenekleri();
+  if (suzgec.satici && suzgec.satici !== SAHIPSIZ && !saticilar.some((u) => u.id === suzgec.satici)) {
+    redirect(raporAdresi({ ...suzgec, satici: null }, yer));
+  }
+
   const sellers = await getSellerReports(session.user, donem.aralik);
-  const [saticilar, siralama, ozet, tahsilat, seriler] = await Promise.all([
-    saticiSecenekleri(),
+  const [siralama, ozet, tahsilat, seriler] = await Promise.all([
     doktorSiralamasi(donem.aralik, suzgec, { skip, take }),
     kpiGetir(() => ciroOzeti({ kovalar: aylar, ...k }, { tur: "sirket" }), baglam),
     kpiGetir(() => tahsilatToplamlari(k.onceki ? [k.simdi, k.onceki] : [k.simdi]), baglam),
     saticiCiroSerileri(aylar, sellers.map((s) => s.sellerId)),
   ]);
   const karsilastir = <T,>(onceki: T | null | undefined) => (k.onceki ? { onceki: onceki ?? null, not } : undefined);
-  // Seçeneklerde olmayan satıcı (eski yer imi, elle yazılmış kimlik) adresten düşer.
-  if (suzgec.satici && suzgec.satici !== "sahipsiz" && !saticilar.some((u) => u.id === suzgec.satici)) {
-    redirect(raporAdresi({ ...suzgec, satici: null }, yer));
-  }
   // Sayfa dışı adres son sayfaya gider.
   if (siralama.satirlar.length === 0 && siralama.toplam > 0) {
     redirect(raporAdresi(suzgec, { ...yer, page: pageCount(siralama.toplam, perPage) }));

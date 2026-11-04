@@ -10,7 +10,11 @@ import { SAHIPSIZ, type RaporSuzgeci } from "@/lib/rapor-listesi/suzgec";
  */
 export type SiraSatiri = DoctorReport & { sira: number; oran: number | null };
 
-const kucuk = (m: string) => m.toLocaleLowerCase("tr");
+/**
+ * Türkçe büyük/küçük harf ve I/ı katlaması: `tr` yereliyle küçültülür, ı ile i birleştirilir — ASCII "ISMAIL" de
+ * "ismail" aramasında bulunur (öbür ekranların `metinVaryantlari` genişliğiyle aynı).
+ */
+const kucuk = (m: string) => m.toLocaleLowerCase("tr").replace(/ı/g, "i");
 
 export async function doktorSiralamasi(
   aralik: Donem,
@@ -27,7 +31,14 @@ export async function doktorSiralamasi(
   return { satirlar: suzulmus.slice(sayfa.skip, sayfa.skip + sayfa.take), toplam: suzulmus.length };
 }
 
-/** Filtrele panelinin satıcı seçenekleri: SATICI rolündekiler, ada göre (pasif işaretli). */
+/**
+ * Filtrele panelinin satıcı seçenekleri: SATICI rolündekiler ve rolü değişse de carisi olanlar (sahip sütununda
+ * adı görünen herkes süzülebilsin), ada göre, pasif işaretli.
+ */
 export async function saticiSecenekleri(): Promise<{ id: string; name: string; isActive: boolean }[]> {
-  return prisma.user.findMany({ where: { role: "SATICI" }, orderBy: { name: "asc" }, select: { id: true, name: true, isActive: true } });
+  return prisma.user.findMany({
+    where: { OR: [{ role: "SATICI" }, { ownedDoctors: { some: {} } }] },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true, isActive: true },
+  });
 }
