@@ -164,6 +164,18 @@ describe("tahsilat — dayanıklı davranış", () => {
     ).toBe(1);
   });
 
+  it("gerekçesiz iptal GEREKCE_ZORUNLU döner, hiçbir şey yazılmaz (X-18-5, A-11-3)", async () => {
+    await recordCollection(null, tahsilatFormu(s.doctor.id, s.havale.id));
+    const payment = await prisma.doctorPayment.findFirstOrThrow();
+    const fd = new FormData();
+    fd.set("paymentId", payment.id);
+    fd.set("reason", "   ");
+    const sonuc = await cancelCollection(null, fd);
+    expect(sonuc.bildirimler[0]).toMatchObject({ kural_kodu: "GEREKCE_ZORUNLU", alan: "reason" });
+    expect((await prisma.doctorPayment.findUniqueOrThrow({ where: { id: payment.id } })).status).toBe("AKTIF");
+    expect(await prisma.auditLog.count({ where: { action: AUDIT_ACTIONS.COLLECTION_CANCEL } })).toBe(0);
+  });
+
   it("geçersiz tutarı reddeder ve hiçbir şey yazmaz", async () => {
     for (const amount of ["0", "-5", "1.234", "abc"]) {
       const sonuc = await recordCollection(null, tahsilatFormu(s.doctor.id, s.havale.id, amount));
@@ -328,6 +340,7 @@ describe("nakit tevsik uyarısı — BILGI, kayıt engellenmez (A-15-1)", () => 
     });
     const fd = new FormData();
     fd.set("paymentId", iptal.id);
+    fd.set("reason", "Dekont hatalı");
     await cancelCollection(null, fd);
 
     expect(kodlar(await recordCollection(null, tahsilatFormu(s.doctor.id, s.nakit.id, "25000")))).toEqual([]);
