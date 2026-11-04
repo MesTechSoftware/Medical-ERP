@@ -95,9 +95,9 @@ function satir(p: Ham, ad: Map<string, string>): TahsilatSatiri {
 
 export type Ozet = { tutar: Decimal; adet: number };
 
-async function ozet(where: Prisma.DoctorPaymentWhereInput): Promise<Ozet & { komisyon: Decimal }> {
-  const a = await prisma.doctorPayment.aggregate({ where, _sum: { amount: true, commissionAmount: true }, _count: true });
-  return { tutar: a._sum.amount ?? new Decimal(0), komisyon: a._sum.commissionAmount ?? new Decimal(0), adet: a._count };
+async function ozet(where: Prisma.DoctorPaymentWhereInput): Promise<Ozet> {
+  const a = await prisma.doctorPayment.aggregate({ where, _sum: { amount: true }, _count: true });
+  return { tutar: a._sum.amount ?? new Decimal(0), adet: a._count };
 }
 
 /** Liste: satırlar, satır sayısı ve (yalnız aktif süzgeçte) süzgecin bütün sayfalarının toplamı. */
@@ -112,18 +112,16 @@ export async function tahsilatListesi(
     s.durum === "aktif" ? ozet(where) : null,
   ]);
   const ad = await adlar(hamlar.map((p) => p.recordedBy));
-  return { satirlar: hamlar.map((p) => satir(p, ad)), toplam, ozet: o && { tutar: o.tutar, adet: o.adet } };
+  return { satirlar: hamlar.map((p) => satir(p, ad)), toplam, ozet: o };
 }
 
-export type TahsilatKpileri = Record<"toplam" | "NAKIT" | "BANKA", Ozet> & { POS: Ozet & { komisyon: Decimal } };
+export type TahsilatKpileri = Record<"toplam" | TahsilatTipi, Ozet>;
 
 /** KPI kartları (spec §3.2): aralıktaki aktif tahsilatlar, toplam ve tip başına; her biri kartın açtığı süzgecin koşulundan. */
 export async function tahsilatKpileri(a: { baslangic: string | null; bitis: string | null }): Promise<TahsilatKpileri> {
   const kosul = (tip: TahsilatTipi | null) => tahsilatKosulu({ ...BOS_SUZGEC, baslangic: a.baslangic, bitis: a.bitis, tip });
-  const [toplam, ...tipler] = await Promise.all([ozet(kosul(null)), ...TIPLER.map((t) => ozet(kosul(t)))]);
-  const [nakit, banka, pos] = tipler;
-  const yalin = (o: Ozet) => ({ tutar: o.tutar, adet: o.adet });
-  return { toplam: yalin(toplam), NAKIT: yalin(nakit), BANKA: yalin(banka), POS: pos };
+  const [toplam, NAKIT, BANKA, POS] = await Promise.all([ozet(kosul(null)), ...TIPLER.map((t) => ozet(kosul(t)))]);
+  return { toplam, NAKIT, BANKA, POS };
 }
 
 export type TahsilatPaneli = TahsilatSatiri & {

@@ -70,7 +70,7 @@ describe("tahsilat kartları = süzgeç (A-11-2)", () => {
     expect([tl(k.toplam.tutar), k.toplam.adet]).toEqual(["600.00", 3]);
     expect([tl(k.NAKIT.tutar), k.NAKIT.adet]).toEqual(["100.00", 1]);
     expect([tl(k.BANKA.tutar), k.BANKA.adet]).toEqual(["200.00", 1]);
-    expect([tl(k.POS.tutar), k.POS.adet, tl(k.POS.komisyon)]).toEqual(["300.00", 1, "7.50"]);
+    expect([tl(k.POS.tutar), k.POS.adet]).toEqual(["300.00", 1]);
   });
 
   it("kartın açtığı süzgecin toplam satırı ve satır sayısı kartla aynı", async () => {

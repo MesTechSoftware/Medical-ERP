@@ -50,7 +50,7 @@ export default function CollectionForm({
 
       <div className="sm:col-span-2">
         <p className="mb-2 text-xs text-slate-500">
-          Tahsilat, vadesi en eski siparişten başlayarak otomatik mahsup edilir.
+          Tahsilat siparişle eşleştirilmez; carinin bakiyesinden düşer.
         </p>
         <div className="mb-2">
           <SonucGosterimi sonuc={state} alanlar={ALANLAR} basari={() => "Tahsilat kaydedildi."} />

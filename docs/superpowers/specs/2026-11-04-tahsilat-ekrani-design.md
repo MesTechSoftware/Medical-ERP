@@ -64,7 +64,7 @@ Durum, tip ve metin süzgecinden bağımsız. `bosDavranisi: "sifir"`, trend ve 
 | Tahsilat (birincil) | aralıktaki aktif tahsilatların tutar toplamı | "N tahsilat" | `?baslangic=…&bitis=…` |
 | Nakit | `paymentMethod.type = NAKIT` toplamı | "N tahsilat" | `…&tip=NAKIT` |
 | Banka | `BANKA` toplamı | "N tahsilat" | `…&tip=BANKA` |
-| POS | `POS` toplamı | "Komisyon ₺X" (`commissionAmount` toplamı) | `…&tip=POS` |
+| POS | `POS` toplamı | "N tahsilat" | `…&tip=POS` |
 
 Kart adresi aralığı adrese yazar (varsayılan aralıkta da); açtığı listenin toplam satırı kartın tutarına,
 satır sayısı ikincil metrikteki adede eşittir.
@@ -147,8 +147,7 @@ yönlenir. İptal: gerekçesiz → `GEREKCE_ZORUNLU` (alan altında); zaten ipta
 **Kabul kriterleri (testten önce):**
 
 - **A-11-2:** Tahsilat ekranının kartları süzgecin tarih aralığındaki (yoksa bu ayın) aktif tahsilatlarını
-  `paidAt`'in İstanbul gününden toplar: toplam ve yöntem tipi başına (Nakit, Banka, POS); POS kartı donmuş
-  komisyonların toplamını da verir. Kartın açtığı süzgecin toplam satırı kartın tutarına, satır sayısı kartın
+  `paidAt`'in İstanbul gününden toplar: toplam ve yöntem tipi başına (Nakit, Banka, POS), tutar ve adet. Kartın açtığı süzgecin toplam satırı kartın tutarına, satır sayısı kartın
   adedine eşittir. İptal edilen tahsilat hiçbir karta ve toplama girmez.
 - **A-11-3:** Tahsilat panelinde komisyon kayıttaki donmuş oran ve tutardır (yöntemin oranı sonradan değişse
   de). Tahsilat iptali gerekçe ister; gerekçe kayda yazılır ve panelde iptal edeni ve zamanıyla görünür.
@@ -176,7 +175,7 @@ Tek PR `revize/tahsilat-ekrani`.
 
 | # | Soru | Seçilen | Diğer |
 |---|---|---|---|
-| 1 | KPI'lar | Tahsilat · Nakit · Banka · POS (POS'ta komisyon) — mutabakatta yöntem kırılımı | Tahsilat · Bugün · İptal · Ortalama |
+| 1 | KPI'lar | Tahsilat · Nakit · Banka · POS — mutabakatta yöntem kırılımı (komisyon tablo sütununda ve panelde; Ü-3-1 ikincil metinde para göstermez) | Tahsilat · Bugün · İptal · Ortalama |
 | 2 | KPI dönemi | süzgecin tarihi, yoksa bu ay (Siparişler gibi) | sabit bu ay |
 | 3 | Hızlı sekmeler | tarih kısayolları (Tümü · Bugün · Son 7 gün · Bu ay) | durum sekmeleri (Aktif/İptal) |
 | 4 | Varsayılan durum | yalnız aktif (iptaller "Durum" süzgecinde) — kart = toplam | aktif + iptal karışık (bugünkü) |
