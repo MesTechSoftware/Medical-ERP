@@ -12,12 +12,17 @@ export function donemAciklamasi(anahtar: string): string {
 /**
  * Rapor dönemi (X-1 §(2)): varsayılan içinde bulunulan aydır; "tüm zamanlar" ayrı,
  * bilinçli bir seçimdir. GET formu — dönem URL'dedir; `SuzgecFormu` istemci tarafında gezer, JS'siz de
- * çalışır ve ay alanını hep uygulanan dönemle gösterir.
+ * çalışır ve ay alanını hep uygulanan dönemle gösterir. `korunan` ekranın öbür süzgeçleridir (Raporlar, Ü-27):
+ * gizli alanla ve "Tüm zamanlar" bağlantısıyla taşınır, dönem değişince düşmez.
  */
-export default function DonemSecici({ anahtar, yol }: { anahtar: string; yol: string }) {
+export default function DonemSecici({ anahtar, yol, korunan = {} }: { anahtar: string; yol: string; korunan?: Record<string, string> }) {
   const tum = anahtar === "tum";
+  const tumAdresi = `${yol}?${new URLSearchParams({ donem: "tum", ...korunan }).toString()}`;
   return (
     <SuzgecFormu action={yol} anahtar={anahtar} className="mb-6 flex flex-wrap items-end gap-2">
+      {Object.entries(korunan).map(([ad, deger]) => (
+        <input key={ad} type="hidden" name={ad} value={deger} />
+      ))}
       <div>
         <label htmlFor="donem" className="mb-1 block text-xs text-slate-500">
           Dönem (ay)
@@ -38,7 +43,7 @@ export default function DonemSecici({ anahtar, yol }: { anahtar: string; yol: st
         Göster
       </button>
       <Link
-        href={`${yol}?donem=tum`}
+        href={tumAdresi}
         scroll={false}
         className={buton(tum ? "birincil" : "ikincil")}
       >

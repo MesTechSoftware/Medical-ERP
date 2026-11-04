@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { formatla } from "@/lib/money";
 import { Tutar } from "@/components/Tutar";
 import { BRUT, MATRAH, tabanli } from "@/lib/taban";
@@ -8,6 +9,8 @@ import { KovaOzeti } from "@/components/kpi/KovaOzeti";
 import type { Ay } from "@/lib/donem";
 import type Decimal from "decimal.js";
 
+const BAGLANTI = "text-link underline decoration-link/40 underline-offset-4 hover:decoration-link";
+
 /**
  * Satıcı raporu tablosu (X-1 §(1)): üç mutlak sayı, tabanı başlıkta yazılı; oran yok.
  * Hakediş sevkiyat satırına donmuş oranla hesaplanır (X-14); "ödenebilir prim" değildir (X-1 §(7)).
@@ -15,8 +18,11 @@ import type Decimal from "decimal.js";
 export default function SaticiRaporTablosu({
   satirlar,
   seriler,
+  saticiBaglantisi,
 }: {
   satirlar: SellerReport[];
+  /** Verilirse satıcı adı bu adrese bağlantıdır (Raporlar: o satıcının carileri, Ü-27). */
+  saticiBaglantisi?: (saticiId: string) => string;
   /** Satıcı başına son 6 ay cirosu (matrah) — "Son 6 ay" hücresi; verilmezse kolon yok. */
   seriler?: { aylar: readonly Ay[]; degerler: Map<string, Decimal[]> };
 }) {
@@ -39,7 +45,15 @@ export default function SaticiRaporTablosu({
           {satirlar.length === 0 && <EmptyRow colSpan={6 + kolon} text="Satıcı yok." />}
           {satirlar.map((s) => (
             <tr key={s.sellerId}>
-              <td className="font-medium text-slate-900">{s.name}</td>
+              <td className="font-medium text-slate-900">
+                {saticiBaglantisi ? (
+                  <Link href={saticiBaglantisi(s.sellerId)} scroll={false} className={BAGLANTI}>
+                    {s.name}
+                  </Link>
+                ) : (
+                  s.name
+                )}
+              </td>
               <td className="sayi"><Tutar deger={s.ciro} taban={MATRAH} baslikta /></td>
               <td className="sayi"><Tutar deger={s.hakedis} taban={MATRAH} baslikta /></td>
               <td className="sayi"><Tutar deger={s.tahsilat} taban={BRUT} baslikta /></td>

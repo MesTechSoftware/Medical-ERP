@@ -169,6 +169,8 @@ async function donemTahsilatlari(donem: Donem, saticiIdleri: string[]): Promise<
 export type DoctorReport = {
   doctorId: string;
   fullName: string;
+  /** Carinin bugünkü sahibi (Raporlar'ın satıcı süzgeci, Ü-27). */
+  sellerId: string | null;
   sellerName: string | null;
   ciro: Decimal;
 };
@@ -176,7 +178,7 @@ export type DoctorReport = {
 export async function getDoctorReports(donem: Donem, limit = 50): Promise<DoctorReport[]> {
   const [doctors, sevk, iade] = await Promise.all([
     prisma.doctor.findMany({
-      select: { id: true, fullName: true, ownerSeller: { select: { name: true } } },
+      select: { id: true, fullName: true, ownerSellerId: true, ownerSeller: { select: { name: true } } },
     }),
     prisma.shipmentItem.findMany({
       where: donemSevkSatiri(donem),
@@ -194,11 +196,13 @@ export async function getDoctorReports(donem: Donem, limit = 50): Promise<Doctor
   const rows = doctors.map((d) => ({
     doctorId: d.id,
     fullName: d.fullName,
+    sellerId: d.ownerSellerId,
     sellerName: d.ownerSeller?.name ?? null,
     ciro: net(doktorSevk.get(d.id) ?? [], doktorIade.get(d.id) ?? []).matrah,
   }));
 
-  rows.sort((a, b) => b.ciro.comparedTo(a.ciro));
+  // Eşit ciroda ada, sonra kimliğe göre: sıra numarası istekten isteğe ve sayfadan sayfaya kaymasın (Ü-27).
+  rows.sort((a, b) => b.ciro.comparedTo(a.ciro) || a.fullName.localeCompare(b.fullName, "tr") || a.doctorId.localeCompare(b.doctorId));
   return rows.slice(0, limit);
 }
 
