@@ -64,14 +64,21 @@ export function durumSekmeleri(s: PartiSuzgeci): { etiket: string; adres: string
   return SEKMELER.map((d) => ({ etiket: DURUM_ADI[d], adres: partiAdresi({ ...s, durum: d }), etkin: s.durum === d }));
 }
 
-/** KPI kartlarının adresleri (X-12-2): kart = açtığı süzgecin satırı. */
-export function kartAdresleri(bugun: string): { tumu: string; buAy: string; geriAlinabilir: string; geriAlindi: string } {
+export type PartiKarti = "tumu" | "buAy" | "geriAlinabilir" | "geriAlindi";
+
+/** KPI kartlarının süzgeçleri (X-12-2): kartın adresi de sayısı da bundan türer — kart = açtığı süzgecin satırı. */
+export function kartSuzgecleri(bugun: string): Record<PartiKarti, PartiSuzgeci> {
   return {
-    tumu: partiAdresi(BOS_SUZGEC),
-    buAy: partiAdresi({ ...BOS_SUZGEC, baslangic: `${bugun.slice(0, 8)}01`, bitis: bugun }),
-    geriAlinabilir: partiAdresi({ ...BOS_SUZGEC, durum: "geri-alinabilir" }),
-    geriAlindi: partiAdresi({ ...BOS_SUZGEC, durum: "geri-alindi" }),
+    tumu: BOS_SUZGEC,
+    buAy: { ...BOS_SUZGEC, baslangic: `${bugun.slice(0, 8)}01`, bitis: bugun },
+    geriAlinabilir: { ...BOS_SUZGEC, durum: "geri-alinabilir" },
+    geriAlindi: { ...BOS_SUZGEC, durum: "geri-alindi" },
   };
+}
+
+export function kartAdresleri(bugun: string): Record<PartiKarti, string> {
+  const k = kartSuzgecleri(bugun);
+  return { tumu: partiAdresi(k.tumu), buAy: partiAdresi(k.buAy), geriAlinabilir: partiAdresi(k.geriAlinabilir), geriAlindi: partiAdresi(k.geriAlindi) };
 }
 
 export function etkinSuzgecler(s: PartiSuzgeci): { anahtar: string; etiket: string; kaldirAdresi: string }[] {
