@@ -7,12 +7,12 @@ const ONAYLI = { stage: "ONAYLI" } as const;
 
 /**
  * Sipariş durum dağılımı (brief §3.3): aralıkta açılan onaylı siparişlerin bugünkü durumları.
- * Kaydı olmayan durum 0'dır.
+ * Kaydı olmayan durum 0'dır. `saticiId` verilirse yalnız o satıcının siparişleri (Siparişlerim, Ü-31).
  */
-export async function siparisDagilimi(aralik: Aralik): Promise<Record<OrderStatus, number>> {
+export async function siparisDagilimi(aralik: Aralik, saticiId?: string): Promise<Record<OrderStatus, number>> {
   const gruplar = await prisma.order.groupBy({
     by: ["status"],
-    where: { ...ONAYLI, orderDate: { gte: aralik.baslangic, lt: aralik.bitis } },
+    where: { ...ONAYLI, orderDate: { gte: aralik.baslangic, lt: aralik.bitis }, ...(saticiId ? { sellerId: saticiId } : {}) },
     _count: { _all: true },
   });
   const sayi = (s: OrderStatus) => gruplar.find((g) => g.status === s)?._count._all ?? 0;

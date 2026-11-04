@@ -8,7 +8,7 @@ import { gunleriAraliga, siparisKpileri, siparisListesi, siparisPaneli } from "@
 import { BOS_SUZGEC, type SiparisSuzgeci } from "@/lib/siparis-listesi/suzgec";
 import { referansVeri, yeniDoktorVerisi } from "../../../test/integration/referans";
 
-// Siparişler ekranı sorguları — KABUL_KRITERLERI A-5-8, A-3-2 (spec Ü-23 §4).
+// Siparişler ekranı sorguları — KABUL_KRITERLERI A-5-8, A-3-2 (spec Ü-23 §4); Siparişlerim kapsamı X-13-3 (Ü-31).
 
 const SAYFA = { skip: 0, take: 100 };
 const DURUMLAR: OrderStatus[] = ["BEKLIYOR", "HAZIRLANIYOR", "KARGOLANDI", "TESLIM_EDILDI", "IPTAL"];
@@ -201,5 +201,34 @@ describe("satır tutarı, sevk ve yan panel (A-3-2)", () => {
 
   it("bulunmayan kimlikte panel null", async () => {
     expect(await siparisPaneli("yok-boyle-bir-siparis")).toBeNull();
+  });
+});
+
+describe("Siparişlerim kapsamı (Ü-31, X-13-3)", () => {
+  it("liste, KPI ve panel yalnız satıcının kendi siparişleri; adresin satıcı süzgeci kapsamı genişletemez", async () => {
+    const ayse = await satici("Ayşe");
+    const can = await satici("Can");
+    const kendi = await siparis({ orderDate: kasim(3), sellerId: ayse.id, documentNo: "SIP-AYSE-1" });
+    await siparis({ orderDate: kasim(3), sellerId: ayse.id, status: "KARGOLANDI", documentNo: "SIP-AYSE-2" });
+    const baska = await siparis({ orderDate: kasim(3), sellerId: can.id, documentNo: "SIP-CAN-1" });
+    await siparis({ orderDate: kasim(3), sellerId: null, documentNo: "SIP-BAYI-1" });
+
+    const belgeler = async (s: SiparisSuzgeci) =>
+      (await siparisListesi(s, SAYFA, ayse.id)).satirlar.map((r) => r.documentNo).sort();
+    expect(await belgeler(BOS_SUZGEC)).toEqual(["SIP-AYSE-1", "SIP-AYSE-2"]);
+    expect(await belgeler(S({ satici: can.id }))).toEqual([]);
+    expect(await belgeler(S({ q: "SIP-CAN" }))).toEqual([]);
+
+    const aralik = gunleriAraliga(KASIM);
+    const k = await siparisKpileri(aralik, ayse.id);
+    expect(k).toMatchObject({ toplam: 2, BEKLIYOR: 1, KARGOLANDI: 1 });
+    // Kart = açtığı süzgecin satır sayısı, aynı kapsamla (A-5-8).
+    for (const d of DURUMLAR) expect(k[d]).toBe((await siparisListesi(S({ durum: d, ...KASIM }), SAYFA, ayse.id)).toplam);
+    // Kapsamsız çağrı (yönetici) dördünü de sayar.
+    expect((await siparisKpileri(aralik)).toplam).toBe(4);
+
+    expect((await siparisPaneli(kendi.id, ayse.id))?.siparis.documentNo).toBe("SIP-AYSE-1");
+    expect(await siparisPaneli(baska.id, ayse.id)).toBeNull();
+    expect((await siparisPaneli(baska.id))?.siparis.documentNo).toBe("SIP-CAN-1");
   });
 });
