@@ -17,14 +17,7 @@ import type { IceAktarimTanimi, OzetSatiri, Satir } from "./tanim";
  * İçe aktarımın tek koşturucusu — ADR-006 §2: doğrula → önizle → yaz. Dosya saklanmaz (E-3 §(2));
  * "yaz" aynı dosyayla yeniden çağrılır ve aynı doğrulamadan geçer. Kısmi yazma yoktur (X-16 §(4)).
  */
-/** Veri tipinin ekran adı — içe aktarım ekranı ve dashboard özeti. */
-export const VERI_TIPI_ADI: Record<ImportDataType, string> = {
-  CARI: "Cari (doktor ve bayi)",
-  URUN: "Ürün",
-  FIYAT_LISTESI: "Fiyat listesi",
-  ACILIS_BAKIYESI: "Açılış bakiyesi",
-  ACILIS_STOGU: "Açılış stoğu",
-};
+export { VERI_TIPI_ADI } from "./adlar";
 
 export const TANIMLAR: Partial<Record<ImportDataType, IceAktarimTanimi<unknown>>> = {
   CARI: CARI_TANIMI as IceAktarimTanimi<unknown>,
