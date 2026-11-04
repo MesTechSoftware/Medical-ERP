@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/db";
+import { ARALIKLI } from "@/lib/disa-aktarim-katalog";
 import { requireAdmin } from "@/lib/session";
 import {
   VERI_SETLERI,
@@ -19,7 +20,6 @@ import { TUM_ZAMANLAR, bugun, yerelGunAraligi, yerelGunMetni } from "@/lib/zaman
 /** Dosya istemciye base64 gider; sunucuda saklanmaz (D-5 §(10), E-3). */
 export type DisaAktarimSonucu = IslemSonucu & { dosya?: { ad: string; mime: string; icerik: string } };
 
-const ARALIKLI: readonly VeriSeti[] = ["CARI_HAREKET", "TAHSILAT", "SIPARIS", "FATURA_HAZIRLIK"];
 
 /**
  * Dışa aktarım — D-5. Yalnız `YONETICI` (§(4)). Her çalıştırma kütüğe yazılır: kullanıcı kimliği,

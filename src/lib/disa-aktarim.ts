@@ -24,8 +24,8 @@ import { EKSIK_FATURA_BILGISI } from "@/lib/cari";
  * - Tarih kolonları `YYYY-AA-GG` yerel gündür (E-1 §(8)); stok veri setinde tutar yoktur (C-2 §(4)).
  */
 
-export const VERI_SETLERI = ["CARI_HAREKET", "TAHSILAT", "SIPARIS", "STOK", "DOKTOR_LISTESI", "FATURA_HAZIRLIK"] as const;
-export type VeriSeti = (typeof VERI_SETLERI)[number];
+import { VERI_SETLERI, type VeriSeti } from "@/lib/disa-aktarim-katalog";
+export { VERI_SETLERI, type VeriSeti };
 
 export type Aralik = { baslangic: Date; bitis: Date };
 export type DisaAktarimParametresi =
