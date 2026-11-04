@@ -36,6 +36,8 @@ test("doktor listesi CSV olarak iner ve kütüğe yazılır (D-5-1, D-5-2)", asy
   expect(icerik.split("\r\n")[0]).toContain("VKN / TCKN");
   await expect(page.getByText(/Dosya hazırlandı: \d+ satır\./)).toBeVisible();
   expect(await kutukSayisi("DOKTOR_LISTESI")).toBe(once + 1);
+  // Seçilen biçim indirmeden sonra Excel'e dönmez.
+  await expect(page.getByRole("radiogroup", { name: "Biçim" }).getByLabel("CSV (.csv)")).toBeChecked();
 });
 
 test("aralık okuyan veri seti dönemsiz çalışmaz; alanın altında gösterilir (D-5-1)", async ({ page }) => {
@@ -45,6 +47,8 @@ test("aralık okuyan veri seti dönemsiz çalışmaz; alanın altında gösteril
   await page.getByLabel("Bitiş günü (dahil)").fill("2026-10-01");
   await page.getByRole("button", { name: "Dosyayı İndir" }).click();
   await expect(page.locator("#bitis-hata")).toHaveText("Bitiş günü başlangıç gününden önce olamaz.");
+  // Hatadan sonra girilen günler silinmez (form sıfırlanmaz).
+  await expect(page.getByLabel("Başlangıç günü")).toHaveValue("2026-10-31");
 });
 
 test("dönem kısayolu alanları doldurur; şablonsuz fatura hazırlık seçilemez; geçmiş yok (D-5-3)", async ({ page }) => {
@@ -62,5 +66,7 @@ test("dönem kısayolu alanları doldurur; şablonsuz fatura hazırlık seçilem
   await page.getByRole("button", { name: "Dosyayı İndir" }).click();
   await indirme;
   await expect(page.getByText(/Dosya hazırlandı: \d+ satır\./)).toBeVisible();
-  await expect(page.getByText(/geçmiş|son indirmeler/i)).toHaveCount(0);
+  // İndirmeden sonra kısayolun doldurduğu günler yerinde kalır.
+  await expect(page.getByLabel("Başlangıç günü")).toHaveValue(baslangic);
+  await expect(page.locator("main").getByText(/geçmiş|son indirmeler/i)).toHaveCount(0);
 });

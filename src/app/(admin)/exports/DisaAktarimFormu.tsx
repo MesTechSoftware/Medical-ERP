@@ -1,26 +1,30 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { startTransition, useActionState, useEffect, useState } from "react";
 import { Field, SubmitButton } from "@/components/form";
 import { SonucGosterimi } from "@/components/Sonuc";
 import { StatusChip } from "@/components/ui";
 import { buton } from "@/components/stil";
 import { Ikon } from "@/components/Ikon";
 import { donemKisayollari } from "@/lib/disa-aktarim-donem";
+import { ARALIKLI, VERI_SETLERI, type VeriSeti } from "@/lib/disa-aktarim-katalog";
 import { disaAktar, type DisaAktarimSonucu } from "./actions";
 
 type Rozet = "Dönem ister" | "Gün sonu" | "Anlık";
 
-/** Altı veri seti (D-5, kodda kapalı) — ad, ne içerdiği ve hangi dönemi istediği (spec Ü-29 §3). */
-const VERI_SETLERI: readonly { kod: string; ad: string; aciklama: string; rozet: Rozet }[] = [
-  { kod: "CARI_HAREKET", ad: "Cari hareket", aciklama: "Bütün cari hareketler tipi, yönü ve vadesiyle; açılış ve vade farkı dahil — mutabakat için.", rozet: "Dönem ister" },
-  { kod: "TAHSILAT", ad: "Tahsilat hareket listesi", aciklama: "Tahsilatlar yöntemi, komisyonu, referansı ve durumuyla.", rozet: "Dönem ister" },
-  { kod: "SIPARIS", ad: "Sipariş", aciklama: "Sayılan siparişlerin satırları ürün, fiyat ve KDV'siyle; bedelsiz işaretli.", rozet: "Dönem ister" },
-  { kod: "STOK", ad: "Stok miktarı", aciklama: "Gün sonu itibarıyla ürün ve konum başına miktar; tutar yok, yıl içi düzeltmeler işaretli.", rozet: "Gün sonu" },
-  { kod: "DOKTOR_LISTESI", ad: "Doktor listesi", aciklama: "Cariler fatura bilgileri ve sorumlu satıcısıyla.", rozet: "Anlık" },
-  { kod: "FATURA_HAZIRLIK", ad: "Fatura hazırlık (sevk günü)", aciklama: "Sevk günündeki satırlar, kurulumdaki şablonun sütun eşlemesiyle.", rozet: "Dönem ister" },
-];
-const ALANLAR = ["kod", "bicim", "baslangic", "bitis", "tarih"] as const;
+/** Veri setinin adı ve ne içerdiği (spec Ü-29 §3); kod listesi sunucuyla tek kaynaktır (`disa-aktarim-katalog`). */
+const TANIM: Record<VeriSeti, { ad: string; aciklama: string }> = {
+  CARI_HAREKET: { ad: "Cari hareket", aciklama: "Bütün cari hareketler tipi, yönü ve vadesiyle; açılış ve vade farkı dahil — mutabakat için." },
+  TAHSILAT: { ad: "Tahsilat hareket listesi", aciklama: "Tahsilatlar yöntemi, komisyonu, referansı ve durumuyla." },
+  SIPARIS: { ad: "Sipariş", aciklama: "Sayılan siparişlerin satırları ürün, fiyat ve KDV'siyle; bedelsiz işaretli." },
+  STOK: { ad: "Stok miktarı", aciklama: "Gün sonu itibarıyla ürün ve konum başına miktar; tutar yok, yıl içi düzeltmeler işaretli." },
+  DOKTOR_LISTESI: { ad: "Doktor listesi", aciklama: "Cariler fatura bilgileri ve sorumlu satıcısıyla." },
+  FATURA_HAZIRLIK: { ad: "Fatura hazırlık (sevk günü)", aciklama: "Sevk günündeki satırlar, kurulumdaki şablonun sütun eşlemesiyle." },
+};
+/** Dönem rozeti sunucunun aralık listesinden türer: dönem alanlarının görünmesi ile sunucunun istemesi aynı kaynaktır. */
+const rozet = (kod: VeriSeti): Rozet => (ARALIKLI.includes(kod) ? "Dönem ister" : kod === "STOK" ? "Gün sonu" : "Anlık");
+/** Altında hata gösterilen alanlar; `kod` ve `bicim` hataları özet kutusunda görünür. */
+const ALANLAR = ["baslangic", "bitis", "tarih"] as const;
 
 /** Dosya sunucuda saklanmaz: yanıttaki içerik tarayıcıda indirilir (D-5 §(10)). */
 function indir(dosya: NonNullable<DisaAktarimSonucu["dosya"]>) {
@@ -40,7 +44,7 @@ function indir(dosya: NonNullable<DisaAktarimSonucu["dosya"]>) {
  */
 export default function DisaAktarimFormu({ bugun, faturaSablonuVar }: { bugun: string; faturaSablonuVar: boolean }) {
   const [state, formAction] = useActionState<DisaAktarimSonucu | null, FormData>(disaAktar, null);
-  const [kod, setKod] = useState("CARI_HAREKET");
+  const [kod, setKod] = useState<VeriSeti>("CARI_HAREKET");
   const [tumZamanlar, setTumZamanlar] = useState(false);
   // Kısayol alanların varsayılanını değiştirir; `surum` alanları yeniden kurar.
   const [aralik, setAralik] = useState({ baslangic: "", bitis: "", surum: 0 });
@@ -49,30 +53,38 @@ export default function DisaAktarimFormu({ bugun, faturaSablonuVar }: { bugun: s
     if (state?.dosya) indir(state.dosya);
   }, [state]);
 
-  const secili = VERI_SETLERI.find((v) => v.kod === kod)!;
+  const donemIster = ARALIKLI.includes(kod);
 
   return (
-    <form action={formAction} className="space-y-6">
+    <form
+      className="space-y-6"
+      onSubmit={(e) => {
+        // Elle gönderim (`IslemFormu` gibi): React'in form eylemi alanları sıfırlar — girilen günler ve biçim kalsın.
+        e.preventDefault();
+        const veri = new FormData(e.currentTarget);
+        startTransition(() => formAction(veri));
+      }}
+    >
       <fieldset>
         <legend className="mb-2 text-sm font-medium text-slate-700">Veri seti</legend>
         <div role="radiogroup" aria-label="Veri seti" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {VERI_SETLERI.map((v) => {
-            const pasif = v.kod === "FATURA_HAZIRLIK" && !faturaSablonuVar;
-            const secilen = kod === v.kod;
+            const pasif = v === "FATURA_HAZIRLIK" && !faturaSablonuVar;
+            const secilen = kod === v;
             return (
               <label
-                key={v.kod}
-                className={`flex cursor-pointer gap-3 rounded-xl border p-4 text-sm transition ${
+                key={v}
+                className={`flex gap-3 rounded-xl border p-4 text-sm transition ${
                   secilen ? "border-information bg-information-bg" : "border-slate-200 bg-white hover:border-slate-300"
-                } ${pasif ? "cursor-not-allowed opacity-60" : ""}`}
+                } ${pasif ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}
               >
-                <input type="radio" name="kod" value={v.kod} checked={secilen} disabled={pasif} onChange={() => setKod(v.kod)} className="mt-0.5" />
+                <input type="radio" name="kod" value={v} checked={secilen} disabled={pasif} onChange={() => setKod(v)} className="mt-0.5" />
                 <span className="min-w-0">
                   <span className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium text-slate-900">{v.ad}</span>
-                    <StatusChip ton="notr">{v.rozet}</StatusChip>
+                    <span className="font-medium text-slate-900">{TANIM[v].ad}</span>
+                    <StatusChip ton="notr">{rozet(v)}</StatusChip>
                   </span>
-                  <span className="mt-1 block text-slate-500">{v.aciklama}</span>
+                  <span className="mt-1 block text-slate-500">{TANIM[v].aciklama}</span>
                   {pasif && <span className="mt-1 block text-slate-500">Kurulumda fatura şablonu tanımlanmadığı için seçilemez.</span>}
                 </span>
               </label>
@@ -82,7 +94,7 @@ export default function DisaAktarimFormu({ bugun, faturaSablonuVar }: { bugun: s
       </fieldset>
 
       <div className="max-w-lg space-y-4">
-        {secili.rozet === "Dönem ister" && (
+        {donemIster && (
           <>
             <label className="flex items-center gap-2 text-sm text-slate-700 dokunmatik:min-h-11">
               <input type="checkbox" name="tumZamanlar" checked={tumZamanlar} onChange={(e) => setTumZamanlar(e.target.checked)} />
