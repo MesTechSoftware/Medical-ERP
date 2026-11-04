@@ -6,7 +6,7 @@
 > Kod yeri, kriter metninde anılan fonksiyonun tanımlandığı dosyadır. Eski PRD matrisi (8 Ağustos 2026)
 > `docs/arsiv/TRACEABILITY_PRD_V2.md`'dedir.
 
-**Özet:** 156 KANITLI · 0 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.0** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
+**Özet:** 157 KANITLI · 0 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.0** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
 
 | Kriter | Karar | Durum | Kod yeri | Test | Kriter metni |
 |---|---|---|---|---|---|
@@ -156,6 +156,7 @@
 | X-12-2 | X-12 | KANITLI | — | `src/lib/ice-aktarim-listesi/sorgu.itest.ts`<br>`e2e/admin/ice-aktarim-ekrani.spec.ts` | İçe aktarım ekranının kartları (parti, bu ay, geri alınabilir, geri alındı) açtıkları süzgecin satır sayısına eşittir; "geri alınabilir"… |
 | X-13-1 | X-13 | KANITLI | — | `src/lib/kapsam.itest.ts`<br>`src/lib/tek-cagri.test.ts` | `kapsamliDoktorlariGetir(kullanici)` doktor okumasının kapsamını **sorgu süzgeci** olarak döner. `SATICI`'ya yalnız sahibi olduğu `DOKTOR… |
 | X-13-2 | X-13 | KANITLI | — | `e2e/operasyon/operasyon.spec.ts` | `OPERASYON` cari listesinde yan paneli açar; panelde Düzenle, listede Yeni Cari ve toplu devir yoktur. |
+| X-13-3 | X-13 | KANITLI | — | `src/lib/siparis-listesi/sorgu.itest.ts`<br>`e2e/seller/siparislerim.spec.ts` | Siparişlerim (satıcı) listesi, KPI kartları ve yan paneli yalnız oturumdaki satıcının siparişlerini okur; adresteki `satici` süzgeci kaps… |
 | X-14-1 | X-14 | KANITLI | `src/lib/satir-tutarlari.ts` | `src/lib/satir-tutarlari.test.ts`<br>`src/lib/reports-service.itest.ts` | Hakediş = sevkiyat satırının matrahı × satıra donmuş oran (`hesaplaSatirTutarlari()`, X-5 §(4)); tutar saklanmaz, raporda hesaplanır. Sat… |
 | X-14-2 | X-14 | KANITLI | — | `src/lib/sevkiyat.itest.ts` | Uygulanan prim oranı sevkiyat anında sevkiyat satırına donar: satıcının özel oranı, yoksa `finance.primOraniVarsayilan`; `BAYI` carinin s… |
 | X-15-1 | X-15 | KANITLI | — | `src/app/(admin)/collections/collections.itest.ts`<br>`src/lib/yetki.test.ts` | Vade değişikliği yalnız `YONETICI`, gerekçe zorunlu, yalnız borç hareketinde (`VADE_YALNIZ_BORC`); eski/yeni vade, kişi, zaman ve gerekçe… |
