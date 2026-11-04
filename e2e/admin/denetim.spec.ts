@@ -17,6 +17,8 @@ test("cari VKN'si değişince kayıt Güncelleme olur; detayda istek bağlamı, 
   await page.getByRole("link", { name: "Düzenle" }).click();
   await page.getByLabel("VKN / TCKN").fill("9876543217");
   await page.getByRole("button", { name: "Kaydet" }).click();
+  // Düzenleme sayfasının başlığı da carinin adıdır: kaydın bittiği detay sayfasına yönlenmeden anlaşılır.
+  await expect(page).toHaveURL(/\/doctors\/[^/]+$/);
   await expect(page.getByRole("heading", { level: 1, name: ad })).toBeVisible();
   const [cari] = await sorgu<{ id: string }>(`SELECT id FROM "Doctor" WHERE "fullName" = $1`, [ad]);
 

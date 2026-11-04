@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { BOS_SUZGEC, SISTEM, bosDurum, denetimAdresi, etkinSuzgecler, kartAdresleri, suzgecCoz, tarihSekmesiAdresi } from "@/lib/denetim/suzgec";
+import { BOS_SUZGEC, SISTEM, bosDurum, denetimAdresi, etkinSuzgecler, kartAdresleri, kartSuzgecleri, suzgecCoz, tarihSekmesiAdresi } from "@/lib/denetim/suzgec";
 
 // X-18-6: süzgeçler ve imleç adres çubuğunda durur; geçersiz değer yok sayılır.
 
@@ -73,8 +73,16 @@ describe("ekran yardımcıları (Ü-28)", () => {
     expect(e.map((x) => x.etiket)).toEqual(["Tarih: 01.11.2026 – 04.11.2026", "Kullanıcı: Ayşe", "Modül: Stok", "Tür: Silme", "Olay: Giriş başarısız"]);
     expect(e[1].kaldirAdresi).toBe("/audit-logs?baslangic=2026-11-01&bitis=2026-11-04&modul=STOK&tur=SILME&olay=AUTH_LOGIN_FAILURE");
     expect(etkinSuzgecler({ ...BOS_SUZGEC, kullanici: SISTEM }, () => undefined).map((x) => x.etiket)).toEqual(["Kullanıcı: Sistem / anonim"]);
-    expect(etkinSuzgecler({ ...BOS_SUZGEC, kullanici: "u-9" }, () => undefined)).toEqual([]);
+    // Adı bilinmeyen kullanıcı da süzer: etiket görünür kalır, kaldırılabilir.
+    expect(etkinSuzgecler({ ...BOS_SUZGEC, kullanici: "u-9" }, () => undefined).map((x) => [x.etiket, x.kaldirAdresi])).toEqual([["Kullanıcı: (bilinmiyor)", "/audit-logs"]]);
     expect(bosDurum(BOS_SUZGEC)).toBe("hic-kayit");
     expect(bosDurum({ ...BOS_SUZGEC, tur: "SILME" })).toBe("suzgecli");
+  });
+
+  it("kart süzgeçleri adreslerle aynı kaynaktır", () => {
+    const k = kartSuzgecleri("2026-11-04");
+    expect(k.yediGun).toEqual({ ...BOS_SUZGEC, baslangic: "2026-10-29", bitis: "2026-11-04" });
+    expect(kartAdresleri("2026-11-04").silme).toBe(denetimAdresi(k.silme));
+    expect(kartSuzgecleri("2026-03-03").yediGun.baslangic).toBe("2026-02-25");
   });
 });

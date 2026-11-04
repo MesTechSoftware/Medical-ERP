@@ -5,7 +5,7 @@ import { veriOku } from "@/lib/aktivite-sablonlari";
 import { prisma } from "@/lib/db";
 import { alanFarklari, type AlanFarki } from "@/lib/denetim/fark";
 import { kisaOzet } from "@/lib/denetim/ozet";
-import { SISTEM, kartAdresleri, suzgecCoz, type DenetimSuzgeci, type Imlec } from "@/lib/denetim/suzgec";
+import { SISTEM, kartSuzgecleri, type DenetimSuzgeci, type Imlec } from "@/lib/denetim/suzgec";
 import { kaydiDogrula, type KayitDurumu } from "@/lib/denetim/zincir";
 import { yerelGunAraligi } from "@/lib/zaman";
 
@@ -162,12 +162,12 @@ export function kullaniciSecenekleri() {
 export type DenetimKpileri = { bugun: number; yediGun: number; basarisiz: number; silme: number };
 
 /**
- * KPI kartları (spec Ü-28 §3.1): her kart, açtığı adresin süzgecini (`kartAdresleri` → `suzgecCoz`) listenin
- * koşuluyla sayar — kart = satır (X-18-8).
+ * KPI kartları (spec Ü-28 §3.1): her kart, adresinin de türediği süzgeci (`kartSuzgecleri`) listenin koşuluyla
+ * sayar — kart = satır (X-18-8).
  */
 export async function denetimKpileri(bugun: string): Promise<DenetimKpileri> {
-  const adres = kartAdresleri(bugun);
-  const say = (yol: string) => prisma.auditLog.count({ where: denetimKosulu(suzgecCoz(Object.fromEntries(new URL(yol, "http://x").searchParams)).suzgec) });
-  const [b, y, ba, si] = await Promise.all([say(adres.bugun), say(adres.yediGun), say(adres.basarisiz), say(adres.silme)]);
+  const k = kartSuzgecleri(bugun);
+  const say = (s: DenetimSuzgeci) => prisma.auditLog.count({ where: denetimKosulu(s) });
+  const [b, y, ba, si] = await Promise.all([say(k.bugun), say(k.yediGun), say(k.basarisiz), say(k.silme)]);
   return { bugun: b, yediGun: y, basarisiz: ba, silme: si };
 }

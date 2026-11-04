@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { kpiIskeletiEslesir, kpiKartlariTasmaz } from "../helpers";
+import { kpiIskeletiEslesir, kpiKartlariTasmaz, sorgu } from "../helpers";
 
 /** Ü-28 — denetim kaydı ekranı: KPI (X-18-8), tarih sekmeleri, açılır süzgeç, etkin etiketler, sütun seçici. */
 
@@ -24,8 +24,13 @@ test("başarısız giriş kartı süzgeci açar; kart = satır (X-18-8)", async 
   await kart.click();
   await expect(page).toHaveURL(/olay=AUTH_LOGIN_FAILURE/);
   await expect(page.getByRole("list", { name: "Etkin süzgeçler" }).getByText("Olay: Giriş başarısız")).toBeVisible();
-  // Sayfa boyu 50: kart değeri ilk sayfaya sığıyorsa satır sayısı aynıdır.
-  if (deger <= 50) await expect(satirlar(page)).toHaveCount(deger);
+  // Kart = bugünün (İstanbul) başarısız girişleri; liste eşitliği itest'te (sayfa boyu 50).
+  const [{ n }] = await sorgu<{ n: string }>(
+    `SELECT COUNT(*)::text AS n FROM "AuditLog" WHERE action = 'AUTH_LOGIN_FAILURE'
+       AND ("createdAt" AT TIME ZONE 'Europe/Istanbul')::date = (now() AT TIME ZONE 'Europe/Istanbul')::date`
+  );
+  expect(deger).toBe(parseInt(n, 10));
+  await expect(satirlar(page)).toHaveCount(Math.min(deger, 50));
 });
 
 test("tarih sekmesi ve etiket kaldırma süzgeci günceller", async ({ page }) => {
@@ -36,6 +41,14 @@ test("tarih sekmesi ve etiket kaldırma süzgeci günceller", async ({ page }) =
   await expect(etiketler.getByText("Modül: Kullanıcı ve oturum")).toBeVisible();
   await etiketler.getByRole("link", { name: "Kaldır: Modül: Kullanıcı ve oturum" }).click();
   await expect(page).not.toHaveURL(/modul=/);
+});
+
+test("imleçle gelinen boş sayfa ilk sayfaya dönüş verir", async ({ page }) => {
+  await page.goto("/audit-logs?once=1");
+  await expect(page.getByText("Bu sayfada kayıt yok.")).toBeVisible();
+  await page.getByRole("link", { name: "Süzgeçleri temizle" }).click();
+  await expect(page).toHaveURL(/\/audit-logs$/);
+  await expect(satirlar(page).first()).toBeVisible();
 });
 
 test.describe("sütun seçici", () => {
