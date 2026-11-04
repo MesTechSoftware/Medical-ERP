@@ -6,7 +6,7 @@
 > Kod yeri, kriter metninde anılan fonksiyonun tanımlandığı dosyadır. Eski PRD matrisi (8 Ağustos 2026)
 > `docs/arsiv/TRACEABILITY_PRD_V2.md`'dedir.
 
-**Özet:** 154 KANITLI · 0 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.0** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
+**Özet:** 155 KANITLI · 0 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.0** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
 
 | Kriter | Karar | Durum | Kod yeri | Test | Kriter metni |
 |---|---|---|---|---|---|
@@ -111,6 +111,7 @@
 | D-4-1 | D-4 | KANITLI | — | `src/lib/reports-service.itest.ts` | Hakediş yalnız satırın matrahı ve satıra donmuş oranla hesaplanır; satıcının dönem cirosu, hedefi ya da kotası oranı değiştirmez — aynı s… |
 | D-5-1 | D-5 | KANITLI | `src/lib/disa-aktarim.ts`<br>`src/lib/satir-tutarlari.ts` | `src/lib/disa-aktarim.itest.ts`<br>`src/lib/disa-aktarim-yazici.test.ts`<br>`e2e/admin/disa-aktarim.spec.ts`<br>`src/lib/yetki.test.ts`<br>`e2e/operasyon/operasyon.spec.ts` | Dışa aktarım yalnız `calistirDisaAktarim()` ile çalışır ve `{ kolonlar, satirlar }` döner; format katmanı (XLSX, CSV) iş kavramı tanımaz.… |
 | D-5-2 | D-5 | KANITLI | — | `src/lib/disa-aktarim.itest.ts`<br>`src/lib/tek-cagri.test.ts` | Her dışa aktarım veritabanındaki kütüğe yazılır: zaman, kullanıcı kimliği, veri seti kodu, parametreler (dönem/gün, biçim), satır sayısı.… |
+| D-5-3 | D-5 | KANITLI | — | `src/lib/disa-aktarim-donem.test.ts`<br>`e2e/admin/disa-aktarim.spec.ts` | Dışa aktarım ekranı altı veri setini açıklamasıyla gösterir; dönem isteyen sette Bu ay, Geçen ay, Bu yıl ve Geçen yıl kısayolları İstanbu… |
 | D-6-1 | D-6 | KANITLI | — | `src/lib/ice-aktarim/ice-aktarim.itest.ts`<br>`e2e/admin/ice-aktarim.spec.ts`<br>`src/lib/yetki.test.ts` | İçe aktarım üç aşamalıdır: doğrula → önizle → tek transaction'da yaz. "Yaz" yalnız hatasız önizlemeden sonra açılır ve aynı dosyayı yenid… |
 | D-6-2 | D-6 | KANITLI | — | `src/lib/ice-aktarim/acilis.itest.ts` | Açılış türlerinde (`ACILIS_BAKIYESI`, `ACILIS_STOGU`) doğrulama içe aktarım tanımının kendisidir (elle giriş yolu yok — X-16 §(1)); ikisi… |
 | E-1-1 | E-1 | KANITLI | `src/lib/stok.ts`<br>`src/lib/doctor-cari.ts` | `src/lib/zaman.test.ts`<br>`src/lib/kisitlar.itest.ts`<br>`src/lib/disa-aktarim.itest.ts` | Gün sınırı İstanbul takvim günüdür; `date` kolonları UTC gece yarısı olarak yazılır. Aralıklar yarı açıktır `[başlangıç, bitiş)`; tarih p… |
