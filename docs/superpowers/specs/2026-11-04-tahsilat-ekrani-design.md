@@ -131,8 +131,8 @@ satırı: "Tahsilat siparişle eşleştirilmez; carinin bakiyesinden düşer." (
   `SUTUN_YOLU = "/collections"`.
 - **`src/lib/tahsilat-listesi/sorgu.ts`:** `tahsilatKosulu(s) → Prisma.DoctorPaymentWhereInput` (tek `where`;
   liste, toplam ve kartlar aynı koşuldan), `tahsilatListesi(s, sayfa)` (satırlar + `toplam: { tutar, adet } |
-  null`), `tahsilatKpileri(aralik)` (bir `groupBy` `paymentMethodId` — `_sum` tutar ve komisyon, `_count` — sonra
-  yöntemlerin tipine katlanır; toplam üç tipin toplamıdır; para `Decimal`, X-5), `tahsilatPaneli(id)`.
+  null`), `tahsilatKpileri(aralik)` (toplam ve her tip için kartın açtığı süzgecin koşuluyla bir `aggregate` — `SUM`
+  veritabanında; X-5 Decimal'de uygulama tarafı toplama izin vermez), `tahsilatPaneli(id)`.
 - **`cancelCollection`:** gerekçe boşsa `engel("GEREKCE_ZORUNLU", {}, "reason")` (X-18-5); sabit "Admin iptali"
   kalkar.
 

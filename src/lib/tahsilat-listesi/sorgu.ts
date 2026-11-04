@@ -129,7 +129,8 @@ export type TahsilatPaneli = TahsilatSatiri & {
   note: string | null;
   createdAt: Date;
   bakiye: DoktorBakiye;
-  iptal: { eden: string | null; zaman: Date; gerekce: string | null } | null;
+  /** Durum `IPTAL` ise dolu; eski kayıtta iptal zamanı boş olabilir. */
+  iptal: { eden: string | null; zaman: Date | null; gerekce: string | null } | null;
 };
 
 export async function tahsilatPaneli(id: string): Promise<TahsilatPaneli | null> {
@@ -143,7 +144,7 @@ export async function tahsilatPaneli(id: string): Promise<TahsilatPaneli | null>
     createdAt: p.createdAt,
     bakiye,
     iptal:
-      p.status === "IPTAL" && p.cancelledAt
+      p.status === "IPTAL"
         ? { eden: p.cancelledBy ? (ad.get(p.cancelledBy) ?? null) : null, zaman: p.cancelledAt, gerekce: p.cancelReason }
         : null,
   };

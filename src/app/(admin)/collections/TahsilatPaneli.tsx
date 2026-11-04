@@ -107,7 +107,7 @@ export function TahsilatPaneli({ veri: p, kapatAdresi }: { veri: Veri; kapatAdre
             {p.iptal ? (
               <dl className="divide-y divide-slate-100">
                 <Satir ad="İptal eden">{p.iptal.eden ?? "—"}</Satir>
-                <Satir ad="Zaman">{formatDateTime(p.iptal.zaman)}</Satir>
+                <Satir ad="Zaman">{p.iptal.zaman ? formatDateTime(p.iptal.zaman) : "—"}</Satir>
                 <Satir ad="Gerekçe">{p.iptal.gerekce ?? "—"}</Satir>
               </dl>
             ) : (

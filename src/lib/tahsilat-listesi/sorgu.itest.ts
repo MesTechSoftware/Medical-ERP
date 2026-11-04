@@ -133,4 +133,10 @@ describe("tahsilat paneli (A-11-3)", () => {
     expect((await tahsilatPaneli(p.id))!.iptal).toEqual({ eden: "Operasyon Ayşe", zaman: new Date("2026-11-02T09:00:00Z"), gerekce: "Dekont hatalı" });
     expect(await tahsilatPaneli("yok")).toBeNull();
   });
+
+  it("iptal zamanı boş eski iptal kaydı da iptal edilmiş sayılır (form açılmaz)", async () => {
+    const p = await tahsilat({ tip: "NAKIT", tutar: "10", an: "2026-11-02T09:00:00Z", iptal: "Eski kayıt" });
+    await prisma.doctorPayment.update({ where: { id: p.id }, data: { cancelledAt: null } });
+    expect((await tahsilatPaneli(p.id))!.iptal).toEqual({ eden: "Operasyon Ayşe", zaman: null, gerekce: "Eski kayıt" });
+  });
 });

@@ -46,6 +46,9 @@ test("panel donmuş komisyonu gösterir; iptal gerekçe ister, gerekçe İptal s
   await form.getByLabel("Gerekçe").fill("   ");
   await form.getByRole("button", { name: "Tahsilatı iptal et" }).click();
   await expect(form.getByText("Gerekçe zorunludur.")).toBeVisible();
+  // Hata alanın altında; yazılan metin hatadan sonra silinmez.
+  await expect(form.getByLabel("Gerekçe")).toHaveAttribute("aria-invalid", "true");
+  await expect(form.getByLabel("Gerekçe")).toHaveValue("   ");
   await form.getByLabel("Gerekçe").fill("Dekont hatalı");
   await form.getByRole("button", { name: "Tahsilatı iptal et" }).click();
   await expect(panel.getByRole("region", { name: "İptal" })).toContainText("Dekont hatalı");
