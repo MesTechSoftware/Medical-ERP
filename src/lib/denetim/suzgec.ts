@@ -1,6 +1,7 @@
 import type { AuditActionType, AuditModule } from "@/generated/prisma/enums";
-import { ISLEM_SINIFI, type AuditAction } from "@/lib/denetim/olaylar";
-import { gun, ilk, kimlik, secenek, type Parametreler } from "@/lib/liste/parametreler";
+import { AUDIT_ACTION_LABELS, ISLEM_SINIFI, ISLEM_TURU_ETIKETI, MODUL_ETIKETI, type AuditAction } from "@/lib/denetim/olaylar";
+import { aralikEtiketi, gun, ilk, kimlik, secenek, type Parametreler } from "@/lib/liste/parametreler";
+import { gunOnce } from "@/lib/liste/tarih-sekmeleri";
 
 /**
  * Denetim listesinin süzgeci ve imleci (KARARLAR X-18 §(9)); adres çubuğunda durur. Geçersiz değer
@@ -66,4 +67,55 @@ export function denetimAdresi(s: DenetimSuzgeci, ek: { once?: number; sonra?: nu
   if (ek.kayit !== undefined) p.set("kayit", ek.kayit);
   const q = p.toString();
   return q ? `/audit-logs?${q}` : "/audit-logs";
+}
+
+// --- Ekran yardımcıları (spec Ü-28) ---------------------------------------------------------
+
+type Tarih = Pick<DenetimSuzgeci, "baslangic" | "bitis">;
+
+export { tarihSekmeleri as hizliSekmeler, etkinTarihSekmesi as etkinSekme } from "@/lib/liste/tarih-sekmeleri";
+
+/** Tarih sekmesinin adresi: tarihleri yazar, öbür süzgeçleri korur; imleç ve kayıt düşer. */
+export function tarihSekmesiAdresi(s: DenetimSuzgeci, tarih: Tarih): string {
+  return denetimAdresi({ ...s, ...tarih });
+}
+
+export type DenetimKarti = "bugun" | "yediGun" | "basarisiz" | "silme";
+
+/** KPI kartlarının süzgeçleri (X-18-8): kartın adresi de sayısı da bundan türer — kart = açtığı süzgecin satırı. */
+export function kartSuzgecleri(bugun: string): Record<DenetimKarti, DenetimSuzgeci> {
+  const bugunku = { ...BOS_SUZGEC, baslangic: bugun, bitis: bugun };
+  return {
+    bugun: bugunku,
+    yediGun: { ...BOS_SUZGEC, baslangic: gunOnce(bugun, 6), bitis: bugun },
+    basarisiz: { ...bugunku, olay: "AUTH_LOGIN_FAILURE" },
+    silme: { ...bugunku, tur: "SILME" },
+  };
+}
+
+export function kartAdresleri(bugun: string): Record<DenetimKarti, string> {
+  const k = kartSuzgecleri(bugun);
+  return { bugun: denetimAdresi(k.bugun), yediGun: denetimAdresi(k.yediGun), basarisiz: denetimAdresi(k.basarisiz), silme: denetimAdresi(k.silme) };
+}
+
+/** Etkin süzgeç etiketleri, her biri o alanı düşüren imleçsiz adresle; adı bilinmeyen kullanıcı da süzer, "(bilinmiyor)" etiketlenir. */
+export function etkinSuzgecler(
+  s: DenetimSuzgeci,
+  kullaniciAdi: (id: string) => string | undefined
+): { anahtar: string; etiket: string; kaldirAdresi: string }[] {
+  const liste: { anahtar: string; etiket: string; kaldirAdresi: string }[] = [];
+  const ekle = (anahtar: string, etiket: string, ek: Partial<DenetimSuzgeci>) => liste.push({ anahtar, etiket, kaldirAdresi: denetimAdresi({ ...s, ...ek }) });
+  if (s.baslangic || s.bitis) ekle("tarih", `Tarih: ${aralikEtiketi(s.baslangic, s.bitis)}`, { baslangic: null, bitis: null });
+  if (s.kullanici) {
+    const ad = s.kullanici === SISTEM ? "Sistem / anonim" : (kullaniciAdi(s.kullanici) ?? "(bilinmiyor)");
+    ekle("kullanici", `Kullanıcı: ${ad}`, { kullanici: null });
+  }
+  if (s.modul) ekle("modul", `Modül: ${MODUL_ETIKETI[s.modul]}`, { modul: null });
+  if (s.tur) ekle("tur", `Tür: ${ISLEM_TURU_ETIKETI[s.tur]}`, { tur: null });
+  if (s.olay) ekle("olay", `Olay: ${AUDIT_ACTION_LABELS[s.olay] ?? s.olay}`, { olay: null });
+  return liste;
+}
+
+export function bosDurum(s: DenetimSuzgeci): "hic-kayit" | "suzgecli" {
+  return Object.values(s).some((d) => d !== null) ? "suzgecli" : "hic-kayit";
 }

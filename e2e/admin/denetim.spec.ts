@@ -17,6 +17,8 @@ test("cari VKN'si değişince kayıt Güncelleme olur; detayda istek bağlamı, 
   await page.getByRole("link", { name: "Düzenle" }).click();
   await page.getByLabel("VKN / TCKN").fill("9876543217");
   await page.getByRole("button", { name: "Kaydet" }).click();
+  // Düzenleme sayfasının başlığı da carinin adıdır: kaydın bittiği detay sayfasına yönlenmeden anlaşılır.
+  await expect(page).toHaveURL(/\/doctors\/[^/]+$/);
   await expect(page.getByRole("heading", { level: 1, name: ad })).toBeVisible();
   const [cari] = await sorgu<{ id: string }>(`SELECT id FROM "Doctor" WHERE "fullName" = $1`, [ad]);
 
@@ -71,15 +73,21 @@ test("süzgeç formu adres çubuğuna yazılır; Daha eski ve Daha yeni sayfalar
     [`e2e-sayfa-${Date.now()}`]
   );
   await page.goto("/audit-logs");
+  // Süzgeç açılır paneldedir (Ü-28).
+  const filtrele = page.locator("summary", { hasText: "Filtrele" });
+  await filtrele.click();
   const form = page.getByRole("form", { name: "Denetim kaydı süzgeci" });
   await form.getByLabel("Kullanıcı").selectOption({ label: "Sistem / anonim" });
   await form.getByLabel("Olay").selectOption({ label: "Giriş başarısız" });
   const yumusak = await yumusakGezinmeIsareti(page);
-  await form.getByRole("button", { name: "Filtrele" }).click();
+  await form.getByRole("button", { name: "Uygula" }).click();
   await expect(page).toHaveURL(/kullanici=sistem/);
   expect(await yumusak()).toBe(true);
   await expect(page).toHaveURL(/olay=AUTH_LOGIN_FAILURE/);
+  // Panel yeni adreste kapalı yeniden kurulur; açınca form uygulanan süzgeci gösterir.
+  await filtrele.click();
   await expect(form.getByLabel("Olay")).toHaveValue("AUTH_LOGIN_FAILURE");
+  await filtrele.click();
 
   const kimlikler = () => page.locator("a[data-kayit]").evaluateAll((a) => a.map((x) => x.getAttribute("data-kayit")));
   const ilk = await kimlikler();
@@ -98,7 +106,9 @@ test("süzgeç formu adres çubuğuna yazılır; Daha eski ve Daha yeni sayfalar
   expect(await kimlikler()).toEqual(ilk);
 
   // Temizle süzgeci kaldırır; form da yeniden kurulur, eski seçimi göstermez.
-  await page.getByRole("link", { name: "Temizle" }).click();
+  await filtrele.click();
+  await form.getByRole("link", { name: "Temizle" }).click();
   await expect(page).toHaveURL(/\/audit-logs$/);
+  await filtrele.click();
   await expect(form.getByLabel("Olay")).toHaveValue("");
 });

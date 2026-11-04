@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/db";
-import { denetimKaydi, denetimListesi } from "@/lib/denetim/sorgu";
-import { BOS_SUZGEC, SISTEM, type Imlec } from "@/lib/denetim/suzgec";
+import { denetimKaydi, denetimKpileri, denetimListesi } from "@/lib/denetim/sorgu";
+import { BOS_SUZGEC, SISTEM, kartAdresleri, suzgecCoz, type Imlec } from "@/lib/denetim/suzgec";
 import { referansVeri } from "../../../test/integration/referans";
 
 // X-18-6 liste (imleçli sayfalama, süzgeçler) · X-18-7 detay (fark, bütünlük).
@@ -194,5 +194,27 @@ describe("denetimKaydi — detay (X-18-7)", () => {
       },
     });
     expect(await denetimKaydi(eski.id)).toMatchObject({ modulOncesi: true, farklar: [{ alan: "name", eski: "Eldiven", yeni: "Eldiven M" }] });
+  });
+});
+
+describe("denetimKpileri — kart = süzgecin satırı (X-18-8)", () => {
+  it("bugün, son 7 gün, bugün başarısız giriş, bugün silme; İstanbul gece yarısı", async () => {
+    const yaz = (createdAt: Date, action: string, actionType: "EKLEME" | "SILME" | "OTURUM" | "GUNCELLEME", module: "KULLANICI" | "URUN_FIYAT") =>
+      prisma.auditLog.create({ data: { action, actionType, module, entityType: "X", createdAt } });
+    // 4 Kasım İstanbul günü: 2026-11-03T21:00Z – 2026-11-04T21:00Z
+    await yaz(new Date("2026-11-04T09:00:00Z"), "AUTH_LOGIN_FAILURE", "OTURUM", "KULLANICI");
+    await yaz(new Date("2026-11-03T21:30:00Z"), "AUTH_LOGIN_FAILURE", "OTURUM", "KULLANICI"); // 4 Kasım 00:30
+    await yaz(new Date("2026-11-03T20:30:00Z"), "AUTH_LOGIN_FAILURE", "OTURUM", "KULLANICI"); // 3 Kasım 23:30
+    await yaz(new Date("2026-11-04T10:00:00Z"), "PRICE_LIST_ITEM_DELETE", "SILME", "URUN_FIYAT");
+    await yaz(new Date("2026-10-30T10:00:00Z"), "PRODUCT_UPDATE", "GUNCELLEME", "URUN_FIYAT");
+    await yaz(new Date("2026-10-20T10:00:00Z"), "PRODUCT_UPDATE", "GUNCELLEME", "URUN_FIYAT");
+
+    const k = await denetimKpileri("2026-11-04");
+    expect(k).toEqual({ bugun: 3, yediGun: 5, basarisiz: 2, silme: 1 });
+    const adres = kartAdresleri("2026-11-04");
+    for (const anahtar of ["bugun", "yediGun", "basarisiz", "silme"] as const) {
+      const { suzgec } = suzgecCoz(Object.fromEntries(new URL(adres[anahtar], "http://x").searchParams));
+      expect((await denetimListesi(suzgec, null, 1000)).satirlar.length, anahtar).toBe(k[anahtar]);
+    }
   });
 });

@@ -9,7 +9,7 @@ export type TarihAraligi = { baslangic: string | null; bitis: string | null };
 export type TarihSekmesi = "Tümü" | "Bugün" | "Son 7 gün" | "Bu ay";
 
 /** Takvim gününden `adet` gün önce; takvim günü UTC parçalarıyla taşınır, saat dilimine bakılmaz. */
-function gunOnce(metin: string, adet: number): string {
+export function gunOnce(metin: string, adet: number): string {
   const [yil, ay, g] = metin.split("-").map((p) => parseInt(p, 10));
   return gunEkle(new Date(Date.UTC(yil, ay - 1, g)), -adet).toISOString().slice(0, 10);
 }
