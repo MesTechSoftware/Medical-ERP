@@ -12,7 +12,7 @@ const dosya = (satirlar: (string | null)[][]) => ({
 
 test("şablon iner; hatalı satır yazmayı kapatır; hatasız dosya önizlenip yazılır ve parti geri alınır (X-16-1)", async ({ page }) => {
   const ek = `${Date.now()}`.slice(-7);
-  await page.goto("/imports");
+  await page.goto("/imports/new");
 
   const indirme = page.waitForEvent("download");
   await page.getByRole("button", { name: "Şablonu indir" }).click();
@@ -41,18 +41,23 @@ test("şablon iner; hatalı satır yazmayı kapatır; hatasız dosya önizlenip 
   await page.getByRole("button", { name: "Yaz (2 kayıt)" }).click();
   await expect(page.getByText(/Parti CARI-\d{8}-\w{5} yazıldı\./)).toBeVisible();
 
+  // Parti listede; geri alma parti panelinden, gerekçeyle (Ü-30 §3.4).
+  await page.goto("/imports");
   const satir = page.locator("tr[data-parti]").first();
   await expect(satir).toContainText("cari.xlsx");
-  await satir.getByText("Geri al", { exact: true }).click();
-  await satir.getByLabel("Geri alma gerekçesi").fill("Deneme");
-  await satir.getByRole("button", { name: "Partiyi geri al" }).click();
+  await satir.getByRole("link", { name: "İncele" }).click();
+  const panel = page.getByRole("dialog");
+  await expect(panel.getByRole("region", { name: "Kayıtlar" })).toContainText("Cari");
+  await panel.getByLabel("Geri alma gerekçesi").fill("Deneme");
+  await panel.getByRole("button", { name: "Partiyi geri al" }).click();
+  await expect(panel.getByRole("region", { name: "Geri alma" })).toContainText("Deneme");
   await expect(page.locator("tr[data-parti]").first()).toContainText("Geri alındı");
 });
 
 test("açılış bakiyesi: özet brüt toplamları gösterir, yazılır, parti geri alınmaz (A-6-1, D-6-2)", async ({ page }) => {
   const s = await stoksuzSiparis(); // yeni cari
   const [{ telefon }] = await sorgu<{ telefon: string }>(`SELECT "phoneNormalized" AS telefon FROM "Doctor" WHERE id = $1`, [s.doktorId]);
-  await page.goto("/imports");
+  await page.goto("/imports/new");
   await page.getByLabel("Veri türü").selectOption("ACILIS_BAKIYESI");
   await page.getByLabel("Dosya (.xlsx)").setInputFiles({
     name: "acilis.xlsx",
@@ -66,7 +71,14 @@ test("açılış bakiyesi: özet brüt toplamları gösterir, yazılır, parti g
   await expect(page.getByText("₺750,00 (KDV dahil)").first()).toBeVisible();
   await page.getByRole("button", { name: "Yaz (1 kayıt)" }).click();
   await expect(page.getByText(/Parti ACILIS_BAKIYESI-\d{8}-\w{5} yazıldı\./)).toBeVisible();
-  await expect(page.locator("tr[data-parti]").first()).toContainText("Yazıldı");
+  await page.goto("/imports");
+  const satir = page.locator("tr[data-parti]").first();
+  await expect(satir).toContainText("Yazıldı");
+  // Açılış partisi geri alınmaz: panelde form yok, açıklama var (D-6-2).
+  await satir.getByRole("link", { name: "İncele" }).click();
+  const geriAlma = page.getByRole("dialog").getByRole("region", { name: "Geri alma" });
+  await expect(geriAlma).toContainText("Bu tür geri alınmaz (açılış).");
+  await expect(geriAlma.getByRole("button", { name: "Partiyi geri al" })).toHaveCount(0);
 
   const [h] = await sorgu<{ type: string; amount: string }>(`SELECT type::text, amount::text FROM "LedgerEntry" WHERE "doctorId" = $1`, [s.doktorId]);
   expect(h).toEqual({ type: "ACILIS", amount: "750.00" });

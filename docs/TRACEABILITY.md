@@ -6,7 +6,7 @@
 > Kod yeri, kriter metninde anılan fonksiyonun tanımlandığı dosyadır. Eski PRD matrisi (8 Ağustos 2026)
 > `docs/arsiv/TRACEABILITY_PRD_V2.md`'dedir.
 
-**Özet:** 155 KANITLI · 0 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.0** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
+**Özet:** 156 KANITLI · 0 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.0** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
 
 | Kriter | Karar | Durum | Kod yeri | Test | Kriter metni |
 |---|---|---|---|---|---|
@@ -153,6 +153,7 @@
 | X-11-1 | X-11 | KANITLI | — | `src/app/(admin)/collections/collections.itest.ts`<br>`src/lib/sevkiyat.itest.ts`<br>`src/lib/tek-cagri.test.ts` | Borç ya da alacak doğuran her olay tek cari hareket satırı yazar: tutar pozitif, yön ayrı, kaynak belgenin numarasıyla ve belgeyle aynı t… |
 | X-11-2 | X-11 | KANITLI | — | `src/app/(admin)/doctors/cari-hareket.itest.ts`<br>`e2e/admin/vade-farki.spec.ts` | Elle ters kayıt yalnız `ACILIS` ve `VADE_FARKI` hareketinde, yalnız `YONETICI` ve gerekçeyle yapılır: `TERS_KAYIT` ters yönde, aynı tutar… |
 | X-12-1 | X-12 | KANITLI | — | `src/lib/ice-aktarim/ice-aktarim.itest.ts`<br>`e2e/admin/ice-aktarim.spec.ts` | Parti geri alma yalnız `YONETICI`, gerekçe zorunlu, tek transaction; koşul partinin **tamamına** bakar (C-3 §(6)): bir kayıt bile belgeye… |
+| X-12-2 | X-12 | KANITLI | — | `src/lib/ice-aktarim-listesi/sorgu.itest.ts`<br>`e2e/admin/ice-aktarim-ekrani.spec.ts` | İçe aktarım ekranının kartları (parti, bu ay, geri alınabilir, geri alındı) açtıkları süzgecin satır sayısına eşittir; "geri alınabilir"… |
 | X-13-1 | X-13 | KANITLI | — | `src/lib/kapsam.itest.ts`<br>`src/lib/tek-cagri.test.ts` | `kapsamliDoktorlariGetir(kullanici)` doktor okumasının kapsamını **sorgu süzgeci** olarak döner. `SATICI`'ya yalnız sahibi olduğu `DOKTOR… |
 | X-13-2 | X-13 | KANITLI | — | `e2e/operasyon/operasyon.spec.ts` | `OPERASYON` cari listesinde yan paneli açar; panelde Düzenle, listede Yeni Cari ve toplu devir yoktur. |
 | X-14-1 | X-14 | KANITLI | `src/lib/satir-tutarlari.ts` | `src/lib/satir-tutarlari.test.ts`<br>`src/lib/reports-service.itest.ts` | Hakediş = sevkiyat satırının matrahı × satıra donmuş oran (`hesaplaSatirTutarlari()`, X-5 §(4)); tutar saklanmaz, raporda hesaplanır. Sat… |
