@@ -7,7 +7,7 @@ import { formatDateTime } from "@/lib/format";
 import { VERI_TIPI_ADI } from "@/lib/ice-aktarim/adlar";
 import type { PartiPaneli as Veri } from "@/lib/ice-aktarim-listesi/sorgu";
 import { partiyiGeriAl } from "./actions";
-import { PartiDurumu } from "./PartiTablosu";
+import { PartiDurumRozeti } from "./PartiTablosu";
 
 const BASLIK = "parti-paneli-baslik";
 
@@ -43,7 +43,7 @@ export function PartiPaneli({ veri: p, kapatAdresi }: { veri: Veri; kapatAdresi:
               {p.batchNo}
             </h2>
             <div className="mt-2 text-sm">
-              <PartiDurumu geriAlindi={p.geriAlindi} />
+              <PartiDurumRozeti geriAlindi={p.geriAlindi} />
             </div>
           </div>
           <Link href={kapatAdresi} scroll={false} className={buton("metin")}>
@@ -93,7 +93,7 @@ export function PartiPaneli({ veri: p, kapatAdresi }: { veri: Veri; kapatAdresi:
                 </button>
               </IslemFormu>
             ) : (
-              <p className="text-sm text-slate-500">Bu tür geri alınmaz (açılış).</p>
+              <p className="text-sm text-slate-500">Bu türün partisi geri alınmaz.</p>
             )}
           </Bolum>
         </div>

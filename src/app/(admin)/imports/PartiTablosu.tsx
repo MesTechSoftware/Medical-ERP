@@ -9,7 +9,7 @@ import type { PartiSatiri } from "@/lib/ice-aktarim-listesi/sorgu";
 import type { PartiSutunu } from "@/lib/ice-aktarim-listesi/sutunlar";
 import { bosDurum, partiAdresi, type PartiSuzgeci } from "@/lib/ice-aktarim-listesi/suzgec";
 
-export function PartiDurumu({ geriAlindi }: { geriAlindi: boolean }) {
+export function PartiDurumRozeti({ geriAlindi }: { geriAlindi: boolean }) {
   return geriAlindi ? <StatusChip ton="uyari">Geri alındı</StatusChip> : <StatusChip ton="notr">Yazıldı</StatusChip>;
 }
 
@@ -61,7 +61,7 @@ export function PartiTablosu({
                 <td className="whitespace-nowrap text-slate-500">{formatDateTime(p.createdAt)}</td>
                 <td className="sayi">{p.kayit}</td>
                 <td>
-                  <PartiDurumu geriAlindi={p.geriAlindi} />
+                  <PartiDurumRozeti geriAlindi={p.geriAlindi} />
                 </td>
                 <td className="text-right">
                   <Link href={partiAdresi(suzgec, { ...yer, detay: p.id })} scroll={false} data-kayit={p.id} className={buton("metin")}>

@@ -77,7 +77,7 @@ test("açılış bakiyesi: özet brüt toplamları gösterir, yazılır, parti g
   // Açılış partisi geri alınmaz: panelde form yok, açıklama var (D-6-2).
   await satir.getByRole("link", { name: "İncele" }).click();
   const geriAlma = page.getByRole("dialog").getByRole("region", { name: "Geri alma" });
-  await expect(geriAlma).toContainText("Bu tür geri alınmaz (açılış).");
+  await expect(geriAlma).toContainText("Bu türün partisi geri alınmaz.");
   await expect(geriAlma.getByRole("button", { name: "Partiyi geri al" })).toHaveCount(0);
 
   const [h] = await sorgu<{ type: string; amount: string }>(`SELECT type::text, amount::text FROM "LedgerEntry" WHERE "doctorId" = $1`, [s.doktorId]);

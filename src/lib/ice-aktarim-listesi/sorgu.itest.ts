@@ -56,6 +56,9 @@ describe("parti kartları = süzgeç (X-12-2)", () => {
     expect(await id({ tur: "URUN" })).toEqual([b.id]);
     expect(await id({ q: "KASIM" })).toEqual([a.id]);
     expect(await id({ q: b.batchNo.toLowerCase() })).toEqual([b.id]);
+    // Türkçe I/ı: veritabanı yereli ı'yı katlamaz (`metinVaryantlari`).
+    const c = await parti({ tur: "URUN", an: "2026-11-02T09:00:00Z", dosya: "urunler-ılık.xlsx" });
+    expect(await id({ q: "ILIK" })).toEqual([c.id]);
   });
 });
 

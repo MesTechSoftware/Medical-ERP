@@ -54,5 +54,9 @@ export async function partiyiGeriAl(partiId: string, _prev: unknown, formData: F
   const sonuc = await partiGeriAl(partiId, session.user.id, gerekce);
   revalidatePath("/imports");
   revalidatePath("/doctors");
+  // Ürün ve fiyat listesi partisinin geri alınması o ekranların kayıtlarını siler (Ü-30).
+  revalidatePath("/products");
+  revalidatePath("/price-lists");
+  revalidatePath("/stock");
   return sonuc;
 }

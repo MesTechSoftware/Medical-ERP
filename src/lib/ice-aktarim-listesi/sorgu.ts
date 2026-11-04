@@ -2,6 +2,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import type { ImportDataType } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import { TANIMLAR } from "@/lib/ice-aktarim";
+import { metinVaryantlari } from "@/lib/liste/metin";
 import { gunleriAraliga } from "@/lib/siparis-listesi/sorgu";
 import { kartSuzgecleri, type PartiSuzgeci } from "@/lib/ice-aktarim-listesi/suzgec";
 
@@ -21,7 +22,15 @@ export function partiKosulu(s: PartiSuzgeci): Prisma.ImportBatchWhereInput {
     const a = gunleriAraliga(s);
     ve.push({ createdAt: { gte: a.baslangic, lt: a.bitis } });
   }
-  if (s.q) ve.push({ OR: [{ batchNo: { contains: s.q, mode: "insensitive" } }, { fileName: { contains: s.q, mode: "insensitive" } }] });
+  if (s.q) {
+    // Türkçe I/ı varyantları (`metinVaryantlari`): veritabanı yereli ı'yı katlamaz.
+    ve.push({
+      OR: metinVaryantlari(s.q).flatMap((v) => {
+        const icerir = { contains: v, mode: "insensitive" as const };
+        return [{ batchNo: icerir }, { fileName: icerir }];
+      }),
+    });
+  }
   return ve.length === 0 ? {} : { AND: ve };
 }
 
