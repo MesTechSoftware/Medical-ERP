@@ -7,6 +7,7 @@ import { Tutar } from "@/components/Tutar";
 import { LinkButton, StatusChip } from "@/components/ui";
 import { formatDate, formatDateTime, formatGun } from "@/lib/format";
 import type { SiparisPaneli as Veri } from "@/lib/siparis-listesi/sorgu";
+import type { SiparisYolu } from "@/lib/siparis-listesi/suzgec";
 import { SATIR_TABANI, tabanli } from "@/lib/taban";
 import { DurumRozeti } from "./SiparisTablosu";
 
@@ -34,9 +35,11 @@ function Bolum({ baslik, children }: { baslik: string; children: React.ReactNode
 /**
  * Siparişin yan paneli (spec Ü-23 §3.5, 11-A): özet, kalemler (sevk / kalan / iade — A-3-2), tutarlar
  * (`siparisToplami` ile aynı yol), sevkiyatlar, iadeler. İşlem düğmesi yoktur; işlemler detay sayfasındadır.
+ * Siparişlerim'de (Ü-31) satıcı satırı yoktur (kendi siparişi) ve cari adı bağlantı değildir.
  */
-export function SiparisPaneli({ veri, kapatAdresi }: { veri: Veri; kapatAdresi: string }) {
+export function SiparisPaneli({ veri, kapatAdresi, yol = "/orders" }: { veri: Veri; kapatAdresi: string; yol?: SiparisYolu }) {
   const o = veri.siparis;
+  const yonetici = yol === "/orders";
   return (
     <YanPanel kapatAdresi={kapatAdresi} baslikId={BASLIK} kayitId={o.id}>
       <div className="flex h-full flex-col">
@@ -61,12 +64,16 @@ export function SiparisPaneli({ veri, kapatAdresi }: { veri: Veri; kapatAdresi: 
             <dl className="divide-y divide-slate-100">
               <Satir ad="Tarih">{formatDateTime(o.orderDate)}</Satir>
               <Satir ad="Cari">
-                <Link href={`/doctors?detay=${o.cari.id}`} className={BAGLANTI}>
-                  {o.cari.fullName}
-                </Link>
+                {yonetici ? (
+                  <Link href={`/doctors?detay=${o.cari.id}`} className={BAGLANTI}>
+                    {o.cari.fullName}
+                  </Link>
+                ) : (
+                  o.cari.fullName
+                )}
                 {o.cari.clinic && <span className="block text-xs text-slate-500">{o.cari.clinic}</span>}
               </Satir>
-              <Satir ad="Satıcı">{o.satici ?? "—"}</Satir>
+              {yonetici && <Satir ad="Satıcı">{o.satici ?? "—"}</Satir>}
               <Satir ad="Vade">{o.paymentTermDays} gün</Satir>
             </dl>
           </Bolum>
@@ -176,7 +183,7 @@ export function SiparisPaneli({ veri, kapatAdresi }: { veri: Veri; kapatAdresi: 
         </div>
 
         <footer className="flex flex-wrap gap-3 border-t border-slate-200 p-4">
-          <LinkButton href={`/orders/${o.id}`} ikon="detay">
+          <LinkButton href={`${yol}/${o.id}`} ikon="detay">
             Tam detay
           </LinkButton>
         </footer>

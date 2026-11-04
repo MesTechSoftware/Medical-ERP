@@ -1,6 +1,6 @@
 import { KpiSatiriIskeleti, SayfaBasligiIskeleti, SuzgecCubuguIskeleti, TabloIskeleti } from "@/components/Iskelet";
 import { BOS_SUZGEC, hizliSekmeler } from "@/lib/siparis-listesi/suzgec";
-import { DURUM_KARTLARI } from "./KpiKartlari";
+import { DURUM_KARTLARI } from "@/components/siparis/KpiKartlari";
 
 /** Siparişler iskeleti: başlık, KPI satırı (kartlarla aynı metinler, varsayılan aralık), süzgeç çubuğu, tablo. */
 export default function Loading() {

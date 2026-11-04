@@ -1,47 +1,61 @@
-import Link from "next/link";
-import { prisma } from "@/lib/db";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { requireSeller } from "@/lib/session";
-import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
-import { formatDate } from "@/lib/format";
-import {
-  PageHeader,
-  LinkButton,
-  Card,
-  StatusBadge,
-  EmptyRow,
-} from "@/components/ui";
+import { PageHeader, LinkButton } from "@/components/ui";
 import Pagination from "@/components/Pagination";
+import { KpiKartlari, SATICI_DURUM_KARTLARI } from "@/components/siparis/KpiKartlari";
+import { SiparisPaneli } from "@/components/siparis/SiparisPaneli";
+import { SiparisTablosu } from "@/components/siparis/SiparisTablosu";
+import { SuzgecCubugu } from "@/components/siparis/SuzgecCubugu";
+import { SutunSecici } from "@/components/liste/SutunSecici";
+import { kpiGetir } from "@/lib/kpi/getir";
+import { gizliSutunlariCoz } from "@/lib/liste/sutunlar";
+import { ilk } from "@/lib/liste/parametreler";
 import { getPagination, pageCount } from "@/lib/pagination";
-import { Tutar } from "@/components/Tutar";
-import { SATIR_TABANI, tabanli } from "@/lib/taban";
-import { belgeOnayDurumlari } from "@/lib/onay-blogu";
-import { OnayEtiketi } from "@/components/OnayEtiketi";
-import { buton } from "@/components/stil";
-import { Ikon } from "@/components/Ikon";
+import { gunleriAraliga, siparisKpileri, siparisListesi, siparisPaneli } from "@/lib/siparis-listesi/sorgu";
+import { SATICI_SUTUNLARI, SATICI_SUTUN_CEREZI } from "@/lib/siparis-listesi/sutunlar";
+import { kpiAraligi, siparisAdresi, suzgecCoz, type Parametreler } from "@/lib/siparis-listesi/suzgec";
+import { simdi, yerelGunMetni } from "@/lib/zaman";
+import { sutunlariKaydet } from "./sutunEylemi";
 
-export default async function MyOrdersPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ page?: string; per?: string }>;
-}) {
+const YOL = "/my-orders";
+
+/**
+ * Siparişlerim (spec Ü-31): yönetici Siparişler ekranının (Ü-23) satıcı kapsamlı hâli — KPI, durum sekmeleri,
+ * Filtrele (tarih, metin), sütun seçici, sayfalı liste, yan panel. Kapsam sorgudadır (`saticiId`, X-13):
+ * liste, kartlar ve panel yalnız bu satıcının siparişlerini okur; adresteki `satici` yok sayılır.
+ */
+export default async function MyOrdersPage({ searchParams }: { searchParams: Promise<Parametreler> }) {
   const session = await requireSeller();
-  const { page, perPage, skip, take } = getPagination(await searchParams);
-  const where = { sellerId: session.user.id };
+  const saticiId = session.user.id;
+  const params = await searchParams;
+  const per = ilk(params, "per") ?? undefined;
+  const { page, perPage, skip, take } = getPagination({ page: ilk(params, "page") ?? undefined, per });
+  const cozulen = suzgecCoz(params);
+  // Satıcı süzgeci bu ekranda yoktur; adreste kalmışsa (yönetici bağlantısı, elle) etiket ve adres yazmasın.
+  const suzgec = { ...cozulen.suzgec, satici: null };
+  const detay = cozulen.detay;
+  const yer = { page, per: per ? perPage : undefined };
+  const gizli = gizliSutunlariCoz(SATICI_SUTUNLARI, (await cookies()).get(SATICI_SUTUN_CEREZI)?.value);
+  const adres = siparisAdresi(suzgec, yer, YOL);
+  const aralik = kpiAraligi(suzgec, yerelGunMetni(simdi()));
 
-  const [orders, total] = await Promise.all([
-    prisma.order.findMany({
-      where,
-      orderBy: { orderDate: "desc" },
-      skip,
-      take,
-      include: {
-        items: { select: SIPARIS_SATIRI },
-        doctor: { select: { fullName: true, clinic: true } },
-      },
-    }),
-    prisma.order.count({ where }),
+  // Üç okuma birbirinden bağımsızdır; tek turda gider.
+  const [liste, kpi, panel] = await Promise.all([
+    siparisListesi(suzgec, { skip, take }, saticiId),
+    kpiGetir(() => siparisKpileri(gunleriAraliga(aralik), saticiId), { yol: YOL, kullaniciId: saticiId }),
+    detay ? siparisPaneli(detay, saticiId) : null,
   ]);
-  const onayDurumu = await belgeOnayDurumlari("SIP", orders.map((o) => o.id));
+
+  // Sayfa dışı adres son sayfaya gider; boş durum "hiç kayıt yok" demesin.
+  if (liste.satirlar.length === 0 && liste.toplam > 0) {
+    redirect(siparisAdresi(suzgec, { ...yer, page: pageCount(liste.toplam, perPage), ...(detay ? { detay } : {}) }, YOL));
+  }
+
+  const sayfaParametreleri = {
+    ...Object.fromEntries(new URL(siparisAdresi(suzgec, {}, YOL), "http://x").searchParams),
+    per: yer.per === undefined ? undefined : String(yer.per),
+  };
 
   return (
     <div>
@@ -51,67 +65,21 @@ export default async function MyOrdersPage({
         action={<LinkButton href="/my-orders/new" ikon="yeni">Yeni Sipariş</LinkButton>}
       />
 
-      <Card>
-        <div className="tablo-kutusu">
-          <table className="veri-tablosu">
-            <thead>
-              <tr>
-                <th>Tarih</th>
-                <th>Doktor</th>
-                <th className="oncelik-dusuk">Hastane</th>
-                <th className="sayi oncelik-dusuk">Kalem</th>
-                <th className="sayi">{tabanli("Tutar", SATIR_TABANI.toplam)}</th>
-                <th>Durum</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.length === 0 && (
-                <EmptyRow colSpan={7} text="Henüz sipariş oluşturmadınız." />
-              )}
-              {orders.map((o) => (
-                <tr key={o.id}>
-                  <td className="whitespace-nowrap text-slate-500">
-                    {formatDate(o.orderDate)}
-                  </td>
-                  <td className="font-medium text-slate-900">
-                    {o.doctor.fullName}
-                  </td>
-                  <td className="text-slate-500 oncelik-dusuk">{o.doctor.clinic ?? "—"}</td>
-                  <td className="sayi oncelik-dusuk">
-                    {o.items.length}
-                  </td>
-                  <td className="sayi">
-                    <Tutar deger={siparisToplami(o.items).toplam} taban={SATIR_TABANI.toplam} baslikta />
-                  </td>
-                  <td>
-                    <span className="flex flex-wrap items-center gap-1">
-                      <StatusBadge status={o.status} />
-                      <OnayEtiketi durum={onayDurumu.get(o.id)} />
-                    </span>
-                  </td>
-                  <td className="text-right">
-                    <Link
-                      href={`/my-orders/${o.id}`}
-                      className={buton("metin")}
-                    >
-                      <Ikon ad="detay" />
-                      Detay
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+      <KpiKartlari sonuc={kpi} aralik={aralik} yol={YOL} kartlar={SATICI_DURUM_KARTLARI} />
 
-      <Pagination
-        page={page}
-        totalPages={pageCount(total, perPage)}
-        total={total}
-        basePath="/my-orders"
+      <SuzgecCubugu
+        suzgec={suzgec}
+        per={yer.per}
+        yol={YOL}
+        sutunMenusu={<SutunSecici sutunlar={SATICI_SUTUNLARI} gizli={gizli} action={sutunlariKaydet} donus={adres} />}
       />
+
+      <SiparisTablosu satirlar={liste.satirlar} gizli={gizli} suzgec={suzgec} yer={yer} yol={YOL} sutunlar={SATICI_SUTUNLARI} />
+
+      <Pagination page={page} totalPages={pageCount(liste.toplam, perPage)} total={liste.toplam} basePath={YOL} params={sayfaParametreleri} />
+
+      {/* Bulunamayan ya da başka satıcının kimliğinde panel açılmaz. */}
+      {panel && <SiparisPaneli key={panel.siparis.id} veri={panel} kapatAdresi={adres} yol={YOL} />}
     </div>
   );
 }

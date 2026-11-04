@@ -8,7 +8,8 @@ import { Tutar } from "@/components/Tutar";
 import { formatDate } from "@/lib/format";
 import type { SiparisSatiri } from "@/lib/siparis-listesi/sorgu";
 import { SUTUNLAR, type SiparisSutunu } from "@/lib/siparis-listesi/sutunlar";
-import { bosDurum, siparisAdresi, type SiparisSuzgeci } from "@/lib/siparis-listesi/suzgec";
+import type { SutunTanimi } from "@/lib/liste/sutunlar";
+import { bosDurum, siparisAdresi, type SiparisSuzgeci, type SiparisYolu } from "@/lib/siparis-listesi/suzgec";
 import { SATIR_TABANI, tabanli } from "@/lib/taban";
 
 const SINIF: Partial<Record<SiparisSutunu, string>> = {
@@ -36,21 +37,26 @@ export function sevkMetni(sevk: number, adet: number): string {
 
 /**
  * Sipariş tablosu (spec Ü-23 §3.4). Gizli sütunun başlığı ve hücresi çizilmez. Cari adı yan paneli açar;
- * onay bloğu (A-8) çipi adın yanında, teklif işareti Durum sütunundadır (`DurumRozeti`).
+ * onay bloğu (A-8) çipi adın yanında, teklif işareti Durum sütunundadır (`DurumRozeti`). Siparişlerim
+ * (Ü-31) aynı tabloyu kendi yolu ve satıcı sütunsuz tanımla (`SATICI_SUTUNLARI`) çizer.
  */
 export function SiparisTablosu({
   satirlar,
   gizli,
   suzgec,
   yer,
+  yol = "/orders",
+  sutunlar = SUTUNLAR,
 }: {
   satirlar: SiparisSatiri[];
   gizli: ReadonlySet<SiparisSutunu>;
   suzgec: SiparisSuzgeci;
   yer: { page?: number; per?: number };
+  yol?: SiparisYolu;
+  sutunlar?: readonly SutunTanimi<SiparisSutunu>[];
 }) {
-  const gorunur = SUTUNLAR.filter((s) => !gizli.has(s.anahtar));
-  const acik = (k: SiparisSutunu) => !gizli.has(k);
+  const gorunur = sutunlar.filter((s) => !gizli.has(s.anahtar));
+  const acik = (k: SiparisSutunu) => gorunur.some((s) => s.anahtar === k);
   const tur = bosDurum(suzgec);
 
   return (
@@ -79,10 +85,10 @@ export function SiparisTablosu({
                 colSpan={4 + gorunur.length}
                 ikon={tur === "suzgecli" ? "filtrele" : "yeni"}
                 baslik={tur === "suzgecli" ? "Bu süzgeçlere uyan sipariş yok." : "Henüz sipariş yok."}
-                temizleAdresi={tur === "suzgecli" ? "/orders" : undefined}
+                temizleAdresi={tur === "suzgecli" ? yol : undefined}
                 eylem={
                   tur === "hic-kayit" ? (
-                    <LinkButton href="/orders/new" ikon="yeni">
+                    <LinkButton href={`${yol}/new`} ikon="yeni">
                       Yeni Sipariş
                     </LinkButton>
                   ) : undefined
@@ -97,7 +103,7 @@ export function SiparisTablosu({
                   <div className="flex flex-wrap items-center gap-2">
                     {/* Cari adı yan paneli açar (spec §3.5); kapanınca odak `data-kayit` ile buraya döner. */}
                     <Link
-                      href={siparisAdresi(suzgec, { ...yer, detay: o.id })}
+                      href={siparisAdresi(suzgec, { ...yer, detay: o.id }, yol)}
                       scroll={false}
                       data-kayit={o.id}
                       className="inline-flex items-center gap-0.5 text-link underline decoration-link/40 underline-offset-4 hover:decoration-link"
@@ -120,7 +126,7 @@ export function SiparisTablosu({
                   <DurumRozeti stage={o.stage} status={o.status} />
                 </td>
                 <td className="text-right">
-                  <Link href={`/orders/${o.id}`} className={buton("metin")}>
+                  <Link href={`${yol}/${o.id}`} className={buton("metin")}>
                     <Ikon ad="detay" />
                     Detay
                   </Link>

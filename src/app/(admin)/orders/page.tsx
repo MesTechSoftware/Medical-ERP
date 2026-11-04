@@ -12,10 +12,10 @@ import { gunleriAraliga, saticiSecenekleri, siparisKpileri, siparisListesi, sipa
 import { SUTUNLAR, SUTUN_CEREZI } from "@/lib/siparis-listesi/sutunlar";
 import { kpiAraligi, SATICISIZ, siparisAdresi, suzgecCoz, type Parametreler } from "@/lib/siparis-listesi/suzgec";
 import { simdi, yerelGunMetni } from "@/lib/zaman";
-import { KpiKartlari } from "./KpiKartlari";
-import { SiparisPaneli } from "./SiparisPaneli";
-import { SiparisTablosu } from "./SiparisTablosu";
-import { SuzgecCubugu } from "./SuzgecCubugu";
+import { KpiKartlari } from "@/components/siparis/KpiKartlari";
+import { SiparisPaneli } from "@/components/siparis/SiparisPaneli";
+import { SiparisTablosu } from "@/components/siparis/SiparisTablosu";
+import { SuzgecCubugu } from "@/components/siparis/SuzgecCubugu";
 import { sutunlariKaydet } from "./sutunEylemi";
 
 export default async function OrdersPage({ searchParams }: { searchParams: Promise<Parametreler> }) {
