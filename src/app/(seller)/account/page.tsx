@@ -7,7 +7,10 @@ import { formatla } from "@/lib/money";
 import { policy } from "@/lib/policy";
 import { kpiGetir } from "@/lib/kpi/getir";
 import { ciroOzeti } from "@/lib/reports-service";
+import { sayilanBelgeler } from "@/lib/sayilan-belgeler";
 import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
+import { kartSayisi } from "@/lib/doktor-listesi/sorgu";
+import { BOS_SUZGEC as TUM_DOKTORLAR } from "@/lib/doktor-listesi/suzgec";
 import { gunleriAraliga, siparisKpileri } from "@/lib/siparis-listesi/sorgu";
 import { BOS_SUZGEC, kpiAraligi } from "@/lib/siparis-listesi/suzgec";
 import { MATRAH } from "@/lib/taban";
@@ -19,13 +22,24 @@ import { KpiSatiri } from "@/components/kpi/KpiSatiri";
 
 const KART = "block h-full rounded-xl transition hover:opacity-90";
 
-/** FR-61: satıcının bütün siparişlerinde ortalama iskonto (tutar ağırlıklı, iptal hariç) — tek hesap `siparisToplami`. */
+/**
+ * FR-61: satıcının bütün siparişlerinde ortalama iskonto (tutar ağırlıklı) — tek hesap `siparisToplami`. Siparişler
+ * sayılan siparişlerdir (`sayilanBelgeler.siparis`: teklif ve iptal hariç — A-5, X-6 §(9)).
+ */
 async function ortalamaIskonto(saticiId: string) {
   const kalemler = await prisma.orderItem.findMany({
-    where: { order: { sellerId: saticiId, status: { not: "IPTAL" } } },
+    where: { order: { ...sayilanBelgeler.siparis, sellerId: saticiId } },
     select: SIPARIS_SATIRI,
   });
   return siparisToplami(kalemler).iskontoOran;
+}
+
+function Yuklenemedi({ referans }: { referans: string }) {
+  return (
+    <span className="text-negative">
+      Yüklenemedi <span className="font-mono text-xs text-slate-500">{referans}</span>
+    </span>
+  );
 }
 
 function Satir({ ad, children }: { ad: string; children: React.ReactNode }) {
@@ -39,7 +53,7 @@ function Satir({ ad, children }: { ad: string; children: React.ReactNode }) {
 
 /**
  * Hesabım (spec Ü-34): portföy ve bu ayın özeti, profil. Kartlar öbür satıcı ekranlarının kartlarıyla aynı
- * fonksiyonlardandır — Doktorlarım = Doktorlarım'ın toplamı (`kapsamliDoktorlariGetir`), Bu ay siparişim =
+ * fonksiyonlardandır — Doktorlarım = Doktorlarım'ın toplamı (`kartSayisi`), Bu ay siparişim =
  * Siparişlerim'in Toplam kartı (`siparisKpileri`), Bu ay cirom = Raporum'un Cirom'u (`ciroOzeti`); sayılar ekranlar
  * arasında aynıdır. Okumalar tek turdadır; her kart kendi hatasını taşır (ADR-010).
  *
@@ -57,9 +71,10 @@ export default async function AccountPage() {
   const aylar = sonAylar(6, donemBitisAyi(donem, an), an);
   const siparisAraligi = kpiAraligi(BOS_SUZGEC, yerelGunMetni(an));
 
-  const [kullanici, doktorSayisi, siparisler, ciro, iskonto] = await Promise.all([
-    prisma.user.findUniqueOrThrow({ where: { id: saticiId }, select: { name: true, email: true, commissionRate: true } }),
-    kpiGetir(() => prisma.doctor.count({ where: kapsamliDoktorlariGetir(session.user) }), baglam),
+  const [prim, doktorSayisi, siparisler, ciro, iskonto] = await Promise.all([
+    // Ad ve e-posta oturumdadır; yalnız prim oranı okunur, o da kapsüllü (düşerse yalnız o satır).
+    kpiGetir(() => prisma.user.findUniqueOrThrow({ where: { id: saticiId }, select: { commissionRate: true } }), baglam),
+    kpiGetir(() => kartSayisi(TUM_DOKTORLAR, kapsamliDoktorlariGetir(session.user), an), baglam),
     kpiGetir(() => siparisKpileri(gunleriAraliga(siparisAraligi), kapsam), baglam),
     kpiGetir(() => ciroOzeti({ kovalar: aylar, ...k }, kapsam), baglam),
     kpiGetir(() => ortalamaIskonto(saticiId), baglam),
@@ -122,25 +137,27 @@ export default async function AccountPage() {
         <section aria-label="Profil">
           <h2 className="mb-2 text-sm font-semibold text-slate-900">Profil</h2>
           <dl className="divide-y divide-slate-100">
-            <Satir ad="Ad soyad">{kullanici.name}</Satir>
-            <Satir ad="E-posta">{kullanici.email}</Satir>
+            <Satir ad="Ad soyad">{session.user.name}</Satir>
+            <Satir ad="E-posta">{session.user.email}</Satir>
             <Satir ad="Rol">Satıcı</Satir>
             {/* X-14 §(2): satıcıya özel oran yoksa `finance.primOraniVarsayilan`; uygulanan oran sevkiyat satırına donar. */}
             <Satir ad="Prim oranım">
-              {kullanici.commissionRate !== null
-                ? formatla(kullanici.commissionRate, "oran")
-                : `${formatla(policy.finance.primOraniVarsayilan, "oran")} (varsayılan)`}
+              {!prim.tamam ? (
+                <Yuklenemedi referans={prim.referans} />
+              ) : prim.deger.commissionRate !== null ? (
+                formatla(prim.deger.commissionRate, "oran")
+              ) : (
+                `${formatla(policy.finance.primOraniVarsayilan, "oran")} (varsayılan)`
+              )}
             </Satir>
             <Satir ad="Ortalama iskontom">
               {iskonto.tamam ? (
                 <>
                   {formatla(iskonto.deger, "oran")}
-                  <span className="block text-xs text-slate-500">Bütün siparişlerim, tutar ağırlıklı, iptal hariç</span>
+                  <span className="block text-xs text-slate-500">Bütün siparişlerim, tutar ağırlıklı, teklif ve iptal hariç</span>
                 </>
               ) : (
-                <span className="text-negative">
-                  Yüklenemedi <span className="font-mono text-xs text-slate-500">{iskonto.referans}</span>
-                </span>
+                <Yuklenemedi referans={iskonto.referans} />
               )}
             </Satir>
           </dl>

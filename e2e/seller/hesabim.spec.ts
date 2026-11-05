@@ -4,7 +4,7 @@ import { USERS, kpiIskeletiEslesir, kpiKartlariTasmaz } from "../helpers";
 /** Ü-34 — Hesabım: kartlar öbür satıcı ekranlarının kartlarıyla aynı sayıdır; profil; iskelet. */
 
 const kart = (page: Page, ad: string) => page.getByRole("group", { name: ad, exact: true });
-const deger = async (page: Page, ad: string) => (await kart(page, ad).innerText()).split("\n").map((s) => s.trim()).find((s) => /^₺?[\d.]+(,\d{2})?$/.test(s));
+const deger = async (page: Page, ad: string) => (await kart(page, ad).innerText()).split("\n").map((s) => s.trim()).find((s) => /^[-−]?₺?[\d.]+(,\d{2})?$/.test(s));
 
 test("Doktorlarım, Bu ay siparişim ve Bu ay cirom kartları Doktorlarım, Siparişlerim ve Raporum'daki kartlarla aynı", async ({ page }) => {
   await page.goto("/account");
@@ -15,7 +15,7 @@ test("Doktorlarım, Bu ay siparişim ve Bu ay cirom kartları Doktorlarım, Sipa
   };
   expect(hesap.doktor).toMatch(/^\d+$/);
   expect(hesap.siparis).toMatch(/^\d+$/);
-  expect(hesap.ciro).toMatch(/^₺/);
+  expect(hesap.ciro).toMatch(/^[-−]?₺/);
 
   await page.goto("/my-doctors");
   expect(await deger(page, "Doktorlarım")).toBe(hesap.doktor);

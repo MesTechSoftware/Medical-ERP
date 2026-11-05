@@ -174,14 +174,17 @@ export async function doktorPaneli(id: string): Promise<DoktorPaneliVerisi | nul
 
 // --- Doktorlarım (satıcı, Ü-32) ------------------------------------------------------------------
 
+/** Bir kartın sayısı: listenin koşulu ve kapsamıyla (kart = satır). Hesabım'ın Doktorlarım kartı da bunu okur (X-13-5). */
+export function kartSayisi(s: DoktorSuzgeci, kapsam: Prisma.DoctorWhereInput, an: Date = simdi()): Promise<number> {
+  return prisma.doctor.count({ where: { AND: [kapsam, doktorWhere(s, an)] } });
+}
+
 /** Doktorlarım kartları: her kart, adresinin de türediği süzgeci listenin koşuluyla ve aynı kapsamla sayar (X-13-4). */
 export async function saticiDoktorKpileri(
   kapsam: Prisma.DoctorWhereInput,
   an: Date = simdi()
 ): Promise<Record<(typeof SATICI_KARTLARI)[number]["anahtar"], number>> {
-  const sayilar = await Promise.all(
-    SATICI_KARTLARI.map((k) => prisma.doctor.count({ where: { AND: [kapsam, doktorWhere(k.suzgec, an)] } }))
-  );
+  const sayilar = await Promise.all(SATICI_KARTLARI.map((k) => kartSayisi(k.suzgec, kapsam, an)));
   return Object.fromEntries(SATICI_KARTLARI.map((k, i) => [k.anahtar, sayilar[i]])) as Record<(typeof SATICI_KARTLARI)[number]["anahtar"], number>;
 }
 
