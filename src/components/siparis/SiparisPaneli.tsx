@@ -37,7 +37,7 @@ function Bolum({ baslik, children }: { baslik: string; children: React.ReactNode
  * (`siparisToplami` ile aynı yol), sevkiyatlar, iadeler. İşlem düğmesi yoktur; işlemler detay sayfasındadır.
  * Siparişlerim'de (Ü-31) satıcı satırı yoktur (kendi siparişi) ve cari adı bağlantı değildir.
  */
-export function SiparisPaneli({ veri, kapatAdresi, yol = "/orders" }: { veri: Veri; kapatAdresi: string; yol?: SiparisYolu }) {
+export function SiparisPaneli({ veri, kapatAdresi, yol }: { veri: Veri; kapatAdresi: string; yol: SiparisYolu }) {
   const o = veri.siparis;
   const yonetici = yol === "/orders";
   return (

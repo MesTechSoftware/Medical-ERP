@@ -44,13 +44,13 @@ export function SiparisTablosu({
   gizli,
   suzgec,
   yer,
-  yol = "/orders",
+  yol,
 }: {
   satirlar: SiparisSatiri[];
   gizli: ReadonlySet<SiparisSutunu>;
   suzgec: SiparisSuzgeci;
   yer: { page?: number; per?: number };
-  yol?: SiparisYolu;
+  yol: SiparisYolu;
 }) {
   const gorunur = ekranSutunlari(yol).filter((s) => !gizli.has(s.anahtar));
   const acikKume = new Set(gorunur.map((s) => s.anahtar));

@@ -4,6 +4,7 @@
  */
 
 import type { SutunTanimi } from "@/lib/liste/sutunlar";
+import type { SiparisYolu } from "@/lib/siparis-listesi/suzgec";
 
 export type SiparisSutunu = "belgeNo" | "klinik" | "satici" | "tutar" | "sevk";
 
@@ -28,6 +29,6 @@ export const SATICI_SUTUN_CEREZI = "siparislerim-sutunlar";
 export const SATICI_SUTUN_YOLU = "/my-orders";
 
 /** Ekranın sütun seti yolundan türer (kart seti gibi): satıcı ekranı satıcı sütununu hiç çizmez. */
-export function ekranSutunlari(yol: "/orders" | "/my-orders"): readonly SutunTanimi<SiparisSutunu>[] {
+export function ekranSutunlari(yol: SiparisYolu): readonly SutunTanimi<SiparisSutunu>[] {
   return yol === "/orders" ? SUTUNLAR : SATICI_SUTUNLARI;
 }

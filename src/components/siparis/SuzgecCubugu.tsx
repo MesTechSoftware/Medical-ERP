@@ -31,13 +31,13 @@ export function SuzgecCubugu({
   per,
   saticilar,
   sutunMenusu,
-  yol = "/orders",
+  yol,
 }: {
   suzgec: SiparisSuzgeci;
   per: number | undefined;
   saticilar?: readonly { id: string; name: string; isActive: boolean }[];
   sutunMenusu?: React.ReactNode;
-  yol?: SiparisYolu;
+  yol: SiparisYolu;
 }) {
   const etiketler = etkinSuzgecler(suzgec, (id) => saticilar?.find((s) => s.id === id)?.name, yol);
   const uygulanan = siparisAdresi(suzgec, {}, yol);

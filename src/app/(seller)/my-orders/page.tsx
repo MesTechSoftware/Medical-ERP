@@ -38,7 +38,7 @@ export default async function MyOrdersPage({ searchParams }: { searchParams: Pro
   // Satıcı süzgeci bu ekranda yoktur; adreste kalmışsa (yönetici bağlantısı, elle) sorgulardan önce adresten düşer.
   // Kapsam zaten sorgudadır — bu yalnız adres çubuğunun uygulanan süzgeci göstermesi içindir.
   const suzgec = { ...cozulen.suzgec, satici: null };
-  if (cozulen.suzgec.satici) redirect(siparisAdresi(suzgec, { ...yer, ...(detay ? { detay } : {}) }, YOL));
+  if (ilk(params, "satici") !== null) redirect(siparisAdresi(suzgec, { ...yer, ...(detay ? { detay } : {}) }, YOL));
   const gizli = gizliSutunlariCoz(SATICI_SUTUNLARI, (await cookies()).get(SATICI_SUTUN_CEREZI)?.value);
   const adres = siparisAdresi(suzgec, yer, YOL);
   const aralik = kpiAraligi(suzgec, yerelGunMetni(simdi()));

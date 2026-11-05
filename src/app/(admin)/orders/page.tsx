@@ -60,21 +60,22 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         action={<LinkButton href="/orders/new" ikon="yeni">Yeni Sipariş</LinkButton>}
       />
 
-      <KpiKartlari sonuc={kpi} aralik={aralik} />
+      <KpiKartlari sonuc={kpi} aralik={aralik} yol="/orders" />
 
       <SuzgecCubugu
         suzgec={suzgec}
         per={yer.per}
         saticilar={saticilar}
+        yol="/orders"
         sutunMenusu={<SutunSecici sutunlar={SUTUNLAR} gizli={gizli} action={sutunlariKaydet} donus={adres} />}
       />
 
-      <SiparisTablosu satirlar={liste.satirlar} gizli={gizli} suzgec={suzgec} yer={yer} />
+      <SiparisTablosu satirlar={liste.satirlar} gizli={gizli} suzgec={suzgec} yer={yer} yol="/orders" />
 
       <Pagination page={page} totalPages={pageCount(liste.toplam, perPage)} total={liste.toplam} basePath="/orders" params={sayfaParametreleri} />
 
       {/* Bulunamayan kimlikte panel açılmaz (spec §5). */}
-      {panel && <SiparisPaneli key={panel.siparis.id} veri={panel} kapatAdresi={adres} />}
+      {panel && <SiparisPaneli key={panel.siparis.id} veri={panel} kapatAdresi={adres} yol="/orders" />}
     </div>
   );
 }

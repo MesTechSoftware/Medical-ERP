@@ -41,7 +41,7 @@ export function ekranKartlari(yol: SiparisYolu): typeof DURUM_KARTLARI {
  * teklifi de listeler). Siparişlerim (Ü-31) aynı kartın satıcı kapsamlı sayısını `ekranKartlari`'nın
  * verdiği dört kartla çizer.
  */
-export function KpiKartlari({ sonuc, aralik, yol = "/orders" }: { sonuc: KpiSonucu<SiparisKpileri>; aralik: Aralik; yol?: SiparisYolu }) {
+export function KpiKartlari({ sonuc, aralik, yol }: { sonuc: KpiSonucu<SiparisKpileri>; aralik: Aralik; yol: SiparisYolu }) {
   const kartlar = ekranKartlari(yol);
   const k = sonuc.tamam ? sonuc.deger : null;
   const hataReferansi = sonuc.tamam ? undefined : sonuc.referans;
