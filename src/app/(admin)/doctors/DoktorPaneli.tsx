@@ -3,7 +3,7 @@ import { Panel, PanelBolumu as Bolum, PanelSatiri as Satir, Yok } from "@/compon
 import { Ikon } from "@/components/Ikon";
 import { SonucGosterimi } from "@/components/Sonuc";
 import { Tutar } from "@/components/Tutar";
-import { buton } from "@/components/stil";
+import { BAGLANTI, buton } from "@/components/stil";
 import { LinkButton, StatusBadge, StatusChip } from "@/components/ui";
 import { bakiyeYonu } from "@/lib/doctor-cari";
 import type { DoktorPaneliVerisi } from "@/lib/doktor-listesi/sorgu";
@@ -108,7 +108,7 @@ export function DoktorPaneli({
             {veri.siparisler.map((o) => (
               <li key={o.id} className="flex flex-wrap items-center justify-between gap-2 py-1.5 text-sm">
                 <span className="min-w-0">
-                  <Link href={`/orders/${o.id}`} className="font-medium text-link hover:underline">
+                  <Link href={`/orders/${o.id}`} className={BAGLANTI}>
                     {o.documentNo}
                   </Link>
                   <span className="ml-2 text-slate-500">{formatDate(o.orderDate)}</span>

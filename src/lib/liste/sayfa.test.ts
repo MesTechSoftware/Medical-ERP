@@ -52,5 +52,6 @@ describe("sayfalamaParametreleri", () => {
   it("süzgeci ve per'i korur, sayfa ve panel adresten gelmez", () => {
     expect(sayfalamaParametreleri("/orders?durum=BEKLIYOR&q=ali", { page: 2, per: 50 })).toEqual({ durum: "BEKLIYOR", q: "ali", per: "50" });
     expect(sayfalamaParametreleri("/orders", { page: 1 })).toEqual({ per: undefined });
+    expect(sayfalamaParametreleri("/shipping?firma=x&page=3&per=10&detay=a&kismi=b", { page: 3 })).toEqual({ firma: "x", per: undefined });
   });
 });

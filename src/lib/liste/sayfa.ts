@@ -40,8 +40,10 @@ export function sayfaDisi(liste: { satirlar: readonly unknown[]; toplam: number 
 
 /** Sayfalama bağlantılarının parametreleri: süzgeçli liste adresi ve (geçerliyse) sayfa boyu; paneli taşımaz. */
 export function sayfalamaParametreleri(suzgecliAdres: string, yer: Yer): Record<string, string | undefined> {
-  return {
-    ...Object.fromEntries(new URL(suzgecliAdres, "http://x").searchParams),
-    per: yer.per === undefined ? undefined : String(yer.per),
-  };
+  const parametreler = new URL(suzgecliAdres, "http://x").searchParams;
+  // Konum ve panel parametreleri adresle gelse de taşınmaz: sayfa bağlantısı paneli yeniden açmasın.
+  for (const ad of KONUM_PARAMETRELERI) parametreler.delete(ad);
+  return { ...Object.fromEntries(parametreler), per: yer.per === undefined ? undefined : String(yer.per) };
 }
+
+const KONUM_PARAMETRELERI = ["page", "per", "detay", "kismi"] as const;
