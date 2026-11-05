@@ -5,6 +5,7 @@ import { SubmitButton } from "@/components/form";
 import { SonucGosterimi, type SonucDurumu } from "@/components/Sonuc";
 import { transferDoctor } from "./actions";
 import { KONTROL_TEK_SATIR } from "@/components/stil";
+import { GEREKCE_AZAMI } from "@/lib/sonuc";
 
 /**
  * Toplu devir formu (X-17 §(4)). Doktor seçimi listedeki kutulardan gelir; kutular
@@ -47,6 +48,7 @@ export default function TransferForm({
         <input
           id="toplu-gerekce"
           name="reason"
+          maxLength={GEREKCE_AZAMI}
           placeholder="Örn. bölge değişikliği"
           className={`w-full ${KONTROL_TEK_SATIR}`}
         />

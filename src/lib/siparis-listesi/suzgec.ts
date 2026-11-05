@@ -1,5 +1,5 @@
 import type { OrderStatus } from "@/generated/prisma/enums";
-import { aralikEtiketi, gun, ilk, kimlik, secenek, type Parametreler } from "@/lib/liste/parametreler";
+import { type Parametreler, aralikEtiketi, gun, ilk, kimlik, secenek } from "@/lib/liste/parametreler";
 import { yerelGunMetni } from "@/lib/zaman";
 
 /**
@@ -26,13 +26,13 @@ export const SATICISIZ = "yok";
 
 const METIN_SINIRI = 100;
 
-/** Sekme sırası ve etiketleri (bugünkü sekmelerle aynı metin); KPI kartları da buradan okur. */
+/** Sekme sırası ve etiketleri — durum rozetiyle (`StatusBadge`) aynı metin; KPI kartları da buradan okur. */
 export const DURUMLAR: readonly { kod: SiparisDurumu; etiket: string }[] = [
   { kod: "BEKLIYOR", etiket: "Bekliyor" },
   { kod: "HAZIRLANIYOR", etiket: "Hazırlanıyor" },
   { kod: "KARGOLANDI", etiket: "Kargolandı" },
   { kod: "TESLIM_EDILDI", etiket: "Teslim Edildi" },
-  { kod: "IPTAL", etiket: "İptal" },
+  { kod: "IPTAL", etiket: "İptal Edildi" },
   { kod: "TEKLIF", etiket: "Teklif" },
 ];
 const DURUM_KODLARI = DURUMLAR.map((d) => d.kod);
@@ -106,11 +106,6 @@ export function hizliSekmeler(s: SiparisSuzgeci, yol: SiparisYolu = "/orders"): 
  * KPI kartlarının aralığı (spec §3.2): tarih süzgeci varsa o, yoksa bu ay (ayın 1'i – `bugun`).
  * Metin, satıcı ve durum süzgeci aralığı değiştirmez.
  */
-export function kpiAraligi(s: SiparisSuzgeci, bugun: string): { baslangic: string | null; bitis: string | null; varsayilan: boolean } {
-  if (s.baslangic || s.bitis) return { baslangic: s.baslangic, bitis: s.bitis, varsayilan: false };
-  return { baslangic: `${bugun.slice(0, 8)}01`, bitis: bugun, varsayilan: true };
-}
-
 /** Durum kartının adresi: kartın saydığı aralığı yazar, satır sayısı kartla aynı olur (A-5-8). */
 export function kartAdresi(durum: OrderStatus, a: { baslangic: string | null; bitis: string | null }, yol: SiparisYolu = "/orders"): string {
   return siparisAdresi({ ...BOS_SUZGEC, durum, baslangic: a.baslangic, bitis: a.bitis }, {}, yol);

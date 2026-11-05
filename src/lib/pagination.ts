@@ -7,7 +7,7 @@
  */
 
 export const DEFAULT_PER_PAGE = 25;
-const MAX_PER_PAGE = 100;
+export const MAX_PER_PAGE = 100;
 
 export type Pagination = {
   page: number;

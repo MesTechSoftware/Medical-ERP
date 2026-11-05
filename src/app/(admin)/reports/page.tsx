@@ -87,7 +87,8 @@ export default async function ReportsPage({
         description="Ciro ve performans"
       />
 
-      <DonemSecici anahtar={donem.anahtar} yol="/reports" korunan={korunanlar(suzgec)} />
+      {/* Dönem değişince süzgeç ve sayfa boyu korunur (Raporum gibi). */}
+      <DonemSecici anahtar={donem.anahtar} yol="/reports" korunan={{ ...korunanlar(suzgec), ...(yer.per ? { per: String(yer.per) } : {}) }} />
 
       {/* FR-60: kanal karşılaştırması C5'te söküldü (X-8) */}
       <KpiSatiri>

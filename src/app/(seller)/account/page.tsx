@@ -11,7 +11,7 @@ import { kartSayisi } from "@/lib/doktor-listesi/sorgu";
 import { BOS_SUZGEC as TUM_DOKTORLAR } from "@/lib/doktor-listesi/suzgec";
 import { gunleriAraliga } from "@/lib/liste/parametreler";
 import { siparisKpileri } from "@/lib/siparis-listesi/sorgu";
-import { BOS_SUZGEC, kpiAraligi } from "@/lib/siparis-listesi/suzgec";
+import { BOS_SUZGEC } from "@/lib/siparis-listesi/suzgec";
 import { MATRAH } from "@/lib/taban";
 import { simdi, yerelGunMetni } from "@/lib/zaman";
 import { Card, PageHeader } from "@/components/ui";
@@ -19,21 +19,14 @@ import { KovaOzeti } from "@/components/kpi/KovaOzeti";
 import { KpiCard } from "@/components/kpi/KpiCard";
 import { KpiSatiri } from "@/components/kpi/KpiSatiri";
 import { KPI_BAGLANTISI } from "@/components/stil";
+import { kpiAraligi } from "@/lib/liste/parametreler";
+import { PanelSatiri } from "@/components/panel/Panel";
 
 function Yuklenemedi({ referans }: { referans: string }) {
   return (
     <span className="text-negative">
       Yüklenemedi <span className="font-mono text-xs text-slate-500">{referans}</span>
     </span>
-  );
-}
-
-function Satir({ ad, children }: { ad: string; children: React.ReactNode }) {
-  return (
-    <div className="grid grid-cols-[10rem_minmax(0,1fr)] gap-2 py-2 text-sm">
-      <dt className="text-slate-500">{ad}</dt>
-      <dd className="min-w-0 break-words text-slate-900">{children}</dd>
-    </div>
   );
 }
 
@@ -123,11 +116,11 @@ export default async function AccountPage() {
         <section aria-label="Profil">
           <h2 className="mb-2 text-sm font-semibold text-slate-900">Profil</h2>
           <dl className="divide-y divide-slate-100">
-            <Satir ad="Ad soyad">{session.user.name}</Satir>
-            <Satir ad="E-posta">{session.user.email}</Satir>
-            <Satir ad="Rol">Satıcı</Satir>
+            <PanelSatiri etiket="cok-genis" ad="Ad soyad">{session.user.name}</PanelSatiri>
+            <PanelSatiri etiket="cok-genis" ad="E-posta">{session.user.email}</PanelSatiri>
+            <PanelSatiri etiket="cok-genis" ad="Rol">Satıcı</PanelSatiri>
             {/* X-14 §(2): satıcıya özel oran yoksa `finance.primOraniVarsayilan`; uygulanan oran sevkiyat satırına donar. */}
-            <Satir ad="Prim oranım">
+            <PanelSatiri etiket="cok-genis" ad="Prim oranım">
               {!prim.tamam ? (
                 <Yuklenemedi referans={prim.referans} />
               ) : prim.deger.commissionRate !== null ? (
@@ -135,8 +128,8 @@ export default async function AccountPage() {
               ) : (
                 `${formatla(policy.finance.primOraniVarsayilan, "oran")} (varsayılan)`
               )}
-            </Satir>
-            <Satir ad="Ortalama iskontom">
+            </PanelSatiri>
+            <PanelSatiri etiket="cok-genis" ad="Ortalama iskontom">
               {iskonto.tamam ? (
                 <>
                   {formatla(iskonto.deger, "oran")}
@@ -145,7 +138,7 @@ export default async function AccountPage() {
               ) : (
                 <Yuklenemedi referans={iskonto.referans} />
               )}
-            </Satir>
+            </PanelSatiri>
           </dl>
         </section>
       </Card>

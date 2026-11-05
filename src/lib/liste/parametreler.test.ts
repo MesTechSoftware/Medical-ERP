@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { TUM_ZAMANLAR } from "@/lib/zaman";
-import { aralikEtiketi, gun, gunleriAraliga, ilk, kimlik, secenek } from "./parametreler";
+import { aralikEtiketi, gun, gunleriAraliga, ilk, kimlik, kpiAraligi, kpiDonemNotu, secenek } from "./parametreler";
 
 describe("adres parametresi yardımcıları", () => {
   it("ilk: dizide ilk eleman, boş metin null", () => {
@@ -48,5 +48,22 @@ describe("gunleriAraliga", () => {
   it("boş ya da geçersiz uç tüm zamanların ucudur", () => {
     expect(gunleriAraliga({ baslangic: null, bitis: null })).toEqual(TUM_ZAMANLAR);
     expect(gunleriAraliga({ baslangic: "2026-02-30", bitis: null })).toEqual(TUM_ZAMANLAR);
+  });
+});
+
+describe("kpiAraligi / kpiDonemNotu", () => {
+  it("süzgeç boşsa bu ay; not \"Bu ay\"", () => {
+    const a = kpiAraligi({ baslangic: null, bitis: null }, "2026-11-05");
+    expect(a).toEqual({ baslangic: "2026-11-01", bitis: "2026-11-05", varsayilan: true });
+    expect(kpiDonemNotu(a)).toBe("Bu ay");
+  });
+
+  it("kart bağlantısının yazdığı bu ay aralığı da \"Bu ay\" der (tarih aralığı yazmaz)", () => {
+    expect(kpiDonemNotu(kpiAraligi({ baslangic: "2026-11-01", bitis: "2026-11-05" }, "2026-11-05"))).toBe("Bu ay");
+  });
+
+  it("başka aralık etiketiyle yazılır", () => {
+    expect(kpiDonemNotu(kpiAraligi({ baslangic: "2026-10-01", bitis: "2026-10-31" }, "2026-11-05"))).toBe("01.10.2026 – 31.10.2026");
+    expect(kpiDonemNotu(kpiAraligi({ baslangic: "2026-11-01", bitis: null }, "2026-11-05"))).toBe("01.11.2026 sonrası");
   });
 });

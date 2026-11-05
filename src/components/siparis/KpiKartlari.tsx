@@ -3,17 +3,13 @@ import type { OrderStatus } from "@/generated/prisma/enums";
 import { KpiCard } from "@/components/kpi/KpiCard";
 import { KpiSatiri } from "@/components/kpi/KpiSatiri";
 import type { KpiSonucu } from "@/lib/kpi/getir";
-import { aralikEtiketi } from "@/lib/liste/parametreler";
+import { kpiDonemNotu, type KpiAraligi } from "@/lib/liste/parametreler";
 import type { SiparisKpileri } from "@/lib/siparis-listesi/sorgu";
-import { DURUMLAR, kartAdresi, type kpiAraligi, type SiparisYolu } from "@/lib/siparis-listesi/suzgec";
+import { DURUMLAR, kartAdresi, type SiparisYolu } from "@/lib/siparis-listesi/suzgec";
 import { KPI_BAGLANTISI } from "@/components/stil";
 
-type Aralik = ReturnType<typeof kpiAraligi>;
+type Aralik = KpiAraligi;
 
-/** Kartların alt notu: varsayılan aralık "Bu ay", yoksa süzgecin gün aralığı. */
-export function kpiDonemNotu(a: Aralik): string {
-  return a.varsayilan ? "Bu ay" : aralikEtiketi(a.baslangic, a.bitis);
-}
 
 /** Durum kartları: sekmelerle aynı sıra ve metin (tek kaynak `DURUMLAR`), teklif hariç (A-5-8). */
 export const DURUM_KARTLARI: readonly { durum: OrderStatus; etiket: string }[] = DURUMLAR.flatMap((d) =>

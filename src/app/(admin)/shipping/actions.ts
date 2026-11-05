@@ -3,10 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireStaff } from "@/lib/session";
-import { topluSecimCoz, TOPLU_SINIR } from "@/lib/kargo-listesi/suzgec";
+import { kismiSonrasiAdres, topluSecimCoz, TOPLU_SINIR } from "@/lib/kargo-listesi/suzgec";
 import { siparisiSevkEt, topluKargo, type TopluSatirSonucu } from "@/lib/sevk-et";
 import type { TopluSonucSatiri } from "@/components/Sonuc";
-import { basarili, engel, onayaGonderildi, type IslemSonucu } from "@/lib/sonuc";
+import { engel, onayaGonderildi, topluUstSonuc, type IslemSonucu } from "@/lib/sonuc";
+import { prisma } from "@/lib/db";
+import { aktifFirmaMi } from "@/lib/sevkiyat";
 
 const KALEM = "miktar_";
 
@@ -52,7 +54,8 @@ export async function shipOrder(orderId: string, _prev: unknown, formData: FormD
     return onayaGonderildi(sonuc.bildirimler);
   }
   yenile();
-  redirect(sonuc.tamamlandi ? "/shipping" : `/shipping?kismi=${encodeURIComponent(orderId)}`);
+  // Liste süzgeci ve sayfası korunur; sipariş hâlâ kargo bekliyorsa panel güncel kalanla açık kalır.
+  redirect(kismiSonrasiAdres(String(formData.get("donus") ?? ""), orderId, sonuc.tamamlandi));
 }
 
 /** Toplu kargoda bir siparişin sonucu; tip ve metin `TopluKargoSonucListesi`'ndedir (X-4-2). */
@@ -86,8 +89,12 @@ export async function topluKargola(_prev: TopluKargoSonucu | null, formData: For
     return { ...sonuc, satirlar: [] };
   }
   const carrierId = String(formData.get("carrierId") ?? "").trim() || null;
+  // Firma bir kez denetlenir: bilinmeyen ya da pasif firma işlemin tamamını durdurur (sipariş başına hata üretmez).
+  if (carrierId !== null && !(await aktifFirmaMi(prisma, carrierId))) {
+    return { ...engel("KARGO_FIRMASI_GECERSIZ", {}, "carrierId"), satirlar: [] };
+  }
   const sonuclar = await topluKargo(secim.secimler, carrierId, { id: session.user.id, rol: session.user.role });
   yenile();
   revalidatePath("/approvals");
-  return { ...basarili(), satirlar: sonuclar.map(satir) };
+  return { ...topluUstSonuc(sonuclar.map((r) => r.sonuc.durum === "SEVK_EDILDI")), satirlar: sonuclar.map(satir) };
 }

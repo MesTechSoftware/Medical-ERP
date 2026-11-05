@@ -62,6 +62,7 @@ export function Field({
   placeholder,
   step,
   min,
+  maxLength,
   sonuc,
 }: {
   label: string;
@@ -72,6 +73,7 @@ export function Field({
   placeholder?: string;
   step?: string;
   min?: string;
+  maxLength?: number;
   sonuc?: SonucDurumu;
 }) {
   const hata = alanHatasi(sonuc, name);
@@ -86,6 +88,7 @@ export function Field({
         placeholder={placeholder}
         step={step}
         min={min}
+        maxLength={maxLength}
         {...hataNitelikleri(name, hata)}
         className={`w-full ${KONTROL_TEK_SATIR}`}
       />
@@ -134,12 +137,14 @@ export function TextArea({
   name,
   defaultValue,
   placeholder,
+  maxLength,
   sonuc,
 }: {
   label: string;
   name: string;
   defaultValue?: string;
   placeholder?: string;
+  maxLength?: number;
   sonuc?: SonucDurumu;
 }) {
   const hata = alanHatasi(sonuc, name);
@@ -150,6 +155,7 @@ export function TextArea({
         name={name}
         defaultValue={defaultValue}
         placeholder={placeholder}
+        maxLength={maxLength}
         rows={2}
         {...hataNitelikleri(name, hata)}
         className={`w-full ${KONTROL_COK_SATIR}`}

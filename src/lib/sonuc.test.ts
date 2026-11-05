@@ -5,6 +5,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { describe, expect, it } from "vitest";
+import { GEREKCE_AZAMI, gerekceHatasi, topluUstSonuc } from "@/lib/sonuc";
 
 import { SonucGosterimi } from "@/components/Sonuc";
 
@@ -153,5 +154,24 @@ describe("kademe başına tek gösterim deseni (X-4-4)", () => {
     expect(kutu).not.toMatch(/Bu alan zorunludur/);
     // Alan formda yoksa bildirim atılmaz, kutuya düşer (X-4 §(7)).
     expect(html(sonuc)).toMatch(/Bu alan zorunludur/);
+  });
+});
+
+describe("topluUstSonuc — toplu işlemin üst sonucu satırlardan (Ü-35)", () => {
+  it("hepsi yazıldı → başarılı; hiçbiri → engel; bir kısmı → bilgi kademesinde uyarılı", () => {
+    expect(topluUstSonuc([true, true]).durum).toBe("BASARILI");
+    expect(topluUstSonuc([false, false])).toMatchObject({ durum: "ENGELLENDI", bildirimler: [{ kural_kodu: "TOPLU_HICBIRI_YAZILMADI", parametreler: { toplam: 2 } }] });
+    expect(topluUstSonuc([true, false, false])).toMatchObject({
+      durum: "BASARILI_UYARILI",
+      bildirimler: [{ kademe: "BILGI", kural_kodu: "TOPLU_KISMEN_YAZILDI", parametreler: { yazilan: 1, toplam: 3 } }],
+    });
+  });
+});
+
+describe("gerekceHatasi — bütün gerekçe akışlarının ortak denetimi (Ü-35)", () => {
+  it("boş zorunlu, sınır dahil geçer, sınırın üstü uzun", () => {
+    expect(gerekceHatasi("", "reason")).toMatchObject({ kural_kodu: "GEREKCE_ZORUNLU", alan: "reason" });
+    expect(gerekceHatasi("x".repeat(GEREKCE_AZAMI))).toBeNull();
+    expect(gerekceHatasi("x".repeat(GEREKCE_AZAMI + 1), "not")).toMatchObject({ kural_kodu: "GEREKCE_UZUN", parametreler: { azami: GEREKCE_AZAMI }, alan: "not" });
   });
 });

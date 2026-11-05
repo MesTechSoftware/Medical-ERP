@@ -21,12 +21,15 @@ export function DurumRozeti({ durum }: { durum: TahsilatSatiri["status"] }) {
 export function TahsilatTablosu({
   satirlar,
   ozet,
+  yalnizIptal,
   gizli,
   suzgec,
   yer,
 }: {
   satirlar: TahsilatSatiri[];
   ozet: Ozet | null;
+  /** Varsayılan liste boş ama iptal edilmiş tahsilat var. */
+  yalnizIptal: boolean;
   gizli: ReadonlySet<TahsilatSutunu>;
   suzgec: TahsilatSuzgeci;
   yer: { page?: number; per?: number };
@@ -65,8 +68,21 @@ export function TahsilatTablosu({
               <BosDurum
                 colSpan={6 + gorunur.length}
                 ikon={tur === "suzgecli" ? "filtrele" : "yeni"}
-                baslik={tur === "suzgecli" ? "Bu süzgeçlere uyan tahsilat yok." : "Henüz tahsilat kaydı yok."}
+                baslik={
+                  tur === "suzgecli"
+                    ? "Bu süzgeçlere uyan tahsilat yok."
+                    : yalnizIptal
+                      ? "Aktif tahsilat yok; yalnız iptal edilmiş kayıtlar var."
+                      : "Henüz tahsilat kaydı yok."
+                }
                 temizleAdresi={tur === "suzgecli" ? "/collections" : undefined}
+                eylem={
+                  tur === "hic-kayit" && yalnizIptal ? (
+                    <Link href={tahsilatAdresi({ ...suzgec, durum: "IPTAL" })} className={BAGLANTI}>
+                      İptal edilenleri göster
+                    </Link>
+                  ) : undefined
+                }
               />
             )}
             {satirlar.map((p) => {

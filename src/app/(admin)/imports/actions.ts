@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import type { ImportDataType } from "@/generated/prisma/enums";
 import { requireAdmin } from "@/lib/session";
 import { calistirIceAktarim, partiGeriAl, sablonUret, TANIMLAR, type IceAktarimSonucu } from "@/lib/ice-aktarim";
-import { basarili, engel, type IslemSonucu } from "@/lib/sonuc";
+import { type IslemSonucu, basarili, engel, gerekceEngeli } from "@/lib/sonuc";
 
 /**
  * İçe aktarım (D-6, X-16) — yalnız `YONETICI` (X-16 §(6); devreye alma aracı). Dosya istekle gelir,
@@ -50,7 +50,8 @@ export async function sablonIndir(t: ImportDataType): Promise<IceAktarimSonucu> 
 export async function partiyiGeriAl(partiId: string, _prev: unknown, formData: FormData): Promise<IslemSonucu> {
   const session = await requireAdmin();
   const gerekce = String(formData.get("reason") ?? "").trim();
-  if (!gerekce) return engel("GEREKCE_ZORUNLU", {}, "reason");
+  const gerekceSonucu = gerekceEngeli(gerekce, "reason");
+  if (gerekceSonucu) return gerekceSonucu;
   const sonuc = await partiGeriAl(partiId, session.user.id, gerekce);
   revalidatePath("/imports");
   revalidatePath("/doctors");

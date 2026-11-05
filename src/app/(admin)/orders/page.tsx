@@ -8,12 +8,13 @@ import { kpiGetir } from "@/lib/kpi/getir";
 import { sayfaCoz, sayfaDisi } from "@/lib/liste/sayfa";
 import { gunleriAraliga } from "@/lib/liste/parametreler";
 import { saticiSecenekleri, siparisKpileri, siparisListesi, siparisPaneli } from "@/lib/siparis-listesi/sorgu";
-import { kpiAraligi, SATICISIZ, siparisAdresi, suzgecCoz, TUM_SIPARISLER, type Parametreler } from "@/lib/siparis-listesi/suzgec";
+import { SATICISIZ, siparisAdresi, suzgecCoz, TUM_SIPARISLER, type Parametreler } from "@/lib/siparis-listesi/suzgec";
 import { simdi, yerelGunMetni } from "@/lib/zaman";
 import { KpiKartlari } from "@/components/siparis/KpiKartlari";
 import { SiparisPaneli } from "@/components/siparis/SiparisPaneli";
 import { SiparisTablosu } from "@/components/siparis/SiparisTablosu";
 import { SuzgecCubugu } from "@/components/siparis/SuzgecCubugu";
+import { kpiAraligi } from "@/lib/liste/parametreler";
 
 export default async function OrdersPage({ searchParams }: { searchParams: Promise<Parametreler> }) {
   const session = await requireStaff();

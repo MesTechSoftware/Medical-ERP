@@ -6,6 +6,7 @@ import {
   etkinSuzgecler,
   hizliSekmeler,
   kargoAdresi,
+  kismiSonrasiAdres,
   sekmeAdresi,
   suzgecCoz,
   topluSecimCoz,
@@ -112,5 +113,21 @@ describe("Tümünü seç (toplu sınır)", () => {
     expect(tumunuSecDurumu(Array(TOPLU_SINIR + 5).fill(false))).toEqual([...Array(TOPLU_SINIR).fill(true), ...Array(5).fill(false)]);
     expect(tumunuSecDurumu([true, true], 2)).toEqual([false, false]);
     expect(tumunuSecDurumu([true, true, false], 2)).toEqual([false, false, false]);
+  });
+});
+
+describe("kismiSonrasiAdres — kısmi sevkten sonra liste süzgeci korunur (Ü-35)", () => {
+  it("kalan varsa panel açık, süzgeç ve sayfa korunur", () => {
+    expect(kismiSonrasiAdres("/shipping?firma=f1&page=2", "s1", false)).toBe("/shipping?firma=f1&page=2&kismi=s1");
+  });
+
+  it("tamamlandıysa panel düşer", () => {
+    expect(kismiSonrasiAdres("/shipping?q=ali&kismi=s1", "s1", true)).toBe("/shipping?q=ali");
+  });
+
+  it("başka adres listeye düşer (açık yönlendirme yok)", () => {
+    for (const kotu of ["", "https://kotu.example", "//kotu.example", "/orders", "/shippingx"]) {
+      expect(kismiSonrasiAdres(kotu, "s1", true)).toBe("/shipping");
+    }
   });
 });

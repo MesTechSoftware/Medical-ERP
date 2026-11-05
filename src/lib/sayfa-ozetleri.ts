@@ -4,6 +4,10 @@ import { prisma } from "@/lib/db";
 import { VERI_SETLERI } from "@/lib/disa-aktarim";
 import type { Aralik } from "@/lib/donem";
 import { kpiGetir, type KpiSonucu } from "@/lib/kpi/getir";
+import { onayKosulu } from "@/lib/onay-listesi/sorgu";
+import { BOS_SUZGEC as BOS_ONAY } from "@/lib/onay-listesi/suzgec";
+import { siparisKosulu } from "@/lib/siparis-listesi/sorgu";
+import { BOS_SUZGEC as BOS_SIPARIS, TUM_SIPARISLER } from "@/lib/siparis-listesi/suzgec";
 import { stokDurumu } from "@/lib/stok-durumu";
 import { gunAraligi } from "@/lib/zaman";
 
@@ -16,9 +20,11 @@ export type SeritBaglami = { aralik: Aralik; an: Date; stoklar: readonly { stok:
  * sayıları (tahsilat, içe aktarım) seçili aralıktan (K-D2); stok `aktifUrunStoklari()` okumasından.
  */
 export const SAYFA_SAYILARI: Record<OzetSayfasi, (b: SeritBaglami) => Promise<number>> = {
-  "/orders": () => prisma.order.count({ where: { status: "BEKLIYOR" } }),
+  // Siparişler ekranının "Bekliyor" sekmesiyle aynı koşul: onaylı siparişler, teklif sayılmaz (A-5).
+  "/orders": () => prisma.order.count({ where: siparisKosulu({ ...BOS_SIPARIS, durum: "BEKLIYOR" }, TUM_SIPARISLER) }),
   "/shipping": () => prisma.order.count({ where: { status: "HAZIRLANIYOR" } }),
-  "/approvals": () => prisma.approvalBlock.count({ where: { decision: null } }),
+  // Onay ekranının "Bekleyen" sekmesiyle aynı koşul (`onayKosulu`, A-8-11).
+  "/approvals": (b) => prisma.approvalBlock.count({ where: onayKosulu(BOS_ONAY, b.an) }),
   // Stok okuması düştüyse sıfır gösterilmez (X-3): kutu kendi hata alanına düşer.
   "/stock": async (b) => {
     if (b.stoklar === null) throw new Error("Dashboard stok okuması yüklenemedi.");

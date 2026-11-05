@@ -65,6 +65,8 @@ export default async function DenetimKaydiSayfasi({
   const sekmeler = hizliSekmeler(bugun);
   const etkin = etkinSekme(sekmeler, suzgec);
   const acik = (k: (typeof SUTUNLAR)[number]["anahtar"]) => !gizli.has(k);
+  // Gizlenemeyen sütunlar: zaman, kullanıcı, işlem türü, detay.
+  const SABIT_SUTUN = 4;
   // İmleçle gelinen boş sayfa (eski yer imi) "hiç kayıt yok" demez; ilk sayfaya dönüş verir.
   const tur = imlec ? "imlecli" : bosDurum(suzgec);
 
@@ -176,7 +178,7 @@ export default async function DenetimKaydiSayfasi({
             <tbody>
               {sayfa.satirlar.length === 0 && (
                 <BosDurum
-                  colSpan={6 - gizli.size}
+                  colSpan={SABIT_SUTUN + SUTUNLAR.filter((k) => acik(k.anahtar)).length}
                   ikon="filtrele"
                   baslik={tur === "imlecli" ? "Bu sayfada kayıt yok." : tur === "suzgecli" ? "Bu süzgeçlere uyan kayıt yok." : "Henüz kayıt yok."}
                   temizleAdresi={tur === "imlecli" ? denetimAdresi(suzgec) : tur === "suzgecli" ? "/audit-logs" : undefined}

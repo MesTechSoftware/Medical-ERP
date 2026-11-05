@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { sayfaCoz, sayfaDisi, sayfalamaParametreleri } from "@/lib/liste/sayfa";
+import { perEkle, sayfaCoz, sayfaDisi, sayfalamaParametreleri } from "@/lib/liste/sayfa";
 
 describe("sayfaCoz", () => {
   it("adres boşsa ilk sayfa, varsayılan boy; per bağlantılara yazılmaz", () => {
@@ -53,5 +53,17 @@ describe("sayfalamaParametreleri", () => {
     expect(sayfalamaParametreleri("/orders?durum=BEKLIYOR&q=ali", { page: 2, per: 50 })).toEqual({ durum: "BEKLIYOR", q: "ali", per: "50" });
     expect(sayfalamaParametreleri("/orders", { page: 1 })).toEqual({ per: undefined });
     expect(sayfalamaParametreleri("/shipping?firma=x&page=3&per=10&detay=a&kismi=b", { page: 3 })).toEqual({ firma: "x", per: undefined });
+  });
+});
+
+describe("perEkle — süzgeç bağlantıları sayfa boyunu korur", () => {
+  it("geçerli per eklenir, sınır uygulanır", () => {
+    expect(perEkle("/orders?durum=BEKLIYOR", "50")).toBe("/orders?durum=BEKLIYOR&per=50");
+    expect(perEkle("/orders", "500")).toBe("/orders?per=100");
+  });
+
+  it("geçersiz ya da boş per eklenmez; bağlantıda per varsa dokunulmaz", () => {
+    for (const per of [null, "", "abc", "0", "2.5"]) expect(perEkle("/orders?q=a", per)).toBe("/orders?q=a");
+    expect(perEkle("/orders?per=10", "50")).toBe("/orders?per=10");
   });
 });

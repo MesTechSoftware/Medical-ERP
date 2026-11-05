@@ -7,12 +7,13 @@ import { gizliSutunlar } from "@/lib/liste/sutun-tercihi";
 import { kpiGetir } from "@/lib/kpi/getir";
 import { sayfaCoz, sayfaDisi } from "@/lib/liste/sayfa";
 import { tahsilatKpileri, tahsilatListesi, tahsilatPaneli } from "@/lib/tahsilat-listesi/sorgu";
-import { kpiAraligi, suzgecCoz, tahsilatAdresi, type Parametreler } from "@/lib/tahsilat-listesi/suzgec";
+import { suzgecCoz, tahsilatAdresi, type Parametreler } from "@/lib/tahsilat-listesi/suzgec";
 import { simdi, yerelGunMetni } from "@/lib/zaman";
 import { KpiKartlari } from "./KpiKartlari";
 import { SuzgecCubugu } from "./SuzgecCubugu";
 import { TahsilatPaneli } from "./TahsilatPaneli";
 import { TahsilatTablosu } from "./TahsilatTablosu";
+import { kpiAraligi } from "@/lib/liste/parametreler";
 
 /**
  * Tahsilatlar (spec Ü-26): dönemin tahsilatı ve yöntem kırılımı, süzgeçli liste ve toplamı, tahsilat paneli
@@ -61,7 +62,7 @@ export default async function CollectionsPage({ searchParams }: { searchParams: 
         sutunMenusu={<SutunSecici liste="/collections" gizli={gizli} donus={adres} />}
       />
 
-      <TahsilatTablosu satirlar={liste.satirlar} ozet={liste.ozet} gizli={gizli} suzgec={suzgec} yer={yer} />
+      <TahsilatTablosu satirlar={liste.satirlar} ozet={liste.ozet} yalnizIptal={liste.yalnizIptal} gizli={gizli} suzgec={suzgec} yer={yer} />
 
       <ListeSayfalama sayfa={sayfa} toplam={liste.toplam} adres={tahsilatAdresi(suzgec)} />
 

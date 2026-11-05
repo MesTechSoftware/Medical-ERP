@@ -7,6 +7,7 @@ import { VERI_TIPI_ADI } from "@/lib/ice-aktarim/adlar";
 import type { PartiPaneli as Veri } from "@/lib/ice-aktarim-listesi/sorgu";
 import { partiyiGeriAl } from "./actions";
 import { PartiDurumRozeti } from "./PartiTablosu";
+import { GEREKCE_AZAMI } from "@/lib/sonuc";
 
 /**
  * Partinin paneli (spec Ü-30 §3.4, X-12-2): parti bilgisi, yazdığı kayıtların dağılımı, geri alma durumu; geri
@@ -53,7 +54,7 @@ export function PartiPaneli({ veri: p, kapatAdresi }: { veri: Veri; kapatAdresi:
           </dl>
         ) : p.geriAlinabilir ? (
           <IslemFormu action={partiyiGeriAl.bind(null, p.id)} className="space-y-2">
-            <input aria-label="Geri alma gerekçesi" name="reason" required placeholder="Gerekçe" className={`w-full ${KONTROL_TEK_SATIR}`} />
+            <input aria-label="Geri alma gerekçesi" name="reason" required maxLength={GEREKCE_AZAMI} placeholder="Gerekçe" className={`w-full ${KONTROL_TEK_SATIR}`} />
             <button type="submit" className={buton("olumsuz")}>
               <Ikon ad="geriAl" />
               Partiyi geri al
