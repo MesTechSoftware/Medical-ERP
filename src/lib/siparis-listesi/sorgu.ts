@@ -78,7 +78,7 @@ const SATIR_SECIMI = {
   stage: true,
   status: true,
   sellerId: true,
-  doctor: { select: { id: true, fullName: true, clinic: true, ownerSellerId: true } },
+  doctor: { select: { id: true, fullName: true, clinic: true, ownerSellerId: true, accountClass: true } },
   seller: { select: { name: true } },
   items: { select: { ...SIPARIS_SATIRI, shipmentItems: { select: { quantity: true } }, returnItems: { select: { quantity: true } } } },
 } satisfies Prisma.OrderSelect;
@@ -109,7 +109,8 @@ function satir(o: HamSiparis, onay: SiparisSatiri["onay"], toplam: Decimal = sip
     stage: o.stage,
     status: o.status,
     cari: { id: o.doctor.id, fullName: o.doctor.fullName, clinic: o.doctor.clinic },
-    cariSaticida: o.sellerId !== null && o.doctor.ownerSellerId === o.sellerId,
+    // `kapsamliDoktorlariGetir`'in satıcı kapsamıyla aynı tanım: sahibi o satıcı ve sınıfı DOKTOR (bayinin sahibi zaten olamaz — CHECK).
+    cariSaticida: o.sellerId !== null && o.doctor.ownerSellerId === o.sellerId && o.doctor.accountClass === "DOKTOR",
     satici: o.seller?.name ?? null,
     toplam,
     sevk: o.items.reduce((t, k) => t + kalemMiktarlari(k).sevk, 0),

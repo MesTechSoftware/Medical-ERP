@@ -30,7 +30,6 @@ const BOS: Record<BosTur, { ikon: "yeni" | "onayla" | "filtrele"; baslik: string
   suzgecli: { ikon: "filtrele", baslik: "Bu süzgeçlere uyan cari bulunamadı." },
 };
 
-
 /**
  * Cari listesinin tablosu (spec Ü-18 §3.3). Eksik fatura bilgisi olan satır uyarı arka planı taşır
  * (A-13-3). Gizli sütunun başlığı ve hücresi çizilmez. İsim yan paneli açar.

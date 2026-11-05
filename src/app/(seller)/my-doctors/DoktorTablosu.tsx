@@ -14,7 +14,7 @@ import { formatPhone } from "@/lib/phone";
 
 const YOL = "/my-doctors";
 
-const BASLIK: Partial<Record<SutunAnahtari, { metin: string; sinif?: string }>> = {
+const BASLIK: Record<Exclude<SutunAnahtari, "satici">, { metin: string; sinif?: string }> = {
   klinik: { metin: "Klinik / Bölge", sinif: "oncelik-dusuk" },
   telefon: { metin: "Telefon", sinif: "oncelik-dusuk" },
   siparis: { metin: "Sipariş", sinif: "sayi oncelik-dusuk" },
@@ -41,9 +41,9 @@ export function DoktorTablosu({
   yer: { page?: number; per?: number };
   an: Date;
 }) {
-  const gorunur = SATICI_SUTUNLARI.filter((s) => !gizli.has(s.anahtar)).map((s) => s.anahtar);
+  const gorunur = SATICI_SUTUNLARI.filter((s) => !gizli.has(s.anahtar)).map((s) => s.anahtar as Exclude<SutunAnahtari, "satici">);
   const acikKume = new Set(gorunur);
-  const acik = (k: SutunAnahtari) => acikKume.has(k);
+  const acik = (k: Exclude<SutunAnahtari, "satici">) => acikKume.has(k);
   const suzgecli = bosDurum(suzgec) !== "hic-kayit";
 
   return (
@@ -54,8 +54,8 @@ export function DoktorTablosu({
             <tr>
               <th>Ad Soyad</th>
               {gorunur.map((k) => (
-                <th key={k} className={BASLIK[k]?.sinif}>
-                  {BASLIK[k]?.metin}
+                <th key={k} className={BASLIK[k].sinif}>
+                  {BASLIK[k].metin}
                 </th>
               ))}
               <th className="sayi">İşlem</th>

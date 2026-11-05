@@ -69,6 +69,8 @@ export function SuzgecCubugu({
               <Alan id="suzgec-bolge" etiket="Bölge">
                 <select id="suzgec-bolge" name="bolge" defaultValue={suzgec.bolge ?? ""} className={KONTROL_TEK_SATIR}>
                   <option value="">Tümü</option>
+                  {/* Uygulanan bölge seçeneklerde yoksa (devirle portföyden çıkmış) de görünür; form onu sessizce düşürmez. */}
+                  {suzgec.bolge && !bolgeler.includes(suzgec.bolge) && <option value={suzgec.bolge}>{suzgec.bolge}</option>}
                   {bolgeler.map((b) => (
                     <option key={b} value={b}>
                       {b}
