@@ -25,6 +25,8 @@ import { KpiSatiri } from "@/components/kpi/KpiSatiri";
  * KPI'lar seçili döneme bağlıdır (K-4, K-5; ADR-010). Doktorlarıma göre cirom (spec Ü-33) aynı dönemin, satıcı
  * kapsamlı doktor ciro sıralamasıdır (`doktorSiralamasi`, Raporlar'la tek yol); İadem kartı Cirom'un okumasından gelir.
  */
+const YOL = "/my-report";
+
 export default async function MyReportPage({
   searchParams,
 }: {
@@ -38,7 +40,7 @@ export default async function MyReportPage({
   const k = karsilastirmaAraliklari(donem, an);
   const aylar = sonAylar(6, donemBitisAyi(donem, an), an);
   const not = karsilastirmaNotu(k.devamEdiyor);
-  const baglam = { yol: "/my-report", kullaniciId: session.user.id };
+  const baglam = { yol: YOL, kullaniciId: session.user.id };
   const kapsam = { tur: "satici", saticiId: session.user.id } as const;
   const cozulen = suzgecCoz(params);
   // Satıcı süzgeci bu ekranda yoktur; adreste kalmışsa sorgulardan önce adresten düşer.
@@ -46,21 +48,22 @@ export default async function MyReportPage({
   const per = ilk(params, "per") ?? undefined;
   const { page, perPage, skip, take } = getPagination({ page: ilk(params, "page") ?? undefined, per });
   const yer = { page, per: per ? perPage : undefined };
-  if (ilk(params, "satici") !== null) redirect(raporAdresi(suzgec, yer, "/my-report"));
+  if (ilk(params, "satici") !== null) redirect(raporAdresi(suzgec, yer, YOL));
 
   // Dört okuma birbirinden bağımsızdır; tek turda gider.
   const [satirlar, ozet, tahsilat, siralama] = await Promise.all([
     getSellerReports(session.user, donem.aralik),
     kpiGetir(() => ciroOzeti({ kovalar: aylar, ...k }, kapsam), baglam),
     kpiGetir(() => saticiTahsilatOzeti(k, session.user.id), baglam),
-    doktorSiralamasi(donem.aralik, suzgec, { skip, take }, kapsam),
+    // Sıralama da kart gibi kapsüllüdür: okuma düşerse yalnız o bölüm hata referansı gösterir, KPI'lar kalır.
+    kpiGetir(() => doktorSiralamasi(donem.aralik, suzgec, { skip, take }, kapsam), baglam),
   ]);
   // Sayfa dışı adres son sayfaya gider.
-  if (siralama.satirlar.length === 0 && siralama.toplam > 0) {
-    redirect(raporAdresi(suzgec, { ...yer, page: pageCount(siralama.toplam, perPage) }, "/my-report"));
+  if (siralama.tamam && siralama.deger.satirlar.length === 0 && siralama.deger.toplam > 0) {
+    redirect(raporAdresi(suzgec, { ...yer, page: pageCount(siralama.deger.toplam, perPage) }, YOL));
   }
   const sayfaParametreleri = {
-    ...Object.fromEntries(new URL(raporAdresi(suzgec, {}, "/my-report"), "http://x").searchParams),
+    ...Object.fromEntries(new URL(raporAdresi(suzgec, {}, YOL), "http://x").searchParams),
     per: yer.per === undefined ? undefined : String(yer.per),
   };
   const karsilastir = <T,>(onceki: T | null | undefined) => (k.onceki ? { onceki: onceki ?? null, not } : undefined);
@@ -68,7 +71,7 @@ export default async function MyReportPage({
   return (
     <div>
       <PageHeader title="Raporum" description="Dönem cirom, hakedişim ve tahsilatım" />
-      <DonemSecici anahtar={donem.anahtar} yol="/my-report" korunan={korunanlar(suzgec)} />
+      <DonemSecici anahtar={donem.anahtar} yol={YOL} korunan={korunanlar(suzgec)} />
       <KpiSatiri>
         <KpiCard
           etiket="Cirom"
@@ -132,8 +135,10 @@ export default async function MyReportPage({
       </Card>
 
       <div className="mt-6">
-        <CiroSiralamasi satirlar={siralama.satirlar} suzgec={suzgec} per={yer.per} saticiId={session.user.id} />
-        <Pagination page={page} totalPages={pageCount(siralama.toplam, perPage)} total={siralama.toplam} basePath="/my-report" params={sayfaParametreleri} />
+        <CiroSiralamasi sonuc={siralama} suzgec={suzgec} per={yer.per} saticiId={session.user.id} />
+        {siralama.tamam && (
+          <Pagination page={page} totalPages={pageCount(siralama.deger.toplam, perPage)} total={siralama.deger.toplam} basePath={YOL} params={sayfaParametreleri} />
+        )}
       </div>
     </div>
   );

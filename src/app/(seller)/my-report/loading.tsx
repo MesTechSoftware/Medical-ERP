@@ -20,6 +20,10 @@ export default function Loading() {
         ]}
       />
       <TabloIskeleti sutun={7} satir={1} />
+      {/* Doktorlarıma göre cirom kartı: yer tutucu, akış bitince sayfa yüksekliği zıplamasın. */}
+      <div className="mt-6">
+        <TabloIskeleti sutun={4} satir={5} />
+      </div>
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { SAHIPSIZ, type RaporSuzgeci } from "@/lib/rapor-listesi/suzgec";
 /**
  * Raporlar'ın doktor ciro sıralaması (spec Ü-27 §4, X-1-2). Servis dönemin bütün carilerini hesaplar;
  * cirosu sıfır olan düşer, sıra ve lidere oran bu tam dönem listesinden çıkar, süzgeç ve sayfa sonra uygulanır —
- * süzülmüş listede de carinin şirket içindeki yeri okunur.
+ * süzülmüş listede de carinin kapsam içindeki yeri okunur (Raporlar'da şirket, Raporum'da satıcının kendi listesi).
  */
 export type SiraSatiri = DoctorReport & { sira: number; oran: number | null };
 

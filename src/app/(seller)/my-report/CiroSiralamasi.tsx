@@ -9,6 +9,7 @@ import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import { Tutar } from "@/components/Tutar";
 import { OranCubugu } from "@/components/grafik/BarMicro";
 import { MATRAH, tabanli } from "@/lib/taban";
+import type { KpiSonucu } from "@/lib/kpi/getir";
 import type { SiraSatiri } from "@/lib/rapor-listesi/sorgu";
 import { bosDurum, etkinSuzgecler, raporAdresi, type RaporSuzgeci } from "@/lib/rapor-listesi/suzgec";
 
@@ -21,19 +22,21 @@ const BAGLANTI = "text-link underline decoration-link/40 underline-offset-4 hove
  * lidere oran satıcının kendi dönem sırasıdır. Ad, cari bugün de portföydeyse Doktorlarım panelini açar.
  */
 export function CiroSiralamasi({
-  satirlar,
+  sonuc,
   suzgec,
   per,
   saticiId,
 }: {
-  satirlar: SiraSatiri[];
+  sonuc: KpiSonucu<{ satirlar: SiraSatiri[]; toplam: number }>;
   suzgec: RaporSuzgeci;
   per: number | undefined;
   saticiId: string;
 }) {
   const etiketler = etkinSuzgecler(suzgec, () => undefined, YOL);
   const tur = bosDurum(suzgec);
-  const temizle = raporAdresi({ ...suzgec, q: null }, {}, YOL);
+  // Temizle sayfa boyunu korur (form da `per`'i gizli alanla taşır).
+  const temizle = raporAdresi({ ...suzgec, q: null }, { per }, YOL);
+  const satirlar = sonuc.tamam ? sonuc.deger.satirlar : [];
   const uygulanan = raporAdresi(suzgec, {}, YOL);
   return (
     <Card>
@@ -87,7 +90,17 @@ export function CiroSiralamasi({
             </tr>
           </thead>
           <tbody>
-            {satirlar.length === 0 && (
+            {!sonuc.tamam && (
+              <tr>
+                <td colSpan={4}>
+                  <p className="text-sm font-medium text-negative">Yüklenemedi</p>
+                  <p className="text-xs text-slate-500">
+                    Hata referansı: <span className="font-mono">{sonuc.referans}</span>
+                  </p>
+                </td>
+              </tr>
+            )}
+            {sonuc.tamam && satirlar.length === 0 && (
               <BosDurum
                 colSpan={4}
                 ikon="filtrele"

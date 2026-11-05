@@ -70,6 +70,10 @@ test("arama istemci tarafında süzer, dönem değişince korunur; adresteki sat
   await page.getByLabel("Dönem (ay)").fill("2026-10");
   await page.getByRole("button", { name: "Göster" }).click();
   await expect(page).toHaveURL(/donem=2026-10.*q=|q=.*donem=2026-10/);
+  // Arama yalnız adreste değil formda ve uygulanan süzgeçte de kalır.
+  await expect(page.getByRole("list", { name: "Etkin süzgeçler" }).getByText(/^Ara: /)).toBeVisible();
+  await page.getByText(/^Filtrele/).click();
+  await expect(page.getByRole("form", { name: "Rapor süzgeci" }).getByLabel("Ara")).toHaveValue(ilkAd.split(" ").at(-1)!);
 
   await page.goto("/my-report?satici=cm0000000000000000000000x&donem=tum");
   await expect(page).toHaveURL(/\/my-report\?donem=tum$/);
