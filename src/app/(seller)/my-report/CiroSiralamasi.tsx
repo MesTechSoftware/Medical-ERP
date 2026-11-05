@@ -12,6 +12,7 @@ import { MATRAH, tabanli } from "@/lib/taban";
 import type { KpiSonucu } from "@/lib/kpi/getir";
 import type { SiraSatiri } from "@/lib/rapor-listesi/sorgu";
 import { bosDurum, etkinSuzgecler, raporAdresi, type RaporSuzgeci } from "@/lib/rapor-listesi/suzgec";
+import { SUZGEC_ETIKETI } from "@/components/liste/SuzgecAlani";
 
 const YOL = "/my-report";
 
@@ -59,7 +60,7 @@ export function CiroSiralamasi({
                 {suzgec.donem && <input type="hidden" name="donem" value={suzgec.donem} />}
                 {per !== undefined && <input type="hidden" name="per" value={per} />}
                 <div className="text-sm">
-                  <label htmlFor="rapor-q" className="mb-1 block font-medium text-slate-700">
+                  <label htmlFor="rapor-q" className={SUZGEC_ETIKETI}>
                     Ara
                   </label>
                   <input type="search" id="rapor-q" name="q" maxLength={100} placeholder="Doktor adı" defaultValue={suzgec.q ?? ""} className={KONTROL_TEK_SATIR} />

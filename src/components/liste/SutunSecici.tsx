@@ -3,6 +3,7 @@ import { AcilirPanel } from "@/components/liste/AcilirPanel";
 import { buton } from "@/components/stil";
 import { sutunlariKaydet } from "@/lib/liste/sutun-eylemi";
 import { SUTUN_LISTELERI, type SutunAnahtari, type SutunluListe } from "@/lib/liste/sutun-listeleri";
+import { SUZGEC_ETIKETI } from "@/components/liste/SuzgecAlani";
 
 /**
  * Liste ekranlarının sütun seçici menüsü (spec Ü-18 §3.4, Ü-19 §3.4): JS'siz form. Sütunlar ekranın
@@ -35,7 +36,7 @@ export function SutunSecici<L extends SutunluListe>({
         <input type="hidden" name="liste" value={liste} />
         <input type="hidden" name="donus" value={donus} />
         <fieldset className="space-y-1">
-          <legend className="mb-1 font-medium text-slate-700">Görünür sütunlar</legend>
+          <legend className={SUZGEC_ETIKETI}>Görünür sütunlar</legend>
           {sutunlar.map((s) => (
             <label key={s.anahtar} className="flex items-center gap-2 py-0.5 text-slate-700">
               <input type="checkbox" name="gorunur" value={s.anahtar} defaultChecked={!gizliler.has(s.anahtar)} />

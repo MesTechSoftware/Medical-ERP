@@ -30,11 +30,9 @@ export function SiparisPaneli({ veri, kapatAdresi, yol }: { veri: Veri; kapatAdr
         </>
       }
       altBilgi={
-        <>
-          <LinkButton href={`${yol}/${o.id}`} ikon="detay">
-            Tam detay
-          </LinkButton>
-        </>
+        <LinkButton href={`${yol}/${o.id}`} ikon="detay">
+          Tam detay
+        </LinkButton>
       }
     >
       <Bolum baslik="Özet">

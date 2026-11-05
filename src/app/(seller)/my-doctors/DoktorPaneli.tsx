@@ -30,12 +30,10 @@ export function DoktorPaneli({ veri, kapatAdresi }: { veri: SaticiDoktorPaneli; 
       baslik={<>{d.title ? `${d.title} ` : ""}{d.fullName}</>}
       ust={<DurumRozetleri status={d.status} eksikFatura={false} risk={risk} />}
       altBilgi={
-        <>
-          <Link href={`/my-doctors/${d.id}/edit`} className={buton("ikincil")}>
-            <Ikon ad="duzenle" />
-            Düzenle
-          </Link>
-        </>
+        <Link href={`/my-doctors/${d.id}/edit`} className={buton("ikincil")}>
+          <Ikon ad="duzenle" />
+          Düzenle
+        </Link>
       }
     >
       <Bolum baslik="Kimlik ve iletişim">

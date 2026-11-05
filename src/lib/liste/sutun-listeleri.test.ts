@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -13,6 +13,16 @@ describe("SUTUN_LISTELERI", () => {
     for (const yol of anahtarlar) {
       const grup = yol.startsWith("/my-") ? "(seller)" : "(admin)";
       expect(existsSync(path.join("src/app", grup, yol, "page.tsx")), yol).toBe(true);
+    }
+  });
+
+  it("yetki sayfanın guard'ıyla aynıdır (sütun eylemi bu yetkiyle korunur)", () => {
+    const guard = { yonetici: "requireAdmin", personel: "requireStaff", satici: "requireSeller" } as const;
+    for (const [yol, k] of Object.entries(SUTUN_LISTELERI)) {
+      const grup = yol.startsWith("/my-") ? "(seller)" : "(admin)";
+      const sayfaGuardi = readFileSync(path.join("src/app", grup, yol, "page.tsx"), "utf8").match(/await (require[A-Za-z]+)\(\)/)?.[1];
+      expect(sayfaGuardi, yol).toBeDefined();
+      expect(guard[k.yetki], yol).toBe(sayfaGuardi);
     }
   });
 

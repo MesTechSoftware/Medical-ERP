@@ -5,25 +5,9 @@ import { redirect } from "next/navigation";
 import { homeFor } from "@/lib/roles";
 import { requireAdmin, requireSeller, requireSession, requireStaff } from "@/lib/session";
 import { gizliSutunCerezi, guvenliDonus } from "@/lib/liste/sutunlar";
-import { SUTUN_LISTELERI, sutunluListeMi, type SutunluListe } from "@/lib/liste/sutun-listeleri";
+import { SUTUN_LISTELERI, sutunluListeMi, type SutunYetkisi } from "@/lib/liste/sutun-listeleri";
 
-/** Tercihi kaydetme yetkisi: listeyi görebilen rol (sayfanın kendi guard'ı). */
-const YETKI: Record<SutunluListe, () => Promise<unknown>> = {
-  "/approvals": requireAdmin,
-  "/audit-logs": requireAdmin,
-  "/collections": requireStaff,
-  "/doctors": requireStaff,
-  "/imports": requireAdmin,
-  "/orders": requireStaff,
-  "/price-lists": requireAdmin,
-  "/products": requireStaff,
-  "/reports": requireAdmin,
-  "/shipping": requireStaff,
-  "/stock": requireStaff,
-  "/users": requireStaff,
-  "/my-doctors": requireSeller,
-  "/my-orders": requireSeller,
-};
+const GUARD: Record<SutunYetkisi, () => Promise<unknown>> = { yonetici: requireAdmin, personel: requireStaff, satici: requireSeller };
 
 /**
  * Liste ekranlarının sütun tercihi (spec Ü-18 §3.4): görünür bırakılmayan sütunlar ekranın çerezine,
@@ -36,8 +20,8 @@ export async function sutunlariKaydet(formData: FormData): Promise<void> {
     const session = await requireSession();
     redirect(homeFor(session.user.role));
   }
-  await YETKI[liste]();
   const kayit = SUTUN_LISTELERI[liste];
+  await GUARD[kayit.yetki]();
   const jar = await cookies();
   if (formData.get("islem") === "varsayilan") {
     jar.delete({ name: kayit.cerez, path: liste });

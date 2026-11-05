@@ -3,6 +3,7 @@ import { Panel, PanelBolumu as Bolum, PanelSatiri } from "@/components/panel/Pan
 import { LinkButton, StatusChip } from "@/components/ui";
 import type { ListePaneli as ListePaneliVerisi } from "@/lib/fiyat-listesi-listesi/sorgu";
 import { BaremMatrisi } from "./BaremMatrisi";
+import { BAGLANTI } from "@/components/stil";
 
 const Satir = (p: { ad: string; children: React.ReactNode }) => <PanelSatiri etiket="genis" {...p} />;
 
@@ -26,11 +27,9 @@ export function ListePaneli({ veri, kapatAdresi }: { veri: ListePaneliVerisi; ka
         </>
       }
       altBilgi={
-        <>
-          <LinkButton href={`/price-lists/${l.id}`} ikon="duzenle">
-            Satırları düzenle
-          </LinkButton>
-        </>
+        <LinkButton href={`/price-lists/${l.id}`} ikon="duzenle">
+          Satırları düzenle
+        </LinkButton>
       }
     >
       <Bolum baslik="Özet">
@@ -60,7 +59,7 @@ export function ListePaneli({ veri, kapatAdresi }: { veri: ListePaneliVerisi; ka
           <ul className="divide-y divide-slate-100">
             {veri.cariler.map((c) => (
               <li key={c.id} className="flex items-center justify-between gap-2 py-1.5 text-sm">
-                <Link href={`/doctors?detay=${c.id}`} className="text-link underline decoration-link/40 underline-offset-4 hover:decoration-link">
+                <Link href={`/doctors?detay=${c.id}`} className={BAGLANTI}>
                   {c.fullName}
                 </Link>
                 {c.pasif && <StatusChip ton="notr">Pasif</StatusChip>}

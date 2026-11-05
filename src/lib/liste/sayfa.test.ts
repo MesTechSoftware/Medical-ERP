@@ -10,10 +10,11 @@ describe("sayfaCoz", () => {
   it("geçerli per taşınır, sınırın üstü 100'e iner", () => {
     expect(sayfaCoz({ page: "3", per: "50" })).toMatchObject({ page: 3, perPage: 50, skip: 100, yer: { page: 3, per: 50 } });
     expect(sayfaCoz({ per: "500" }).yer.per).toBe(100);
+    expect(sayfaCoz({ per: "050" }).yer.per).toBe(50);
   });
 
   it("geçersiz per (harf, sıfır, eksi, ondalık) varsayılana düşer ve bağlantılara yazılmaz", () => {
-    for (const per of ["abc", "0", "-5", "2.5", "25abc", ""]) {
+    for (const per of ["abc", "0", "00", "-5", "2.5", "25abc", ""]) {
       const s = sayfaCoz({ per });
       expect(s.perPage, per).toBe(25);
       expect(s.yer.per, per).toBeUndefined();

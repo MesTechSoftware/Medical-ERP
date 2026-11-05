@@ -47,7 +47,7 @@ export function Panel({
           </Link>
         </header>
 
-        <div className="flex-1 space-y-5 overflow-y-auto p-4">{children}</div>
+        {children && <div className="flex-1 space-y-5 overflow-y-auto p-4">{children}</div>}
 
         {altBilgi && <footer className="flex flex-wrap items-center gap-3 border-t border-slate-200 p-4">{altBilgi}</footer>}
       </div>

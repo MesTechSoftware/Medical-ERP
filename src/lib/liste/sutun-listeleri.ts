@@ -1,7 +1,7 @@
 /**
  * Sütun seçicili liste ekranlarının tek kaydı (spec Ü-18 §3.4): anahtar ekranın yoludur — tercih çerezi o
  * yola yazılır, kaydettikten sonra yalnız o yola dönülür. Yeni sütunlu ekran buraya bir satır, sütun
- * eyleminin yetki tablosuna bir satır ekler. Saf modül.
+ * yetkisi aynı satırdadır. Saf modül.
  */
 
 import type { SutunTanimi } from "@/lib/liste/sutunlar";
@@ -18,23 +18,26 @@ import * as stok from "@/lib/stok-listesi/sutunlar";
 import * as tahsilat from "@/lib/tahsilat-listesi/sutunlar";
 import * as urun from "@/lib/urun-listesi/sutunlar";
 
-export type SutunListesi = { sutunlar: readonly SutunTanimi<string>[]; cerez: string };
+/** Tercihi kaydetme yetkisi: listeyi görebilen roller — sayfanın guard'ıyla aynı (`requireAdmin`/`requireStaff`/`requireSeller`). */
+export type SutunYetkisi = "yonetici" | "personel" | "satici";
+
+export type SutunListesi = { sutunlar: readonly SutunTanimi<string>[]; cerez: string; yetki: SutunYetkisi };
 
 export const SUTUN_LISTELERI = {
-  "/approvals": { sutunlar: onay.SUTUNLAR, cerez: onay.SUTUN_CEREZI },
-  "/audit-logs": { sutunlar: denetim.SUTUNLAR, cerez: denetim.SUTUN_CEREZI },
-  "/collections": { sutunlar: tahsilat.SUTUNLAR, cerez: tahsilat.SUTUN_CEREZI },
-  "/doctors": { sutunlar: doktor.SUTUNLAR, cerez: doktor.SUTUN_CEREZI },
-  "/imports": { sutunlar: iceAktarim.SUTUNLAR, cerez: iceAktarim.SUTUN_CEREZI },
-  "/orders": { sutunlar: siparis.SUTUNLAR, cerez: siparis.SUTUN_CEREZI },
-  "/price-lists": { sutunlar: fiyatListesi.SUTUNLAR, cerez: fiyatListesi.SUTUN_CEREZI },
-  "/products": { sutunlar: urun.SUTUNLAR, cerez: urun.SUTUN_CEREZI },
-  "/reports": { sutunlar: rapor.SUTUNLAR, cerez: rapor.SUTUN_CEREZI },
-  "/shipping": { sutunlar: kargo.SUTUNLAR, cerez: kargo.SUTUN_CEREZI },
-  "/stock": { sutunlar: stok.SUTUNLAR, cerez: stok.SUTUN_CEREZI },
-  "/users": { sutunlar: kullanici.SUTUNLAR, cerez: kullanici.SUTUN_CEREZI },
-  "/my-doctors": { sutunlar: doktor.SATICI_SUTUNLARI, cerez: doktor.SATICI_SUTUN_CEREZI },
-  "/my-orders": { sutunlar: siparis.SATICI_SUTUNLARI, cerez: siparis.SATICI_SUTUN_CEREZI },
+  "/approvals": { sutunlar: onay.SUTUNLAR, cerez: onay.SUTUN_CEREZI, yetki: "yonetici" },
+  "/audit-logs": { sutunlar: denetim.SUTUNLAR, cerez: denetim.SUTUN_CEREZI, yetki: "yonetici" },
+  "/collections": { sutunlar: tahsilat.SUTUNLAR, cerez: tahsilat.SUTUN_CEREZI, yetki: "personel" },
+  "/doctors": { sutunlar: doktor.SUTUNLAR, cerez: doktor.SUTUN_CEREZI, yetki: "personel" },
+  "/imports": { sutunlar: iceAktarim.SUTUNLAR, cerez: iceAktarim.SUTUN_CEREZI, yetki: "yonetici" },
+  "/orders": { sutunlar: siparis.SUTUNLAR, cerez: siparis.SUTUN_CEREZI, yetki: "personel" },
+  "/price-lists": { sutunlar: fiyatListesi.SUTUNLAR, cerez: fiyatListesi.SUTUN_CEREZI, yetki: "yonetici" },
+  "/products": { sutunlar: urun.SUTUNLAR, cerez: urun.SUTUN_CEREZI, yetki: "personel" },
+  "/reports": { sutunlar: rapor.SUTUNLAR, cerez: rapor.SUTUN_CEREZI, yetki: "yonetici" },
+  "/shipping": { sutunlar: kargo.SUTUNLAR, cerez: kargo.SUTUN_CEREZI, yetki: "personel" },
+  "/stock": { sutunlar: stok.SUTUNLAR, cerez: stok.SUTUN_CEREZI, yetki: "personel" },
+  "/users": { sutunlar: kullanici.SUTUNLAR, cerez: kullanici.SUTUN_CEREZI, yetki: "personel" },
+  "/my-doctors": { sutunlar: doktor.SATICI_SUTUNLARI, cerez: doktor.SATICI_SUTUN_CEREZI, yetki: "satici" },
+  "/my-orders": { sutunlar: siparis.SATICI_SUTUNLARI, cerez: siparis.SATICI_SUTUN_CEREZI, yetki: "satici" },
 } as const satisfies Record<string, SutunListesi>;
 
 export type SutunluListe = keyof typeof SUTUN_LISTELERI;

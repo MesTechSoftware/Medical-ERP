@@ -11,12 +11,12 @@ export type Yer = { page: number; per?: number };
 
 export type ListeSayfasi = Pagination & { yer: Yer };
 
-const SAYI = /^[1-9]\d*$/;
+const SAYI = /^\d+$/;
 
 /** Geçersiz `per` (harf, sıfır, boş) varsayılana düşer ve bağlantılara yazılmaz; çok büyüğü sınıra iner. */
 export function sayfaCoz(p: Parametreler, varsayilan: number = DEFAULT_PER_PAGE): ListeSayfasi {
   const ham = ilk(p, "per");
-  const per = ham !== null && SAYI.test(ham) ? ham : undefined;
+  const per = ham !== null && SAYI.test(ham) && parseInt(ham, 10) > 0 ? ham : undefined;
   const sayfa = getPagination({ page: ilk(p, "page") ?? undefined, per }, varsayilan);
   return { ...sayfa, yer: { page: sayfa.page, per: per === undefined ? undefined : sayfa.perPage } };
 }
