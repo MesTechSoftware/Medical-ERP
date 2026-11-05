@@ -187,7 +187,7 @@ describe("paylaşılan ciro okuması — rapor ekranı satırları bir kez okur,
     expect(paylasilan.find((x) => x.sellerId === ali.id)!.ciro.toFixed(2)).toBe("120.50");
 
     const seri = (m: Map<string, { toFixed: (n: number) => string }[]>) => m.get(ali.id)!.map(tl);
-    expect(seri(await saticiCiroSerileri(aylar, [ali.id], okuma))).toEqual(seri(await saticiCiroSerileri(aylar, [ali.id])));
+    expect(seri(await saticiCiroSerileri(aylar, [ali.id], okuma))).toEqual(seri(await saticiCiroSerileri(aylar, [ali.id], ciroOku(kapsayanAralik(aylar.map((a) => a.aralik)), SIRKET))));
     expect(seri(await saticiCiroSerileri(aylar, [ali.id], okuma))).toEqual(["0.00", "120.50", "80.00"]);
 
     const kpi = (o: Awaited<ReturnType<typeof ciroOzeti>>) => [o.seri.map(tl), tl(o.simdi.ciro), tl(o.simdi.iade), o.onceki && tl(o.onceki.ciro)];

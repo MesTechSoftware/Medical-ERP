@@ -48,6 +48,11 @@ dışı yönlendirmede panel sorgusunun koşmaması, kargo KPI'larının bekleye
 KPI'larının imleç gezintisinde koşmaması. Her kalem için önce sonuç eşitliği testi (eski ve yeni yol aynı sayıyı
 verir), sonra değişiklik.
 
+**Bu turda yapılmayanlar (YOL_HARITASI Ü-38):** İçe Aktarım'ın dört KPI sayımı (tek sorguya inmesi "kart = satır" tek
+koşulunu bozar; tablo küçük) · Denetim KPI'larının imleç gezintisinde koşması (önbellek ister) · sayfa dışı
+yönlendirmede panel sorgusu (paralel okumanın nadir yoldaki bedeli) · Raporlar dönem cirosunun bellekte hesaplanması
+(okuma tekleşti; SQL toplamı ikinci hesap yolu olur — KARARLAR §0.4, ancak karar değişikliğiyle).
+
 ## 4. PR 3 — küçük düzeltmeler (davranış)
 
 - Doktorlar ve Doktorlarım "Sipariş" sütunu **sayılan siparişleri** sayar (teklif ve iptal hariç, A-5) — kullanıcı

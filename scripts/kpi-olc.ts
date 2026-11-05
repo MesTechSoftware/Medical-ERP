@@ -6,7 +6,7 @@ import { prisma } from "../src/lib/db";
 import { bakiyeSerisi } from "../src/lib/doctor-cari";
 import { ARALIKLAR, dashboardAraligi, donemCoz, karsilastirmaAraliklari, sonAylar } from "../src/lib/donem";
 import { istisnalar } from "../src/lib/istisnalar";
-import { ciroOzeti, enCokSevkEdilenler, saticiCiroSerileri, tahsilatToplamlari } from "../src/lib/reports-service";
+import { ciroOku, ciroOzeti, enCokSevkEdilenler, kapsayanAralik, saticiCiroSerileri, tahsilatToplamlari } from "../src/lib/reports-service";
 import { seritKutulari } from "../src/lib/sayfa-ozetleri";
 import { TUM_SIPARISLER } from "../src/lib/siparis-listesi/suzgec";
 import { aktifUrunStoklari } from "../src/lib/stok";
@@ -50,7 +50,9 @@ async function main() {
   await olc("tahsilatToplamlari — 6 ay + 2 dönem, tek sorgu", () =>
     tahsilatToplamlari([...aylar.map((a) => a.aralik), k.simdi, ...(k.onceki ? [k.onceki] : [])])
   );
-  await olc("saticiCiroSerileri — bütün satıcılar, 6 ay", () => saticiCiroSerileri(aylar, saticilar));
+  await olc("saticiCiroSerileri — bütün satıcılar, 6 ay (okuma dahil)", async () =>
+    saticiCiroSerileri(aylar, saticilar, ciroOku(kapsayanAralik(aylar.map((a) => a.aralik)), { tur: "sirket" }))
+  );
   await olc("enCokSevkEdilenler — bu ay, ilk 5", () => enCokSevkEdilenler(k.simdi, 5));
   await olc("sipariş sayıları (bekleyen + kargolanacak)", () =>
     Promise.all([prisma.order.count({ where: { status: "BEKLIYOR" } }), prisma.order.count({ where: { status: "HAZIRLANIYOR" } })])

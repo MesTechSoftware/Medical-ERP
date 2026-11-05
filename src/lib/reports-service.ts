@@ -264,23 +264,11 @@ export type DoctorReport = {
 };
 
 /**
+ * Dönemde cirosu sıfırdan farklı carilerin raporu, sıralı (doktor sıralaması — X-1-2). Yalnız bu cariler okunur.
  * `kapsam` zorunludur (KPI'larla aynı `KpiKapsami`, X-1 §(8) deseni): satıcı kapsamında ciro yalnız o satıcının
- * siparişlerinin sevk ve iadesidir (hakediş gibi siparişin satıcısına yazılır — X-13) ve cari listesi o satıcının
- * sipariş girdiği carilerle sınırlıdır (devirle portföyden çıkmış cari de, cirosu onundur).
+ * siparişlerinin sevk ve iadesidir (hakediş gibi siparişin satıcısına yazılır — X-13); devirle portföyden çıkmış
+ * cari de listededir, cirosu onundur.
  */
-export async function getDoctorReports(donem: Donem, limit: number, kapsam: KpiKapsami): Promise<DoctorReport[]> {
-  const satici = kapsam.tur === "satici" ? kapsam.saticiId : null;
-  const [doctors, cirolar] = await Promise.all([
-    prisma.doctor.findMany({
-      where: satici ? { orders: { some: { sellerId: satici } } } : {},
-      select: DOKTOR_RAPOR_SECIMI,
-    }),
-    doktorCirolari(donem, kapsam),
-  ]);
-  return siraliDoktorRaporlari(doctors, cirolar).slice(0, limit);
-}
-
-/** Dönemde cirosu sıfırdan farklı carilerin raporu, sıralı (doktor sıralaması — X-1-2). Yalnız bu cariler okunur. */
 export async function ciroluDoktorRaporlari(donem: Donem, kapsam: KpiKapsami, okuma?: PaylasilanOkuma): Promise<DoctorReport[]> {
   const cirolar = await doktorCirolari(donem, kapsam, okuma);
   const idler = [...cirolar].filter(([, ciro]) => !ciro.isZero()).map(([id]) => id);
@@ -353,8 +341,8 @@ export async function ciroOzeti(
   kapsam: KpiKapsami,
   okuma?: PaylasilanOkuma
 ): Promise<{ seri: Decimal[]; simdi: CiroToplami; onceki: CiroToplami | null }> {
-  const o = await okumaFor(ciroOzetiAraligi(g), kapsam, okuma);
-  const { sevk, iade } = aralikta(o, o.aralik, kapsam);
+  const aralik = ciroOzetiAraligi(g);
+  const { sevk, iade } = aralikta(await okumaFor(aralik, kapsam, okuma), aralik, kapsam);
   const sevkKova = kovalaraBol(sevk, g.kovalar, (s) => s.an);
   const iadeKova = kovalaraBol(iade, g.kovalar, (s) => s.an);
   const sec = (aralik: Donem) =>
@@ -374,8 +362,8 @@ export function ciroOzetiAraligi(g: { kovalar: readonly Kova[]; simdi: Donem; on
   return kapsayanAralik([g.kovalar[0].aralik, g.kovalar[g.kovalar.length - 1].aralik, g.simdi, ...(g.onceki ? [g.onceki] : [])]);
 }
 
-/** Satıcı başına aylık ciro serisi (rapor tablosunun "Son 6 ay" hücresi) — tek okuma. */
-export async function saticiCiroSerileri(aylar: readonly Ay[], saticiIdleri: string[], okuma?: PaylasilanOkuma): Promise<Map<string, Decimal[]>> {
+/** Satıcı başına aylık ciro serisi (rapor tablosunun "Son 6 ay" hücresi) — ekranın şirket okumasından; ayrı sorgu yok. */
+export async function saticiCiroSerileri(aylar: readonly Ay[], saticiIdleri: string[], okuma: PaylasilanOkuma): Promise<Map<string, Decimal[]>> {
   if (saticiIdleri.length === 0) return new Map();
   const aralik = kapsayanAralik(aylar.map((a) => a.aralik));
   const { sevk, iade } = aralikta(await okumaFor(aralik, { tur: "sirket" }, okuma), aralik);

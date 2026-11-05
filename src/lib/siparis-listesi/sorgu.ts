@@ -15,7 +15,8 @@ import { kapsamKosulu, SATICISIZ, type SiparisKapsami, type SiparisSuzgeci } fro
 /**
  * Siparişler ekranı sorguları (spec Ü-23 §4). Süzgeç tek `where` üreticisindedir; durum kartı ile
  * açtığı listenin sayısı aynıdır (A-5-8). KPI dashboard'un dağılımıyla tek yoldur (`siparisDagilimi`).
- * Kalem miktarları `kalemMiktarlari`'ndan, tutar `siparisToplami` / `siparisTutarlari`'ndan (A-3-2).
+ * Liste satırının sevk adedi `sevkMiktari`'ndan, panelin kalem miktarları `kalemMiktarlari`'ndan, tutar
+ * `siparisToplami` / `siparisTutarlari`'ndan (A-3-2).
  *
  * `kapsam` zorunludur (`SiparisKapsami`, X-13): satıcı kapsamında (Siparişlerim, Ü-31) liste, KPI ve panel
  * yalnız o satıcının siparişlerini okur. Kapsam sorgudadır; adresin `satici` süzgeci onu genişletemez.

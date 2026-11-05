@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { prisma } from "@/lib/db";
 import { degistirDoktorSahibi } from "@/lib/sahiplik";
-import { getCiroTotal, getDoctorReports, getSellerReports, saticiOrtalamaIskontosu } from "@/lib/reports-service";
+import { ciroluDoktorRaporlari, getCiroTotal, getSellerReports, saticiOrtalamaIskontosu } from "@/lib/reports-service";
 import { sayilanBelgeler } from "@/lib/sayilan-belgeler";
 import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
 import { TUM_ZAMANLAR } from "@/lib/zaman";
@@ -182,7 +182,7 @@ describe("satıcı raporu — dönem cirosu ve hakedişi (X-1-1 · X-14-1)", () 
     expect(r.ciro.toFixed(2)).toBe("100.00");
     expect(r.hakedis.toFixed(2)).toBe("5.00");
     expect((await getCiroTotal(EKIM)).toFixed(2)).toBe("100.00");
-    const [dr] = await getDoctorReports(EKIM, 50, { tur: "sirket" });
+    const [dr] = await ciroluDoktorRaporlari(EKIM, { tur: "sirket" });
     expect(dr.ciro.toFixed(2)).toBe("100.00");
   });
 

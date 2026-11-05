@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { prisma } from "@/lib/db";
 import { bakiyeSerisi } from "@/lib/doctor-cari";
 import { dashboardAraligi, donemCoz, karsilastirmaAraliklari, sonAylar } from "@/lib/donem";
-import { ciroOzeti, enCokSevkEdilenler, saticiCiroSerileri, saticiTahsilatOzeti, tahsilatToplamlari } from "@/lib/reports-service";
+import { ciroOku, ciroOzeti, enCokSevkEdilenler, kapsayanAralik, saticiCiroSerileri, saticiTahsilatOzeti, tahsilatToplamlari } from "@/lib/reports-service";
 import { referansVeri, yeniDoktorVerisi } from "../../test/integration/referans";
 
 // KPI sorguları (tasarım 2. tur, ADR-010): ciro serisi ve karşılaştırması getCiroTotal ile aynı
@@ -160,7 +160,7 @@ describe("ciroOzeti — aylık seri ve aynı gün aralığı karşılaştırmas�
     const aliOzeti = await ciroOzeti({ kovalar: AYLAR, ...K }, { tur: "satici", saticiId: ali.id });
     expect(aliOzeti.simdi.ciro.toFixed(2)).toBe("100.00");
     expect((await ciroOzeti({ kovalar: AYLAR, ...K }, SIRKET)).simdi.ciro.toFixed(2)).toBe("1000.00");
-    const seriler = await saticiCiroSerileri(AYLAR, [ali.id, veli.id]);
+    const seriler = await saticiCiroSerileri(AYLAR, [ali.id, veli.id], ciroOku(kapsayanAralik(AYLAR.map((a) => a.aralik)), SIRKET));
     expect(seriler.get(veli.id)![5].toFixed(2)).toBe("900.00");
     expect(seriler.get(ali.id)![5].toFixed(2)).toBe("100.00");
   });
