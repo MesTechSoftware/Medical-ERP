@@ -8,6 +8,7 @@ import { doktorKpileri, doktorListesi, doktorPaneli, doktorSuzgecSecenekleri } f
 import { SUTUNLAR, SUTUN_CEREZI, gizliSutunlariCoz } from "@/lib/doktor-listesi/sutunlar";
 import { doktorAdresi, saticiyiDogrula, suzgecCoz, type Parametreler } from "@/lib/doktor-listesi/suzgec";
 import { simdi } from "@/lib/zaman";
+import { kapsamliDoktorlariGetir } from "@/lib/doctor";
 import TransferForm from "./TransferForm";
 import { DoktorPaneli } from "./DoktorPaneli";
 import { DoktorTablosu } from "./DoktorTablosu";
@@ -38,7 +39,7 @@ export default async function AdminDoctorsPage({ searchParams }: { searchParams:
 
   // FR-05: admin TÜM doktorları görür.
   const [liste, sayilar, panel] = await Promise.all([
-    doktorListesi(suzgec, { skip, take }, an),
+    doktorListesi(suzgec, { skip, take }, kapsamliDoktorlariGetir(session.user), an),
     doktorKpileri(),
     detay ? doktorPaneli(detay) : null,
   ]);

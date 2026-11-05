@@ -9,7 +9,7 @@ import { sayilanBelgeler } from "@/lib/sayilan-belgeler";
 import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
 import type { Bildirim } from "@/lib/sonuc";
 import { geceYarisi, simdi, takvimGunu, yerelGunAraligi } from "@/lib/zaman";
-import { SAHIPSIZ, type DoktorSuzgeci } from "@/lib/doktor-listesi/suzgec";
+import { SAHIPSIZ, SATICI_KARTLARI, type DoktorSuzgeci } from "@/lib/doktor-listesi/suzgec";
 
 /**
  * Cari listesinin okumaları (spec Ü-18 §4.2). "Son sipariş" sayılan sipariştir (A-5-7); eksik fatura
@@ -62,12 +62,17 @@ export type DoktorSatiri = Prisma.DoctorGetPayload<{ include: typeof LISTE_EKI }
   eksikFatura: boolean;
 };
 
+/**
+ * `kapsam` zorunludur: `kapsamliDoktorlariGetir(kullanici)`'nın çıktısı (D-2 §(3), X-13-1) — yöneticide `{}`,
+ * satıcıda kendi `DOKTOR` carileri. Unutulan kapsam "herkes"e düşmesin diye varsayılanı yoktur.
+ */
 export async function doktorListesi(
   s: DoktorSuzgeci,
   sayfa: { skip: number; take: number },
+  kapsam: Prisma.DoctorWhereInput,
   an: Date = simdi()
 ): Promise<{ satirlar: DoktorSatiri[]; toplam: number }> {
-  const where = doktorWhere(s, an);
+  const where = { AND: [kapsam, doktorWhere(s, an)] };
   const [doktorlar, toplam] = await Promise.all([
     prisma.doctor.findMany({ where, orderBy: { fullName: "asc" }, skip: sayfa.skip, take: sayfa.take, include: LISTE_EKI }),
     prisma.doctor.count({ where }),
@@ -170,3 +175,66 @@ export async function doktorPaneli(id: string): Promise<DoktorPaneliVerisi | nul
     devirler: devirler.map((d) => ({ id: d.id, changedAt: d.changedAt, from: d.fromSeller?.name ?? null, to: d.toSeller?.name ?? null })),
   };
 }
+
+// --- Doktorlarım (satıcı, Ü-32) ------------------------------------------------------------------
+
+/** Doktorlarım kartları: her kart, adresinin de türediği süzgeci listenin koşuluyla ve aynı kapsamla sayar (X-13-4). */
+export async function saticiDoktorKpileri(
+  kapsam: Prisma.DoctorWhereInput,
+  an: Date = simdi()
+): Promise<Record<(typeof SATICI_KARTLARI)[number]["anahtar"], number>> {
+  const sayilar = await Promise.all(
+    SATICI_KARTLARI.map((k) => prisma.doctor.count({ where: { AND: [kapsam, doktorWhere(k.suzgec, an)] } }))
+  );
+  return Object.fromEntries(SATICI_KARTLARI.map((k, i) => [k.anahtar, sayilar[i]])) as Record<(typeof SATICI_KARTLARI)[number]["anahtar"], number>;
+}
+
+/** Bölge seçenekleri yalnız kapsamdaki carilerden (satıcı başka portföyün bölgelerini görmez). */
+export async function doktorBolgeleri(kapsam: Prisma.DoctorWhereInput): Promise<string[]> {
+  const satirlar = await prisma.doctor.findMany({
+    where: { AND: [kapsam, { region: { not: null } }] },
+    distinct: ["region"],
+    select: { region: true },
+  });
+  return satirlar
+    .map((b) => b.region!)
+    .filter((b) => b.trim() !== "")
+    .sort((a, b) => a.localeCompare(b, "tr"));
+}
+
+export type SaticiDoktorPaneli = {
+  doktor: Doctor;
+  eksikFatura: boolean;
+  risk: DoktorRisk;
+  vadeUyarisi: Bildirim | null;
+  siparisler: { id: string; documentNo: string; orderDate: Date; stage: OrderStage; status: OrderStatus; toplam: Decimal }[];
+};
+
+/**
+ * Doktorlarım yan paneli (spec Ü-32 §3.4): kimlik ve iletişim, cari özeti (bakiye, açık sipariş, risk — X-6 §(6),
+ * A-12), vade uyarısı, satıcının bu cariye girdiği son 5 sipariş. Cari hareketleri ve devir geçmişi yönetici
+ * panelindedir. Kapsam dışı kimlikte `null`; öbür okumalar yalnız kapsam doğrulandıktan sonra koşar.
+ */
+export async function saticiDoktorPaneli(id: string, kapsam: Prisma.DoctorWhereInput, saticiId: string): Promise<SaticiDoktorPaneli | null> {
+  const doktor = await prisma.doctor.findFirst({ where: { AND: [{ id }, kapsam] } });
+  if (!doktor) return null;
+  const [eksik, risk, vadeUyarisi, siparisler] = await Promise.all([
+    prisma.doctor.count({ where: { AND: [{ id }, EKSIK_FATURA_BILGISI] } }),
+    hesaplaDoktorRisk(id),
+    vadesiGecmisUyarisi(id),
+    prisma.order.findMany({
+      where: { doctorId: id, sellerId: saticiId },
+      orderBy: [{ orderDate: "desc" }, { id: "desc" }],
+      take: 5,
+      select: { id: true, documentNo: true, orderDate: true, stage: true, status: true, items: { select: SIPARIS_SATIRI } },
+    }),
+  ]);
+  return {
+    doktor,
+    eksikFatura: eksik > 0,
+    risk,
+    vadeUyarisi,
+    siparisler: siparisler.map(({ items, ...o }) => ({ ...o, toplam: siparisToplami(items).toplam })),
+  };
+}
+

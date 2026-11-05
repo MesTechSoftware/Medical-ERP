@@ -3,8 +3,12 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/db";
 import { hesaplaDoktorRisk } from "@/lib/doctor-cari";
 import { degistirDoktorSahibi } from "@/lib/sahiplik";
-import { BOS_SUZGEC, type DoktorSuzgeci } from "@/lib/doktor-listesi/suzgec";
+import { BOS_SUZGEC, SATICI_KARTLARI, type DoktorSuzgeci } from "@/lib/doktor-listesi/suzgec";
+import { kapsamliDoktorlariGetir } from "@/lib/doctor";
 import {
+  doktorBolgeleri,
+  saticiDoktorKpileri,
+  saticiDoktorPaneli,
   doktorKpileri,
   doktorListesi,
   doktorPaneli,
@@ -13,7 +17,7 @@ import {
 } from "@/lib/doktor-listesi/sorgu";
 import { referansVeri, yeniDoktorVerisi } from "../../../test/integration/referans";
 
-// Cari listesi sorguları — KABUL_KRITERLERI A-5-7, A-13-3, X-8-4.
+// Cari listesi sorguları — KABUL_KRITERLERI A-5-7, A-13-3, X-8-4; Doktorlarım kapsamı X-13-4 (Ü-32).
 
 const AN = new Date("2026-10-27T09:00:00Z"); // İstanbul 27.10.2026 12:00
 const SAYFA = { skip: 0, take: 100 };
@@ -49,7 +53,7 @@ function siparis(doktorId: string, orderDate: string, stage: "TEKLIF" | "ONAYLI"
 }
 
 const adlar = async (s: Partial<DoktorSuzgeci>) =>
-  (await doktorListesi({ ...BOS_SUZGEC, ...s }, SAYFA, AN)).satirlar.map((d) => d.fullName).sort();
+  (await doktorListesi({ ...BOS_SUZGEC, ...s }, SAYFA, {}, AN)).satirlar.map((d) => d.fullName).sort();
 
 beforeEach(async () => {
   const ref = await referansVeri();
@@ -65,13 +69,13 @@ describe("son sipariş — sayılan sipariş (A-5-7)", () => {
     await siparis(d.id, "2026-10-20T09:00:00Z", "TEKLIF");
     await siparis(d.id, "2026-10-22T09:00:00Z", "ONAYLI", "IPTAL");
     await siparis(d.id, "2026-10-01T09:00:00Z");
-    const [satir] = (await doktorListesi(BOS_SUZGEC, SAYFA, AN)).satirlar;
+    const [satir] = (await doktorListesi(BOS_SUZGEC, SAYFA, {}, AN)).satirlar;
     expect(satir.sonSiparis?.toISOString()).toBe("2026-10-01T09:00:00.000Z");
   });
 
   it("siparişsiz doktorun son siparişi yoktur", async () => {
     await doktor("Dr. Yeni");
-    expect((await doktorListesi(BOS_SUZGEC, SAYFA, AN)).satirlar[0].sonSiparis).toBeNull();
+    expect((await doktorListesi(BOS_SUZGEC, SAYFA, {}, AN)).satirlar[0].sonSiparis).toBeNull();
   });
 
   it("sessiz=30 bugün dahil 30 İstanbul günüdür", async () => {
@@ -153,7 +157,7 @@ describe("satır özetleri", () => {
     await doktor("Dr. Adressiz", { invoiceAddress: null });
     await doktor("Dr. Vergi Dairesiz", { taxOffice: null });
     await doktor("Dr. Gerçek Kişi", { partyType: "GERCEK_KISI", taxOffice: null });
-    const isaretli = (await doktorListesi(BOS_SUZGEC, SAYFA, AN)).satirlar.filter((d) => d.eksikFatura).map((d) => d.fullName).sort();
+    const isaretli = (await doktorListesi(BOS_SUZGEC, SAYFA, {}, AN)).satirlar.filter((d) => d.eksikFatura).map((d) => d.fullName).sort();
     expect(isaretli).toEqual(await adlar({ fatura: "eksik" }));
     expect(isaretli).toEqual(["Dr. Adressiz", "Dr. Vergi Dairesiz"]);
   });
@@ -161,7 +165,7 @@ describe("satır özetleri", () => {
   it("risk satırı hesaplaDoktorRisk ile aynı", async () => {
     const d = await doktor("Dr. Riskli", { creditLimit: "100" });
     await siparis(d.id, "2026-10-20T09:00:00Z");
-    const [satir] = (await doktorListesi(BOS_SUZGEC, SAYFA, AN)).satirlar;
+    const [satir] = (await doktorListesi(BOS_SUZGEC, SAYFA, {}, AN)).satirlar;
     const tekli = await hesaplaDoktorRisk(d.id);
     expect(satir.risk.risk.toFixed(2)).toBe(tekli.risk.toFixed(2));
     expect(satir.risk.limitAsildi).toBe(true);
@@ -171,7 +175,7 @@ describe("satır özetleri", () => {
     await doktor("Dr. B");
     await doktor("Dr. A");
     await doktor("Dr. C", { region: "Ege" });
-    const r = await doktorListesi({ ...BOS_SUZGEC, bolge: "Bölge" }, { skip: 0, take: 1 }, AN);
+    const r = await doktorListesi({ ...BOS_SUZGEC, bolge: "Bölge" }, { skip: 0, take: 1 }, {}, AN);
     expect(r.toplam).toBe(2);
     expect(r.satirlar.map((d) => d.fullName)).toEqual(["Dr. A"]);
   });
@@ -237,3 +241,51 @@ describe("doktorPaneli", () => {
     expect(p.risk.bakiye.toFixed(2)).toBe("21.00");
   });
 });
+
+describe("Doktorlarım kapsamı (Ü-32, X-13-4)", () => {
+  it("liste, kartlar, bölgeler ve panel yalnız satıcının DOKTOR carileri; kart = süzgecin satırı", async () => {
+    const ayse = await prisma.user.create({ data: { name: "Ayşe", email: "ayse@medikal.local", passwordHash: "x", role: "SATICI" } });
+    const can = await prisma.user.create({ data: { name: "Can", email: "can@medikal.local", passwordHash: "x", role: "SATICI" } });
+    const k = kapsamliDoktorlariGetir({ id: ayse.id, role: "SATICI" });
+
+    const aktif = await doktor("Dr. Aktif", { region: "Ege" });
+    const pasif = await doktor("Dr. Pasif", { region: "Ege", status: "PASIF" });
+    const sessiz = await doktor("Dr. Sessiz", { region: "Marmara" });
+    const baska = await doktor("Dr. Başkası", { region: "Karadeniz" });
+    await doktor("Dr. Sahipsiz", { region: "Akdeniz" });
+    for (const d of [aktif, pasif, sessiz]) await sahip(d.id, ayse.id);
+    await sahip(baska.id, can.id);
+    // Aktif doktorun dün siparişi var; Sessiz'in 100 gün önce; Pasif'in hiç yok.
+    const tarih = (gunOnce: number) => new Date(AN.getTime() - gunOnce * 86_400_000);
+    const sip = async (doktorId: string, sellerId: string, gunOnce: number) => {
+      no += 1;
+      return prisma.order.create({
+        data: {
+          documentNo: `SIP-K-${no}`, doctorId: doktorId, sellerId, paymentTermDays: 30, stage: "ONAYLI", status: "BEKLIYOR", orderDate: tarih(gunOnce),
+          items: { create: [{ productId: urunId, quantity: 1, listPrice: "100", unitPrice: "100", vatRate: "20", isFree: false }] },
+        },
+      });
+    };
+    const kendi = await sip(aktif.id, ayse.id, 1);
+    await sip(sessiz.id, ayse.id, 100);
+    // Aynı doktora başka satıcının (devir öncesi) siparişi panelde "son siparişlerim"e girmez.
+    await sip(aktif.id, can.id, 2);
+
+    const ad = async (s: Partial<DoktorSuzgeci>) => (await doktorListesi({ ...BOS_SUZGEC, ...s }, SAYFA, k, AN)).satirlar.map((d) => d.fullName).sort();
+    expect(await ad({})).toEqual(["Dr. Aktif", "Dr. Pasif", "Dr. Sessiz"]);
+    // Adresten gelen satıcı süzgeci kapsamı genişletemez (kapsam AND ile birleşir).
+    expect(await ad({ satici: can.id })).toEqual([]);
+
+    const kpi = await saticiDoktorKpileri(k, AN);
+    expect(kpi).toEqual({ toplam: 3, aktif: 2, sessiz90: 2, hic: 1 });
+    for (const kart of SATICI_KARTLARI) expect(kpi[kart.anahtar]).toBe((await doktorListesi(kart.suzgec, SAYFA, k, AN)).toplam);
+
+    expect(await doktorBolgeleri(k)).toEqual(["Ege", "Marmara"]);
+
+    const panel = (await saticiDoktorPaneli(aktif.id, k, ayse.id))!;
+    expect(panel.siparisler.map((o) => o.id)).toEqual([kendi.id]);
+    expect(panel.risk.bakiye.isZero()).toBe(true);
+    expect(await saticiDoktorPaneli(baska.id, k, ayse.id)).toBeNull();
+  });
+});
+
