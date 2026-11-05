@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { SUTUN_LISTELERI, sutunluListeMi } from "@/lib/liste/sutun-listeleri";
@@ -7,20 +8,24 @@ import { SUTUN_LISTELERI, sutunluListeMi } from "@/lib/liste/sutun-listeleri";
 // Sütun seçicili ekranların tek kaydı — spec Ü-18 §3.4. Anahtar ekranın yolu, çerez o yola yazılır.
 
 const anahtarlar = Object.keys(SUTUN_LISTELERI);
+/** Depo kökü — test hangi dizinden koşarsa koşsun sayfa dosyaları bulunur. */
+const KOK = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+const sayfaYolu = (yol: string) => path.join(KOK, "src/app", yol.startsWith("/my-") ? "(seller)" : "(admin)", yol, "page.tsx");
 
 describe("SUTUN_LISTELERI", () => {
   it("her anahtar gerçek bir liste sayfasının yoludur", () => {
     for (const yol of anahtarlar) {
-      const grup = yol.startsWith("/my-") ? "(seller)" : "(admin)";
-      expect(existsSync(path.join("src/app", grup, yol, "page.tsx")), yol).toBe(true);
+      expect(existsSync(sayfaYolu(yol)), yol).toBe(true);
     }
   });
 
   it("yetki sayfanın guard'ıyla aynıdır (sütun eylemi bu yetkiyle korunur)", () => {
     const guard = { yonetici: "requireAdmin", personel: "requireStaff", satici: "requireSeller" } as const;
     for (const [yol, k] of Object.entries(SUTUN_LISTELERI)) {
-      const grup = yol.startsWith("/my-") ? "(seller)" : "(admin)";
-      const sayfaGuardi = readFileSync(path.join("src/app", grup, yol, "page.tsx"), "utf8").match(/await (require[A-Za-z]+)\(\)/)?.[1];
+      // Rol guard'ı (oturum guard'ı değil): sayfada tam olarak bir tane olmalı.
+      const guardlar = [...readFileSync(sayfaYolu(yol), "utf8").matchAll(/await (requireAdmin|requireStaff|requireSeller)\(\)/g)].map((m) => m[1]);
+      expect(new Set(guardlar).size, yol).toBe(1);
+      const sayfaGuardi = guardlar[0];
       expect(sayfaGuardi, yol).toBeDefined();
       expect(guard[k.yetki], yol).toBe(sayfaGuardi);
     }

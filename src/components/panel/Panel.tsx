@@ -4,7 +4,7 @@ import { Ikon } from "@/components/Ikon";
 import { buton } from "@/components/stil";
 
 /** Sayfada tek panel açık olduğundan başlık kimliği sabittir. */
-export const PANEL_BASLIGI = "yan-panel-baslik";
+const PANEL_BASLIGI = "yan-panel-baslik";
 
 /**
  * Liste ekranlarının yan paneli (X-18 §(9) kabuğu `YanPanel`): başlık, rozet satırı, Kapat, kaydırılan

@@ -43,20 +43,22 @@ export function UrunPaneli({
         </>
       }
       altBilgi={
-        <>
-          {/* Stok girişi formu yalnız aktif ürünü önseçer; pasif üründe düğme yoktur. */}
-          {u.status === "AKTIF" && (
-            <LinkButton href={`/stock?urun=${u.id}`} ikon="yeni">
-              Stok girişi
-            </LinkButton>
-          )}
-          {yonetici && (
-            <Link href={`/products/${u.id}/edit`} className={buton("metin")}>
-              <Ikon ad="duzenle" />
-              Düzenle
-            </Link>
-          )}
-        </>
+        (u.status === "AKTIF" || yonetici) && (
+          <>
+            {/* Stok girişi formu yalnız aktif ürünü önseçer; pasif üründe düğme yoktur. */}
+            {u.status === "AKTIF" && (
+              <LinkButton href={`/stock?urun=${u.id}`} ikon="yeni">
+                Stok girişi
+              </LinkButton>
+            )}
+            {yonetici && (
+              <Link href={`/products/${u.id}/edit`} className={buton("metin")}>
+                <Ikon ad="duzenle" />
+                Düzenle
+              </Link>
+            )}
+          </>
+        )
       }
     >
       <Bolum baslik="Özet">

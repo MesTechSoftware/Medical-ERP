@@ -29,19 +29,21 @@ export function KullaniciPaneli({ veri, kapatAdresi, yonetici }: { veri: Veri; k
         </>
       }
       altBilgi={
-        <>
-          {yonetici && (
-            <LinkButton href={`/users/${u.id}/edit`} ikon="duzenle">
-              Düzenle
-            </LinkButton>
-          )}
-          {satici && (
-            <Link href={`/users/${u.id}`} className={buton("metin")}>
-              <Ikon ad="sonraki" />
-              Tam detaya git
-            </Link>
-          )}
-        </>
+        (yonetici || satici) && (
+          <>
+            {yonetici && (
+              <LinkButton href={`/users/${u.id}/edit`} ikon="duzenle">
+                Düzenle
+              </LinkButton>
+            )}
+            {satici && (
+              <Link href={`/users/${u.id}`} className={buton("metin")}>
+                <Ikon ad="sonraki" />
+                Tam detaya git
+              </Link>
+            )}
+          </>
+        )
       }
     >
       <Bolum baslik="Özet">
