@@ -8,6 +8,7 @@ import { ARALIKLAR, dashboardAraligi, donemCoz, karsilastirmaAraliklari, sonAyla
 import { istisnalar } from "../src/lib/istisnalar";
 import { ciroOzeti, enCokSevkEdilenler, saticiCiroSerileri, tahsilatToplamlari } from "../src/lib/reports-service";
 import { seritKutulari } from "../src/lib/sayfa-ozetleri";
+import { TUM_SIPARISLER } from "../src/lib/siparis-listesi/suzgec";
 import { aktifUrunStoklari } from "../src/lib/stok";
 import { simdi, takvimAyi } from "../src/lib/zaman";
 
@@ -64,7 +65,7 @@ async function main() {
       tahsilatToplamlari([...r.kovalar.map((kova) => kova.aralik), r.simdi, r.onceki])
     );
     await olc(`dashboard ${anahtar} — durum dağılımı + hazırlama süreleri`, () =>
-      Promise.all([siparisDagilimi(r.simdi), hazirlamaSureleri(r.simdi)])
+      Promise.all([siparisDagilimi(r.simdi, TUM_SIPARISLER), hazirlamaSureleri(r.simdi)])
     );
   }
   const stoklar = await aktifUrunStoklari();

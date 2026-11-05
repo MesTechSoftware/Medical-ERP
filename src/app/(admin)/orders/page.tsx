@@ -10,12 +10,12 @@ import { ilk } from "@/lib/liste/parametreler";
 import { getPagination, pageCount } from "@/lib/pagination";
 import { gunleriAraliga, saticiSecenekleri, siparisKpileri, siparisListesi, siparisPaneli } from "@/lib/siparis-listesi/sorgu";
 import { SUTUNLAR, SUTUN_CEREZI } from "@/lib/siparis-listesi/sutunlar";
-import { kpiAraligi, SATICISIZ, siparisAdresi, suzgecCoz, type Parametreler } from "@/lib/siparis-listesi/suzgec";
+import { kpiAraligi, SATICISIZ, siparisAdresi, suzgecCoz, TUM_SIPARISLER, type Parametreler } from "@/lib/siparis-listesi/suzgec";
 import { simdi, yerelGunMetni } from "@/lib/zaman";
-import { KpiKartlari } from "./KpiKartlari";
-import { SiparisPaneli } from "./SiparisPaneli";
-import { SiparisTablosu } from "./SiparisTablosu";
-import { SuzgecCubugu } from "./SuzgecCubugu";
+import { KpiKartlari } from "@/components/siparis/KpiKartlari";
+import { SiparisPaneli } from "@/components/siparis/SiparisPaneli";
+import { SiparisTablosu } from "@/components/siparis/SiparisTablosu";
+import { SuzgecCubugu } from "@/components/siparis/SuzgecCubugu";
 import { sutunlariKaydet } from "./sutunEylemi";
 
 export default async function OrdersPage({ searchParams }: { searchParams: Promise<Parametreler> }) {
@@ -30,9 +30,9 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   const aralik = kpiAraligi(suzgec, yerelGunMetni(simdi()));
 
   const [liste, kpi, panel, saticilar] = await Promise.all([
-    siparisListesi(suzgec, { skip, take }),
-    kpiGetir(() => siparisKpileri(gunleriAraliga(aralik)), { yol: "/orders", kullaniciId: session.user.id }),
-    detay ? siparisPaneli(detay) : null,
+    siparisListesi(suzgec, { skip, take }, TUM_SIPARISLER),
+    kpiGetir(() => siparisKpileri(gunleriAraliga(aralik), TUM_SIPARISLER), { yol: "/orders", kullaniciId: session.user.id }),
+    detay ? siparisPaneli(detay, TUM_SIPARISLER) : null,
     saticiSecenekleri(),
   ]);
 
@@ -60,21 +60,22 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         action={<LinkButton href="/orders/new" ikon="yeni">Yeni Sipariş</LinkButton>}
       />
 
-      <KpiKartlari sonuc={kpi} aralik={aralik} />
+      <KpiKartlari sonuc={kpi} aralik={aralik} yol="/orders" />
 
       <SuzgecCubugu
         suzgec={suzgec}
         per={yer.per}
         saticilar={saticilar}
+        yol="/orders"
         sutunMenusu={<SutunSecici sutunlar={SUTUNLAR} gizli={gizli} action={sutunlariKaydet} donus={adres} />}
       />
 
-      <SiparisTablosu satirlar={liste.satirlar} gizli={gizli} suzgec={suzgec} yer={yer} />
+      <SiparisTablosu satirlar={liste.satirlar} gizli={gizli} suzgec={suzgec} yer={yer} yol="/orders" />
 
       <Pagination page={page} totalPages={pageCount(liste.toplam, perPage)} total={liste.toplam} basePath="/orders" params={sayfaParametreleri} />
 
       {/* Bulunamayan kimlikte panel açılmaz (spec §5). */}
-      {panel && <SiparisPaneli key={panel.siparis.id} veri={panel} kapatAdresi={adres} />}
+      {panel && <SiparisPaneli key={panel.siparis.id} veri={panel} kapatAdresi={adres} yol="/orders" />}
     </div>
   );
 }
