@@ -2,7 +2,7 @@ import Decimal from "decimal.js";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { sayilanBelgeler } from "@/lib/sayilan-belgeler";
-import { SIPARIS_SATIRI, sevkMiktari, siparisToplami } from "@/lib/siparis";
+import { kalanMiktar, SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
 import { bilgi, type Bildirim } from "@/lib/sonuc";
 import { bugun, gunAraligi } from "@/lib/zaman";
 
@@ -78,20 +78,33 @@ export async function bakiyeSerisi(doktorId: string, sinirlar: readonly Date[], 
  * `BORC` hareketi varsa en eski vadesiyle döner. Tutar gösterilmez (§(7)); tahsilat borçlarla
  * eşleştirilmez (§(1)/(2)) — tarih o borcun açık olduğunu söylemez.
  *
- * `bakiye` verilirse (aynı istekte riskle ya da kartla zaten hesaplanmışsa) yeniden hesaplanmaz. Vade okuması
- * yalnız cari borçluyken koşar; okumalar sıralıdır (transaction içinde paralel sorgu gönderilmez).
+ * `bakiye` verilirse (aynı istekte riskle ya da kartla zaten hesaplanmışsa) yeniden hesaplanmaz ve vade okuması
+ * onunla aynı turda gider. Verilmezse okumalar sıralıdır ve vade yalnız borçluyken okunur (transaction içinde
+ * paralel sorgu gönderilmez).
  */
 export async function vadesiGecmisUyarisi(
   doktorId: string,
   { gun = bugun(), db = prisma, bakiye }: { gun?: Date; db?: Db; bakiye?: Promise<Decimal> } = {}
 ): Promise<Bildirim | null> {
-  const b = await (bakiye ?? hesaplaDoktorBakiye(doktorId, undefined, db).then((x) => x.bakiye));
+  const enEskiVade = () =>
+    db.ledgerEntry.findFirst({
+      where: { doctorId: doktorId, direction: "BORC", dueDate: { lt: gun }, reversal: { is: null } },
+      orderBy: { dueDate: "asc" },
+      select: { dueDate: true },
+    });
+  const kendiBakiyesi = () => hesaplaDoktorBakiye(doktorId, undefined, db).then((x) => x.bakiye);
+  let b: Decimal;
+  let enEski: { dueDate: Date | null } | null;
+  if (bakiye) {
+    // Verilen bakiye riskle/kartla aynı turda hesaplanıyor; vade okuması onu beklemez. Verilen okuma düşerse
+    // uyarı kendi bakiyesini hesaplar — paylaşılan okumanın hatası uyarıyı (ve sayfayı) birlikte düşürmesin.
+    [b, enEski] = await Promise.all([bakiye.catch(kendiBakiyesi), enEskiVade()]);
+  } else {
+    b = await kendiBakiyesi();
+    if (bakiyeYonu(b) !== "BORC") return null;
+    enEski = await enEskiVade();
+  }
   if (bakiyeYonu(b) !== "BORC") return null;
-  const enEski = await db.ledgerEntry.findFirst({
-    where: { doctorId: doktorId, direction: "BORC", dueDate: { lt: gun }, reversal: { is: null } },
-    orderBy: { dueDate: "asc" },
-    select: { dueDate: true },
-  });
   if (!enEski?.dueDate) return null;
   return bilgi("VADESI_GECMIS_HAREKET", { enEskiVade: enEski.dueDate.toISOString().slice(0, 10) });
 }
@@ -141,7 +154,7 @@ export async function hesaplaDoktorRiskleri(idler: readonly string[], db: Db = p
 
   const acikSatirlar = new Map<string, typeof satirlar>();
   for (const s of satirlar) {
-    const kalan = s.quantity - sevkMiktari(s);
+    const kalan = kalanMiktar(s);
     if (kalan > 0) acikSatirlar.set(s.order.doctorId, [...(acikSatirlar.get(s.order.doctorId) ?? []), { ...s, quantity: kalan }]);
   }
   const acik = new Map(doktorlar.map((d) => [d.id, siparisToplami(acikSatirlar.get(d.id) ?? []).toplam]));

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { IsHatasi } from "@/lib/hata";
 import { sevkiyatYaz, type SevkiyatGirdisi } from "@/lib/sevkiyat";
 import { hataKapsulu } from "@/lib/hata-kapsulu";
-import { kalemMiktarlari } from "@/lib/siparis";
+import { kalanMiktar } from "@/lib/siparis";
 import type { TopluSecim } from "@/lib/kargo-listesi/suzgec";
 import { sert, yumusak, type Bildirim, type IslemSonucu } from "@/lib/sonuc";
 
@@ -70,7 +70,7 @@ export async function topluKargo(
       id: true,
       documentNo: true,
       doctor: { select: { fullName: true } },
-      items: { select: { id: true, quantity: true, shipmentItems: { select: { quantity: true } }, returnItems: { select: { quantity: true } } } },
+      items: { select: { id: true, quantity: true, shipmentItems: { select: { quantity: true } } } },
     },
   });
   const sonuclar: TopluSatirSonucu[] = [];
@@ -86,7 +86,7 @@ export async function topluKargo(
       continue;
     }
     const kalemler = o.items.flatMap((k) => {
-      const { kalan } = kalemMiktarlari(k);
+      const kalan = kalanMiktar(k);
       return kalan > 0 ? [{ siparisKalemiId: k.id, miktar: kalan }] : [];
     });
     if (kalemler.length === 0) {

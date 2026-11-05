@@ -49,6 +49,11 @@ export function sevkMiktari(k: { shipmentItems: readonly { quantity: number }[] 
   return k.shipmentItems.reduce((t, s) => t + s.quantity, 0);
 }
 
+/** Kalemin sevk edilmemiş miktarı: sipariş − sevk (A-3); iade kalanı değiştirmez (A-1), okunması gerekmez. */
+export function kalanMiktar(k: { quantity: number; shipmentItems: readonly { quantity: number }[] }): number {
+  return k.quantity - sevkMiktari(k);
+}
+
 /**
  * Kalem başına sevk edilen, iade edilen ve kalan miktar (A-3-2). Kalan = sipariş − sevk (A-3);
  * iade ayrı belgedir ve kalanı değiştirmez (A-1). Sipariş yan paneli buradan okur (liste satırı yalnız `sevkMiktari`); detay
@@ -57,5 +62,5 @@ export function sevkMiktari(k: { shipmentItems: readonly { quantity: number }[] 
 export function kalemMiktarlari(k: KalemHareketleri): { sevk: number; iade: number; kalan: number } {
   const sevk = sevkMiktari(k);
   const iade = k.returnItems.reduce((t, r) => t + r.quantity, 0);
-  return { sevk, iade, kalan: k.quantity - sevk };
+  return { sevk, iade, kalan: kalanMiktar(k) };
 }

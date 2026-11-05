@@ -3,7 +3,7 @@ import type { FreeReason, OrderStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import { icerirDesenleri } from "@/lib/liste/metin";
 import { BOS_SUZGEC, ESKI_ONAY_SAATI, type OnaySuzgeci } from "@/lib/onay-listesi/suzgec";
-import { kalemMiktarlari } from "@/lib/siparis";
+import { kalanMiktar } from "@/lib/siparis";
 import { gunleriAraliga } from "@/lib/liste/parametreler";
 import { hesaplaStoklar, varsayilanDepoId } from "@/lib/stok";
 
@@ -189,7 +189,6 @@ export async function onayPaneli(id: string): Promise<OnayPaneli | null> {
                 productId: true,
                 product: { select: { name: true, code: true } },
                 shipmentItems: { select: { quantity: true } },
-                returnItems: { select: { quantity: true } },
               },
             },
           },
@@ -206,7 +205,7 @@ export async function onayPaneli(id: string): Promise<OnayPaneli | null> {
     const urunler = new Map<string, { urun: string; kod: string; kalan: number }>();
     for (const k of siparis.items) {
       const u = urunler.get(k.productId) ?? { urun: k.product.name, kod: k.product.code, kalan: 0 };
-      u.kalan += kalemMiktarlari(k).kalan;
+      u.kalan += kalanMiktar(k);
       urunler.set(k.productId, u);
     }
     const stok = await hesaplaStoklar([...urunler.keys()], depoId);

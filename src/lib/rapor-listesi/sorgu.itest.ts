@@ -204,6 +204,12 @@ describe("paylaşılan ciro okuması — rapor ekranı satırları bir kez okur,
     expect(tl((await ciroOzeti(g, kapsam, okuma)).simdi.ciro)).toBe("120.50");
   });
 
+  it("paylaşılan okuma düşerse hesap kendi okumasını yapar — bir okumanın hatası ekrandaki bütün hesapları düşürmez", async () => {
+    const dusen = Promise.reject(new Error("okuma düştü"));
+    dusen.catch(() => {});
+    expect(ozet(await doktorSiralamasi(EKIM, BOS_SUZGEC, SAYFA, SIRKET, dusen))).toEqual(ozet(await doktorSiralamasi(EKIM, BOS_SUZGEC, SAYFA, SIRKET)));
+  });
+
   it("okuma hesabın aralığını ya da kapsamını karşılamıyorsa hata verir (sessizce eksik sayılmaz)", async () => {
     const kasimOkumasi = ciroOku({ baslangic: new Date("2026-10-31T21:00:00Z"), bitis: new Date("2026-11-30T21:00:00Z") }, SIRKET);
     await expect(doktorSiralamasi(EKIM, BOS_SUZGEC, SAYFA, SIRKET, kasimOkumasi)).rejects.toThrow(/karşılamıyor/);

@@ -135,7 +135,10 @@ export async function ciroOku(aralik: Donem, kapsam: KpiKapsami): Promise<CiroOk
  */
 async function okumaFor(aralik: Donem, kapsam: KpiKapsami, verilen: PaylasilanOkuma | undefined): Promise<CiroOkumasi> {
   if (!verilen) return ciroOku(aralik, kapsam);
-  const okuma = await verilen;
+  // Paylaşılan okuma düşerse hesap kendi okumasını dener: bir okumanın hatası ekrandaki bütün hesapları birlikte
+  // düşürmesin (kart düzeyinde hata alanı, X-3). Kendi okuması da düşerse hata olduğu gibi fırlar.
+  const okuma = await Promise.resolve(verilen).catch(() => null);
+  if (okuma === null) return ciroOku(aralik, kapsam);
   const kapsar = okuma.aralik.baslangic <= aralik.baslangic && okuma.aralik.bitis >= aralik.bitis;
   const yeter = okuma.kapsam.tur === "sirket" || (kapsam.tur === "satici" && kapsam.saticiId === okuma.kapsam.saticiId);
   if (!kapsar || !yeter) throw new Error("Ciro okuması hesabın aralığını ya da kapsamını karşılamıyor.");

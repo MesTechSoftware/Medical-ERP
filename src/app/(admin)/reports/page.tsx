@@ -64,7 +64,7 @@ export default async function ReportsPage({
   // aynı okumadan hesaplanır (aynı satırlar dört kez okunmaz); her hesabın kendi sorguları okumayla aynı turdadır.
   const g = { kovalar: aylar, ...k };
   const sirket = { tur: "sirket" } as const;
-  const okuma = ciroOku(kapsayanAralik([ciroOzetiAraligi(g), donem.aralik]), sirket);
+  const okuma = ciroOku(kapsayanAralik([ciroOzetiAraligi(g), donem.aralik, ...aylar.map((a) => a.aralik)]), sirket);
   const [sellers, siralama, ozet, tahsilat] = await Promise.all([
     getSellerReports(session.user, donem.aralik, okuma),
     doktorSiralamasi(donem.aralik, suzgec, { skip, take }, sirket, okuma),

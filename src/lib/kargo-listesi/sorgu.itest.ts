@@ -73,7 +73,7 @@ describe("kargo bekleyenler ve KPI", () => {
     );
     expect(liste[1].onay).toBe("BEKLIYOR");
 
-    const k = await kargoKpileri("2026-11-02", liste);
+    const k = await kargoKpileri("2026-11-02", Promise.resolve(liste));
     expect(k).toMatchObject({ bekleyen: 2, bekleyenAdet: 5, onayBekleyen: 1 });
   });
 
@@ -84,7 +84,7 @@ describe("kargo bekleyenler ve KPI", () => {
     await sevkiyat({ orderId: o.id, itemId: o.items[0].id, adet: 1, shippedAt: new Date("2026-11-02T20:59:00Z") });
     await siparis({ status: "KARGOLANDI" });
 
-    const k = await kargoKpileri("2026-11-03", await kargoBekleyenler());
+    const k = await kargoKpileri("2026-11-03", kargoBekleyenler());
     const bugun = await sevkiyatListesi(S({ baslangic: "2026-11-03", bitis: "2026-11-03" }), SAYFA);
     expect(k.bugunKargolanan).toBe(1);
     expect(k.bugunKargolanan).toBe(bugun.toplam);

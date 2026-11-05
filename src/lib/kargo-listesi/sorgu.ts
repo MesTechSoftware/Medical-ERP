@@ -6,14 +6,14 @@ import { takipLinki } from "@/lib/kargo";
 import { FIRMASIZ, type KargoSuzgeci } from "@/lib/kargo-listesi/suzgec";
 import { metinVaryantlari } from "@/lib/liste/metin";
 import { belgeOnayDurumlari } from "@/lib/onay-blogu";
-import { kalemMiktarlari, SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
+import { kalanMiktar, SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
 import { gunleriAraliga } from "@/lib/liste/parametreler";
 import { siparisKosulu } from "@/lib/siparis-listesi/sorgu";
 import { BOS_SUZGEC as BOS_SIPARIS, TUM_SIPARISLER } from "@/lib/siparis-listesi/suzgec";
 
 /**
  * Kargo ekranı sorguları (spec Ü-24 §4). Kargo bekleyen = onaylı ve hazırlanıyor; kalan
- * `kalemMiktarlari`'ndan. Sevkiyat listesi tek `where` üreticisinden (`sevkiyatKosulu`); "Bugün kargolanan"
+ * `kalanMiktar`'dan. Sevkiyat listesi tek `where` üreticisinden (`sevkiyatKosulu`); "Bugün kargolanan"
  * kartı aynı üreticiyle sayılır (D-3-2).
  */
 
@@ -51,14 +51,13 @@ export async function kargoBekleyenler(): Promise<BekleyenSatir[]> {
           id: true,
           product: { select: { name: true, code: true } },
           shipmentItems: { select: { quantity: true } },
-          returnItems: { select: { quantity: true } },
         },
       },
     },
   });
   const onay = await belgeOnayDurumlari("SIP", siparisler.map((o) => o.id));
   return siparisler.map((o) => {
-    const kalemler = o.items.map((k) => ({ id: k.id, urun: k.product.name, kod: k.product.code, adet: k.quantity, kalan: kalemMiktarlari(k).kalan }));
+    const kalemler = o.items.map((k) => ({ id: k.id, urun: k.product.name, kod: k.product.code, adet: k.quantity, kalan: kalanMiktar(k) }));
     return {
       id: o.id,
       documentNo: o.documentNo,
@@ -78,10 +77,7 @@ export async function kargoBekleyenler(): Promise<BekleyenSatir[]> {
 export type KargoKpileri = { bekleyen: number; bekleyenAdet: number; onayBekleyen: number; bugunKargolanan: number; teslimBekleyen: number };
 
 /** Kartlar (spec §3.2): bekleyen sayıları sayfanın okuduğu listeden; bugün ve teslim bekleyen sayımla. */
-export async function kargoKpileri(
-  bugun: string,
-  bekleyenOkumasi: readonly BekleyenSatir[] | Promise<readonly BekleyenSatir[]>
-): Promise<KargoKpileri> {
+export async function kargoKpileri(bugun: string, bekleyenOkumasi: Promise<readonly BekleyenSatir[]>): Promise<KargoKpileri> {
   // Sayımlar bekleyenlerin okunmasını beklemez; ekran okumayı söz olarak verirse aynı turda gider.
   const [bugunKargolanan, teslimBekleyen, bekleyenler] = await Promise.all([
     prisma.shipment.count({ where: sevkiyatKosulu({ baslangic: bugun, bitis: bugun, firma: null, durum: null, q: null }) }),
