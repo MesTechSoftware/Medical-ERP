@@ -7,19 +7,7 @@ import { SuzgecFormu } from "@/components/liste/SuzgecFormu";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import { VERI_TIPI_ADI } from "@/lib/ice-aktarim/adlar";
 import { durumSekmeleri, etkinSuzgecler, partiAdresi, type PartiSuzgeci } from "@/lib/ice-aktarim-listesi/suzgec";
-
-const ETIKET = "mb-1 block font-medium text-slate-700";
-
-function Alan({ id, etiket, children }: { id: string; etiket: string; children: React.ReactNode }) {
-  return (
-    <div className="text-sm">
-      <label htmlFor={id} className={ETIKET}>
-        {etiket}
-      </label>
-      {children}
-    </div>
-  );
-}
+import { SuzgecAlani } from "@/components/liste/SuzgecAlani";
 
 /**
  * İçe aktarım partilerinin süzgeç çubuğu (spec Ü-30 §3.2): durum sekmeleri, Filtrele paneli (GET formu; tür, tarih,
@@ -46,7 +34,7 @@ export function SuzgecCubugu({ suzgec, per, sutunMenusu }: { suzgec: PartiSuzgec
             >
               {suzgec.durum !== "tumu" && <input type="hidden" name="durum" value={suzgec.durum} />}
               {per !== undefined && <input type="hidden" name="per" value={per} />}
-              <Alan id="parti-tur" etiket="Tür">
+              <SuzgecAlani id="parti-tur" etiket="Tür">
                 <select id="parti-tur" name="tur" defaultValue={suzgec.tur ?? ""} className={KONTROL_TEK_SATIR}>
                   <option value="">Tümü</option>
                   {Object.entries(VERI_TIPI_ADI).map(([kod, ad]) => (
@@ -55,16 +43,16 @@ export function SuzgecCubugu({ suzgec, per, sutunMenusu }: { suzgec: PartiSuzgec
                     </option>
                   ))}
                 </select>
-              </Alan>
-              <Alan id="parti-q" etiket="Ara">
+              </SuzgecAlani>
+              <SuzgecAlani id="parti-q" etiket="Ara">
                 <input type="search" id="parti-q" name="q" maxLength={100} placeholder="Parti no ya da dosya adı" defaultValue={suzgec.q ?? ""} className={KONTROL_TEK_SATIR} />
-              </Alan>
-              <Alan id="parti-baslangic" etiket="Başlangıç">
+              </SuzgecAlani>
+              <SuzgecAlani id="parti-baslangic" etiket="Başlangıç">
                 <input type="date" id="parti-baslangic" name="baslangic" defaultValue={suzgec.baslangic ?? ""} className={KONTROL_TEK_SATIR} />
-              </Alan>
-              <Alan id="parti-bitis" etiket="Bitiş">
+              </SuzgecAlani>
+              <SuzgecAlani id="parti-bitis" etiket="Bitiş">
                 <input type="date" id="parti-bitis" name="bitis" defaultValue={suzgec.bitis ?? ""} className={KONTROL_TEK_SATIR} />
-              </Alan>
+              </SuzgecAlani>
               <div className="flex items-center gap-3 sm:col-span-2">
                 <button type="submit" className={buton("birincil")}>
                   <Ikon ad="filtrele" />

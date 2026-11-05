@@ -25,6 +25,12 @@ export const KONTROL_COK_SATIR = `${KONTROL} min-h-(--control-h) py-2`;
 export const ACILIR_EYLEM =
   "flex cursor-pointer list-none items-center gap-1 [&::-webkit-details-marker]:hidden";
 
+/** Metin içi bağlantı (panel, tablo, açıklama satırı). */
+export const BAGLANTI = "text-link underline decoration-link/40 underline-offset-4 hover:decoration-link";
+
+/** Tıklanır KPI kartının sarmalayıcı bağlantısı: kart satır yüksekliğini doldurur. */
+export const KPI_BAGLANTISI = "block h-full rounded-xl transition hover:opacity-90";
+
 export type ButonTuru =
   | "birincil"
   | "ikincil"

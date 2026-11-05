@@ -13,4 +13,3 @@ export const SUTUNLAR: readonly SutunTanimi<DenetimSutunu>[] = [
 ];
 
 export const SUTUN_CEREZI = "denetim-sutunlar";
-export const SUTUN_YOLU = "/audit-logs";

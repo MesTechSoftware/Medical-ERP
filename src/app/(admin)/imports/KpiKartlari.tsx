@@ -4,8 +4,7 @@ import { KpiSatiri } from "@/components/kpi/KpiSatiri";
 import type { KpiSonucu } from "@/lib/kpi/getir";
 import type { PartiKpileri } from "@/lib/ice-aktarim-listesi/sorgu";
 import { kartAdresleri } from "@/lib/ice-aktarim-listesi/suzgec";
-
-const KART = "block h-full rounded-xl transition hover:opacity-90";
+import { KPI_BAGLANTISI } from "@/components/stil";
 
 /** İçe aktarım ekranının üst kartları (spec Ü-30 §3.1): süzgeçten bağımsız, anlık; kart = açtığı süzgecin satırı (X-12-2). */
 export function KpiKartlari({ sonuc, bugun }: { sonuc: KpiSonucu<PartiKpileri>; bugun: string }) {
@@ -15,16 +14,16 @@ export function KpiKartlari({ sonuc, bugun }: { sonuc: KpiSonucu<PartiKpileri>; 
   return (
     <section aria-label="Parti sayıları">
       <KpiSatiri>
-        <Link href={adres.tumu} className={KART}>
+        <Link href={adres.tumu} className={KPI_BAGLANTISI}>
           <KpiCard etiket="Parti" varyant="birincil" iyiYon="notr" bosDavranisi="sifir" adet={k ? k.tumu : null} karsilastirma={{ anlik: "şu an" }} hataReferansi={hataReferansi} />
         </Link>
-        <Link href={adres.buAy} className={KART}>
+        <Link href={adres.buAy} className={KPI_BAGLANTISI}>
           <KpiCard etiket="Bu ay" varyant="ikincil" iyiYon="notr" bosDavranisi="sifir" adet={k ? k.buAy : null} karsilastirma={{ anlik: "bu ay" }} hataReferansi={hataReferansi} />
         </Link>
-        <Link href={adres.geriAlinabilir} className={KART}>
+        <Link href={adres.geriAlinabilir} className={KPI_BAGLANTISI}>
           <KpiCard etiket="Geri alınabilir" varyant="ikincil" iyiYon="notr" bosDavranisi="sifir" adet={k ? k.geriAlinabilir : null} karsilastirma={{ anlik: "şu an" }} hataReferansi={hataReferansi} />
         </Link>
-        <Link href={adres.geriAlindi} className={KART}>
+        <Link href={adres.geriAlindi} className={KPI_BAGLANTISI}>
           <KpiCard etiket="Geri alındı" varyant="ikincil" iyiYon="notr" bosDavranisi="sifir" adet={k ? k.geriAlindi : null} karsilastirma={{ anlik: "şu an" }} hataReferansi={hataReferansi} />
         </Link>
       </KpiSatiri>

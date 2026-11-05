@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { cookies } from "next/headers";
 
 import { DetayPaneli, KayitYokPaneli } from "@/components/denetim/DetayPaneli";
 import { ImlecSayfalama } from "@/components/denetim/ImlecSayfalama";
@@ -10,13 +9,14 @@ import { BosDurum } from "@/components/liste/BosDurum";
 import { EtkinSuzgecler } from "@/components/liste/EtkinSuzgecler";
 import { HizliSekmeler } from "@/components/liste/HizliSekmeler";
 import { SutunSecici } from "@/components/liste/SutunSecici";
+import { gizliSutunlar } from "@/lib/liste/sutun-tercihi";
 import { SuzgecFormu } from "@/components/liste/SuzgecFormu";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import { Card, PageHeader } from "@/components/ui";
 import { AUDIT_ACTION_LABELS, ISLEM_TURU_ETIKETI, MODUL_ETIKETI } from "@/lib/denetim/olaylar";
 import { varlikEtiketi } from "@/lib/denetim/ozet";
 import { denetimKaydi, denetimKpileri, denetimListesi, kullaniciSecenekleri } from "@/lib/denetim/sorgu";
-import { SUTUNLAR, SUTUN_CEREZI } from "@/lib/denetim/sutunlar";
+import { SUTUNLAR } from "@/lib/denetim/sutunlar";
 import {
   SISTEM,
   bosDurum,
@@ -30,28 +30,14 @@ import {
 } from "@/lib/denetim/suzgec";
 import { formatDateTime } from "@/lib/format";
 import { kpiGetir } from "@/lib/kpi/getir";
-import { gizliSutunlariCoz } from "@/lib/liste/sutunlar";
 import { ROLE_LABEL } from "@/lib/roles";
 import { requireAdmin } from "@/lib/session";
 import { simdi, yerelGunMetni } from "@/lib/zaman";
 import { KpiKartlari } from "./KpiKartlari";
-import { sutunlariKaydet } from "./sutunEylemi";
+import { SuzgecAlani } from "@/components/liste/SuzgecAlani";
 
 /** Listede kalınan yer; detay açılıp kapanınca aynı sayfaya dönülür. */
 const imlecParametresi = (i: Imlec) => (i === null ? {} : i.yon === "once" ? { once: i.seq } : { sonra: i.seq });
-
-const ETIKET = "mb-1 block font-medium text-slate-700";
-
-function Alan({ id, etiket, children }: { id: string; etiket: string; children: React.ReactNode }) {
-  return (
-    <div className="text-sm">
-      <label htmlFor={id} className={ETIKET}>
-        {etiket}
-      </label>
-      {children}
-    </div>
-  );
-}
 
 /**
  * Denetim kaydı (KARARLAR X-18): üç katman — süzgeçli liste, sağdan detay paneli, alan bazlı fark.
@@ -66,7 +52,7 @@ export default async function DenetimKaydiSayfasi({
   const session = await requireAdmin();
   const bugun = yerelGunMetni(simdi());
   const { suzgec, imlec, kayit } = suzgecCoz(await searchParams);
-  const gizli = gizliSutunlariCoz(SUTUNLAR, (await cookies()).get(SUTUN_CEREZI)?.value);
+  const gizli = await gizliSutunlar("/audit-logs");
   const [sayfa, kullanicilar, detay, kpi] = await Promise.all([
     denetimListesi(suzgec, imlec),
     kullaniciSecenekleri(),
@@ -106,13 +92,13 @@ export default async function DenetimKaydiSayfasi({
                 aria-label="Denetim kaydı süzgeci"
                 className="absolute right-0 z-20 mt-2 grid w-[min(36rem,calc(100vw-2rem))] gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-lg sm:grid-cols-2"
               >
-                <Alan id="denetim-baslangic" etiket="Başlangıç">
+                <SuzgecAlani id="denetim-baslangic" etiket="Başlangıç">
                   <input type="date" id="denetim-baslangic" name="baslangic" defaultValue={suzgec.baslangic ?? ""} className={KONTROL_TEK_SATIR} />
-                </Alan>
-                <Alan id="denetim-bitis" etiket="Bitiş">
+                </SuzgecAlani>
+                <SuzgecAlani id="denetim-bitis" etiket="Bitiş">
                   <input type="date" id="denetim-bitis" name="bitis" defaultValue={suzgec.bitis ?? ""} className={KONTROL_TEK_SATIR} />
-                </Alan>
-                <Alan id="denetim-kullanici" etiket="Kullanıcı">
+                </SuzgecAlani>
+                <SuzgecAlani id="denetim-kullanici" etiket="Kullanıcı">
                   <select id="denetim-kullanici" name="kullanici" defaultValue={suzgec.kullanici ?? ""} className={KONTROL_TEK_SATIR}>
                     <option value="">Tümü</option>
                     <option value={SISTEM}>Sistem / anonim</option>
@@ -123,8 +109,8 @@ export default async function DenetimKaydiSayfasi({
                       </option>
                     ))}
                   </select>
-                </Alan>
-                <Alan id="denetim-modul" etiket="Modül">
+                </SuzgecAlani>
+                <SuzgecAlani id="denetim-modul" etiket="Modül">
                   <select id="denetim-modul" name="modul" defaultValue={suzgec.modul ?? ""} className={KONTROL_TEK_SATIR}>
                     <option value="">Tümü</option>
                     {Object.entries(MODUL_ETIKETI).map(([deger, etiket]) => (
@@ -133,8 +119,8 @@ export default async function DenetimKaydiSayfasi({
                       </option>
                     ))}
                   </select>
-                </Alan>
-                <Alan id="denetim-tur" etiket="İşlem türü">
+                </SuzgecAlani>
+                <SuzgecAlani id="denetim-tur" etiket="İşlem türü">
                   <select id="denetim-tur" name="tur" defaultValue={suzgec.tur ?? ""} className={KONTROL_TEK_SATIR}>
                     <option value="">Tümü</option>
                     {Object.entries(ISLEM_TURU_ETIKETI).map(([deger, etiket]) => (
@@ -143,8 +129,8 @@ export default async function DenetimKaydiSayfasi({
                       </option>
                     ))}
                   </select>
-                </Alan>
-                <Alan id="denetim-olay" etiket="Olay">
+                </SuzgecAlani>
+                <SuzgecAlani id="denetim-olay" etiket="Olay">
                   <select id="denetim-olay" name="olay" defaultValue={suzgec.olay ?? ""} className={KONTROL_TEK_SATIR}>
                     <option value="">Tümü</option>
                     {Object.entries(AUDIT_ACTION_LABELS).map(([deger, etiket]) => (
@@ -153,7 +139,7 @@ export default async function DenetimKaydiSayfasi({
                       </option>
                     ))}
                   </select>
-                </Alan>
+                </SuzgecAlani>
                 <div className="flex items-center gap-3 sm:col-span-2">
                   <button type="submit" className={buton("birincil")}>
                     <Ikon ad="filtrele" />
@@ -166,7 +152,7 @@ export default async function DenetimKaydiSayfasi({
                 </div>
               </SuzgecFormu>
             </AcilirPanel>
-            <SutunSecici sutunlar={SUTUNLAR} gizli={gizli} action={sutunlariKaydet} donus={listeAdresi} />
+            <SutunSecici liste="/audit-logs" gizli={gizli} donus={listeAdresi} />
           </div>
         </div>
         <EtkinSuzgecler etiketler={etiketler} />

@@ -3,8 +3,8 @@ import { KpiCard } from "@/components/kpi/KpiCard";
 import { KpiSatiri } from "@/components/kpi/KpiSatiri";
 import type { KullaniciKpileri } from "@/lib/kullanici-listesi/sorgu";
 import { BOS_SUZGEC, kullaniciAdresi, type GorenRol } from "@/lib/kullanici-listesi/suzgec";
+import { KPI_BAGLANTISI } from "@/components/stil";
 
-const KART = "block h-full rounded-xl transition hover:opacity-90";
 const ANLIK = { anlik: "şu an" } as const;
 
 /**
@@ -17,12 +17,12 @@ export function KpiKartlari({ sayilar, gorenRol }: { sayilar: KullaniciKpileri; 
     <section aria-label="Kullanıcı sayıları">
       <KpiSatiri>
         {gorenRol === "YONETICI" && (
-          <Link href={kullaniciAdresi({ ...BOS_SUZGEC, durum: "aktif" })} className={KART}>
+          <Link href={kullaniciAdresi({ ...BOS_SUZGEC, durum: "aktif" })} className={KPI_BAGLANTISI}>
             <KpiCard etiket="Aktif kullanıcı" varyant="birincil" iyiYon="notr" bosDavranisi="sifir" adet={sayilar.aktifKullanici} karsilastirma={ANLIK} />
           </Link>
         )}
         {/* OPERASYON'un kapsamı zaten satıcılar; ona rol süzgeci yoktur (spec §3.3). */}
-        <Link href={kullaniciAdresi({ ...BOS_SUZGEC, durum: "aktif", rol: gorenRol === "YONETICI" ? "SATICI" : null })} className={KART}>
+        <Link href={kullaniciAdresi({ ...BOS_SUZGEC, durum: "aktif", rol: gorenRol === "YONETICI" ? "SATICI" : null })} className={KPI_BAGLANTISI}>
           <KpiCard
             etiket="Aktif satıcı"
             varyant={gorenRol === "YONETICI" ? "ikincil" : "birincil"}
@@ -32,7 +32,7 @@ export function KpiKartlari({ sayilar, gorenRol }: { sayilar: KullaniciKpileri; 
             karsilastirma={ANLIK}
           />
         </Link>
-        <Link href={kullaniciAdresi({ ...BOS_SUZGEC, portfoy: "yok" })} className={KART}>
+        <Link href={kullaniciAdresi({ ...BOS_SUZGEC, portfoy: "yok" })} className={KPI_BAGLANTISI}>
           <KpiCard
             etiket="Portföysüz aktif satıcı"
             varyant="ikincil"
@@ -43,7 +43,7 @@ export function KpiKartlari({ sayilar, gorenRol }: { sayilar: KullaniciKpileri; 
             vurgu={sayilar.portfoysuz > 0 ? "uyari" : undefined}
           />
         </Link>
-        <Link href={kullaniciAdresi({ ...BOS_SUZGEC, durum: "aktif", parola: "gecici" })} className={KART}>
+        <Link href={kullaniciAdresi({ ...BOS_SUZGEC, durum: "aktif", parola: "gecici" })} className={KPI_BAGLANTISI}>
           <KpiCard
             etiket="İlk girişi bekleyen"
             varyant="ikincil"

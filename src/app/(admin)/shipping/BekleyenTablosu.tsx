@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { OnayEtiketi } from "@/components/OnayEtiketi";
-import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
+import { BAGLANTI, KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import { Tutar } from "@/components/Tutar";
 import { Ikon } from "@/components/Ikon";
 import { formatDate } from "@/lib/format";
@@ -64,7 +64,7 @@ export function BekleyenTablosu({
                 </td>
                 <td className="whitespace-nowrap text-slate-500">{formatDate(r.orderDate)}</td>
                 <td className="whitespace-nowrap">
-                  <Link href={`/orders?detay=${r.id}`} className="text-link underline decoration-link/40 underline-offset-4 hover:decoration-link">
+                  <Link href={`/orders?detay=${r.id}`} className={BAGLANTI}>
                     {r.documentNo}
                   </Link>
                 </td>

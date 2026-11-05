@@ -1,4 +1,5 @@
 import { aralikEtiketi, gun, ilk, kimlik, secenek, type Parametreler } from "@/lib/liste/parametreler";
+import type { BlokKuralKodu } from "@/lib/onay-blogu";
 import { BLOK_KURAL_ADI } from "@/lib/sozluk";
 
 /**
@@ -8,14 +9,13 @@ import { BLOK_KURAL_ADI } from "@/lib/sozluk";
  */
 
 export type OnayDurumu = "bekleyen" | "ONAY" | "RED" | "tumu";
-export type OnayKurali = "NEGATIF_STOK" | "BEDELSIZ_ONAYI";
 
 export type OnaySuzgeci = {
   durum: OnayDurumu;
   baslangic: string | null;
   bitis: string | null;
   eski: boolean;
-  kural: OnayKurali | null;
+  kural: BlokKuralKodu | null;
   acan: string | null;
   q: string | null;
 };
@@ -23,6 +23,9 @@ export type OnaySuzgeci = {
 export const BOS_SUZGEC: OnaySuzgeci = { durum: "bekleyen", baslangic: null, bitis: null, eski: false, kural: null, acan: null, q: null };
 
 const METIN_SINIRI = 100;
+
+/** Süzgeçte seçilebilen kurallar: blok kataloğunun adları (tek kaynak `BLOK_KURAL_ADI`). */
+export const ONAY_KURALLARI = Object.keys(BLOK_KURAL_ADI) as BlokKuralKodu[];
 
 /** "Eski onay" sınırı, saat (D-1 brief): dashboard istisnası, KPI ve `eski` süzgeci bu sabitle sayar. */
 export const ESKI_ONAY_SAATI = 24;
@@ -48,7 +51,7 @@ export function suzgecCoz(p: Parametreler): { suzgec: OnaySuzgeci; detay: string
       baslangic,
       bitis,
       eski,
-      kural: secenek(ilk(p, "kural"), ["NEGATIF_STOK", "BEDELSIZ_ONAYI"] as const),
+      kural: secenek(ilk(p, "kural"), ONAY_KURALLARI),
       acan: kimlik(ilk(p, "acan")),
       q: q === "" ? null : q,
     },

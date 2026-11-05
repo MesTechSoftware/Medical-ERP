@@ -1,3 +1,4 @@
+import { donemAnahtari } from "@/lib/donem";
 import { ilk, kimlik, type Parametreler } from "@/lib/liste/parametreler";
 
 /**
@@ -17,17 +18,11 @@ export type { Parametreler };
 /** Ekran: Raporlar `/reports` (şirket), Raporum `/my-report` (satıcının kendi cirosu, Ü-33 — satıcı süzgeci yok). */
 export type RaporYolu = "/reports" | "/my-report";
 
-/** `YYYY-AA` (ay 01–12) ya da `tum`; başka değer yok sayılır. */
-function donemParametresi(metin: string | null): string | null {
-  if (metin === "tum") return "tum";
-  return metin !== null && /^\d{4}-(0[1-9]|1[0-2])$/.test(metin) ? metin : null;
-}
-
 export function suzgecCoz(p: Parametreler): RaporSuzgeci {
   const satici = ilk(p, "satici");
   const q = (ilk(p, "q") ?? "").trim().slice(0, METIN_SINIRI);
   return {
-    donem: donemParametresi(ilk(p, "donem")),
+    donem: donemAnahtari(ilk(p, "donem")),
     satici: satici === SAHIPSIZ ? SAHIPSIZ : kimlik(satici),
     q: q === "" ? null : q,
   };

@@ -5,9 +5,9 @@ import { formatDateTime } from "@/lib/format";
 import type { SevkiyatSatiri } from "@/lib/kargo-listesi/sorgu";
 import { SUTUNLAR, type KargoSutunu } from "@/lib/kargo-listesi/sutunlar";
 import { bosDurum, type KargoSuzgeci } from "@/lib/kargo-listesi/suzgec";
+import { BAGLANTI } from "@/components/stil";
 
 const SINIF: Partial<Record<KargoSutunu, string>> = { siparis: "whitespace-nowrap", firma: "oncelik-dusuk", irsaliye: "oncelik-dusuk", adet: "sayi" };
-const BAGLANTI = "text-link underline decoration-link/40 underline-offset-4 hover:decoration-link";
 
 /**
  * Sevkiyat listesi (spec Ü-24 §3.5): bir siparişin her sevkiyatı ayrı satır. Gizli sütun çizilmez. Sipariş

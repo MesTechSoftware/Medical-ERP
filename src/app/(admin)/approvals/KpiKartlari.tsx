@@ -5,8 +5,7 @@ import { goreliZaman } from "@/lib/format";
 import type { KpiSonucu } from "@/lib/kpi/getir";
 import type { OnayKpileri } from "@/lib/onay-listesi/sorgu";
 import { kartAdresleri } from "@/lib/onay-listesi/suzgec";
-
-const KART = "block h-full rounded-xl transition hover:opacity-90";
+import { KPI_BAGLANTISI } from "@/components/stil";
 
 /** Birincil kartın ikincil metriği: en eski bekleyen talebin yaşı. */
 export function enEskiMetni(enEski: Date | null, an: Date): string {
@@ -35,7 +34,7 @@ export function KpiKartlari({ sonuc, bugun, an }: { sonuc: KpiSonucu<OnayKpileri
           vurgu={k && k.bekleyen > 0 ? "uyari" : undefined}
           hataReferansi={hataReferansi}
         />
-        <Link href={adres.eski} className={KART}>
+        <Link href={adres.eski} className={KPI_BAGLANTISI}>
           <KpiCard
             etiket="24 saatten eski"
             varyant="ikincil"
@@ -47,10 +46,10 @@ export function KpiKartlari({ sonuc, bugun, an }: { sonuc: KpiSonucu<OnayKpileri
             hataReferansi={hataReferansi}
           />
         </Link>
-        <Link href={adres.bugunOnay} className={KART}>
+        <Link href={adres.bugunOnay} className={KPI_BAGLANTISI}>
           <KpiCard etiket="Bugün onaylanan" varyant="ikincil" iyiYon="notr" bosDavranisi="sifir" adet={k ? k.bugunOnay : null} karsilastirma={{ anlik: "bugün" }} hataReferansi={hataReferansi} />
         </Link>
-        <Link href={adres.bugunRed} className={KART}>
+        <Link href={adres.bugunRed} className={KPI_BAGLANTISI}>
           <KpiCard etiket="Bugün reddedilen" varyant="ikincil" iyiYon="notr" bosDavranisi="sifir" adet={k ? k.bugunRed : null} karsilastirma={{ anlik: "bugün" }} hataReferansi={hataReferansi} />
         </Link>
       </KpiSatiri>

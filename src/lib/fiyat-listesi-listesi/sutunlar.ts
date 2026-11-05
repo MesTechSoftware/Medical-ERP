@@ -17,4 +17,3 @@ export const SUTUNLAR: readonly SutunTanimi<ListeSutunu>[] = [
 ];
 
 export const SUTUN_CEREZI = "fiyat-listesi-sutunlar";
-export const SUTUN_YOLU = "/price-lists";

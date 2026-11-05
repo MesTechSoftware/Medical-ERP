@@ -3,7 +3,7 @@ import { Card, LinkButton, StatusBadge, StatusChip } from "@/components/ui";
 import { Ikon } from "@/components/Ikon";
 import { BosDurum } from "@/components/liste/BosDurum";
 import { OnayEtiketi } from "@/components/OnayEtiketi";
-import { buton } from "@/components/stil";
+import { BAGLANTI, buton } from "@/components/stil";
 import { Tutar } from "@/components/Tutar";
 import { formatDate } from "@/lib/format";
 import type { SiparisSatiri } from "@/lib/siparis-listesi/sorgu";
@@ -104,7 +104,7 @@ export function SiparisTablosu({
                       href={siparisAdresi(suzgec, { ...yer, detay: o.id }, yol)}
                       scroll={false}
                       data-kayit={o.id}
-                      className="inline-flex items-center gap-0.5 text-link underline decoration-link/40 underline-offset-4 hover:decoration-link"
+                      className={`inline-flex items-center gap-0.5 ${BAGLANTI}`}
                     >
                       <span>{o.cari.fullName}</span>
                       <Ikon ad="sonraki" />

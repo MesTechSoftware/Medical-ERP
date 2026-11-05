@@ -6,8 +6,7 @@ import { aralikEtiketi } from "@/lib/liste/parametreler";
 import { BRUT } from "@/lib/taban";
 import type { TahsilatKpileri } from "@/lib/tahsilat-listesi/sorgu";
 import { TIP_ADI, kartAdresi, type TahsilatTipi, type kpiAraligi } from "@/lib/tahsilat-listesi/suzgec";
-
-const KART = "block h-full rounded-xl transition hover:opacity-90";
+import { KPI_BAGLANTISI } from "@/components/stil";
 
 type Aralik = ReturnType<typeof kpiAraligi>;
 
@@ -45,7 +44,7 @@ function Kart({
 }) {
   const o = k ? (tip ? k[tip] : k.toplam) : null;
   return (
-    <Link href={kartAdresi(tip, aralik)} className={KART}>
+    <Link href={kartAdresi(tip, aralik)} className={KPI_BAGLANTISI}>
       <KpiCard
         etiket={etiket}
         varyant={birincil ? "birincil" : "ikincil"}

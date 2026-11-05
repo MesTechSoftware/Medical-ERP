@@ -8,8 +8,8 @@ import { ciroOzeti, getSellerReports, saticiTahsilatOzeti } from "@/lib/reports-
 import DonemSecici from "@/components/DonemSecici";
 import { ilk, type Parametreler } from "@/lib/liste/parametreler";
 import SaticiRaporTablosu from "@/components/SaticiRaporTablosu";
-import Pagination from "@/components/Pagination";
-import { getPagination, pageCount } from "@/lib/pagination";
+import { ListeSayfalama } from "@/components/liste/ListeSayfalama";
+import { sayfaCoz, sayfaDisi } from "@/lib/liste/sayfa";
 import { doktorSiralamasi } from "@/lib/rapor-listesi/sorgu";
 import { korunanlar, raporAdresi, suzgecCoz } from "@/lib/rapor-listesi/suzgec";
 import { CiroSiralamasi } from "./CiroSiralamasi";
@@ -45,9 +45,8 @@ export default async function MyReportPage({
   const cozulen = suzgecCoz(params);
   // Satıcı süzgeci bu ekranda yoktur; adreste kalmışsa sorgulardan önce adresten düşer.
   const suzgec = { ...cozulen, satici: null };
-  const per = ilk(params, "per") ?? undefined;
-  const { page, perPage, skip, take } = getPagination({ page: ilk(params, "page") ?? undefined, per });
-  const yer = { page, per: per ? perPage : undefined };
+  const sayfa = sayfaCoz(params);
+  const { page, perPage, skip, take, yer } = sayfa;
   if (ilk(params, "satici") !== null) redirect(raporAdresi(suzgec, yer, YOL));
 
   // Dört okuma birbirinden bağımsızdır; tek turda gider.
@@ -61,12 +60,8 @@ export default async function MyReportPage({
   // Sayfa dışı adres son sayfaya gider.
   // Sonuçsuz aramada ikinci sayfadan sonrası birinci sayfaya (sayfalama "3 / 1" demesin).
   if (siralama.tamam && siralama.deger.satirlar.length === 0 && page > 1) {
-    redirect(raporAdresi(suzgec, { ...yer, page: siralama.deger.toplam > 0 ? pageCount(siralama.deger.toplam, perPage) : 1 }, YOL));
+    redirect(raporAdresi(suzgec, { ...yer, page: sayfaDisi(siralama.deger, perPage) ?? 1 }, YOL));
   }
-  const sayfaParametreleri = {
-    ...Object.fromEntries(new URL(raporAdresi(suzgec, {}, YOL), "http://x").searchParams),
-    per: yer.per === undefined ? undefined : String(yer.per),
-  };
   const karsilastir = <T,>(onceki: T | null | undefined) => (k.onceki ? { onceki: onceki ?? null, not } : undefined);
 
   return (
@@ -139,7 +134,7 @@ export default async function MyReportPage({
       <div className="mt-6">
         <CiroSiralamasi sonuc={siralama} suzgec={suzgec} per={yer.per} saticiId={session.user.id} tumZamanlar={donem.anahtar === "tum"} />
         {siralama.tamam && (
-          <Pagination page={page} totalPages={pageCount(siralama.deger.toplam, perPage)} total={siralama.deger.toplam} basePath={YOL} params={sayfaParametreleri} />
+          <ListeSayfalama sayfa={sayfa} toplam={siralama.deger.toplam} adres={raporAdresi(suzgec, {}, YOL)} />
         )}
       </div>
     </div>

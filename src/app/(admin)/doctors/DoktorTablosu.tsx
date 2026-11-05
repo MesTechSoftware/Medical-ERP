@@ -10,6 +10,7 @@ import { formatPhone } from "@/lib/phone";
 import { BAKIYE_BASLIGI, BakiyeHucresi } from "@/components/doktor/bakiye";
 import { DurumRozetleri } from "@/components/doktor/DurumRozetleri";
 import { SonSiparisHucresi } from "@/components/doktor/SonSiparisHucresi";
+import { BAGLANTI } from "@/components/stil";
 
 /** Sütun başlıkları; Bakiye'nin tabanı başlıktadır (`BAKIYE_BASLIGI` — Ü-3-1). */
 const BASLIK: Record<SutunAnahtari, { metin: string; sinif?: string }> = {
@@ -94,7 +95,7 @@ export function DoktorTablosu({
                     href={doktorAdresi(suzgec, { ...yer, detay: d.id })}
                     scroll={false}
                     data-kayit={d.id}
-                    className="inline-flex items-center gap-0.5 text-link underline decoration-link/40 underline-offset-4 hover:decoration-link"
+                    className={`inline-flex items-center gap-0.5 ${BAGLANTI}`}
                   >
                     <span>
                       {d.title ? `${d.title} ` : ""}

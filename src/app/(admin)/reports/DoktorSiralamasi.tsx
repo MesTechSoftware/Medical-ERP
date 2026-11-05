@@ -5,16 +5,14 @@ import { BosDurum } from "@/components/liste/BosDurum";
 import { EtkinSuzgecler } from "@/components/liste/EtkinSuzgecler";
 import { AcilirPanel } from "@/components/liste/AcilirPanel";
 import { SuzgecFormu } from "@/components/liste/SuzgecFormu";
-import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
+import { BAGLANTI, KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import { Tutar } from "@/components/Tutar";
 import { OranCubugu } from "@/components/grafik/BarMicro";
 import { MATRAH, tabanli } from "@/lib/taban";
 import type { SiraSatiri } from "@/lib/rapor-listesi/sorgu";
 import type { RaporSutunu } from "@/lib/rapor-listesi/sutunlar";
 import { SAHIPSIZ, bosDurum, etkinSuzgecler, raporAdresi, type RaporSuzgeci } from "@/lib/rapor-listesi/suzgec";
-
-const BAGLANTI = "text-link underline decoration-link/40 underline-offset-4 hover:decoration-link";
-const ETIKET = "mb-1 block font-medium text-slate-700";
+import { SUZGEC_ETIKETI } from "@/components/liste/SuzgecAlani";
 
 /**
  * Doktor ciro sıralaması (spec Ü-27 §3.2–3.3, X-1-2): dönemde cirolu bütün cariler, sayfalı. Sıra ve lidere göre
@@ -60,7 +58,7 @@ export function DoktorSiralamasi({
                 {suzgec.donem && <input type="hidden" name="donem" value={suzgec.donem} />}
                 {per !== undefined && <input type="hidden" name="per" value={per} />}
                 <div className="text-sm">
-                  <label htmlFor="rapor-satici" className={ETIKET}>
+                  <label htmlFor="rapor-satici" className={SUZGEC_ETIKETI}>
                     Satıcı (carinin sahibi)
                   </label>
                   <select id="rapor-satici" name="satici" defaultValue={suzgec.satici ?? ""} className={KONTROL_TEK_SATIR}>
@@ -74,7 +72,7 @@ export function DoktorSiralamasi({
                   </select>
                 </div>
                 <div className="text-sm">
-                  <label htmlFor="rapor-q" className={ETIKET}>
+                  <label htmlFor="rapor-q" className={SUZGEC_ETIKETI}>
                     Ara
                   </label>
                   <input type="search" id="rapor-q" name="q" maxLength={100} placeholder="Cari adı" defaultValue={suzgec.q ?? ""} className={KONTROL_TEK_SATIR} />

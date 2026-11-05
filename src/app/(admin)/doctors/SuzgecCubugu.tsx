@@ -12,29 +12,10 @@ import {
   doktorAdresi,
   etkinSayisi,
   etkinSuzgecler,
+  SESSIZ_SECENEKLERI,
   type DoktorSuzgeci,
 } from "@/lib/doktor-listesi/suzgec";
-
-const ETIKET = "mb-1 block font-medium text-slate-700";
-
-const SESSIZ_SECENEKLERI = [
-  { deger: "30", metin: "30+ gündür sipariş yok" },
-  { deger: "60", metin: "60+ gündür sipariş yok" },
-  { deger: "90", metin: "90+ gündür sipariş yok" },
-  { deger: "180", metin: "180+ gündür sipariş yok" },
-  { deger: "hic", metin: "Hiç sipariş yok" },
-];
-
-function Alan({ id, etiket, children }: { id: string; etiket: string; children: React.ReactNode }) {
-  return (
-    <div className="text-sm">
-      <label htmlFor={id} className={ETIKET}>
-        {etiket}
-      </label>
-      {children}
-    </div>
-  );
-}
+import { SuzgecAlani } from "@/components/liste/SuzgecAlani";
 
 /**
  * Cari listesinin süzgeç çubuğu (spec Ü-18 §3.2): hızlı sekmeler, Filtrele paneli (GET formu; `next/form`
@@ -73,14 +54,14 @@ export function SuzgecCubugu({
               aria-label="Cari süzgeci"
               className="absolute right-0 z-20 mt-2 grid w-[min(56rem,calc(100vw-2rem))] gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-lg sm:grid-cols-2 lg:grid-cols-4"
             >
-              <Alan id="suzgec-sinif" etiket="Hesap sınıfı">
+              <SuzgecAlani id="suzgec-sinif" etiket="Hesap sınıfı">
                 <select id="suzgec-sinif" name="sinif" defaultValue={suzgec.sinif ?? ""} className={KONTROL_TEK_SATIR}>
                   <option value="">Tümü</option>
                   <option value="DOKTOR">Doktor</option>
                   <option value="BAYI">Bayi</option>
                 </select>
-              </Alan>
-              <Alan id="suzgec-bolge" etiket="Bölge">
+              </SuzgecAlani>
+              <SuzgecAlani id="suzgec-bolge" etiket="Bölge">
                 <select id="suzgec-bolge" name="bolge" defaultValue={suzgec.bolge ?? ""} className={KONTROL_TEK_SATIR}>
                   <option value="">Tümü</option>
                   {secenekler.bolgeler.map((b) => (
@@ -89,8 +70,8 @@ export function SuzgecCubugu({
                     </option>
                   ))}
                 </select>
-              </Alan>
-              <Alan id="suzgec-satici" etiket="Sorumlu satıcı">
+              </SuzgecAlani>
+              <SuzgecAlani id="suzgec-satici" etiket="Sorumlu satıcı">
                 <select id="suzgec-satici" name="satici" defaultValue={suzgec.satici ?? ""} className={KONTROL_TEK_SATIR}>
                   <option value="">Tümü</option>
                   <option value={SAHIPSIZ}>Sahipsiz</option>
@@ -100,15 +81,15 @@ export function SuzgecCubugu({
                     </option>
                   ))}
                 </select>
-              </Alan>
-              <Alan id="suzgec-durum" etiket="Durum">
+              </SuzgecAlani>
+              <SuzgecAlani id="suzgec-durum" etiket="Durum">
                 <select id="suzgec-durum" name="durum" defaultValue={suzgec.durum ?? ""} className={KONTROL_TEK_SATIR}>
                   <option value="">Tümü</option>
                   <option value="AKTIF">Aktif</option>
                   <option value="PASIF">Pasif</option>
                 </select>
-              </Alan>
-              <Alan id="suzgec-sessiz" etiket="Son sipariş">
+              </SuzgecAlani>
+              <SuzgecAlani id="suzgec-sessiz" etiket="Son sipariş">
                 <select id="suzgec-sessiz" name="sessiz" defaultValue={suzgec.sessiz ?? ""} className={KONTROL_TEK_SATIR}>
                   <option value="">Tümü</option>
                   {SESSIZ_SECENEKLERI.map((s) => (
@@ -117,13 +98,13 @@ export function SuzgecCubugu({
                     </option>
                   ))}
                 </select>
-              </Alan>
-              <Alan id="suzgec-sonbas" etiket="Son sipariş — başlangıç">
+              </SuzgecAlani>
+              <SuzgecAlani id="suzgec-sonbas" etiket="Son sipariş — başlangıç">
                 <input type="date" id="suzgec-sonbas" name="sonBas" defaultValue={suzgec.sonBas ?? ""} className={KONTROL_TEK_SATIR} />
-              </Alan>
-              <Alan id="suzgec-sonbit" etiket="Son sipariş — bitiş">
+              </SuzgecAlani>
+              <SuzgecAlani id="suzgec-sonbit" etiket="Son sipariş — bitiş">
                 <input type="date" id="suzgec-sonbit" name="sonBit" defaultValue={suzgec.sonBit ?? ""} className={KONTROL_TEK_SATIR} />
-              </Alan>
+              </SuzgecAlani>
               <div className="flex items-end text-sm">
                 <label className="inline-flex h-(--control-h) items-center gap-2 text-slate-700">
                   <input type="checkbox" name="fatura" value="eksik" defaultChecked={suzgec.fatura === "eksik"} />

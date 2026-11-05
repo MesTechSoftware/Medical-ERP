@@ -2,15 +2,13 @@ import Link from "next/link";
 import { Card, StatusChip } from "@/components/ui";
 import { Ikon } from "@/components/Ikon";
 import { BosDurum } from "@/components/liste/BosDurum";
-import { buton } from "@/components/stil";
+import { BAGLANTI, buton } from "@/components/stil";
 import { Tutar } from "@/components/Tutar";
 import { formatDate } from "@/lib/format";
 import { BRUT, tabanli } from "@/lib/taban";
 import type { Ozet, TahsilatSatiri } from "@/lib/tahsilat-listesi/sorgu";
 import { SUTUNLAR, type TahsilatSutunu } from "@/lib/tahsilat-listesi/sutunlar";
 import { bosDurum, tahsilatAdresi, type TahsilatSuzgeci } from "@/lib/tahsilat-listesi/suzgec";
-
-const BAGLANTI = "text-link underline decoration-link/40 underline-offset-4 hover:decoration-link";
 
 export function DurumRozeti({ durum }: { durum: TahsilatSatiri["status"] }) {
   return durum === "IPTAL" ? <StatusChip ton="hata">İptal</StatusChip> : <StatusChip ton="notr">Aktif</StatusChip>;

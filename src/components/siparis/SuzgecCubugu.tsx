@@ -6,19 +6,7 @@ import { AcilirPanel } from "@/components/liste/AcilirPanel";
 import { SuzgecFormu } from "@/components/liste/SuzgecFormu";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import { etkinSuzgecler, hizliSekmeler, SATICISIZ, siparisAdresi, type SiparisSuzgeci, type SiparisYolu } from "@/lib/siparis-listesi/suzgec";
-
-const ETIKET = "mb-1 block font-medium text-slate-700";
-
-function Alan({ id, etiket, children }: { id: string; etiket: string; children: React.ReactNode }) {
-  return (
-    <div className="text-sm">
-      <label htmlFor={id} className={ETIKET}>
-        {etiket}
-      </label>
-      {children}
-    </div>
-  );
-}
+import { SuzgecAlani } from "@/components/liste/SuzgecAlani";
 
 /**
  * Sipariş listesinin süzgeç çubuğu (spec Ü-23 §3.3): durum sekmeleri, Filtrele paneli (GET formu; tarih,
@@ -62,14 +50,14 @@ export function SuzgecCubugu({
             >
               {suzgec.durum && <input type="hidden" name="durum" value={suzgec.durum} />}
               {per && <input type="hidden" name="per" value={per} />}
-              <Alan id="suzgec-baslangic" etiket="Başlangıç">
+              <SuzgecAlani id="suzgec-baslangic" etiket="Başlangıç">
                 <input type="date" id="suzgec-baslangic" name="baslangic" defaultValue={suzgec.baslangic ?? ""} className={KONTROL_TEK_SATIR} />
-              </Alan>
-              <Alan id="suzgec-bitis" etiket="Bitiş">
+              </SuzgecAlani>
+              <SuzgecAlani id="suzgec-bitis" etiket="Bitiş">
                 <input type="date" id="suzgec-bitis" name="bitis" defaultValue={suzgec.bitis ?? ""} className={KONTROL_TEK_SATIR} />
-              </Alan>
+              </SuzgecAlani>
               {yol === "/orders" && saticilar && (
-                <Alan id="suzgec-satici" etiket="Satıcı">
+                <SuzgecAlani id="suzgec-satici" etiket="Satıcı">
                   <select id="suzgec-satici" name="satici" defaultValue={suzgec.satici ?? ""} className={KONTROL_TEK_SATIR}>
                     <option value="">Tümü</option>
                     {saticilar.map((s) => (
@@ -79,9 +67,9 @@ export function SuzgecCubugu({
                     ))}
                     <option value={SATICISIZ}>Satıcısız (bayi)</option>
                   </select>
-                </Alan>
+                </SuzgecAlani>
               )}
-              <Alan id="suzgec-q" etiket="Ara">
+              <SuzgecAlani id="suzgec-q" etiket="Ara">
                 <input
                   type="search"
                   id="suzgec-q"
@@ -91,7 +79,7 @@ export function SuzgecCubugu({
                   defaultValue={suzgec.q ?? ""}
                   className={KONTROL_TEK_SATIR}
                 />
-              </Alan>
+              </SuzgecAlani>
               <div className="flex items-center gap-3 sm:col-span-2">
                 <button type="submit" className={buton("birincil")}>
                   <Ikon ad="filtrele" />

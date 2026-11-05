@@ -9,8 +9,8 @@ import { belgeOnayDurumlari } from "@/lib/onay-blogu";
 import type { BelgeTutari } from "@/lib/satir-tutarlari";
 import { kalemMiktarlari, SIPARIS_SATIRI, siparisToplami, siparisTutarlari } from "@/lib/siparis";
 import { metinVaryantlari } from "@/lib/liste/metin";
+import { gunleriAraliga } from "@/lib/liste/parametreler";
 import { kapsamKosulu, SATICISIZ, type SiparisKapsami, type SiparisSuzgeci } from "@/lib/siparis-listesi/suzgec";
-import { TUM_ZAMANLAR, yerelGunAraligi } from "@/lib/zaman";
 
 /**
  * Siparişler ekranı sorguları (spec Ü-23 §4). Süzgeç tek `where` üreticisindedir; durum kartı ile
@@ -20,14 +20,6 @@ import { TUM_ZAMANLAR, yerelGunAraligi } from "@/lib/zaman";
  * `kapsam` zorunludur (`SiparisKapsami`, X-13): satıcı kapsamında (Siparişlerim, Ü-31) liste, KPI ve panel
  * yalnız o satıcının siparişlerini okur. Kapsam sorgudadır; adresin `satici` süzgeci onu genişletemez.
  */
-
-/** İstanbul gün metinlerini yarı açık aralığa çevirir; boş uç `TUM_ZAMANLAR`'ın ucudur. */
-export function gunleriAraliga(a: { baslangic: string | null; bitis: string | null }): Aralik {
-  return {
-    baslangic: (a.baslangic && yerelGunAraligi(a.baslangic)?.baslangic) || TUM_ZAMANLAR.baslangic,
-    bitis: (a.bitis && yerelGunAraligi(a.bitis)?.bitis) || TUM_ZAMANLAR.bitis,
-  };
-}
 
 export function siparisKosulu(s: SiparisSuzgeci, kapsam: SiparisKapsami): Prisma.OrderWhereInput {
   const ve: Prisma.OrderWhereInput[] = [kapsamKosulu(kapsam)];

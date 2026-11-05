@@ -2,15 +2,13 @@ import Link from "next/link";
 import { Card, StatusChip } from "@/components/ui";
 import { Ikon } from "@/components/Ikon";
 import { BosDurum } from "@/components/liste/BosDurum";
-import { buton } from "@/components/stil";
+import { BAGLANTI, buton } from "@/components/stil";
 import { formatDateTime } from "@/lib/format";
-import type { OnayKurali } from "@/lib/onay-listesi/suzgec";
+import type { BlokKuralKodu } from "@/lib/onay-blogu";
 import type { OnaySatiri } from "@/lib/onay-listesi/sorgu";
 import { SUTUNLAR, type OnaySutunu } from "@/lib/onay-listesi/sutunlar";
 import { bosDurum, onayAdresi, type OnaySuzgeci } from "@/lib/onay-listesi/suzgec";
 import { BLOK_KURAL_ADI } from "@/lib/sozluk";
-
-const BAGLANTI = "text-link underline decoration-link/40 underline-offset-4 hover:decoration-link";
 
 /** Talebin durumu: bekliyor (uyarı), onaylandı (olumlu), reddedildi (hata). */
 export function KararRozeti({ karar }: { karar: OnaySatiri["decision"] }) {
@@ -19,7 +17,7 @@ export function KararRozeti({ karar }: { karar: OnaySatiri["decision"] }) {
   return <StatusChip ton="uyari">Bekliyor</StatusChip>;
 }
 
-export const kuralAdi = (kod: string) => BLOK_KURAL_ADI[kod as OnayKurali] ?? kod;
+export const kuralAdi = (kod: string) => BLOK_KURAL_ADI[kod as BlokKuralKodu] ?? kod;
 
 /** Belge hücresi: numara; sipariş Siparişler panelini açar; bulunmayan belge "—". */
 export function BelgeBaglantisi({ belge }: { belge: OnaySatiri["belge"] }) {

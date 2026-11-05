@@ -8,8 +8,7 @@ import { ColumnMicro } from "@/components/grafik/ColumnMicro";
 import { KovaOzeti } from "@/components/kpi/KovaOzeti";
 import type { Ay } from "@/lib/donem";
 import type Decimal from "decimal.js";
-
-const BAGLANTI = "text-link underline decoration-link/40 underline-offset-4 hover:decoration-link";
+import { BAGLANTI } from "@/components/stil";
 
 /**
  * Satıcı raporu tablosu (X-1 §(1)): üç mutlak sayı, tabanı başlıkta yazılı; oran yok.

@@ -4,8 +4,7 @@ import { KpiSatiri } from "@/components/kpi/KpiSatiri";
 import type { KpiSonucu } from "@/lib/kpi/getir";
 import type { saticiDoktorKpileri } from "@/lib/doktor-listesi/sorgu";
 import { SATICI_KARTLARI, doktorAdresi } from "@/lib/doktor-listesi/suzgec";
-
-const KART = "block h-full rounded-xl transition hover:opacity-90";
+import { KPI_BAGLANTISI } from "@/components/stil";
 
 /**
  * Doktorlarım'ın üst kartları (spec Ü-32 §3.1): portföyün anlık sayıları, süzgeçten bağımsız. Her kart tıklanınca
@@ -18,7 +17,7 @@ export function KpiKartlari({ sonuc }: { sonuc: KpiSonucu<Awaited<ReturnType<typ
   return (
     <section aria-label="Doktor sayıları">
       <KpiSatiri>
-        <Link href={doktorAdresi(toplam.suzgec, {}, "/my-doctors")} className={KART}>
+        <Link href={doktorAdresi(toplam.suzgec, {}, "/my-doctors")} className={KPI_BAGLANTISI}>
           <KpiCard
             etiket={toplam.etiket}
             varyant="birincil"
@@ -30,7 +29,7 @@ export function KpiKartlari({ sonuc }: { sonuc: KpiSonucu<Awaited<ReturnType<typ
           />
         </Link>
         {digerleri.map((kart) => (
-          <Link key={kart.anahtar} href={doktorAdresi(kart.suzgec, {}, "/my-doctors")} className={KART}>
+          <Link key={kart.anahtar} href={doktorAdresi(kart.suzgec, {}, "/my-doctors")} className={KPI_BAGLANTISI}>
             <KpiCard
               etiket={kart.etiket}
               varyant="ikincil"

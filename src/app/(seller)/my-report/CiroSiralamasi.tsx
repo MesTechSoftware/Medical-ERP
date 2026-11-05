@@ -5,16 +5,16 @@ import { BosDurum } from "@/components/liste/BosDurum";
 import { EtkinSuzgecler } from "@/components/liste/EtkinSuzgecler";
 import { AcilirPanel } from "@/components/liste/AcilirPanel";
 import { SuzgecFormu } from "@/components/liste/SuzgecFormu";
-import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
+import { BAGLANTI, KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import { Tutar } from "@/components/Tutar";
 import { OranCubugu } from "@/components/grafik/BarMicro";
 import { MATRAH, tabanli } from "@/lib/taban";
 import type { KpiSonucu } from "@/lib/kpi/getir";
 import type { SiraSatiri } from "@/lib/rapor-listesi/sorgu";
 import { bosDurum, etkinSuzgecler, raporAdresi, type RaporSuzgeci } from "@/lib/rapor-listesi/suzgec";
+import { SUZGEC_ETIKETI } from "@/components/liste/SuzgecAlani";
 
 const YOL = "/my-report";
-const BAGLANTI = "text-link underline decoration-link/40 underline-offset-4 hover:decoration-link";
 
 /**
  * Raporum'un doktor ciro sıralaması (spec Ü-33 §3.2): satıcının dönemde ciro yaptığı bütün carileri, sayfalı. Ciro
@@ -60,7 +60,7 @@ export function CiroSiralamasi({
                 {suzgec.donem && <input type="hidden" name="donem" value={suzgec.donem} />}
                 {per !== undefined && <input type="hidden" name="per" value={per} />}
                 <div className="text-sm">
-                  <label htmlFor="rapor-q" className="mb-1 block font-medium text-slate-700">
+                  <label htmlFor="rapor-q" className={SUZGEC_ETIKETI}>
                     Ara
                   </label>
                   <input type="search" id="rapor-q" name="q" maxLength={100} placeholder="Doktor adı" defaultValue={suzgec.q ?? ""} className={KONTROL_TEK_SATIR} />

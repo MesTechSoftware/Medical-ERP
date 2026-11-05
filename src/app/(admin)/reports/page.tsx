@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/session";
 import { BRUT, MATRAH } from "@/lib/taban";
@@ -8,15 +7,13 @@ import { simdi } from "@/lib/zaman";
 import DonemSecici from "@/components/DonemSecici";
 import { ilk, type Parametreler } from "@/lib/liste/parametreler";
 import SaticiRaporTablosu from "@/components/SaticiRaporTablosu";
-import Pagination from "@/components/Pagination";
+import { ListeSayfalama } from "@/components/liste/ListeSayfalama";
 import { SutunSecici } from "@/components/liste/SutunSecici";
-import { gizliSutunlariCoz } from "@/lib/liste/sutunlar";
-import { getPagination, pageCount } from "@/lib/pagination";
+import { gizliSutunlar } from "@/lib/liste/sutun-tercihi";
+import { sayfaCoz, sayfaDisi } from "@/lib/liste/sayfa";
 import { doktorSiralamasi, saticiSecenekleri } from "@/lib/rapor-listesi/sorgu";
-import { SUTUNLAR, SUTUN_CEREZI } from "@/lib/rapor-listesi/sutunlar";
 import { SAHIPSIZ, korunanlar, raporAdresi, saticiAdresi, suzgecCoz } from "@/lib/rapor-listesi/suzgec";
 import { DoktorSiralamasi } from "./DoktorSiralamasi";
-import { sutunlariKaydet } from "./sutunEylemi";
 import {
   ciroOzeti,
   getSellerReports,
@@ -50,10 +47,9 @@ export default async function ReportsPage({
   const baglam = { yol: "/reports", kullaniciId: session.user.id };
   const not = karsilastirmaNotu(k.devamEdiyor);
   const suzgec = suzgecCoz(params);
-  const per = ilk(params, "per") ?? undefined;
-  const { page, perPage, skip, take } = getPagination({ page: ilk(params, "page") ?? undefined, per });
-  const yer = { page, per: per ? perPage : undefined };
-  const gizli = gizliSutunlariCoz(SUTUNLAR, (await cookies()).get(SUTUN_CEREZI)?.value);
+  const sayfa = sayfaCoz(params);
+  const { perPage, skip, take, yer } = sayfa;
+  const gizli = await gizliSutunlar("/reports");
 
   // Seçeneklerde olmayan satıcı (eski yer imi, elle yazılmış kimlik) ağır sorgulardan önce adresten düşer.
   const saticilar = await saticiSecenekleri();
@@ -70,14 +66,11 @@ export default async function ReportsPage({
   ]);
   const karsilastir = <T,>(onceki: T | null | undefined) => (k.onceki ? { onceki: onceki ?? null, not } : undefined);
   // Sayfa dışı adres son sayfaya gider.
-  if (siralama.satirlar.length === 0 && siralama.toplam > 0) {
-    redirect(raporAdresi(suzgec, { ...yer, page: pageCount(siralama.toplam, perPage) }));
+  const son = sayfaDisi(siralama, perPage);
+  if (son !== null) {
+    redirect(raporAdresi(suzgec, { ...yer, page: son }));
   }
   const adres = raporAdresi(suzgec, yer);
-  const sayfaParametreleri = {
-    ...Object.fromEntries(new URL(raporAdresi(suzgec), "http://x").searchParams),
-    per: yer.per === undefined ? undefined : String(yer.per),
-  };
 
   return (
     <div>
@@ -157,9 +150,9 @@ export default async function ReportsPage({
           per={yer.per}
           saticilar={saticilar}
           gizli={gizli}
-          sutunMenusu={<SutunSecici sutunlar={SUTUNLAR} gizli={gizli} action={sutunlariKaydet} donus={adres} />}
+          sutunMenusu={<SutunSecici liste="/reports" gizli={gizli} donus={adres} />}
         />
-        <Pagination page={page} totalPages={pageCount(siralama.toplam, perPage)} total={siralama.toplam} basePath="/reports" params={sayfaParametreleri} />
+        <ListeSayfalama sayfa={sayfa} toplam={siralama.toplam} adres={raporAdresi(suzgec)} />
       </div>
     </div>
   );

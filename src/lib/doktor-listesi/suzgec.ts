@@ -40,7 +40,15 @@ export type { Parametreler };
 /** Listenin ekranı: yönetici `/doctors` (bütün cariler), satıcı `/my-doctors` (kendi portföyü — X-13, kapsam sorguda). */
 export type DoktorYolu = "/doctors" | "/my-doctors";
 
-const SESSIZ: readonly Sessiz[] = ["30", "60", "90", "180", "hic"];
+/** "Son sipariş" süzgecinin seçenekleri — iki ekranın süzgeç paneli ve adres doğrulaması aynı listeyi okur. */
+export const SESSIZ_SECENEKLERI: readonly { deger: Sessiz; metin: string }[] = [
+  { deger: "30", metin: "30+ gündür sipariş yok" },
+  { deger: "60", metin: "60+ gündür sipariş yok" },
+  { deger: "90", metin: "90+ gündür sipariş yok" },
+  { deger: "180", metin: "180+ gündür sipariş yok" },
+  { deger: "hic", metin: "Hiç sipariş yok" },
+];
+const SESSIZ: readonly Sessiz[] = SESSIZ_SECENEKLERI.map((s) => s.deger);
 const BOLGE_AZAMI = 100;
 
 export function suzgecCoz(p: Parametreler): { suzgec: DoktorSuzgeci; detay: string | null } {
