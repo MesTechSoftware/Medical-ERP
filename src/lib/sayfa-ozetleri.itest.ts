@@ -17,10 +17,10 @@ async function kullanici(rol: "YONETICI" | "OPERASYON" | "SATICI", aktif = true)
   return prisma.user.create({ data: { name: `K${no}`, email: `k${no}@medikal.local`, passwordHash: "x", role: rol, isActive: aktif } });
 }
 
-async function siparis(status: "BEKLIYOR" | "HAZIRLANIYOR" | "IPTAL") {
+async function siparis(status: "BEKLIYOR" | "HAZIRLANIYOR" | "IPTAL", stage: "ONAYLI" | "TEKLIF" = "ONAYLI") {
   no += 1;
   const d = await prisma.doctor.create({ data: yeniDoktorVerisi(`Dr. ${no}`) });
-  return prisma.order.create({ data: { documentNo: `SIP-S-${no}`, doctorId: d.id, paymentTermDays: 30, stage: "ONAYLI", status } });
+  return prisma.order.create({ data: { documentNo: `SIP-S-${no}`, doctorId: d.id, paymentTermDays: 30, stage, status } });
 }
 
 const baglam = (stoklar: { stok: number }[] = []): SeritBaglami => ({ aralik: EKIM, an: AN, stoklar });
@@ -32,6 +32,8 @@ describe("SAYFA_SAYILARI — dashboard sayfa şeridi", () => {
     await siparis("BEKLIYOR");
     await siparis("HAZIRLANIYOR");
     await siparis("IPTAL");
+    // Teklif "Bekliyor" durumunda doğar; Siparişler ekranının Bekliyor sekmesi onu saymaz, şerit de saymaz (A-5).
+    await siparis("BEKLIYOR", "TEKLIF");
     const blok = { documentType: "SIP", documentId: "x", ruleCode: "NEGATIF_STOK", openedById: "u", openReason: "acil" };
     await prisma.approvalBlock.create({ data: blok });
     await prisma.approvalBlock.create({ data: { ...blok, decision: "ONAY", decidedById: "y", decidedAt: AN, decisionNote: "not" } });

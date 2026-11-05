@@ -4,7 +4,7 @@
  */
 
 import { ilk, type Parametreler } from "@/lib/liste/parametreler";
-import { DEFAULT_PER_PAGE, getPagination, pageCount, type Pagination } from "@/lib/pagination";
+import { DEFAULT_PER_PAGE, getPagination, MAX_PER_PAGE, pageCount, type Pagination } from "@/lib/pagination";
 
 /** Adrese yazılan sayfa konumu: `per` yalnız adreste geçerli bir değer varsa taşınır. */
 export type Yer = { page: number; per?: number };
@@ -21,6 +21,19 @@ export function sayfaCoz(p: Parametreler, varsayilan: number = DEFAULT_PER_PAGE)
   const per = sayi(ilk(p, "per"));
   const sayfa = getPagination({ page: sayi(ilk(p, "page")), per }, varsayilan);
   return { ...sayfa, yer: { page: sayfa.page, per: per === undefined ? undefined : sayfa.perPage } };
+}
+
+/**
+ * Süzgeç bağlantısına (sekme, süzgeç etiketi) adresteki geçerli sayfa boyunu ekler: süzgeç değişince sayfa
+ * düşer ama kullanıcının seçtiği boy korunur. Geçersiz ya da boş `per` eklenmez; bağlantıda varsa dokunulmaz.
+ */
+export function perEkle(adres: string, per: string | null): string {
+  const gecerli = sayi(per);
+  if (gecerli === undefined) return adres;
+  const url = new URL(adres, "http://x");
+  if (url.searchParams.has("per")) return adres;
+  url.searchParams.set("per", String(Math.min(parseInt(gecerli, 10), MAX_PER_PAGE)));
+  return `${url.pathname}${url.search}`;
 }
 
 /** Yalnız rakamlardan oluşan, sıfırdan büyük, güvenli tam sayı; değilse yok sayılır (harf, ondalık, taşma). */

@@ -7,7 +7,7 @@ import { amountSchema } from "@/lib/validation";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { simdi } from "@/lib/zaman";
 import { IsHatasi } from "@/lib/hata";
-import { basarili, engel, sonucOlustur, type Bildirim, type IslemSonucu } from "@/lib/sonuc";
+import { type Bildirim, type IslemSonucu, basarili, engel, gerekceEngeli, sonucOlustur } from "@/lib/sonuc";
 import { nakitTevsikUyarisi } from "@/lib/tevsik";
 import { vadesiGecmisUyarisi } from "@/lib/doctor-cari";
 import { tersKayitYaz } from "@/lib/cari-hareket";
@@ -85,7 +85,8 @@ export async function cancelCollection(
   const reason = ((formData.get("reason") as string) || "").trim();
   if (!paymentId) return engel("TAHSILAT_BULUNAMADI");
   // X-18-5: tahsilat iptali gerekçe isteyen akıştır; gerekçe kaydın `cancelReason` alanına yazılır.
-  if (!reason) return engel("GEREKCE_ZORUNLU", {}, "reason");
+  const gerekceSonucu = gerekceEngeli(reason, "reason");
+  if (gerekceSonucu) return gerekceSonucu;
 
   const before = await prisma.doctorPayment.findUnique({
     where: { id: paymentId },
@@ -147,7 +148,8 @@ export async function changeDueDate(
   const reason = ((formData.get("reason") as string) || "").trim();
   if (!ledgerEntryId) return engel("CARI_HAREKET_BULUNAMADI");
   if (!raw) return engel("ALAN_ZORUNLU", {}, "newDueDate");
-  if (!reason) return engel("GEREKCE_ZORUNLU", {}, "reason");
+  const gerekceSonucu = gerekceEngeli(reason, "reason");
+  if (gerekceSonucu) return gerekceSonucu;
 
   // `date` kolonu: "YYYY-MM-DD" UTC gece yarısı olarak okunur, dilim taşımaz (E-1 §(1)).
   if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return engel("GECERSIZ_TARIH", {}, "newDueDate");

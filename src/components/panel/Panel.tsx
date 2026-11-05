@@ -70,7 +70,13 @@ const ETIKET = {
   dar: "grid-cols-[7rem_minmax(0,1fr)]",
   orta: "grid-cols-[8rem_minmax(0,1fr)]",
   genis: "grid-cols-[9rem_minmax(0,1fr)]",
+  "cok-genis": "grid-cols-[10rem_minmax(0,1fr)]",
 } as const;
+
+export type EtiketGenisligi = keyof typeof ETIKET;
+
+/** Etiket–değer satırının ızgara sınıfı — satır ve iskeleti aynı ölçüyü kullanır. */
+export const panelSatiriSinifi = (etiket: EtiketGenisligi = "orta") => `grid ${ETIKET[etiket]} gap-2 py-1.5 text-sm`;
 
 /** `<dl>` içindeki etiket–değer satırı. */
 export function PanelSatiri({
@@ -79,11 +85,11 @@ export function PanelSatiri({
   children,
 }: {
   ad: string;
-  etiket?: keyof typeof ETIKET;
+  etiket?: EtiketGenisligi;
   children: React.ReactNode;
 }) {
   return (
-    <div className={`grid ${ETIKET[etiket]} gap-2 py-1.5 text-sm`}>
+    <div className={panelSatiriSinifi(etiket)}>
       <dt className="text-slate-500">{ad}</dt>
       <dd className="min-w-0 break-words text-slate-900">{children}</dd>
     </div>

@@ -11,7 +11,7 @@ import { kullaniciOturumlariniSonlandir } from "@/lib/oturum";
 import { parolaHashle, parolaHatasi } from "@/lib/parola";
 import { IsHatasi, benzersizIhlali } from "@/lib/hata";
 import { eszamanlilikHatasi, pasiflestirmeEngeli, pasiflestirmeTxSecenekleri } from "@/lib/kullanici";
-import { engel, sert, sonucOlustur, type IslemSonucu } from "@/lib/sonuc";
+import { type IslemSonucu, engel, gerekceEngeli, sert, sonucOlustur } from "@/lib/sonuc";
 
 /**
  * Kullanıcı yönetimi — E-2 §(1)/(3)/(6)/(7), 20.10.2026 eki. Yalnız `YONETICI`.
@@ -43,7 +43,8 @@ export async function createUser(_prev: unknown, formData: FormData): Promise<Us
   if (!ROLLER.includes(role)) return { ...engel("ALAN_ZORUNLU", {}, "role"), degerler };
   const parolaHata = parolaHatasi(password, "password");
   if (parolaHata) return { ...sonucOlustur([parolaHata]), degerler };
-  if (!gerekce) return { ...engel("GEREKCE_ZORUNLU", {}, "gerekce"), degerler };
+  const gerekceSonucu = gerekceEngeli(gerekce, "gerekce");
+  if (gerekceSonucu) return { ...gerekceSonucu, degerler };
 
   const passwordHash = await parolaHashle(password);
   try {
@@ -111,7 +112,8 @@ export async function updateUser(
     const parolaHata = parolaHatasi(password, "password");
     if (parolaHata) return { ...sonucOlustur([parolaHata]), degerler };
   }
-  if ((pasiflestiriliyor || password) && !gerekce) return { ...engel("GEREKCE_ZORUNLU", {}, "gerekce"), degerler };
+  const gerekceSonucu = pasiflestiriliyor || password ? gerekceEngeli(gerekce, "gerekce") : null;
+  if (gerekceSonucu) return { ...gerekceSonucu, degerler };
 
   const data: {
     name: string;
@@ -133,7 +135,8 @@ export async function updateUser(
     const doktorSayisi = await prisma.doctor.count({ where: { ownerSellerId: id } });
     if (doktorSayisi > 0) {
       if (!degerler.portfoy) return { ...engel("PORTFOY_HEDEFI_SECILMEDI", { doktorSayisi }, "portfoy"), degerler };
-      if (!degerler.portfoyGerekce) return { ...engel("GEREKCE_ZORUNLU", {}, "portfoyGerekce"), degerler };
+      const portfoySonucu = gerekceEngeli(degerler.portfoyGerekce, "portfoyGerekce");
+      if (portfoySonucu) return { ...portfoySonucu, degerler };
       portfoy = {
         hedef: degerler.portfoy === "SAHIPSIZ" ? null : degerler.portfoy,
         gerekce: degerler.portfoyGerekce,

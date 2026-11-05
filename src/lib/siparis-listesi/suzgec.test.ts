@@ -6,11 +6,11 @@ import {
   etkinSuzgecler,
   hizliSekmeler,
   kartAdresi,
-  kpiAraligi,
   siparisAdresi,
   suzgecCoz,
   type SiparisSuzgeci,
 } from "./suzgec";
+import { kpiAraligi } from "@/lib/liste/parametreler";
 
 const S = (ek: Partial<SiparisSuzgeci>): SiparisSuzgeci => ({ ...BOS_SUZGEC, ...ek });
 
@@ -52,8 +52,8 @@ describe("sipariş süzgeci (spec Ü-23 §3.3)", () => {
   it("sekmeler yalnız durumu yazar, öbür süzgeçleri korur, sayfa düşer", () => {
     const s = S({ durum: "IPTAL", satici: "u-1", q: "x" });
     const sekmeler = hizliSekmeler(s);
-    expect(sekmeler.map((t) => t.etiket)).toEqual(["Tümü", "Bekliyor", "Hazırlanıyor", "Kargolandı", "Teslim Edildi", "İptal", "Teklif"]);
-    expect(sekmeler.find((t) => t.etkin)?.etiket).toBe("İptal");
+    expect(sekmeler.map((t) => t.etiket)).toEqual(["Tümü", "Bekliyor", "Hazırlanıyor", "Kargolandı", "Teslim Edildi", "İptal Edildi", "Teklif"]);
+    expect(sekmeler.find((t) => t.etkin)?.etiket).toBe("İptal Edildi");
     expect(sekmeler[0].adres).toBe("/orders?satici=u-1&q=x");
     expect(sekmeler[6].adres).toBe("/orders?durum=TEKLIF&satici=u-1&q=x");
     expect(hizliSekmeler(BOS_SUZGEC)[0].etkin).toBe(true);

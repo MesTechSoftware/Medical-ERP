@@ -7,6 +7,7 @@ import { SonucGosterimi } from "@/components/Sonuc";
 import type { UserFormState } from "./actions";
 import { buton } from "@/components/stil";
 import { Ikon } from "@/components/Ikon";
+import { GEREKCE_AZAMI } from "@/lib/sonuc";
 
 type Action = (prev: unknown, formData: FormData) => Promise<UserFormState>;
 
@@ -97,6 +98,7 @@ export default function UserForm({
         label={isEdit ? "Gerekçe (pasifleştirme ve parola atamada zorunlu)" : "Gerekçe"}
         name="gerekce"
         required={!isEdit}
+        maxLength={GEREKCE_AZAMI}
         defaultValue={state?.degerler?.gerekce}
         sonuc={state}
       />
@@ -123,6 +125,7 @@ export default function UserForm({
           <Field
             label="Portföy gerekçesi"
             name="portfoyGerekce"
+            maxLength={GEREKCE_AZAMI}
             defaultValue={state?.degerler?.portfoyGerekce}
             sonuc={state}
           />

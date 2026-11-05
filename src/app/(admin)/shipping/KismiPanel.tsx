@@ -42,6 +42,7 @@ export function KismiPanel({
           </span>
         </div>
         <IslemFormu action={shipOrder.bind(null, r.id)} className="flex flex-wrap items-end gap-2">
+          <input type="hidden" name="donus" value={kapatAdresi} />
           <div className="w-full space-y-1">
             {r.kalemler.map((i) => (
               <div key={i.id} className="flex items-center justify-between gap-3 text-sm">

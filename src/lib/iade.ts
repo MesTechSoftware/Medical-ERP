@@ -4,7 +4,7 @@ import { iadeHareketiYaz } from "@/lib/cari-hareket";
 import { IsHatasi } from "@/lib/hata";
 import { onIadeKaydedildi } from "@/lib/olaylar";
 import { hesaplaSatirTutarlari } from "@/lib/satir-tutarlari";
-import { sert, type Bildirim } from "@/lib/sonuc";
+import { type Bildirim, gerekceHatasi, sert } from "@/lib/sonuc";
 import { stokHareketiYaz, stokKilitle, varsayilanDepoId } from "@/lib/stok";
 
 /**
@@ -33,7 +33,8 @@ export async function iadeYaz(
 ): Promise<{ iadeId: string; documentNo: string }> {
   const hatalar: Bildirim[] = [];
   const sebep = girdi.sebep.trim();
-  if (sebep === "") hatalar.push(sert("GEREKCE_ZORUNLU", {}, "reason"));
+  const sebepHatasi = gerekceHatasi(sebep, "reason");
+  if (sebepHatasi) hatalar.push(sebepHatasi);
   // 0 iade edilmeyen kalemdir; tam sayı olmayan ya da negatif miktar reddedilir.
   const kalemler = girdi.kalemler.filter((k) => k.miktar !== 0);
   if (kalemler.length === 0 || kalemler.some((k) => !Number.isInteger(k.miktar) || k.miktar < 0)) {

@@ -134,3 +134,14 @@ export function tumunuSecDurumu(secili: readonly boolean[], sinir: number = TOPL
   if (ilkler.length > 0 && ilkler.every(Boolean)) return secili.map(() => false);
   return secili.map((_, i) => i < sinir);
 }
+
+/**
+ * Kısmi sevkten sonra dönülecek adres: panelin açıldığı liste adresi (süzgeç, sayfa korunur; yalnız `/shipping`).
+ * Sipariş hâlâ kargo bekliyorsa `kismi` paneli yeniden açar, tamamlandıysa düşer.
+ */
+export function kismiSonrasiAdres(donus: string, siparisId: string, tamamlandi: boolean): string {
+  const url = new URL(donus === "/shipping" || donus.startsWith("/shipping?") ? donus : "/shipping", "http://x");
+  if (tamamlandi) url.searchParams.delete("kismi");
+  else url.searchParams.set("kismi", siparisId);
+  return `${url.pathname}${url.search}`;
+}

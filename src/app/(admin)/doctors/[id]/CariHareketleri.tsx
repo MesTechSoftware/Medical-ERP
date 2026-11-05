@@ -8,6 +8,7 @@ import { changeDueDate } from "../../collections/actions";
 import { addVadeFarki, reverseLedgerEntry } from "../actions";
 import { ACILIR_EYLEM, KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import { Ikon } from "@/components/Ikon";
+import { GEREKCE_AZAMI } from "@/lib/sonuc";
 
 export const TIP: Record<string, string> = {
   SEVKIYAT: "Sevkiyat",
@@ -75,7 +76,7 @@ export default async function CariHareketleri({ doktorId, yonetici }: { doktorId
                         <IslemFormu action={changeDueDate} className="mt-2 w-48 space-y-2" basariMetni="Vade değişti.">
                           <input type="hidden" name="ledgerEntryId" value={h.id} />
                           <input aria-label="Yeni vade" type="date" name="newDueDate" required className={KUTU} />
-                          <input aria-label="Vade gerekçesi" name="reason" required placeholder="Gerekçe" className={KUTU} />
+                          <input aria-label="Vade gerekçesi" name="reason" required maxLength={GEREKCE_AZAMI} placeholder="Gerekçe" className={KUTU} />
                           <button type="submit" className={DUGME}>
                             <Ikon ad="kaydet" />
                             Kaydet
@@ -90,7 +91,7 @@ export default async function CariHareketleri({ doktorId, yonetici }: { doktorId
                           Ters kayıt
                         </summary>
                         <IslemFormu action={reverseLedgerEntry.bind(null, h.id)} className="mt-2 w-48 space-y-2">
-                          <input aria-label="Ters kayıt gerekçesi" name="reason" required placeholder="Gerekçe" className={KUTU} />
+                          <input aria-label="Ters kayıt gerekçesi" name="reason" required maxLength={GEREKCE_AZAMI} placeholder="Gerekçe" className={KUTU} />
                           <button type="submit" className={DUGME}>
                             <Ikon ad="cevir" />
                             Çevir
@@ -130,7 +131,7 @@ export default async function CariHareketleri({ doktorId, yonetici }: { doktorId
               <label htmlFor="vdf-gerekce" className="mb-1 block text-xs text-slate-500">
                 Gerekçe
               </label>
-              <input id="vdf-gerekce" name="reason" required className={KUTU} />
+              <input id="vdf-gerekce" name="reason" required maxLength={GEREKCE_AZAMI} className={KUTU} />
             </div>
             <div className="flex items-end">
               <button type="submit" className={DUGME}>

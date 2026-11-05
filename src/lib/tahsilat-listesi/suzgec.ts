@@ -1,4 +1,4 @@
-import { aralikEtiketi, gun, ilk, kimlik, secenek, type Parametreler } from "@/lib/liste/parametreler";
+import { type Parametreler, aralikEtiketi, gun, ilk, kimlik, secenek } from "@/lib/liste/parametreler";
 
 /**
  * Tahsilat ekranının süzgeci (spec Ü-26 §3.3); adres çubuğunda durur, geçersiz değer yok sayılır. Varsayılan
@@ -72,11 +72,6 @@ export function sekmeAdresi(s: TahsilatSuzgeci, tarih: Tarih): string {
  * KPI kartlarının aralığı (spec §3.2): tarih süzgeci varsa o, yoksa bu ay (ayın 1'i – `bugun`).
  * Durum, tip ve metin süzgeci aralığı değiştirmez.
  */
-export function kpiAraligi(s: TahsilatSuzgeci, bugun: string): Tarih & { varsayilan: boolean } {
-  if (s.baslangic || s.bitis) return { baslangic: s.baslangic, bitis: s.bitis, varsayilan: false };
-  return { baslangic: `${bugun.slice(0, 8)}01`, bitis: bugun, varsayilan: true };
-}
-
 /** Kartın adresi: saydığı aralığı (varsayılanda da) ve tipi yazar; açtığı süzgecin toplamı kartla aynıdır (A-11-2). */
 export function kartAdresi(tip: TahsilatTipi | null, a: Tarih): string {
   return tahsilatAdresi({ ...BOS_SUZGEC, baslangic: a.baslangic, bitis: a.bitis, tip });

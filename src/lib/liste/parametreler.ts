@@ -49,3 +49,21 @@ export function gunleriAraliga(a: { baslangic: string | null; bitis: string | nu
     bitis: (a.bitis && yerelGunAraligi(a.bitis)?.bitis) || TUM_ZAMANLAR.bitis,
   };
 }
+
+/** KPI kartlarının gün aralığı: süzgecin aralığı, yoksa bu ay (ayın 1'i → bugün). */
+export type KpiAraligi = { baslangic: string | null; bitis: string | null; varsayilan: boolean };
+
+/**
+ * Süzgeç aralığı boşsa bu ay; kart bağlantısının yazdığı aralık bu ayın kendisiyse de "varsayılan" sayılır —
+ * karttan gelen adreste not yine "Bu ay" der, tarih aralığı yazmaz.
+ */
+export function kpiAraligi(s: { baslangic: string | null; bitis: string | null }, bugun: string): KpiAraligi {
+  const ayBasi = `${bugun.slice(0, 8)}01`;
+  if (!s.baslangic && !s.bitis) return { baslangic: ayBasi, bitis: bugun, varsayilan: true };
+  return { baslangic: s.baslangic, bitis: s.bitis, varsayilan: s.baslangic === ayBasi && s.bitis === bugun };
+}
+
+/** KPI kartlarının alt notu: bu ay "Bu ay", yoksa aralığın etiketi. */
+export function kpiDonemNotu(a: KpiAraligi): string {
+  return a.varsayilan ? "Bu ay" : aralikEtiketi(a.baslangic, a.bitis);
+}

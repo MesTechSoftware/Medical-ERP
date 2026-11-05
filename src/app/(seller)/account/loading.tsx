@@ -1,8 +1,8 @@
-import { KpiSatiriIskeleti, SayfaBasligiIskeleti, TabloIskeleti } from "@/components/Iskelet";
+import { KpiSatiriIskeleti, SayfaBasligiIskeleti, TanimListesiIskeleti } from "@/components/Iskelet";
 import { kpiAltNotu } from "@/components/kpi/KpiCard";
 import { karsilastirmaNotu } from "@/lib/donem";
 
-/** Hesabım iskeleti: başlık, KPI satırı (kartlarla aynı satır ve metinler), profil yer tutucusu. */
+/** Hesabım iskeleti: başlık, KPI satırı (kartlarla aynı satır ve metinler), profil tanım listesi (satırlar profille aynı ızgarada). */
 export default function Loading() {
   return (
     <div role="status">
@@ -16,7 +16,7 @@ export default function Loading() {
           { etiket: "Bu ay cirom", varyant: "ikincil", para: true, degisim: true, trend: true, altNot: kpiAltNotu(undefined, karsilastirmaNotu(true)) },
         ]}
       />
-      <TabloIskeleti sutun={2} satir={5} />
+      <TanimListesiIskeleti satir={5} etiket="cok-genis" />
     </div>
   );
 }

@@ -51,9 +51,13 @@ export function doktorWhere(s: DoktorSuzgeci, an: Date = simdi()): Prisma.Doctor
   return { AND: kosullar };
 }
 
+/**
+ * "Sipariş" sütunu carinin sayılan siparişleridir — teklif ve iptal hariç (A-5; kullanıcı kararı 05.11.2026, Ü-35).
+ * Son sipariş, "hiç siparişi yok" kartı ve süzgeci de aynı kümeden sayar.
+ */
 const LISTE_EKI = {
   ownerSeller: { select: { id: true, name: true } },
-  _count: { select: { orders: true } },
+  _count: { select: { orders: { where: siparis } } },
 } as const satisfies Prisma.DoctorInclude;
 
 export type DoktorSatiri = Prisma.DoctorGetPayload<{ include: typeof LISTE_EKI }> & {

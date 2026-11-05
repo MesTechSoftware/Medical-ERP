@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import { test, expect } from "@playwright/test";
 import { Client } from "pg";
 
+import { policy } from "../../src/lib/policy";
+
 /**
  * D-5-1 · D-5-2 — yönetici veri setini dosya olarak indirir; dosya sunucuda saklanmaz,
  * her indirme kütüğe yazılır.
@@ -51,11 +53,14 @@ test("aralık okuyan veri seti dönemsiz çalışmaz; alanın altında gösteril
   await expect(page.getByLabel("Başlangıç günü")).toHaveValue("2026-10-31");
 });
 
-test("dönem kısayolu alanları doldurur; şablonsuz fatura hazırlık seçilemez; geçmiş yok (D-5-3)", async ({ page }) => {
+test("dönem kısayolu alanları doldurur; fatura hazırlık şablona bağlı; geçmiş yok (D-5-3)", async ({ page }) => {
   await page.goto("/exports");
   const setler = page.getByRole("radiogroup", { name: "Veri seti" });
   await expect(setler.getByRole("radio")).toHaveCount(6);
-  await expect(setler.getByLabel(/Fatura hazırlık/)).toBeDisabled();
+  // Kart, kurulumun şablon tanımına bağlıdır (K-4 §(6)-b): beklenti ortamın policy değerinden okunur.
+  const faturaKarti = setler.getByLabel(/Fatura hazırlık/);
+  if (policy.export.sablonTanimi === null) await expect(faturaKarti).toBeDisabled();
+  else await expect(faturaKarti).toBeEnabled();
   await setler.getByLabel(/Tahsilat hareket listesi/).check();
   await page.getByRole("group", { name: "Dönem kısayolları" }).getByRole("button", { name: "Geçen ay" }).click();
   const baslangic = await page.getByLabel("Başlangıç günü").inputValue();

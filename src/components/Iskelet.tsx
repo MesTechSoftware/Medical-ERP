@@ -4,6 +4,7 @@ import { BOYUT_SINIFI, type GrafikBoyutu } from "@/components/grafik/ortak";
 import { kartSinifi, kpiYerlesimi } from "@/components/kpi/KpiSatiri";
 import { DEGER_BOYU, DEGER_SATIRI, type KpiVaryanti } from "@/components/kpi/KpiCard";
 import { ALAN, YERLESIM } from "@/components/dashboard/yerlesim";
+import { panelSatiriSinifi, type EtiketGenisligi } from "@/components/panel/Panel";
 
 /*
  * Yükleme iskeletleri (ADR-009). Ölçü tahmin edilmez: gerçek bileşenlerin sınıfları ve token'ları
@@ -61,6 +62,29 @@ export function TabloIskeleti({ sutun = 5, satir = 8 }: { sutun?: number; satir?
             ))}
           </tbody>
         </table>
+      </div>
+    </Card>
+  );
+}
+
+/** Başlıklı tanım listesi kartı (Hesabım profili gibi): satırlar `PanelSatiri` ile aynı ızgara ve yükseklikte. */
+export function TanimListesiIskeleti({ satir = 5, etiket = "orta" }: { satir?: number; etiket?: EtiketGenisligi }) {
+  return (
+    <Card>
+      <div className="mb-2 flex h-5 items-center">
+        <Cubuk className="h-3.5 w-16" />
+      </div>
+      <div className="divide-y divide-slate-100">
+        {Array.from({ length: satir }, (_, i) => (
+          <div key={i} className={panelSatiriSinifi(etiket)}>
+            <span className="flex h-5 items-center">
+              <Cubuk className="h-3 w-20" />
+            </span>
+            <span className="flex h-5 items-center">
+              <Cubuk className="h-3.5 w-40 max-w-full" />
+            </span>
+          </div>
+        ))}
       </div>
     </Card>
   );
