@@ -59,8 +59,9 @@ export default async function MyReportPage({
     kpiGetir(() => doktorSiralamasi(donem.aralik, suzgec, { skip, take }, kapsam), baglam),
   ]);
   // Sayfa dışı adres son sayfaya gider.
-  if (siralama.tamam && siralama.deger.satirlar.length === 0 && siralama.deger.toplam > 0) {
-    redirect(raporAdresi(suzgec, { ...yer, page: pageCount(siralama.deger.toplam, perPage) }, YOL));
+  // Sonuçsuz aramada ikinci sayfadan sonrası birinci sayfaya (sayfalama "3 / 1" demesin).
+  if (siralama.tamam && siralama.deger.satirlar.length === 0 && page > 1) {
+    redirect(raporAdresi(suzgec, { ...yer, page: siralama.deger.toplam > 0 ? pageCount(siralama.deger.toplam, perPage) : 1 }, YOL));
   }
   const sayfaParametreleri = {
     ...Object.fromEntries(new URL(raporAdresi(suzgec, {}, YOL), "http://x").searchParams),
@@ -71,7 +72,8 @@ export default async function MyReportPage({
   return (
     <div>
       <PageHeader title="Raporum" description="Dönem cirom, hakedişim ve tahsilatım" />
-      <DonemSecici anahtar={donem.anahtar} yol={YOL} korunan={korunanlar(suzgec)} />
+      {/* Dönem değişince arama ve sayfa boyu korunur (arama formu ve Temizle gibi). */}
+      <DonemSecici anahtar={donem.anahtar} yol={YOL} korunan={{ ...korunanlar(suzgec), ...(yer.per ? { per: String(yer.per) } : {}) }} />
       <KpiSatiri>
         <KpiCard
           etiket="Cirom"
@@ -135,7 +137,7 @@ export default async function MyReportPage({
       </Card>
 
       <div className="mt-6">
-        <CiroSiralamasi sonuc={siralama} suzgec={suzgec} per={yer.per} saticiId={session.user.id} />
+        <CiroSiralamasi sonuc={siralama} suzgec={suzgec} per={yer.per} saticiId={session.user.id} tumZamanlar={donem.anahtar === "tum"} />
         {siralama.tamam && (
           <Pagination page={page} totalPages={pageCount(siralama.deger.toplam, perPage)} total={siralama.deger.toplam} basePath={YOL} params={sayfaParametreleri} />
         )}

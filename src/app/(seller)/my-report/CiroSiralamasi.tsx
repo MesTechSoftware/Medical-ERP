@@ -26,11 +26,13 @@ export function CiroSiralamasi({
   suzgec,
   per,
   saticiId,
+  tumZamanlar,
 }: {
   sonuc: KpiSonucu<{ satirlar: SiraSatiri[]; toplam: number }>;
   suzgec: RaporSuzgeci;
   per: number | undefined;
   saticiId: string;
+  tumZamanlar: boolean;
 }) {
   const etiketler = etkinSuzgecler(suzgec, () => undefined, YOL);
   const tur = bosDurum(suzgec);
@@ -104,7 +106,7 @@ export function CiroSiralamasi({
               <BosDurum
                 colSpan={4}
                 ikon="filtrele"
-                baslik={tur === "suzgecli" ? "Bu aramaya uyan doktor yok." : "Bu dönemde cironuz yok."}
+                baslik={tur === "suzgecli" ? "Bu aramaya uyan doktor yok." : tumZamanlar ? "Henüz cironuz yok." : "Bu dönemde cironuz yok."}
                 temizleAdresi={tur === "suzgecli" ? temizle : undefined}
               />
             )}
@@ -112,6 +114,7 @@ export function CiroSiralamasi({
               <tr key={d.doctorId}>
                 <td className="sayi text-slate-500">{d.sira}</td>
                 <td className="font-medium text-slate-900">
+                  {/* `sellerId` carinin bugünkü sahibidir (ciro siparişin satıcısına yazılır); bağlantı yalnız portföydeyken. */}
                   {d.sellerId === saticiId ? (
                     <Link href={`/my-doctors?detay=${d.doctorId}`} className={BAGLANTI}>
                       {d.fullName}
