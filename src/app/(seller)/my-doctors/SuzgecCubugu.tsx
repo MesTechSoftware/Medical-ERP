@@ -5,7 +5,7 @@ import { HizliSekmeler } from "@/components/liste/HizliSekmeler";
 import { AcilirPanel } from "@/components/liste/AcilirPanel";
 import { SuzgecFormu } from "@/components/liste/SuzgecFormu";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
-import { SATICI_SEKMELERI, ayniSuzgec, doktorAdresi, etkinSuzgecler, type DoktorSuzgeci } from "@/lib/doktor-listesi/suzgec";
+import { SATICI_SEKMELERI, ayniSuzgec, doktorAdresi, etkinSayisi, etkinSuzgecler, type DoktorSuzgeci } from "@/lib/doktor-listesi/suzgec";
 
 const YOL = "/my-doctors";
 const ETIKET = "mb-1 block font-medium text-slate-700";
@@ -44,8 +44,8 @@ export function SuzgecCubugu({
   sutunMenusu?: React.ReactNode;
 }) {
   const etiketler = etkinSuzgecler(suzgec, () => undefined, YOL);
-  // Durum sekmeden de seçilir; sayaç panelin bütün alanlarını sayar (durum panelde de var).
-  const sayi = etiketler.length;
+  // Sayaç yönetici çubuğu ve boş durumla aynı kuraldır (`etkinSayisi`); durum panelde de var.
+  const sayi = etkinSayisi(suzgec);
   const uygulanan = doktorAdresi(suzgec, {}, YOL);
   return (
     <div className="mb-4 space-y-3">

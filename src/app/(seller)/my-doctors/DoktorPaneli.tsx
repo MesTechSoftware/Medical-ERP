@@ -54,7 +54,7 @@ export function DoktorPaneli({ veri, kapatAdresi }: { veri: SaticiDoktorPaneli; 
               {d.fullName}
             </h2>
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              <DurumRozetleri status={d.status} eksikFatura={veri.eksikFatura} risk={risk} />
+              <DurumRozetleri status={d.status} eksikFatura={false} risk={risk} />
             </div>
           </div>
           <Link href={kapatAdresi} scroll={false} className={buton("metin")}>
@@ -102,6 +102,9 @@ export function DoktorPaneli({ veri, kapatAdresi }: { veri: SaticiDoktorPaneli; 
           </Bolum>
 
           <Bolum baslik="Son siparişlerim">
+            <p className="mb-1 text-xs text-slate-500">
+              Bu doktora sizin girdiğiniz siparişler. Listedeki sipariş sayısı ve son sipariş, devirden önceki siparişleri de kapsar.
+            </p>
             {veri.siparisler.length === 0 ? (
               <Yok />
             ) : (

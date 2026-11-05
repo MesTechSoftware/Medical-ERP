@@ -64,10 +64,14 @@ export function SiparisPaneli({ veri, kapatAdresi, yol }: { veri: Veri; kapatAdr
             <dl className="divide-y divide-slate-100">
               <Satir ad="Tarih">{formatDateTime(o.orderDate)}</Satir>
               <Satir ad="Cari">
-                {/* Satıcıda Doktorlarım paneli; cari artık onun değilse (devir) panel açılmaz, liste görünür. */}
-                <Link href={`${yonetici ? "/doctors" : "/my-doctors"}?detay=${o.cari.id}`} className={BAGLANTI}>
-                  {o.cari.fullName}
-                </Link>
+                {/* Satıcıda Doktorlarım paneli — yalnız cari bugün de onun portföyündeyse (devir sonrası panel açılmazdı). */}
+                {yonetici || o.cariSaticida ? (
+                  <Link href={`${yonetici ? "/doctors" : "/my-doctors"}?detay=${o.cari.id}`} className={BAGLANTI}>
+                    {o.cari.fullName}
+                  </Link>
+                ) : (
+                  o.cari.fullName
+                )}
                 {o.cari.clinic && <span className="block text-xs text-slate-500">{o.cari.clinic}</span>}
               </Satir>
               {yonetici && <Satir ad="Satıcı">{o.satici ?? "—"}</Satir>}

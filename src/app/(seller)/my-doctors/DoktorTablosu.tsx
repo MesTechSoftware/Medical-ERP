@@ -25,7 +25,8 @@ const BASLIK: Partial<Record<SutunAnahtari, { metin: string; sinif?: string }>> 
 
 /**
  * Doktorlarım tablosu (spec Ü-32 §3.3): ad yan paneli açar; Düzenle satırda kalır. Sorumlu satıcı sütunu yoktur.
- * Bakiye K-2 biçimindedir (mutlak tutar + yön); rozetler yönetici listesiyle aynı bileşendir (A-12-5, A-13-3).
+ * Bakiye K-2 biçimindedir (mutlak tutar + yön); rozetler yönetici listesiyle aynı bileşendir (A-12-5). Eksik fatura
+ * işareti yoktur: fatura bilgisi yöneticinin işidir, satıcının formunda alanı yok — düzeltemeyeceği uyarı çizilmez.
  */
 export function DoktorTablosu({
   satirlar,
@@ -77,8 +78,8 @@ export function DoktorTablosu({
               />
             )}
             {satirlar.map((d) => (
-              <tr key={d.id} className={d.eksikFatura ? "bg-critical-bg" : undefined}>
-                <td className={`font-medium text-slate-900 ${d.eksikFatura ? "border-l-2 border-critical" : ""}`}>
+              <tr key={d.id}>
+                <td className="font-medium text-slate-900">
                   {/* Ad yan paneli açar; kapanınca odak `data-kayit` ile buraya döner. */}
                   <Link
                     href={doktorAdresi(suzgec, { ...yer, detay: d.id }, YOL)}
@@ -109,7 +110,7 @@ export function DoktorTablosu({
                 )}
                 {acik("durum") && (
                   <td>
-                    <DurumRozetleri status={d.status} eksikFatura={d.eksikFatura} risk={d.risk} />
+                    <DurumRozetleri status={d.status} eksikFatura={false} risk={d.risk} />
                   </td>
                 )}
                 <td className="text-right">

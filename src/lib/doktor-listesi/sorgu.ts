@@ -109,16 +109,10 @@ export async function doktorKpileri(): Promise<{ toplam: number; aktif: number; 
 
 export async function doktorSuzgecSecenekleri(): Promise<{ bolgeler: string[]; saticilar: { id: string; name: string }[] }> {
   const [bolgeler, saticilar] = await Promise.all([
-    prisma.doctor.findMany({ where: { region: { not: null } }, distinct: ["region"], select: { region: true } }),
+    doktorBolgeleri({}),
     prisma.user.findMany({ where: { role: "SATICI", isActive: true }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);
-  return {
-    bolgeler: bolgeler
-      .map((b) => b.region!)
-      .filter((b) => b.trim() !== "")
-      .sort((a, b) => a.localeCompare(b, "tr")),
-    saticilar,
-  };
+  return { bolgeler, saticilar };
 }
 
 export type DoktorPaneliVerisi = {
@@ -204,7 +198,6 @@ export async function doktorBolgeleri(kapsam: Prisma.DoctorWhereInput): Promise<
 
 export type SaticiDoktorPaneli = {
   doktor: Doctor;
-  eksikFatura: boolean;
   risk: DoktorRisk;
   vadeUyarisi: Bildirim | null;
   siparisler: { id: string; documentNo: string; orderDate: Date; stage: OrderStage; status: OrderStatus; toplam: Decimal }[];
@@ -218,8 +211,7 @@ export type SaticiDoktorPaneli = {
 export async function saticiDoktorPaneli(id: string, kapsam: Prisma.DoctorWhereInput, saticiId: string): Promise<SaticiDoktorPaneli | null> {
   const doktor = await prisma.doctor.findFirst({ where: { AND: [{ id }, kapsam] } });
   if (!doktor) return null;
-  const [eksik, risk, vadeUyarisi, siparisler] = await Promise.all([
-    prisma.doctor.count({ where: { AND: [{ id }, EKSIK_FATURA_BILGISI] } }),
+  const [risk, vadeUyarisi, siparisler] = await Promise.all([
     hesaplaDoktorRisk(id),
     vadesiGecmisUyarisi(id),
     prisma.order.findMany({
@@ -231,7 +223,6 @@ export async function saticiDoktorPaneli(id: string, kapsam: Prisma.DoctorWhereI
   ]);
   return {
     doktor,
-    eksikFatura: eksik > 0,
     risk,
     vadeUyarisi,
     siparisler: siparisler.map(({ items, ...o }) => ({ ...o, toplam: siparisToplami(items).toplam })),
