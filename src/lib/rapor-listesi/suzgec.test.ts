@@ -38,3 +38,12 @@ describe("rapor süzgeci (spec Ü-27 §3.3)", () => {
     expect(bosDurum(S({ q: "x" }))).toBe("suzgecli");
   });
 });
+
+describe("Raporum yolu (Ü-33)", () => {
+  it("adres ve etiket `/my-report`'u yazar, dönemi korur; varsayılan `/reports` kalır", () => {
+    const s = { ...BOS_SUZGEC, donem: "2026-10", q: "ada" };
+    expect(raporAdresi(s, { page: 2 }, "/my-report")).toBe("/my-report?donem=2026-10&q=ada&page=2");
+    expect(etkinSuzgecler(s, () => undefined, "/my-report")).toEqual([{ anahtar: "q", etiket: "Ara: ada", kaldirAdresi: "/my-report?donem=2026-10" }]);
+    expect(raporAdresi(s)).toBe("/reports?donem=2026-10&q=ada");
+  });
+});

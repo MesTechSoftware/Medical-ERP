@@ -1,12 +1,12 @@
 import { prisma } from "@/lib/db";
 import { cubukOranlari } from "@/lib/kpi/olcek";
-import { getDoctorReports, type Donem, type DoctorReport } from "@/lib/reports-service";
+import { getDoctorReports, type Donem, type DoctorReport, type KpiKapsami } from "@/lib/reports-service";
 import { SAHIPSIZ, type RaporSuzgeci } from "@/lib/rapor-listesi/suzgec";
 
 /**
  * Raporlar'ın doktor ciro sıralaması (spec Ü-27 §4, X-1-2). Servis dönemin bütün carilerini hesaplar;
  * cirosu sıfır olan düşer, sıra ve lidere oran bu tam dönem listesinden çıkar, süzgeç ve sayfa sonra uygulanır —
- * süzülmüş listede de carinin şirket içindeki yeri okunur.
+ * süzülmüş listede de carinin kapsam içindeki yeri okunur (Raporlar'da şirket, Raporum'da satıcının kendi listesi).
  */
 export type SiraSatiri = DoctorReport & { sira: number; oran: number | null };
 
@@ -16,12 +16,17 @@ export type SiraSatiri = DoctorReport & { sira: number; oran: number | null };
  */
 const kucuk = (m: string) => m.toLocaleLowerCase("tr").replace(/ı/g, "i");
 
+/**
+ * Doktor ciro sıralaması. `kapsam` zorunludur: Raporlar şirket geneli, Raporum (Ü-33) satıcının kendi cirosu
+ * (`getDoctorReports`'un kapsamı). Sıra ve lidere oran kapsamın içindeki dönem sırasıdır.
+ */
 export async function doktorSiralamasi(
   aralik: Donem,
   s: RaporSuzgeci,
-  sayfa: { skip: number; take: number }
+  sayfa: { skip: number; take: number },
+  kapsam: KpiKapsami
 ): Promise<{ satirlar: SiraSatiri[]; toplam: number }> {
-  const cirolu = (await getDoctorReports(aralik, Number.POSITIVE_INFINITY)).filter((d) => !d.ciro.isZero());
+  const cirolu = (await getDoctorReports(aralik, Number.POSITIVE_INFINITY, kapsam)).filter((d) => !d.ciro.isZero());
   const oranlar = cubukOranlari(cirolu.map((d) => d.ciro));
   const q = s.q ? kucuk(s.q) : null;
   const suzulmus = cirolu

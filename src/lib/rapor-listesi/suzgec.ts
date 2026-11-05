@@ -14,6 +14,9 @@ const METIN_SINIRI = 100;
 
 export type { Parametreler };
 
+/** Ekran: Raporlar `/reports` (şirket), Raporum `/my-report` (satıcının kendi cirosu, Ü-33 — satıcı süzgeci yok). */
+export type RaporYolu = "/reports" | "/my-report";
+
 /** `YYYY-AA` (ay 01–12) ya da `tum`; başka değer yok sayılır. */
 function donemParametresi(metin: string | null): string | null {
   if (metin === "tum") return "tum";
@@ -31,7 +34,7 @@ export function suzgecCoz(p: Parametreler): RaporSuzgeci {
 }
 
 /** Süzgeci ve dönemi koruyan adres; sayfa ve sayfa boyu isteğe bağlı. */
-export function raporAdresi(s: RaporSuzgeci, ek: { page?: number; per?: number } = {}): string {
+export function raporAdresi(s: RaporSuzgeci, ek: { page?: number; per?: number } = {}, yol: RaporYolu = "/reports"): string {
   const p = new URLSearchParams();
   if (s.donem) p.set("donem", s.donem);
   if (s.satici) p.set("satici", s.satici);
@@ -39,7 +42,7 @@ export function raporAdresi(s: RaporSuzgeci, ek: { page?: number; per?: number }
   if (ek.page !== undefined && ek.page > 1) p.set("page", String(ek.page));
   if (ek.per !== undefined) p.set("per", String(ek.per));
   const q = p.toString();
-  return q ? `/reports?${q}` : "/reports";
+  return q ? `${yol}?${q}` : yol;
 }
 
 /** Dönem seçicinin gizli alanları: dönem değişince doktor süzgeci korunur. */
@@ -57,14 +60,15 @@ export function saticiAdresi(s: RaporSuzgeci, saticiId: string): string {
 
 export function etkinSuzgecler(
   s: RaporSuzgeci,
-  saticiAdi: (id: string) => string | undefined
+  saticiAdi: (id: string) => string | undefined,
+  yol: RaporYolu = "/reports"
 ): { anahtar: string; etiket: string; kaldirAdresi: string }[] {
   const liste: { anahtar: string; etiket: string; kaldirAdresi: string }[] = [];
   const ad = s.satici === SAHIPSIZ ? "Sahipsiz" : s.satici ? saticiAdi(s.satici) : undefined;
   if (ad !== undefined) {
-    liste.push({ anahtar: "satici", etiket: s.satici === SAHIPSIZ ? ad : `Satıcı: ${ad}`, kaldirAdresi: raporAdresi({ ...s, satici: null }) });
+    liste.push({ anahtar: "satici", etiket: s.satici === SAHIPSIZ ? ad : `Satıcı: ${ad}`, kaldirAdresi: raporAdresi({ ...s, satici: null }, {}, yol) });
   }
-  if (s.q) liste.push({ anahtar: "q", etiket: `Ara: ${s.q}`, kaldirAdresi: raporAdresi({ ...s, q: null }) });
+  if (s.q) liste.push({ anahtar: "q", etiket: `Ara: ${s.q}`, kaldirAdresi: raporAdresi({ ...s, q: null }, {}, yol) });
   return liste;
 }
 

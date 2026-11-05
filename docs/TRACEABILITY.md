@@ -6,7 +6,7 @@
 > Kod yeri, kriter metninde anılan fonksiyonun tanımlandığı dosyadır. Eski PRD matrisi (8 Ağustos 2026)
 > `docs/arsiv/TRACEABILITY_PRD_V2.md`'dedir.
 
-**Özet:** 158 KANITLI · 0 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.0** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
+**Özet:** 159 KANITLI · 0 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.0** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
 
 | Kriter | Karar | Durum | Kod yeri | Test | Kriter metni |
 |---|---|---|---|---|---|
@@ -127,6 +127,7 @@
 | E-3-1 | E-3 | KANITLI | — | `src/lib/ice-aktarim/ice-aktarim.itest.ts`<br>`src/lib/xlsx-okuyucu.test.ts` | İçe aktarım dosyası saklanmaz; tek dosya, `.xlsx` uzantısı ve zip imzası, en fazla `import.azamiDosyaBoyutMb` (5) MB — aşan ya da okunama… |
 | X-1-1 | X-1 | KANITLI | — | `src/lib/reports-service.itest.ts`<br>`e2e/operasyon/operasyon.spec.ts` | `getSellerReports(kullanici, { baslangic, bitis })` dönemi zorunlu, yarı açık aralık olarak alır. Satıcı başına üç mutlak sayı döner, ora… |
 | X-1-2 | X-1 | KANITLI | — | `src/lib/rapor-listesi/sorgu.itest.ts`<br>`e2e/admin/rapor-ekrani.spec.ts` | Raporlar'ın doktor ciro sıralaması dönemde cirosu sıfır olmayan bütün carileri ciroya göre azalan (eşitlikte ada göre) sayfalı listeler.… |
+| X-1-3 | X-1 | KANITLI | — | `src/lib/rapor-listesi/sorgu.itest.ts`<br>`e2e/seller/report.spec.ts` | Raporum'un doktor ciro sıralaması satıcı kapsamlıdır: ciro yalnız o satıcının siparişlerinin sevk eksi iadesidir (X-13 — devirle portföyd… |
 | X-2-1 | X-2 | KANITLI | `src/app/(admin)/collections/actions.ts` | `src/app/(admin)/collections/collections.itest.ts`<br>`src/lib/tek-cagri.test.ts` | Tahsilat kaydı ve `THS` numarası aynı transaction'dadır: tahsilat yazılamazsa numara harcanmaz, sonraki tahsilat aynı numarayı alır. `BAY… |
 | X-3-1 | X-3 | KANITLI | — | `src/lib/hata-yuzeyi.test.ts` | Beklenmeyen hatada kullanıcı üç şey görür: sabit açıklama, hata referansı, ana sayfaya dönüş bağlantısı. Hata mesajı, stack, SQL, Prisma… |
 | X-3-2 | X-3 | KANITLI | — | `src/lib/hata.test.ts` | Teknik hata container log'una tek JSON satırı olarak yazılır: zaman, referans, rota (sorgu dizesi olmadan), kullanıcı kimliği (adı değil)… |

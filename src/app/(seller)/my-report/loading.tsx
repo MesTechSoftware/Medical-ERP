@@ -16,9 +16,14 @@ export default function Loading() {
           { etiket: "Cirom", varyant: "birincil", para: true, degisim: true, trend: true, altNot },
           { etiket: "Hakedişim", varyant: "ikincil", para: true, degisim: true, trend: false, altNot },
           { etiket: "Tahsilatım", varyant: "ikincil", para: true, degisim: true, trend: false, altNot },
+          { etiket: "İadem", varyant: "baglamsal", para: true, degisim: true, trend: false, altNot },
         ]}
       />
       <TabloIskeleti sutun={7} satir={1} />
+      {/* Doktorlarıma göre cirom kartı için yer tutucu: akış bitince kaymayı azaltır. */}
+      <div className="mt-6">
+        <TabloIskeleti sutun={4} satir={8} />
+      </div>
     </div>
   );
 }
