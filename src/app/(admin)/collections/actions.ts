@@ -55,7 +55,7 @@ export async function recordCollection(
       // A-15: nakit tevsik uyarısı BILGI'dir — kayıt tamamlanır, uyarı sonuçla döner.
       const tevsik = await nakitTevsikUyarisi(tx, { doctorId, an: payment.paidAt, yon: payment.direction });
       // X-6 §(6): tahsilat ekranında vadesi geçmiş hareketin varlığı (BILGI). Bütün uyarılar döner (X-4 §(7)).
-      const vade = await vadesiGecmisUyarisi(doctorId, undefined, tx);
+      const vade = await vadesiGecmisUyarisi(doctorId, { db: tx });
       return [tevsik, vade].filter((b): b is Bildirim => b !== null);
     });
   } catch (e) {

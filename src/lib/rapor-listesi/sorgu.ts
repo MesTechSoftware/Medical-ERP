@@ -18,7 +18,7 @@ const kucuk = (m: string) => m.toLocaleLowerCase("tr").replace(/ı/g, "i");
 
 /**
  * Doktor ciro sıralaması. `kapsam` zorunludur: Raporlar şirket geneli, Raporum (Ü-33) satıcının kendi cirosu
- * (`getDoctorReports`'un kapsamı). Sıra ve lidere oran kapsamın içindeki dönem sırasıdır. Ekran ciro satırlarını başka
+ * (`ciroluDoktorRaporlari`'nın kapsamı). Sıra ve lidere oran kapsamın içindeki dönem sırasıdır. Ekran ciro satırlarını başka
  * hesaplarla paylaşıyorsa `okuma` verilir (tek okuma).
  */
 export async function doktorSiralamasi(

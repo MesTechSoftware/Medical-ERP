@@ -60,7 +60,7 @@ export default async function DoctorDetailPage({
       },
       { yol: `/doctors/${id}`, kullaniciId: session.user.id }
     ),
-    vadesiGecmisUyarisi(id, undefined, prisma, bakiyeP.then((b) => b.bakiye)),
+    vadesiGecmisUyarisi(id, { bakiye: bakiyeP.then((b) => b.bakiye) }),
     prisma.order.findMany({
       where: { doctorId: id },
       orderBy: { orderDate: "desc" },

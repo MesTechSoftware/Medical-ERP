@@ -143,7 +143,7 @@ export async function doktorPaneli(id: string): Promise<DoktorPaneliVerisi | nul
   const [eksik, risk, vadeUyarisi, siparisler, hareketler, devirler] = await Promise.all([
     prisma.doctor.count({ where: { AND: [{ id }, EKSIK_FATURA_BILGISI] } }),
     riskP,
-    vadesiGecmisUyarisi(id, undefined, prisma, riskP.then((r) => r.bakiye)),
+    vadesiGecmisUyarisi(id, { bakiye: riskP.then((r) => r.bakiye) }),
     prisma.order.findMany({
       where: { doctorId: id },
       orderBy: { orderDate: "desc" },
@@ -222,7 +222,7 @@ export async function saticiDoktorPaneli(id: string, kapsam: Prisma.DoctorWhereI
   const riskP = hesaplaDoktorRisk(id);
   const [risk, vadeUyarisi, siparisler] = await Promise.all([
     riskP,
-    vadesiGecmisUyarisi(id, undefined, prisma, riskP.then((r) => r.bakiye)),
+    vadesiGecmisUyarisi(id, { bakiye: riskP.then((r) => r.bakiye) }),
     prisma.order.findMany({
       where: { doctorId: id, sellerId: saticiId },
       orderBy: [{ orderDate: "desc" }, { id: "desc" }],

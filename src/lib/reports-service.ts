@@ -268,14 +268,14 @@ export type DoctorReport = {
  * siparişlerinin sevk ve iadesidir (hakediş gibi siparişin satıcısına yazılır — X-13) ve cari listesi o satıcının
  * sipariş girdiği carilerle sınırlıdır (devirle portföyden çıkmış cari de, cirosu onundur).
  */
-export async function getDoctorReports(donem: Donem, limit: number, kapsam: KpiKapsami, okuma?: PaylasilanOkuma): Promise<DoctorReport[]> {
+export async function getDoctorReports(donem: Donem, limit: number, kapsam: KpiKapsami): Promise<DoctorReport[]> {
   const satici = kapsam.tur === "satici" ? kapsam.saticiId : null;
   const [doctors, cirolar] = await Promise.all([
     prisma.doctor.findMany({
       where: satici ? { orders: { some: { sellerId: satici } } } : {},
       select: DOKTOR_RAPOR_SECIMI,
     }),
-    doktorCirolari(donem, kapsam, okuma),
+    doktorCirolari(donem, kapsam),
   ]);
   return siraliDoktorRaporlari(doctors, cirolar).slice(0, limit);
 }

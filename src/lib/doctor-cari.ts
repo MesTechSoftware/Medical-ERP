@@ -2,7 +2,7 @@ import Decimal from "decimal.js";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { sayilanBelgeler } from "@/lib/sayilan-belgeler";
-import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
+import { SIPARIS_SATIRI, sevkMiktari, siparisToplami } from "@/lib/siparis";
 import { bilgi, type Bildirim } from "@/lib/sonuc";
 import { bugun, gunAraligi } from "@/lib/zaman";
 
@@ -78,32 +78,21 @@ export async function bakiyeSerisi(doktorId: string, sinirlar: readonly Date[], 
  * `BORC` hareketi varsa en eski vadesiyle döner. Tutar gösterilmez (§(7)); tahsilat borçlarla
  * eşleştirilmez (§(1)/(2)) — tarih o borcun açık olduğunu söylemez.
  *
- * `bakiye` verilirse (aynı istekte riskle ya da kartla zaten hesaplanmışsa) yeniden hesaplanmaz ve en eski
- * vade okuması onunla aynı turda gider. Verilmezse okumalar sıralıdır: transaction içinde (`db = tx`) paralel
- * sorgu gönderilmez.
+ * `bakiye` verilirse (aynı istekte riskle ya da kartla zaten hesaplanmışsa) yeniden hesaplanmaz. Vade okuması
+ * yalnız cari borçluyken koşar; okumalar sıralıdır (transaction içinde paralel sorgu gönderilmez).
  */
 export async function vadesiGecmisUyarisi(
   doktorId: string,
-  gun: Date = bugun(),
-  db: Db = prisma,
-  bakiye?: Promise<Decimal>
+  { gun = bugun(), db = prisma, bakiye }: { gun?: Date; db?: Db; bakiye?: Promise<Decimal> } = {}
 ): Promise<Bildirim | null> {
-  const enEskiVade = () =>
-    db.ledgerEntry.findFirst({
-      where: { doctorId: doktorId, direction: "BORC", dueDate: { lt: gun }, reversal: { is: null } },
-      orderBy: { dueDate: "asc" },
-      select: { dueDate: true },
-    });
-  let b: Decimal;
-  let enEski: { dueDate: Date | null } | null;
-  if (bakiye) {
-    [b, enEski] = await Promise.all([bakiye, enEskiVade()]);
-  } else {
-    b = (await hesaplaDoktorBakiye(doktorId, undefined, db)).bakiye;
-    if (bakiyeYonu(b) !== "BORC") return null;
-    enEski = await enEskiVade();
-  }
-  if (bakiyeYonu(b) !== "BORC" || !enEski?.dueDate) return null;
+  const b = await (bakiye ?? hesaplaDoktorBakiye(doktorId, undefined, db).then((x) => x.bakiye));
+  if (bakiyeYonu(b) !== "BORC") return null;
+  const enEski = await db.ledgerEntry.findFirst({
+    where: { doctorId: doktorId, direction: "BORC", dueDate: { lt: gun }, reversal: { is: null } },
+    orderBy: { dueDate: "asc" },
+    select: { dueDate: true },
+  });
+  if (!enEski?.dueDate) return null;
   return bilgi("VADESI_GECMIS_HAREKET", { enEskiVade: enEski.dueDate.toISOString().slice(0, 10) });
 }
 
@@ -152,7 +141,7 @@ export async function hesaplaDoktorRiskleri(idler: readonly string[], db: Db = p
 
   const acikSatirlar = new Map<string, typeof satirlar>();
   for (const s of satirlar) {
-    const kalan = s.quantity - s.shipmentItems.reduce((t, i) => t + i.quantity, 0);
+    const kalan = s.quantity - sevkMiktari(s);
     if (kalan > 0) acikSatirlar.set(s.order.doctorId, [...(acikSatirlar.get(s.order.doctorId) ?? []), { ...s, quantity: kalan }]);
   }
   const acik = new Map(doktorlar.map((d) => [d.id, siparisToplami(acikSatirlar.get(d.id) ?? []).toplam]));
