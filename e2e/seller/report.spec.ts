@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { SEED_SELLER_NAME, kpiIskeletiEslesir, kpiKartlariTasmaz } from "../helpers";
+import { SEED_SELLER_NAME, kpiIskeletiEslesir, kpiKartlariTasmaz, yumusakGezinmeIsareti } from "../helpers";
 
 /**
  * X-1-1 · D-2 §(1): satıcı kendi prim/hakedişini ekranda görür; kısıt sorgudadır —
@@ -9,7 +9,8 @@ import { SEED_SELLER_NAME, kpiIskeletiEslesir, kpiKartlariTasmaz } from "../help
 test("Raporum yalnız kendi satırını gösterir", async ({ page }) => {
   await page.goto("/my-report");
   await expect(page.getByRole("heading", { name: "Raporum" })).toBeVisible();
-  const satirlar = page.locator("tbody tr");
+  // İlk tablo satıcı satırıdır; ikincisi doktor ciro sıralaması (Ü-33).
+  const satirlar = page.locator("table").first().locator("tbody tr");
   await expect(satirlar).toHaveCount(1);
   await expect(satirlar.first()).toContainText(SEED_SELLER_NAME);
   await expect(page.getByText("Ayşe Demir")).toHaveCount(0);
@@ -24,7 +25,7 @@ test("Raporum KPI'ları satıcı kapsamında: Cirom, Hakedişim ve Tahsilatım t
   await expect(kart("Tahsilatım")).toContainText("KDV dahil");
   await expect(kart("Cirom")).toContainText("geçen ayın aynı günlerine göre");
   // KPI ve tablo ayrı yollardan okur (ciroOzeti / getSellerReports); kapsam aynıysa tutar aynıdır.
-  const satir = page.locator("tbody tr");
+  const satir = page.locator("table").first().locator("tbody tr");
   await expect(satir).toHaveCount(1);
   const tutar = (metin: string) => metin.match(/₺[\d.]+,\d{2}/)?.[0];
   for (const [ad, sutun] of [["Cirom", 1], ["Hakedişim", 2], ["Tahsilatım", 3]] as const) {
@@ -41,3 +42,40 @@ test("yönetim raporu satıcıya kapalıdır", async ({ page }) => {
   await page.goto("/reports");
   await expect(page).toHaveURL(/\/my-orders/);
 });
+
+/** Ü-33 — Raporum: İadem kartı, doktorlarıma göre cirom (X-1-3), süzgeç ve dönem birlikte, yeniden yüklemesiz. */
+
+const siralama = (page: import("@playwright/test").Page) => page.getByRole("table", { name: "Doktorlarıma göre cirom" });
+
+test("4 kart (İadem dahil); doktor ciro sıralaması tüm zamanlarda satırlı ve sıra numaralı", async ({ page }) => {
+  await page.goto("/my-report?donem=tum");
+  await expect(page.locator("[data-kpi-satiri] [role=group]")).toHaveCount(4);
+  await expect(page.getByRole("group", { name: "İadem", exact: true })).toContainText("KDV hariç");
+  const satirlar = siralama(page).locator("tbody tr");
+  await expect(satirlar.first()).toBeVisible();
+  await expect(satirlar.first().locator("td").first()).toHaveText("1");
+});
+
+test("arama istemci tarafında süzer, dönem değişince korunur; adresteki satıcı düşer", async ({ page }) => {
+  await page.goto("/my-report?donem=tum");
+  const ilkAd = (await siralama(page).locator("tbody tr").first().locator("td").nth(1).innerText()).trim();
+  const yumusak = await yumusakGezinmeIsareti(page);
+  await page.getByText("Filtrele", { exact: true }).click();
+  await page.getByRole("form", { name: "Rapor süzgeci" }).getByLabel("Ara").fill(ilkAd.split(" ").at(-1)!);
+  await page.getByRole("form", { name: "Rapor süzgeci" }).getByRole("button", { name: "Uygula" }).click();
+  await expect(page).toHaveURL(/donem=tum&q=/);
+  await expect(siralama(page).locator("tbody tr").first()).toContainText(ilkAd);
+  expect(await yumusak()).toBe(true);
+
+  await page.getByLabel("Dönem (ay)").fill("2026-10");
+  await page.getByRole("button", { name: "Göster" }).click();
+  await expect(page).toHaveURL(/donem=2026-10.*q=|q=.*donem=2026-10/);
+
+  await page.goto("/my-report?satici=cm0000000000000000000000x&donem=tum");
+  await expect(page).toHaveURL(/\/my-report\?donem=tum$/);
+});
+
+test("iskelet 4 kartla eşleşir", async ({ page }) => {
+  await kpiIskeletiEslesir(page, "/my-report");
+});
+
