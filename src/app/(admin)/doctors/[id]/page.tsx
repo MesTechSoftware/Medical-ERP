@@ -14,7 +14,7 @@ import { simdi, takvimAyi } from "@/lib/zaman";
 import { SonucGosterimi } from "@/components/Sonuc";
 import { sonucOlustur } from "@/lib/sonuc";
 import CariHareketleri from "./CariHareketleri";
-import { BAKIYE_ETIKETI } from "../bakiye";
+import { BAKIYE_ETIKETI } from "@/components/doktor/bakiye";
 import {
   PageHeader,
   Card,

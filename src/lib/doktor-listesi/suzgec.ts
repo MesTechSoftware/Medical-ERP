@@ -37,6 +37,9 @@ export const BOS_SUZGEC: DoktorSuzgeci = {
 
 export type { Parametreler };
 
+/** Listenin ekranı: yönetici `/doctors` (bütün cariler), satıcı `/my-doctors` (kendi portföyü — X-13, kapsam sorguda). */
+export type DoktorYolu = "/doctors" | "/my-doctors";
+
 const SESSIZ: readonly Sessiz[] = ["30", "60", "90", "180", "hic"];
 const BOLGE_AZAMI = 100;
 
@@ -64,14 +67,18 @@ export function suzgecCoz(p: Parametreler): { suzgec: DoktorSuzgeci; detay: stri
 }
 
 /** Süzgeci koruyan liste adresi; sayfa ve panel isteğe bağlı. Sayfalama `detay` taşımaz. */
-export function doktorAdresi(s: DoktorSuzgeci, ek: { page?: number; per?: number; detay?: string } = {}): string {
+export function doktorAdresi(
+  s: DoktorSuzgeci,
+  ek: { page?: number; per?: number; detay?: string } = {},
+  yol: DoktorYolu = "/doctors"
+): string {
   const p = new URLSearchParams();
   for (const [ad, deger] of Object.entries(s)) if (deger !== null) p.set(ad, deger);
   if (ek.page !== undefined && ek.page > 1) p.set("page", String(ek.page));
   if (ek.per !== undefined) p.set("per", String(ek.per));
   if (ek.detay !== undefined) p.set("detay", ek.detay);
   const q = p.toString();
-  return q ? `/doctors?${q}` : "/doctors";
+  return q ? `${yol}?${q}` : yol;
 }
 
 export const HIZLI_SEKMELER: readonly { etiket: string; suzgec: DoktorSuzgeci }[] = [
@@ -94,7 +101,8 @@ export function etkinSayisi(s: DoktorSuzgeci): number {
 /** Etkin süzgeçlerin etiketleri, her biri o alanı düşüren adresle; aralığın iki ucu tek etikettir. */
 export function etkinSuzgecler(
   s: DoktorSuzgeci,
-  saticiAdi: (id: string) => string | undefined
+  saticiAdi: (id: string) => string | undefined,
+  yol: DoktorYolu = "/doctors"
 ): { anahtar: keyof DoktorSuzgeci; etiket: string; kaldirAdresi: string }[] {
   const liste: { anahtar: keyof DoktorSuzgeci; etiket: string | undefined; kalan: DoktorSuzgeci }[] = [];
   const ekle = (anahtar: keyof DoktorSuzgeci, etiket: string | undefined) =>
@@ -116,7 +124,7 @@ export function etkinSuzgecler(
       kalan: { ...s, sonBas: null, sonBit: null },
     });
   }
-  return liste.flatMap((e) => (e.etiket === undefined ? [] : [{ anahtar: e.anahtar, etiket: e.etiket, kaldirAdresi: doktorAdresi(e.kalan) }]));
+  return liste.flatMap((e) => (e.etiket === undefined ? [] : [{ anahtar: e.anahtar, etiket: e.etiket, kaldirAdresi: doktorAdresi(e.kalan, {}, yol) }]));
 }
 
 export type BosDurum = "hic-kayit" | "sahipsiz" | "eksik-fatura" | "suzgecli";
@@ -133,3 +141,28 @@ export function bosDurum(s: DoktorSuzgeci): BosDurum {
 export function saticiyiDogrula(s: DoktorSuzgeci, aktifSaticilar: readonly string[]): DoktorSuzgeci {
   return s.satici === null || s.satici === SAHIPSIZ || aktifSaticilar.includes(s.satici) ? s : { ...s, satici: null };
 }
+
+// --- Doktorlarım (satıcı, Ü-32) ------------------------------------------------------------------
+
+/**
+ * Doktorlarım'ın süzgeci: sınıf, satıcı ve fatura bu ekranda yoktur — kapsam yalnız satıcının `DOKTOR`
+ * carileridir (X-13-1), sahibi kendisidir; fatura bilgisi yöneticinin işidir. Adreste kalmışlarsa düşer.
+ */
+export function saticiSuzgeci(s: DoktorSuzgeci): DoktorSuzgeci {
+  return { ...s, sinif: null, satici: null, fatura: null };
+}
+
+/** Doktorlarım'ın kartları (ADR-010: en çok 4): kartın adresi de sayısı da bu süzgeçten türer — kart = satır. */
+export const SATICI_KARTLARI: readonly { anahtar: "toplam" | "aktif" | "sessiz90" | "hic"; etiket: string; suzgec: DoktorSuzgeci }[] = [
+  { anahtar: "toplam", etiket: "Doktorlarım", suzgec: BOS_SUZGEC },
+  { anahtar: "aktif", etiket: "Aktif", suzgec: { ...BOS_SUZGEC, durum: "AKTIF" } },
+  { anahtar: "sessiz90", etiket: "90+ gündür siparişsiz", suzgec: { ...BOS_SUZGEC, sessiz: "90" } },
+  { anahtar: "hic", etiket: "Hiç siparişi yok", suzgec: { ...BOS_SUZGEC, sessiz: "hic" } },
+];
+
+export const SATICI_SEKMELERI: readonly { etiket: string; suzgec: DoktorSuzgeci }[] = [
+  { etiket: "Tümü", suzgec: BOS_SUZGEC },
+  { etiket: "Aktif", suzgec: { ...BOS_SUZGEC, durum: "AKTIF" } },
+  { etiket: "Pasif", suzgec: { ...BOS_SUZGEC, durum: "PASIF" } },
+];
+

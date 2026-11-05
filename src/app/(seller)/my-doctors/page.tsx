@@ -1,41 +1,66 @@
-import Link from "next/link";
-import { prisma } from "@/lib/db";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { requireSeller } from "@/lib/session";
-import { formatPhone } from "@/lib/phone";
 import { kapsamliDoktorlariGetir } from "@/lib/doctor";
-import {
-  PageHeader,
-  LinkButton,
-  Card,
-  StatusBadge,
-  EmptyRow,
-} from "@/components/ui";
+import { PageHeader, LinkButton } from "@/components/ui";
 import Pagination from "@/components/Pagination";
+import { SutunSecici } from "@/components/liste/SutunSecici";
+import { kpiGetir } from "@/lib/kpi/getir";
+import { ilk } from "@/lib/liste/parametreler";
+import { gizliSutunlariCoz } from "@/lib/liste/sutunlar";
 import { getPagination, pageCount } from "@/lib/pagination";
-import { buton } from "@/components/stil";
-import { Ikon } from "@/components/Ikon";
+import { doktorBolgeleri, doktorListesi, saticiDoktorKpileri, saticiDoktorPaneli } from "@/lib/doktor-listesi/sorgu";
+import { SATICI_SUTUNLARI, SATICI_SUTUN_CEREZI } from "@/lib/doktor-listesi/sutunlar";
+import { ayniSuzgec, doktorAdresi, saticiSuzgeci, suzgecCoz, type Parametreler } from "@/lib/doktor-listesi/suzgec";
+import { simdi } from "@/lib/zaman";
+import { DoktorPaneli } from "./DoktorPaneli";
+import { DoktorTablosu } from "./DoktorTablosu";
+import { KpiKartlari } from "./KpiKartlari";
+import { SuzgecCubugu } from "./SuzgecCubugu";
+import { sutunlariKaydet } from "./sutunEylemi";
 
-export default async function DoctorsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ page?: string; per?: string }>;
-}) {
+const YOL = "/my-doctors";
+
+/**
+ * Doktorlarım (spec Ü-32): yönetici Doktorlar ekranının (Ü-18) satıcı kapsamlı hâli — 4 KPI, durum sekmeleri,
+ * Filtrele (bölge, durum, son sipariş), sütun seçici, sayfalı liste, yan panel. Kapsam tek kaynaktadır
+ * (`kapsamliDoktorlariGetir`, X-13-1): liste, kartlar, bölge seçenekleri ve panel yalnız satıcının carilerini okur.
+ */
+export default async function MyDoctorsPage({ searchParams }: { searchParams: Promise<Parametreler> }) {
   const session = await requireSeller();
-  const { page, perPage, skip, take } = getPagination(await searchParams);
+  const kapsam = kapsamliDoktorlariGetir(session.user);
+  const params = await searchParams;
+  const per = ilk(params, "per") ?? undefined;
+  const { page, perPage, skip, take } = getPagination({ page: ilk(params, "page") ?? undefined, per });
+  const cozulen = suzgecCoz(params);
+  const detay = cozulen.detay;
+  const yer = { page, per: per ? perPage : undefined };
+  // Bu ekranda olmayan süzgeçler (sınıf, satıcı, fatura; eski `sahip`) sorgulardan önce adresten düşer.
+  const suzgec = saticiSuzgeci(cozulen.suzgec);
+  if (!ayniSuzgec(suzgec, cozulen.suzgec) || ilk(params, "sahip") !== null) {
+    redirect(doktorAdresi(suzgec, { ...yer, ...(detay ? { detay } : {}) }, YOL));
+  }
+  const an = simdi();
+  const gizli = gizliSutunlariCoz(SATICI_SUTUNLARI, (await cookies()).get(SATICI_SUTUN_CEREZI)?.value);
+  const adres = doktorAdresi(suzgec, yer, YOL);
 
-  // FR-05: satıcı yalnızca kendi portföyünü görür (X-13 §(1)).
-  const where = kapsamliDoktorlariGetir(session.user);
-
-  const [doctors, total] = await Promise.all([
-    prisma.doctor.findMany({
-      where,
-      orderBy: { fullName: "asc" },
-      skip,
-      take,
-      include: { _count: { select: { orders: true } } },
-    }),
-    prisma.doctor.count({ where }),
+  // Dört okuma birbirinden bağımsızdır; tek turda gider.
+  const [liste, kpi, bolgeler, panel] = await Promise.all([
+    doktorListesi(suzgec, { skip, take }, kapsam, an, false),
+    kpiGetir(() => saticiDoktorKpileri(kapsam, an), { yol: YOL, kullaniciId: session.user.id }),
+    doktorBolgeleri(kapsam),
+    detay ? saticiDoktorPaneli(detay, kapsam, session.user.id) : null,
   ]);
+
+  // Sayfa dışı adres son sayfaya gider; boş durum "hiç kayıt yok" demesin.
+  if (liste.satirlar.length === 0 && liste.toplam > 0) {
+    redirect(doktorAdresi(suzgec, { ...yer, page: pageCount(liste.toplam, perPage), ...(detay ? { detay } : {}) }, YOL));
+  }
+
+  const sayfaParametreleri = {
+    ...Object.fromEntries(new URL(doktorAdresi(suzgec, {}, YOL), "http://x").searchParams),
+    per: yer.per === undefined ? undefined : String(yer.per),
+  };
 
   return (
     <div>
@@ -45,63 +70,20 @@ export default async function DoctorsPage({
         action={<LinkButton href="/my-doctors/new" ikon="yeni">Yeni Doktor</LinkButton>}
       />
 
-      <Card>
-        <div className="tablo-kutusu">
-          <table className="veri-tablosu">
-            <thead>
-              <tr>
-                <th>Ad Soyad</th>
-                <th>Klinik</th>
-                <th className="oncelik-dusuk">Bölge</th>
-                <th>Telefon</th>
-                <th className="sayi oncelik-dusuk">Sipariş</th>
-                <th>Durum</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {doctors.length === 0 && (
-                <EmptyRow colSpan={7} text="Henüz doktor kaydınız yok." />
-              )}
-              {doctors.map((d) => (
-                <tr key={d.id}>
-                  <td className="font-medium text-slate-900">
-                    {d.title ? `${d.title} ` : ""}
-                    {d.fullName}
-                  </td>
-                  <td className="text-slate-500">{d.clinic}</td>
-                  <td className="text-slate-500 oncelik-dusuk">{d.region}</td>
-                  <td className="tabular-nums text-slate-500">
-                    {formatPhone(d.phoneNormalized)}
-                  </td>
-                  <td className="sayi oncelik-dusuk">
-                    {d._count.orders}
-                  </td>
-                  <td>
-                    <StatusBadge status={d.status} />
-                  </td>
-                  <td className="text-right">
-                    <Link
-                      href={`/my-doctors/${d.id}/edit`}
-                      className={buton("metin")}
-                    >
-                      <Ikon ad="duzenle" />
-                      Düzenle
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+      <KpiKartlari sonuc={kpi} />
 
-      <Pagination
-        page={page}
-        totalPages={pageCount(total, perPage)}
-        total={total}
-        basePath="/my-doctors"
+      <SuzgecCubugu
+        suzgec={suzgec}
+        bolgeler={bolgeler}
+        sutunMenusu={<SutunSecici sutunlar={SATICI_SUTUNLARI} gizli={gizli} action={sutunlariKaydet} donus={adres} />}
       />
+
+      <DoktorTablosu satirlar={liste.satirlar} gizli={gizli} suzgec={suzgec} yer={yer} an={an} />
+
+      <Pagination page={page} totalPages={pageCount(liste.toplam, perPage)} total={liste.toplam} basePath={YOL} params={sayfaParametreleri} />
+
+      {/* Bulunamayan ya da başka satıcının carisinde panel açılmaz. */}
+      {panel && <DoktorPaneli key={panel.doktor.id} veri={panel} kapatAdresi={adres} />}
     </div>
   );
 }

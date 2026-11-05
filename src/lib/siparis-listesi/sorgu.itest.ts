@@ -233,3 +233,26 @@ describe("Siparişlerim kapsamı (Ü-31, X-13-3)", () => {
     expect((await siparisPaneli(baska.id, TUM_SIPARISLER))?.siparis.documentNo).toBe("SIP-CAN-1");
   });
 });
+
+describe("Siparişlerim panelinin cari bağlantısı (Ü-32)", () => {
+  it("cariSaticida: sahibi siparişin satıcısı ve sınıfı DOKTOR iken; devir sonrası ya da bayide değil", async () => {
+    const ayse = await satici("Ayşe");
+    const can = await satici("Can");
+    const yeni = async (ek: { ownerSellerId?: string | null; accountClass?: "DOKTOR" | "BAYI" }) => {
+      no += 1;
+      const d = await prisma.doctor.create({ data: { ...yeniDoktorVerisi(`Dr. ${no}`), ...ek } });
+      return prisma.order.create({
+        data: { documentNo: `SIP-B-${no}`, doctorId: d.id, sellerId: ayse.id, paymentTermDays: 30, stage: "ONAYLI", status: "BEKLIYOR", orderDate: kasim(3) },
+      });
+    };
+    const kendi = await yeni({ ownerSellerId: ayse.id });
+    const devredilmis = await yeni({ ownerSellerId: can.id });
+    // Bayinin sahibi olamaz (CHECK `Doctor_bayi_sahipsiz_check`, X-8 §(3)); bayi siparişi bağlantı taşımaz.
+    const bayi = await yeni({ ownerSellerId: null, accountClass: "BAYI" });
+    const AYSE: SiparisKapsami = { tur: "satici", saticiId: ayse.id };
+    const bak = async (id: string) => (await siparisPaneli(id, AYSE))!.siparis.cariSaticida;
+    expect(await bak(kendi.id)).toBe(true);
+    expect(await bak(devredilmis.id)).toBe(false);
+    expect(await bak(bayi.id)).toBe(false);
+  });
+});

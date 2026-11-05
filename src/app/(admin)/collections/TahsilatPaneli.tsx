@@ -8,7 +8,7 @@ import { formatla } from "@/lib/money";
 import { BRUT } from "@/lib/taban";
 import type { TahsilatPaneli as Veri } from "@/lib/tahsilat-listesi/sorgu";
 import { TIP_ADI } from "@/lib/tahsilat-listesi/suzgec";
-import { BAKIYE_ETIKETI } from "../doctors/bakiye";
+import { BAKIYE_ETIKETI } from "@/components/doktor/bakiye";
 import { IptalFormu } from "./IptalFormu";
 import { DurumRozeti } from "./TahsilatTablosu";
 

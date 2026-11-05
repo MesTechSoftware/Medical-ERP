@@ -35,7 +35,7 @@ function Bolum({ baslik, children }: { baslik: string; children: React.ReactNode
 /**
  * Siparişin yan paneli (spec Ü-23 §3.5, 11-A): özet, kalemler (sevk / kalan / iade — A-3-2), tutarlar
  * (`siparisToplami` ile aynı yol), sevkiyatlar, iadeler. İşlem düğmesi yoktur; işlemler detay sayfasındadır.
- * Siparişlerim'de (Ü-31) satıcı satırı yoktur (kendi siparişi) ve cari adı bağlantı değildir.
+ * Siparişlerim'de (Ü-31) satıcı satırı yoktur (kendi siparişi); cari adı Doktorlarım panelini açar (Ü-32).
  */
 export function SiparisPaneli({ veri, kapatAdresi, yol }: { veri: Veri; kapatAdresi: string; yol: SiparisYolu }) {
   const o = veri.siparis;
@@ -64,8 +64,9 @@ export function SiparisPaneli({ veri, kapatAdresi, yol }: { veri: Veri; kapatAdr
             <dl className="divide-y divide-slate-100">
               <Satir ad="Tarih">{formatDateTime(o.orderDate)}</Satir>
               <Satir ad="Cari">
-                {yonetici ? (
-                  <Link href={`/doctors?detay=${o.cari.id}`} className={BAGLANTI}>
+                {/* Satıcıda Doktorlarım paneli — yalnız cari bugün de onun portföyündeyse (devir sonrası panel açılmazdı). */}
+                {yonetici || o.cariSaticida ? (
+                  <Link href={`${yonetici ? "/doctors" : "/my-doctors"}?detay=${o.cari.id}`} className={BAGLANTI}>
                     {o.cari.fullName}
                   </Link>
                 ) : (

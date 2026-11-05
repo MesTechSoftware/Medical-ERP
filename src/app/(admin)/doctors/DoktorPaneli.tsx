@@ -12,8 +12,8 @@ import { formatPhone } from "@/lib/phone";
 import { sonucOlustur } from "@/lib/sonuc";
 import { BRUT, SATIR_TABANI } from "@/lib/taban";
 import { TIP } from "./[id]/CariHareketleri";
-import { BAKIYE_ETIKETI } from "./bakiye";
-import { DurumRozetleri } from "./DurumRozetleri";
+import { BAKIYE_ETIKETI } from "@/components/doktor/bakiye";
+import { DurumRozetleri } from "@/components/doktor/DurumRozetleri";
 
 const BASLIK = "cari-paneli-baslik";
 
