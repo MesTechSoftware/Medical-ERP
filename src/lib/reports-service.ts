@@ -175,17 +175,24 @@ export type DoctorReport = {
   ciro: Decimal;
 };
 
-export async function getDoctorReports(donem: Donem, limit = 50): Promise<DoctorReport[]> {
+/**
+ * `kapsam` zorunludur (KPI'larla aynı `KpiKapsami`, X-1 §(8) deseni): satıcı kapsamında ciro yalnız o satıcının
+ * siparişlerinin sevk ve iadesidir (hakediş gibi siparişin satıcısına yazılır — X-13) ve cari listesi o satıcının
+ * sipariş girdiği carilerle sınırlıdır (devirle portföyden çıkmış cari de, cirosu onundur).
+ */
+export async function getDoctorReports(donem: Donem, limit: number, kapsam: KpiKapsami): Promise<DoctorReport[]> {
+  const satici = kapsam.tur === "satici" ? kapsam.saticiId : null;
   const [doctors, sevk, iade] = await Promise.all([
     prisma.doctor.findMany({
+      where: satici ? { orders: { some: { sellerId: satici } } } : {},
       select: { id: true, fullName: true, ownerSellerId: true, ownerSeller: { select: { name: true } } },
     }),
     prisma.shipmentItem.findMany({
-      where: donemSevkSatiri(donem),
+      where: { AND: [donemSevkSatiri(donem), ...(satici ? [{ shipment: { order: { sellerId: satici } } }] : [])] },
       select: { ...SEVK_SATIRI, shipment: { select: { order: { select: { doctorId: true } } } } },
     }),
     prisma.returnNoteItem.findMany({
-      where: donemIadeSatiri(donem),
+      where: { AND: [donemIadeSatiri(donem), ...(satici ? [{ orderItem: { order: { sellerId: satici } } }] : [])] },
       select: { ...SEVK_SATIRI, returnNote: { select: { doctorId: true } } },
     }),
   ]);

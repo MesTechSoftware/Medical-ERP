@@ -6,10 +6,11 @@ import { doktorSiralamasi, saticiSecenekleri } from "@/lib/rapor-listesi/sorgu";
 import { BOS_SUZGEC, SAHIPSIZ, type RaporSuzgeci } from "@/lib/rapor-listesi/suzgec";
 import { referansVeri, yeniDoktorVerisi } from "../../../test/integration/referans";
 
-// Raporlar'ın doktor ciro sıralaması — KABUL_KRITERLERI X-1-2 (spec Ü-27 §4).
+// Raporlar'ın doktor ciro sıralaması — KABUL_KRITERLERI X-1-2 (spec Ü-27 §4); Raporum kapsamı X-1-3 (Ü-33).
 
 const EKIM = { baslangic: new Date("2026-09-30T21:00:00Z"), bitis: new Date("2026-10-31T21:00:00Z") };
 const SAYFA = { skip: 0, take: 100 };
+const SIRKET = { tur: "sirket" } as const;
 const S = (ek: Partial<RaporSuzgeci>): RaporSuzgeci => ({ ...BOS_SUZGEC, ...ek });
 let no = 0;
 
@@ -22,7 +23,7 @@ async function doktor(ad: string, sahipId: string | null) {
 }
 
 /** Tek satırlık siparişi `shippedAt` anında sevk eder; matrah `fiyat`. */
-async function sevk(doctorId: string, fiyat: string, shippedAt: Date) {
+async function sevk(doctorId: string, fiyat: string, shippedAt: Date, sellerId: string | null = null) {
   const { kdv20 } = await referansVeri();
   no += 1;
   const urun = await prisma.product.create({ data: { name: `Ü${no}`, code: `RU${no}`, taxRateId: kdv20.id } });
@@ -30,6 +31,7 @@ async function sevk(doctorId: string, fiyat: string, shippedAt: Date) {
     data: {
       documentNo: `SIP-R-${no}`,
       doctorId,
+      sellerId,
       paymentTermDays: 30,
       stage: "ONAYLI",
       status: "KARGOLANDI",
@@ -80,7 +82,7 @@ const ozet = (r: Awaited<ReturnType<typeof doktorSiralamasi>>) => r.satirlar.map
 
 describe("doktor ciro sıralaması (X-1-2)", () => {
   it("sıfır ciro düşer, eksi ciro kalır; eşit ciroda ada göre; lider oranı 1", async () => {
-    const r = await doktorSiralamasi(EKIM, BOS_SUZGEC, SAYFA);
+    const r = await doktorSiralamasi(EKIM, BOS_SUZGEC, SAYFA, SIRKET);
     expect(ozet(r)).toEqual([
       [ids.a, 1, "300.00"],
       [ids.b, 2, "200.00"],
@@ -93,17 +95,17 @@ describe("doktor ciro sıralaması (X-1-2)", () => {
   });
 
   it("satıcı süzgeci carinin sahibine bakar; sıra dönem sırasıdır", async () => {
-    expect(ozet(await doktorSiralamasi(EKIM, S({ satici: ali.id }), SAYFA))).toEqual([
+    expect(ozet(await doktorSiralamasi(EKIM, S({ satici: ali.id }), SAYFA, SIRKET))).toEqual([
       [ids.b, 2, "200.00"],
       [ids.c, 3, "200.00"],
     ]);
-    expect((await doktorSiralamasi(EKIM, S({ satici: SAHIPSIZ }), SAYFA)).satirlar.map((s) => s.doctorId)).toEqual([ids.a, ids.e]);
+    expect((await doktorSiralamasi(EKIM, S({ satici: SAHIPSIZ }), SAYFA, SIRKET)).satirlar.map((s) => s.doctorId)).toEqual([ids.a, ids.e]);
   });
 
   it("metin cari adına bakar (Türkçe I/ı); sayfalama", async () => {
-    expect((await doktorSiralamasi(EKIM, S({ q: "IŞIK" }), SAYFA)).satirlar.map((s) => s.doctorId)).toEqual([ids.c]);
-    expect((await doktorSiralamasi(EKIM, S({ q: "ışık" }), SAYFA)).satirlar.map((s) => s.doctorId)).toEqual([ids.c]);
-    const r = await doktorSiralamasi(EKIM, BOS_SUZGEC, { skip: 2, take: 2 });
+    expect((await doktorSiralamasi(EKIM, S({ q: "IŞIK" }), SAYFA, SIRKET)).satirlar.map((s) => s.doctorId)).toEqual([ids.c]);
+    expect((await doktorSiralamasi(EKIM, S({ q: "ışık" }), SAYFA, SIRKET)).satirlar.map((s) => s.doctorId)).toEqual([ids.c]);
+    const r = await doktorSiralamasi(EKIM, BOS_SUZGEC, { skip: 2, take: 2 }, SIRKET);
     expect(ozet(r).map((x) => x[1])).toEqual([3, 4]);
     expect(r.toplam).toBe(4);
   });
@@ -111,7 +113,7 @@ describe("doktor ciro sıralaması (X-1-2)", () => {
   it("ASCII büyük I ile yazılmış ad küçük harfli aramada bulunur", async () => {
     const f = await doktor("DR. ISMAIL KAYA", null);
     await sevk(f.id, "10", new Date("2026-10-10T09:00:00Z"));
-    expect((await doktorSiralamasi(EKIM, S({ q: "ismail" }), SAYFA)).satirlar.map((s) => s.doctorId)).toEqual([f.id]);
+    expect((await doktorSiralamasi(EKIM, S({ q: "ismail" }), SAYFA, SIRKET)).satirlar.map((s) => s.doctorId)).toEqual([f.id]);
   });
 
   it("eşit ciro ve eşit adda sıra kimliğe göre sabittir", async () => {
@@ -119,7 +121,7 @@ describe("doktor ciro sıralaması (X-1-2)", () => {
     const y = await doktor("Dr. Aynı", null);
     await sevk(y.id, "120", new Date("2026-10-10T09:00:00Z"));
     await sevk(x.id, "120", new Date("2026-10-10T09:00:00Z"));
-    const sira = (await doktorSiralamasi(EKIM, S({ q: "aynı" }), SAYFA)).satirlar.map((s) => s.doctorId);
+    const sira = (await doktorSiralamasi(EKIM, S({ q: "aynı" }), SAYFA, SIRKET)).satirlar.map((s) => s.doctorId);
     expect(sira).toEqual([x.id, y.id].sort());
   });
 
@@ -130,3 +132,30 @@ describe("doktor ciro sıralaması (X-1-2)", () => {
     expect((await saticiSecenekleri()).map((u) => u.id)).toContain(terfi.id);
   });
 });
+
+describe("Raporum: satıcı kapsamlı sıralama (Ü-33, X-1-3)", () => {
+  it("ciro yalnız satıcının siparişlerinden; devredilmiş carinin onunla cirosu da dahil; sıra ve oran kendi içinde", async () => {
+    // beforeEach'in siparişleri satıcısızdır; Ali'nin kapsamına girmez.
+    const veli = await prisma.user.create({ data: { name: "Veli", email: `veli${no}@medikal.local`, passwordHash: "x", role: "SATICI" } });
+    const ekim = new Date("2026-10-10T09:00:00Z");
+    const kendi = await doktor("Dr. Kendi", ali.id);
+    const devredilen = await doktor("Dr. Devredilen", veli.id);
+    await sevk(kendi.id, "100", ekim, ali.id);
+    // Aynı cariye başka satıcının (Veli) siparişi Ali'nin cirosuna girmez.
+    await sevk(kendi.id, "900", ekim, veli.id);
+    // Ali'nin, sonradan Veli'ye devredilmiş cariye siparişi Ali'nindir (X-13).
+    await sevk(devredilen.id, "400", ekim, ali.id);
+
+    const ALI = { tur: "satici", saticiId: ali.id } as const;
+    const r = await doktorSiralamasi(EKIM, BOS_SUZGEC, SAYFA, ALI);
+    expect(r.satirlar.map((d) => [d.fullName, d.ciro.toFixed(2), d.sira])).toEqual([
+      ["Dr. Devredilen", "400.00", 1],
+      ["Dr. Kendi", "100.00", 2],
+    ]);
+    expect(r.satirlar[0].oran).toBe(1);
+    // Şirket kapsamında aynı cari iki satıcının toplamıdır.
+    const sirket = await doktorSiralamasi(EKIM, BOS_SUZGEC, SAYFA, SIRKET);
+    expect(sirket.satirlar.find((d) => d.doctorId === kendi.id)?.ciro.toFixed(2)).toBe("1000.00");
+  });
+});
+

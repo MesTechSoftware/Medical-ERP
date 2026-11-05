@@ -63,7 +63,7 @@ export default async function ReportsPage({
 
   const sellers = await getSellerReports(session.user, donem.aralik);
   const [siralama, ozet, tahsilat, seriler] = await Promise.all([
-    doktorSiralamasi(donem.aralik, suzgec, { skip, take }),
+    doktorSiralamasi(donem.aralik, suzgec, { skip, take }, { tur: "sirket" }),
     kpiGetir(() => ciroOzeti({ kovalar: aylar, ...k }, { tur: "sirket" }), baglam),
     kpiGetir(() => tahsilatToplamlari(k.onceki ? [k.simdi, k.onceki] : [k.simdi]), baglam),
     saticiCiroSerileri(aylar, sellers.map((s) => s.sellerId)),

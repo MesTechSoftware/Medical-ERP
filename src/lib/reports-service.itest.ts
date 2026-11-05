@@ -180,7 +180,7 @@ describe("satıcı raporu — dönem cirosu ve hakedişi (X-1-1 · X-14-1)", () 
     expect(r.ciro.toFixed(2)).toBe("100.00");
     expect(r.hakedis.toFixed(2)).toBe("5.00");
     expect((await getCiroTotal(EKIM)).toFixed(2)).toBe("100.00");
-    const [dr] = await getDoctorReports(EKIM);
+    const [dr] = await getDoctorReports(EKIM, 50, { tur: "sirket" });
     expect(dr.ciro.toFixed(2)).toBe("100.00");
   });
 
