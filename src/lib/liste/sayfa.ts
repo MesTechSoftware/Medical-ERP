@@ -13,12 +13,21 @@ export type ListeSayfasi = Pagination & { yer: Yer };
 
 const SAYI = /^\d+$/;
 
-/** Geçersiz `per` (harf, sıfır, boş) varsayılana düşer ve bağlantılara yazılmaz; çok büyüğü sınıra iner. */
+/**
+ * Geçersiz `page`/`per` (harf, sıfır, ondalık, taşan sayı) yok sayılır: sayfa 1'e, boy varsayılana düşer ve
+ * bağlantılara yazılmaz; çok büyük `per` sınıra iner, çok büyük `page` son sayfaya yönlendirilir (`sayfaDisi`).
+ */
 export function sayfaCoz(p: Parametreler, varsayilan: number = DEFAULT_PER_PAGE): ListeSayfasi {
-  const ham = ilk(p, "per");
-  const per = ham !== null && SAYI.test(ham) && parseInt(ham, 10) > 0 ? ham : undefined;
-  const sayfa = getPagination({ page: ilk(p, "page") ?? undefined, per }, varsayilan);
+  const per = sayi(ilk(p, "per"));
+  const sayfa = getPagination({ page: sayi(ilk(p, "page")), per }, varsayilan);
   return { ...sayfa, yer: { page: sayfa.page, per: per === undefined ? undefined : sayfa.perPage } };
+}
+
+/** Yalnız rakamlardan oluşan, sıfırdan büyük, güvenli tam sayı; değilse yok sayılır (harf, ondalık, taşma). */
+function sayi(metin: string | null): string | undefined {
+  if (metin === null || !SAYI.test(metin)) return undefined;
+  const n = parseInt(metin, 10);
+  return n > 0 && Number.isSafeInteger(n) ? metin : undefined;
 }
 
 /**

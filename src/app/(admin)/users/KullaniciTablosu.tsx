@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Card, LinkButton, StatusBadge, StatusChip } from "@/components/ui";
 import { Ikon } from "@/components/Ikon";
 import { BosDurum } from "@/components/liste/BosDurum";
-import { buton } from "@/components/stil";
+import { BAGLANTI, buton } from "@/components/stil";
 import { formatDateTime } from "@/lib/format";
 import type { KullaniciSatiri } from "@/lib/kullanici-listesi/sorgu";
 import { SUTUNLAR, type KullaniciSutunu } from "@/lib/kullanici-listesi/sutunlar";
@@ -72,7 +72,7 @@ export function KullaniciTablosu({
                       href={kullaniciAdresi(suzgec, { ...yer, detay: u.id })}
                       scroll={false}
                       data-kayit={u.id}
-                      className="inline-flex items-center gap-0.5 text-link underline decoration-link/40 underline-offset-4 hover:decoration-link"
+                      className={`inline-flex items-center gap-0.5 ${BAGLANTI}`}
                     >
                       <span>{u.name}</span>
                       <Ikon ad="sonraki" />

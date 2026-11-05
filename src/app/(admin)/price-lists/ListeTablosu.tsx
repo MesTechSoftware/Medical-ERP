@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Card, LinkButton, StatusChip } from "@/components/ui";
 import { Ikon } from "@/components/Ikon";
 import { BosDurum } from "@/components/liste/BosDurum";
-import { buton } from "@/components/stil";
+import { BAGLANTI, buton } from "@/components/stil";
 import type { ListeSatiri } from "@/lib/fiyat-listesi-listesi/sorgu";
 import { SUTUNLAR, type ListeSutunu } from "@/lib/fiyat-listesi-listesi/sutunlar";
 import { bosDurum, listeAdresi, type ListeSuzgeci } from "@/lib/fiyat-listesi-listesi/suzgec";
@@ -67,7 +67,7 @@ export function ListeTablosu({
                     href={listeAdresi(suzgec, { ...yer, detay: l.id })}
                     scroll={false}
                     data-kayit={l.id}
-                    className="inline-flex items-center gap-0.5 text-link underline decoration-link/40 underline-offset-4 hover:decoration-link"
+                    className={`inline-flex items-center gap-0.5 ${BAGLANTI}`}
                   >
                     <span>{l.code}</span>
                     <Ikon ad="sonraki" />

@@ -3,7 +3,7 @@ import { Panel, PanelBolumu as Bolum, PanelSatiri as Satir, Yok } from "@/compon
 import { Ikon } from "@/components/Ikon";
 import { SonucGosterimi } from "@/components/Sonuc";
 import { Tutar } from "@/components/Tutar";
-import { buton } from "@/components/stil";
+import { BAGLANTI, buton } from "@/components/stil";
 import { StatusBadge, StatusChip } from "@/components/ui";
 import { BAKIYE_ETIKETI } from "@/components/doktor/bakiye";
 import { DurumRozetleri } from "@/components/doktor/DurumRozetleri";
@@ -14,7 +14,6 @@ import { formatPhone } from "@/lib/phone";
 import { sonucOlustur } from "@/lib/sonuc";
 import { BRUT, SATIR_TABANI } from "@/lib/taban";
 
-const BAGLANTI = "font-medium text-link hover:underline";
 
 /**
  * Doktorlarım yan paneli (spec Ü-32 §3.4): kimlik ve iletişim, cari özeti (bakiye K-2 biçiminde, açık sipariş,

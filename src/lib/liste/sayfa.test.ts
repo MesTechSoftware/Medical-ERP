@@ -21,6 +21,13 @@ describe("sayfaCoz", () => {
     }
   });
 
+  it("taşan sayılar yok sayılır: dev per bağlantıya yazılmaz, dev page ilk sayfadır", () => {
+    const dev = "9".repeat(400);
+    expect(sayfaCoz({ per: dev }).yer.per).toBeUndefined();
+    expect(sayfaCoz({ page: "99999999999999999999" }).page).toBe(1);
+    expect(sayfaCoz({ page: "2abc" }).page).toBe(1);
+  });
+
   it("ekranın varsayılan boyu", () => {
     expect(sayfaCoz({}, 50).perPage).toBe(50);
   });

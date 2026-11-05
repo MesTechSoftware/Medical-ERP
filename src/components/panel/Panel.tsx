@@ -3,13 +3,14 @@ import { YanPanel } from "@/components/YanPanel";
 import { Ikon } from "@/components/Ikon";
 import { buton } from "@/components/stil";
 
+/** Sayfada tek panel açık olduğundan başlık kimliği sabittir. */
+export const PANEL_BASLIGI = "yan-panel-baslik";
+
 /**
  * Liste ekranlarının yan paneli (X-18 §(9) kabuğu `YanPanel`): başlık, rozet satırı, Kapat, kaydırılan
  * gövde ve isteğe bağlı alt bilgi. Bütün paneller aynı iskeleti buradan alır; içerik `PanelBolumu` ve
- * `PanelSatiri` ile kurulur. Sayfada tek panel açık olduğundan başlık kimliği sabittir.
+ * `PanelSatiri` ile kurulur.
  */
-export const PANEL_BASLIGI = "yan-panel-baslik";
-
 export function Panel({
   kapatAdresi,
   kayitId,

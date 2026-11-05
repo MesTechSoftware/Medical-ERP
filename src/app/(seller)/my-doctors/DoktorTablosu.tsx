@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Card, LinkButton } from "@/components/ui";
 import { Ikon } from "@/components/Ikon";
 import { BosDurum } from "@/components/liste/BosDurum";
-import { buton } from "@/components/stil";
+import { BAGLANTI, buton } from "@/components/stil";
 import { BAKIYE_BASLIGI, BakiyeHucresi } from "@/components/doktor/bakiye";
 import { DurumRozetleri } from "@/components/doktor/DurumRozetleri";
 import { SonSiparisHucresi } from "@/components/doktor/SonSiparisHucresi";
@@ -85,7 +85,7 @@ export function DoktorTablosu({
                     href={doktorAdresi(suzgec, { ...yer, detay: d.id }, YOL)}
                     scroll={false}
                     data-kayit={d.id}
-                    className="inline-flex items-center gap-0.5 text-link underline decoration-link/40 underline-offset-4 hover:decoration-link"
+                    className={`inline-flex items-center gap-0.5 ${BAGLANTI}`}
                   >
                     <span>
                       {d.title ? `${d.title} ` : ""}

@@ -5,7 +5,7 @@ import { Ikon } from "@/components/Ikon";
 import { BosDurum } from "@/components/liste/BosDurum";
 import { IslemFormu } from "@/components/Sonuc";
 import { StokMiktari } from "@/components/StokMiktari";
-import { buton } from "@/components/stil";
+import { BAGLANTI, buton } from "@/components/stil";
 import { Tutar } from "@/components/Tutar";
 import { formatla } from "@/lib/money";
 import { BRUT, MATRAH, tabanli } from "@/lib/taban";
@@ -78,7 +78,7 @@ export function UrunTablosu({
                     href={urunAdresi(suzgec, { ...yer, detay: p.id })}
                     scroll={false}
                     data-kayit={p.id}
-                    className="inline-flex items-center gap-0.5 text-link underline decoration-link/40 underline-offset-4 hover:decoration-link"
+                    className={`inline-flex items-center gap-0.5 ${BAGLANTI}`}
                   >
                     <span>{p.name}</span>
                     <Ikon ad="sonraki" />

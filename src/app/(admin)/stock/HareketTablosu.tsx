@@ -5,6 +5,7 @@ import { StatusChip } from "@/components/ui";
 import { formatDateTime } from "@/lib/format";
 import type { StokHareketSatiri } from "@/lib/stok-listesi/sorgu";
 import { SUTUNLAR, type StokSutunu } from "@/lib/stok-listesi/sutunlar";
+import { BAGLANTI } from "@/components/stil";
 
 /** Dar ekranda gizlenen sütunlar (Konum, Açıklama): başlık ve hücre aynı sınıfı taşır. */
 const DUSUK = "oncelik-dusuk";
@@ -52,7 +53,7 @@ export function HareketTablosu({
               <td className="text-slate-900">
                 <Link
                   href={`/products?detay=${h.urun.id}`}
-                  className="inline-flex items-center gap-0.5 text-link underline decoration-link/40 underline-offset-4 hover:decoration-link"
+                  className={`inline-flex items-center gap-0.5 ${BAGLANTI}`}
                 >
                   <span>{h.urun.name}</span>
                   <Ikon ad="sonraki" />
