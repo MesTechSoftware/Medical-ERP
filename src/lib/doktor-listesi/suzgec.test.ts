@@ -9,6 +9,8 @@ import {
   etkinSayisi,
   etkinSuzgecler,
   saticiyiDogrula,
+  saticiSuzgeci,
+  SATICI_KARTLARI,
   suzgecCoz,
   type DoktorSuzgeci,
 } from "@/lib/doktor-listesi/suzgec";
@@ -198,5 +200,28 @@ describe("saticiyiDogrula — bilinmeyen satıcı yok sayılır (spec §5)", () 
     expect(saticiyiDogrula({ ...BOS_SUZGEC, satici: "s1" }, aktif).satici).toBe("s1");
     expect(saticiyiDogrula({ ...BOS_SUZGEC, satici: "yok" }, aktif).satici).toBe("yok");
     expect(saticiyiDogrula({ ...BOS_SUZGEC, satici: "pasif", bolge: "Ege" }, aktif)).toEqual({ ...BOS_SUZGEC, bolge: "Ege" });
+  });
+});
+
+describe("Doktorlarım (Ü-32)", () => {
+  it("adres ve etiketler `/my-doctors`'ı yazar; varsayılan `/doctors` kalır", () => {
+    const s = { ...BOS_SUZGEC, durum: "AKTIF" as const, sessiz: "90" as const };
+    expect(doktorAdresi(s, { page: 2, detay: "d-1" }, "/my-doctors")).toBe("/my-doctors?durum=AKTIF&sessiz=90&page=2&detay=d-1");
+    expect(etkinSuzgecler(s, () => undefined, "/my-doctors").map((e) => e.kaldirAdresi)).toEqual(["/my-doctors?sessiz=90", "/my-doctors?durum=AKTIF"]);
+    expect(doktorAdresi(s)).toBe("/doctors?durum=AKTIF&sessiz=90");
+  });
+
+  it("satıcı süzgeci sınıf, satıcı ve faturayı düşürür; öbürlerini korur", () => {
+    const s = { ...BOS_SUZGEC, sinif: "BAYI" as const, satici: "u-1", fatura: "eksik" as const, bolge: "Marmara", durum: "PASIF" as const };
+    expect(saticiSuzgeci(s)).toEqual({ ...BOS_SUZGEC, bolge: "Marmara", durum: "PASIF" });
+  });
+
+  it("kartlar dört tanedir (ADR-010) ve her biri kendi süzgecinin adresini açar", () => {
+    expect(SATICI_KARTLARI.map((k) => doktorAdresi(k.suzgec, {}, "/my-doctors"))).toEqual([
+      "/my-doctors",
+      "/my-doctors?durum=AKTIF",
+      "/my-doctors?sessiz=90",
+      "/my-doctors?sessiz=hic",
+    ]);
   });
 });

@@ -34,3 +34,9 @@ export function gizliSutunCerezi(gizli: Iterable<string>): string {
 export function guvenliDonus(donus: string): string {
   return ortak.guvenliDonus("/doctors", donus);
 }
+
+/** Doktorlarım (satıcı, Ü-32): sorumlu satıcı sütunu yoktur (hepsi kendisinin). Tercih ayrı çerezde, kendi yolunda. */
+export const SATICI_SUTUNLARI: readonly SutunTanimi<SutunAnahtari>[] = SUTUNLAR.filter((s) => s.anahtar !== "satici");
+export const SATICI_SUTUN_CEREZI = "doktorlarim-sutunlar";
+export const SATICI_SUTUN_YOLU = "/my-doctors";
+
