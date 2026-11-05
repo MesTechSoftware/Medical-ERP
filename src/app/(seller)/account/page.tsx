@@ -6,9 +6,7 @@ import { donemBitisAyi, donemCoz, karsilastirmaAraliklari, karsilastirmaNotu, so
 import { formatla } from "@/lib/money";
 import { policy } from "@/lib/policy";
 import { kpiGetir } from "@/lib/kpi/getir";
-import { ciroOzeti } from "@/lib/reports-service";
-import { sayilanBelgeler } from "@/lib/sayilan-belgeler";
-import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
+import { ciroOzeti, saticiOrtalamaIskontosu } from "@/lib/reports-service";
 import { kartSayisi } from "@/lib/doktor-listesi/sorgu";
 import { BOS_SUZGEC as TUM_DOKTORLAR } from "@/lib/doktor-listesi/suzgec";
 import { gunleriAraliga } from "@/lib/liste/parametreler";
@@ -21,18 +19,6 @@ import { KovaOzeti } from "@/components/kpi/KovaOzeti";
 import { KpiCard } from "@/components/kpi/KpiCard";
 import { KpiSatiri } from "@/components/kpi/KpiSatiri";
 import { KPI_BAGLANTISI } from "@/components/stil";
-
-/**
- * FR-61: satıcının bütün siparişlerinde ortalama iskonto (tutar ağırlıklı) — tek hesap `siparisToplami`. Siparişler
- * sayılan siparişlerdir (`sayilanBelgeler.siparis`: teklif ve iptal hariç — A-5, X-6 §(9)).
- */
-async function ortalamaIskonto(saticiId: string) {
-  const kalemler = await prisma.orderItem.findMany({
-    where: { order: { ...sayilanBelgeler.siparis, sellerId: saticiId } },
-    select: SIPARIS_SATIRI,
-  });
-  return siparisToplami(kalemler).iskontoOran;
-}
 
 function Yuklenemedi({ referans }: { referans: string }) {
   return (
@@ -77,7 +63,7 @@ export default async function AccountPage() {
     kpiGetir(() => kartSayisi(TUM_DOKTORLAR, kapsamliDoktorlariGetir(session.user), an), baglam),
     kpiGetir(() => siparisKpileri(gunleriAraliga(siparisAraligi), kapsam), baglam),
     kpiGetir(() => ciroOzeti({ kovalar: aylar, ...k }, kapsam), baglam),
-    kpiGetir(() => ortalamaIskonto(saticiId), baglam),
+    kpiGetir(() => saticiOrtalamaIskontosu(saticiId), baglam),
   ]);
   const not = karsilastirmaNotu(k.devamEdiyor);
 

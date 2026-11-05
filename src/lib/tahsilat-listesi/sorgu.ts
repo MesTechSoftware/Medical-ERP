@@ -106,10 +106,14 @@ export async function tahsilatListesi(
   sayfa: { skip: number; take: number }
 ): Promise<{ satirlar: TahsilatSatiri[]; toplam: number; ozet: Ozet | null }> {
   const where = tahsilatKosulu(s);
-  const [hamlar, toplam, o] = await Promise.all([
+  // Aktif süzgeçte özet aynı koşulun sayısını da taşır; ayrı COUNT koşmaz.
+  const sayim: Promise<{ toplam: number; ozet: Ozet | null }> =
+    s.durum === "aktif"
+      ? ozet(where).then((o) => ({ toplam: o.adet, ozet: o }))
+      : prisma.doctorPayment.count({ where }).then((toplam) => ({ toplam, ozet: null }));
+  const [hamlar, { toplam, ozet: o }] = await Promise.all([
     prisma.doctorPayment.findMany({ where, orderBy: [{ paidAt: "desc" }, { id: "desc" }], skip: sayfa.skip, take: sayfa.take, select: SATIR }),
-    prisma.doctorPayment.count({ where }),
-    s.durum === "aktif" ? ozet(where) : null,
+    sayim,
   ]);
   const ad = await adlar(hamlar.map((p) => p.recordedBy));
   return { satirlar: hamlar.map((p) => satir(p, ad)), toplam, ozet: o };

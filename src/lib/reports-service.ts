@@ -6,6 +6,8 @@ import { hesaplaSatirTutarlari, type SatirGirdisi } from "@/lib/satir-tutarlari"
 import { sayilanBelgeler } from "@/lib/sayilan-belgeler";
 import type { Ay, Kova } from "@/lib/donem";
 import { kovalaraBol } from "@/lib/kpi/seri";
+import { teknikHataYaz } from "@/lib/hata-kapsulu";
+import { siparisToplami } from "@/lib/siparis";
 
 /**
  * Raporlar (FR-62, FR-63). Tahsilat oranı C4'te söküldü — kalıcı (X-1 §(1)).
@@ -64,8 +66,98 @@ function net(sevk: SevkSatiri[], iade: SevkSatiri[]) {
 
 function grupla<T>(satirlar: T[], anahtar: (s: T) => string): Map<string, T[]> {
   const m = new Map<string, T[]>();
-  for (const s of satirlar) m.set(anahtar(s), [...(m.get(anahtar(s)) ?? []), s]);
+  for (const s of satirlar) {
+    const k = anahtar(s);
+    const grup = m.get(k);
+    if (grup) grup.push(s);
+    else m.set(k, [s]);
+  }
   return m;
+}
+
+// --- Ciro okuması -----------------------------------------------------------------------------
+
+/** KPI ve rapor kapsamı — sorgu düzeyinde (X-1 §(8) deseni): şirket geneli ya da satıcının kendi siparişleri. */
+export type KpiKapsami = { tur: "sirket" } | { tur: "satici"; saticiId: string };
+
+/** Sayılan sevk ya da iade satırı: belge anı, carisi ve siparişin satıcısı (ciro ve hakediş ona yazılır — X-13). */
+export type CiroSatiri = SevkSatiri & { an: Date; doktorId: string; saticiId: string | null };
+
+/**
+ * Bir aralığın sayılan sevk ve iade satırları — ciro, hakediş, iskonto ve serilerin tek okuması. Rapor ekranı
+ * aynı satırları birden çok hesaba verir (KPI özeti, satıcı raporu, satıcı serisi, doktor sıralaması): satırlar
+ * bu hesapların aralıklarını kapsayan tek aralıktan bir kez okunur, her hesap kendi aralığını süzer. Hesap tek
+ * yoldur (`hesaplaSatirTutarlari`, KARARLAR §0.4); okuma yalnız tekrarlanmaz.
+ */
+export type CiroOkumasi = { aralik: Donem; kapsam: KpiKapsami; sevk: CiroSatiri[]; iade: CiroSatiri[] };
+
+/** Hesaplara verilen okuma; söz (Promise) de olabilir — hesabın kendi sorguları okumayla aynı turda başlar. */
+export type PaylasilanOkuma = CiroOkumasi | Promise<CiroOkumasi>;
+
+/** Aralıkların hepsini kapsayan en küçük yarı açık aralık. */
+export function kapsayanAralik(araliklar: readonly Donem[]): Donem {
+  return { baslangic: enErken(araliklar.map((a) => a.baslangic)), bitis: enGec(araliklar.map((a) => a.bitis)) };
+}
+
+export async function ciroOku(aralik: Donem, kapsam: KpiKapsami): Promise<CiroOkumasi> {
+  const satici = kapsam.tur === "satici" ? kapsam.saticiId : null;
+  const [sevk, iade] = await Promise.all([
+    prisma.shipmentItem.findMany({
+      where: { AND: [donemSevkSatiri(aralik), ...(satici ? [{ shipment: { order: { sellerId: satici } } }] : [])] },
+      select: { ...SEVK_SATIRI, shipment: { select: { shippedAt: true, order: { select: { doctorId: true, sellerId: true } } } } },
+    }),
+    prisma.returnNoteItem.findMany({
+      where: { AND: [donemIadeSatiri(aralik), ...(satici ? [{ orderItem: { order: { sellerId: satici } } }] : [])] },
+      select: {
+        quantity: true,
+        commissionRate: true,
+        returnNote: { select: { createdAt: true, doctorId: true } },
+        orderItem: { select: { ...SEVK_SATIRI.orderItem.select, order: { select: { sellerId: true } } } },
+      },
+    }),
+  ]);
+  return {
+    aralik,
+    kapsam,
+    sevk: sevk.flatMap((s) =>
+      s.shipment.shippedAt
+        ? [{ quantity: s.quantity, commissionRate: s.commissionRate, orderItem: s.orderItem, an: s.shipment.shippedAt, doktorId: s.shipment.order.doctorId, saticiId: s.shipment.order.sellerId }]
+        : []
+    ),
+    iade: iade.map((s) => ({
+      quantity: s.quantity,
+      commissionRate: s.commissionRate,
+      orderItem: s.orderItem,
+      an: s.returnNote.createdAt,
+      doktorId: s.returnNote.doctorId,
+      saticiId: s.orderItem.order.sellerId,
+    })),
+  };
+}
+
+/**
+ * Hesabın okuması: verilen okuma aralığı kapsıyorsa ve kapsamı yetiyorsa o, yoksa yeni okuma. Şirket okuması her
+ * kapsama yeter (satıcı süzgeci hesapta uygulanır); satıcı okuması yalnız aynı satıcıya.
+ */
+async function okumaFor(aralik: Donem, kapsam: KpiKapsami, verilen: PaylasilanOkuma | undefined): Promise<CiroOkumasi> {
+  if (!verilen) return ciroOku(aralik, kapsam);
+  // Paylaşılan okuma düşerse hesap kendi okumasını dener: bir okumanın hatası ekrandaki bütün hesapları birlikte
+  // düşürmesin (kart düzeyinde hata alanı, X-3). Kendi okuması da düşerse hata olduğu gibi fırlar.
+  const okuma = await Promise.resolve(verilen).catch((hata) => {
+    teknikHataYaz(hata, { yol: "ciroOku", kullaniciId: null });
+    return null;
+  });
+  if (okuma === null) return ciroOku(aralik, kapsam);
+  const kapsar = okuma.aralik.baslangic <= aralik.baslangic && okuma.aralik.bitis >= aralik.bitis;
+  const yeter = okuma.kapsam.tur === "sirket" || (kapsam.tur === "satici" && kapsam.saticiId === okuma.kapsam.saticiId);
+  if (!kapsar || !yeter) throw new Error("Ciro okuması hesabın aralığını ya da kapsamını karşılamıyor.");
+  return okuma;
+}
+
+/** Okumanın aralıktaki (ve kapsamdaki) satırları. */
+function aralikta(o: CiroOkumasi, aralik: Donem, kapsam: KpiKapsami = o.kapsam): { sevk: CiroSatiri[]; iade: CiroSatiri[] } {
+  const uygun = (r: CiroSatiri) => icinde(r.an, aralik) && (kapsam.tur === "sirket" || r.saticiId === kapsam.saticiId);
+  return { sevk: o.sevk.filter(uygun), iade: o.iade.filter(uygun) };
 }
 
 export type SellerReport = {
@@ -85,38 +177,29 @@ export type SellerReport = {
  */
 export async function getSellerReports(
   kullanici: { id: string; role: Role },
-  donem: Donem
+  donem: Donem,
+  okuma?: PaylasilanOkuma
 ): Promise<SellerReport[]> {
   if (kullanici.role === "OPERASYON") throw new Error("Prim raporu OPERASYON'a kapalıdır (X-1 §(8)).");
-  const kapsam = kullanici.role === "SATICI" ? { id: kullanici.id } : {};
+  const satici = kullanici.role === "SATICI";
+  const kapsam: KpiKapsami = satici ? { tur: "satici", saticiId: kullanici.id } : { tur: "sirket" };
 
   const sellers = await prisma.user.findMany({
-    where: { role: "SATICI", ...kapsam },
+    where: { role: "SATICI", ...(satici ? { id: kullanici.id } : {}) },
     orderBy: { name: "asc" },
     select: { id: true, name: true },
   });
   const idler = sellers.map((s) => s.id);
 
-  const [sevk, iade, tahsilatlar, doktorlar] = await Promise.all([
+  const [o, tahsilatlar, doktorlar] = await Promise.all([
     // Ciro ve hakediş siparişin satıcısına yazılır; devir taşımaz (X-13 §(4)). İade de öyle.
-    prisma.shipmentItem.findMany({
-      where: { AND: [donemSevkSatiri(donem), { shipment: { order: { sellerId: { in: idler } } } }] },
-      select: { ...SEVK_SATIRI, shipment: { select: { order: { select: { sellerId: true } } } } },
-    }),
-    prisma.returnNoteItem.findMany({
-      where: { AND: [donemIadeSatiri(donem), { orderItem: { order: { sellerId: { in: idler } } } }] },
-      select: {
-        quantity: true,
-        commissionRate: true,
-        orderItem: { select: { ...SEVK_SATIRI.orderItem.select, order: { select: { sellerId: true } } } },
-      },
-    }),
+    okumaFor(donem, kapsam, okuma),
     donemTahsilatlari(donem, idler),
     prisma.doctor.groupBy({ by: ["ownerSellerId"], where: { ownerSellerId: { in: idler } }, _count: true }),
   ]);
-
-  const saticiSevk = grupla(sevk, (s) => s.shipment.order.sellerId!);
-  const saticiIade = grupla(iade, (s) => s.orderItem.order.sellerId!);
+  const { sevk, iade } = aralikta(o, donem, kapsam);
+  const saticiSevk = grupla(sevk, (s) => s.saticiId ?? "");
+  const saticiIade = grupla(iade, (s) => s.saticiId ?? "");
 
   return sellers.map((s) => {
     const toplam = net(saticiSevk.get(s.id) ?? [], saticiIade.get(s.id) ?? []);
@@ -130,6 +213,23 @@ export async function getSellerReports(
       doktorSayisi: doktorlar.find((d) => d.ownerSellerId === s.id)?._count ?? 0,
     };
   });
+}
+
+/**
+ * FR-61: satıcının bütün siparişlerinde ortalama iskonto (tutar ağırlıklı) — tek hesap `siparisToplami`. Siparişler
+ * sayılan siparişlerdir (`sayilanBelgeler.siparis`: teklif ve iptal hariç — A-5, X-6 §(9)).
+ *
+ * İskonto `Σ liste×adet` ile `Σ birim×adet`'ten türer; satır başına yuvarlama girmez. Bu yüzden kalemler aynı
+ * fiyat çiftinde gruplanıp adetleri veritabanında toplanır (X-5 §(4)) ve gruplar aynı fonksiyona verilir:
+ * bütün geçmiş belleğe okunmaz, sonuç kalem kalem hesapla aynıdır.
+ */
+export async function saticiOrtalamaIskontosu(saticiId: string): Promise<Decimal | null> {
+  const gruplar = await prisma.orderItem.groupBy({
+    by: ["listPrice", "unitPrice", "vatRate", "isFree"],
+    where: { order: { ...sayilanBelgeler.siparis, sellerId: saticiId } },
+    _sum: { quantity: true },
+  });
+  return siparisToplami(gruplar.map((g) => ({ ...g, quantity: g._sum.quantity ?? 0 })).filter((g) => g.quantity > 0)).iskontoOran;
 }
 
 /**
@@ -176,41 +276,44 @@ export type DoctorReport = {
 };
 
 /**
+ * Dönemde cirosu sıfırdan farklı carilerin raporu, sıralı (doktor sıralaması — X-1-2). Yalnız bu cariler okunur.
  * `kapsam` zorunludur (KPI'larla aynı `KpiKapsami`, X-1 §(8) deseni): satıcı kapsamında ciro yalnız o satıcının
- * siparişlerinin sevk ve iadesidir (hakediş gibi siparişin satıcısına yazılır — X-13) ve cari listesi o satıcının
- * sipariş girdiği carilerle sınırlıdır (devirle portföyden çıkmış cari de, cirosu onundur).
+ * siparişlerinin sevk ve iadesidir (hakediş gibi siparişin satıcısına yazılır — X-13); devirle portföyden çıkmış
+ * cari de listededir, cirosu onundur.
  */
-export async function getDoctorReports(donem: Donem, limit: number, kapsam: KpiKapsami): Promise<DoctorReport[]> {
-  const satici = kapsam.tur === "satici" ? kapsam.saticiId : null;
-  const [doctors, sevk, iade] = await Promise.all([
-    prisma.doctor.findMany({
-      where: satici ? { orders: { some: { sellerId: satici } } } : {},
-      select: { id: true, fullName: true, ownerSellerId: true, ownerSeller: { select: { name: true } } },
-    }),
-    prisma.shipmentItem.findMany({
-      where: { AND: [donemSevkSatiri(donem), ...(satici ? [{ shipment: { order: { sellerId: satici } } }] : [])] },
-      select: { ...SEVK_SATIRI, shipment: { select: { order: { select: { doctorId: true } } } } },
-    }),
-    prisma.returnNoteItem.findMany({
-      where: { AND: [donemIadeSatiri(donem), ...(satici ? [{ orderItem: { order: { sellerId: satici } } }] : [])] },
-      select: { ...SEVK_SATIRI, returnNote: { select: { doctorId: true } } },
-    }),
-  ]);
+export async function ciroluDoktorRaporlari(donem: Donem, kapsam: KpiKapsami, okuma?: PaylasilanOkuma): Promise<DoctorReport[]> {
+  const cirolar = await doktorCirolari(donem, kapsam, okuma);
+  const idler = [...cirolar].filter(([, ciro]) => !ciro.isZero()).map(([id]) => id);
+  if (idler.length === 0) return [];
+  const doctors = await prisma.doctor.findMany({ where: { id: { in: idler } }, select: DOKTOR_RAPOR_SECIMI });
+  return siraliDoktorRaporlari(doctors, cirolar);
+}
 
-  const doktorSevk = grupla(sevk, (s) => s.shipment.order.doctorId);
-  const doktorIade = grupla(iade, (s) => s.returnNote.doctorId);
+const DOKTOR_RAPOR_SECIMI = { id: true, fullName: true, ownerSellerId: true, ownerSeller: { select: { name: true } } } as const;
 
+/** Cari başına dönem cirosu (matrah, sevk − iade); sevk siparişin, iade iade belgesinin carisine yazılır. */
+async function doktorCirolari(donem: Donem, kapsam: KpiKapsami, okuma?: PaylasilanOkuma): Promise<Map<string, Decimal>> {
+  const { sevk, iade } = aralikta(await okumaFor(donem, kapsam, okuma), donem, kapsam);
+  const doktorSevk = grupla(sevk, (s) => s.doktorId);
+  const doktorIade = grupla(iade, (s) => s.doktorId);
+  const idler = [...new Set([...doktorSevk.keys(), ...doktorIade.keys()])];
+  return new Map(idler.map((id) => [id, net(doktorSevk.get(id) ?? [], doktorIade.get(id) ?? []).matrah]));
+}
+
+function siraliDoktorRaporlari(
+  doctors: { id: string; fullName: string; ownerSellerId: string | null; ownerSeller: { name: string } | null }[],
+  cirolar: Map<string, Decimal>
+): DoctorReport[] {
   const rows = doctors.map((d) => ({
     doctorId: d.id,
     fullName: d.fullName,
     sellerId: d.ownerSellerId,
     sellerName: d.ownerSeller?.name ?? null,
-    ciro: net(doktorSevk.get(d.id) ?? [], doktorIade.get(d.id) ?? []).matrah,
+    ciro: cirolar.get(d.id) ?? new Decimal(0),
   }));
-
   // Eşit ciroda ada, sonra kimliğe göre: sıra numarası istekten isteğe ve sayfadan sayfaya kaymasın (Ü-27).
   rows.sort((a, b) => b.ciro.comparedTo(a.ciro) || a.fullName.localeCompare(b.fullName, "tr") || a.doctorId.localeCompare(b.doctorId));
-  return rows.slice(0, limit);
+  return rows;
 }
 
 /** Dönem cirosu — matrah, sevk edilen eksi iade edilen mal (A-3, A-1, Ü-3 C sınıfı); dönem zorunlu (X-1 §(3)). */
@@ -224,42 +327,15 @@ export async function getCiroTotal(donem: Donem): Promise<Decimal> {
 
 // --- KPI (tasarım 2. tur, ADR-010) -----------------------------------------------------------
 
-/** KPI kapsamı — sorgu düzeyinde (X-1 §(8) deseni): şirket geneli ya da satıcının kendi siparişleri. */
-export type KpiKapsami = { tur: "sirket" } | { tur: "satici"; saticiId: string };
-
 export type CiroToplami = {
   ciro: Decimal; // matrah, sevk − iade
   hakedis: Decimal; // matrah × donmuş oran
   iade: Decimal; // dönemde iade edilen matrah (pozitif)
 };
 
-type ZamanliSatir = SevkSatiri & { an: Date };
-
 const enErken = (tarihler: Date[]) => new Date(Math.min(...tarihler.map((t) => t.getTime())));
 const enGec = (tarihler: Date[]) => new Date(Math.max(...tarihler.map((t) => t.getTime())));
 const icinde = (an: Date, aralik: Donem) => an >= aralik.baslangic && an < aralik.bitis;
-
-/** Aralığın sayılan sevk ve iade satırları, belge anıyla — ciroyla aynı okuma yolu. */
-async function zamanliSatirlar(aralik: Donem, kapsam: KpiKapsami): Promise<{ sevk: ZamanliSatir[]; iade: ZamanliSatir[] }> {
-  const saticiSevk: Prisma.ShipmentItemWhereInput[] =
-    kapsam.tur === "satici" ? [{ shipment: { order: { sellerId: kapsam.saticiId } } }] : [];
-  const saticiIade: Prisma.ReturnNoteItemWhereInput[] =
-    kapsam.tur === "satici" ? [{ orderItem: { order: { sellerId: kapsam.saticiId } } }] : [];
-  const [sevk, iade] = await Promise.all([
-    prisma.shipmentItem.findMany({
-      where: { AND: [donemSevkSatiri(aralik), ...saticiSevk] },
-      select: { ...SEVK_SATIRI, shipment: { select: { shippedAt: true } } },
-    }),
-    prisma.returnNoteItem.findMany({
-      where: { AND: [donemIadeSatiri(aralik), ...saticiIade] },
-      select: { ...SEVK_SATIRI, returnNote: { select: { createdAt: true } } },
-    }),
-  ]);
-  return {
-    sevk: sevk.flatMap((s) => (s.shipment.shippedAt ? [{ ...s, an: s.shipment.shippedAt }] : [])),
-    iade: iade.map((s) => ({ ...s, an: s.returnNote.createdAt })),
-  };
-}
 
 function toplamlar(sevk: SevkSatiri[], iade: SevkSatiri[]): CiroToplami {
   const n = net(sevk, iade);
@@ -269,18 +345,16 @@ function toplamlar(sevk: SevkSatiri[], iade: SevkSatiri[]): CiroToplami {
 /**
  * KPI ciro özeti: kova (gün, hafta ya da ay) ciro serisi ve seçili dönemle karşılaştırma döneminin
  * toplamları.
- * Satırlar aralıkların birleşiminden BİR KEZ okunur ve bölünür; hesap `getCiroTotal()` ile
- * aynı yoldur (`hesaplaSatirTutarlari()` — ikinci hesap yolu yok, KARARLAR §0.4).
+ * Satırlar aralıkların birleşiminden BİR KEZ okunur ve bölünür (ekran başka hesaplarla paylaşıyorsa `okuma`
+ * verilir); hesap `getCiroTotal()` ile aynı yoldur (`hesaplaSatirTutarlari()` — ikinci hesap yolu yok, KARARLAR §0.4).
  */
 export async function ciroOzeti(
   g: { kovalar: readonly Kova[]; simdi: Donem; onceki: Donem | null },
-  kapsam: KpiKapsami
+  kapsam: KpiKapsami,
+  okuma?: PaylasilanOkuma
 ): Promise<{ seri: Decimal[]; simdi: CiroToplami; onceki: CiroToplami | null }> {
-  const araliklar = [g.kovalar[0].aralik, g.kovalar[g.kovalar.length - 1].aralik, g.simdi, ...(g.onceki ? [g.onceki] : [])];
-  const { sevk, iade } = await zamanliSatirlar(
-    { baslangic: enErken(araliklar.map((a) => a.baslangic)), bitis: enGec(araliklar.map((a) => a.bitis)) },
-    kapsam
-  );
+  const aralik = ciroOzetiAraligi(g);
+  const { sevk, iade } = aralikta(await okumaFor(aralik, kapsam, okuma), aralik, kapsam);
   const sevkKova = kovalaraBol(sevk, g.kovalar, (s) => s.an);
   const iadeKova = kovalaraBol(iade, g.kovalar, (s) => s.an);
   const sec = (aralik: Donem) =>
@@ -295,32 +369,18 @@ export async function ciroOzeti(
   };
 }
 
-/** Satıcı başına aylık ciro serisi (rapor tablosunun "Son 6 ay" hücresi) — tek okuma. */
-export async function saticiCiroSerileri(aylar: readonly Ay[], saticiIdleri: string[]): Promise<Map<string, Decimal[]>> {
+/** Ciro özetinin okuma aralığı: kovalar, seçili ve karşılaştırma dönemi. */
+export function ciroOzetiAraligi(g: { kovalar: readonly Kova[]; simdi: Donem; onceki: Donem | null }): Donem {
+  return kapsayanAralik([g.kovalar[0].aralik, g.kovalar[g.kovalar.length - 1].aralik, g.simdi, ...(g.onceki ? [g.onceki] : [])]);
+}
+
+/** Satıcı başına aylık ciro serisi (rapor tablosunun "Son 6 ay" hücresi) — ekranın şirket okumasından; ayrı sorgu yok. */
+export async function saticiCiroSerileri(aylar: readonly Ay[], saticiIdleri: string[], okuma: PaylasilanOkuma): Promise<Map<string, Decimal[]>> {
   if (saticiIdleri.length === 0) return new Map();
-  const aralik = { baslangic: aylar[0].aralik.baslangic, bitis: aylar[aylar.length - 1].aralik.bitis };
-  const [sevk, iade] = await Promise.all([
-    prisma.shipmentItem.findMany({
-      where: { AND: [donemSevkSatiri(aralik), { shipment: { order: { sellerId: { in: saticiIdleri } } } }] },
-      select: { ...SEVK_SATIRI, shipment: { select: { shippedAt: true, order: { select: { sellerId: true } } } } },
-    }),
-    prisma.returnNoteItem.findMany({
-      where: { AND: [donemIadeSatiri(aralik), { orderItem: { order: { sellerId: { in: saticiIdleri } } } }] },
-      select: {
-        ...SEVK_SATIRI,
-        returnNote: { select: { createdAt: true } },
-        orderItem: { select: { ...SEVK_SATIRI.orderItem.select, order: { select: { sellerId: true } } } },
-      },
-    }),
-  ]);
-  const saticiSevk = grupla(
-    sevk.flatMap((s) => (s.shipment.shippedAt ? [{ ...s, an: s.shipment.shippedAt }] : [])),
-    (s) => s.shipment.order.sellerId!
-  );
-  const saticiIade = grupla(
-    iade.map((s) => ({ ...s, an: s.returnNote.createdAt })),
-    (s) => s.orderItem.order.sellerId!
-  );
+  const aralik = kapsayanAralik(aylar.map((a) => a.aralik));
+  const { sevk, iade } = aralikta(await okumaFor(aralik, { tur: "sirket" }, okuma), aralik);
+  const saticiSevk = grupla(sevk, (s) => s.saticiId ?? "");
+  const saticiIade = grupla(iade, (s) => s.saticiId ?? "");
   return new Map(
     saticiIdleri.map((id) => {
       const sevkKova = kovalaraBol(saticiSevk.get(id) ?? [], aylar, (s) => s.an);

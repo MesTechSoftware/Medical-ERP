@@ -44,13 +44,23 @@ type KalemHareketleri = {
   returnItems: readonly { quantity: number }[];
 };
 
+/** Kalemin sevk edilen miktarı — kalan hesabının ve liste satırının (iadesiz okuma) tek yolu. */
+export function sevkMiktari(k: { shipmentItems: readonly { quantity: number }[] }): number {
+  return k.shipmentItems.reduce((t, s) => t + s.quantity, 0);
+}
+
+/** Kalemin sevk edilmemiş miktarı: sipariş − sevk (A-3); iade kalanı değiştirmez (A-1), okunması gerekmez. */
+export function kalanMiktar(k: { quantity: number; shipmentItems: readonly { quantity: number }[] }): number {
+  return k.quantity - sevkMiktari(k);
+}
+
 /**
  * Kalem başına sevk edilen, iade edilen ve kalan miktar (A-3-2). Kalan = sipariş − sevk (A-3);
- * iade ayrı belgedir ve kalanı değiştirmez (A-1). Siparişler listesi ve yan paneli buradan okur; detay
- * sayfası, Kargo ekranı ve `sevkiyatYaz` henüz kendi toplamalarını yapar (spec Ü-23 §4; Kargo 6. modülde geçer).
+ * iade ayrı belgedir ve kalanı değiştirmez (A-1). Sipariş yan paneli buradan okur; liste satırı `sevkMiktari`,
+ * Kargo, onay, risk ve `sevkiyatYaz` kalanı iadesiz `kalanMiktar`'dan okur.
  */
 export function kalemMiktarlari(k: KalemHareketleri): { sevk: number; iade: number; kalan: number } {
-  const sevk = k.shipmentItems.reduce((t, s) => t + s.quantity, 0);
+  const sevk = sevkMiktari(k);
   const iade = k.returnItems.reduce((t, r) => t + r.quantity, 0);
-  return { sevk, iade, kalan: k.quantity - sevk };
+  return { sevk, iade, kalan: kalanMiktar(k) };
 }

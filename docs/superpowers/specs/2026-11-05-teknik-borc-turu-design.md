@@ -32,8 +32,10 @@ aç/kapa liste ya da KPI sorgusu koşturmaz (e2e ölçer).
 | `OnayKurali` ↔ `BlokKuralKodu`/`BLOK_KURAL_ADI` | `BlokKuralKodu`; süzgecin seçenekleri `BLOK_KURAL_ADI`'dan |
 | `kpiGetir` toplu kargoda | nötr `lib/hata-kapsulu.ts` `hataKapsulu`; `kpiGetir` KPI çağrılarında takma ad |
 
-Tek görünür etki: geçersiz `per` (harf, sıfır, ondalık) artık sayfalama ve süzgeç bağlantılarına yazılmaz
-(önceden yazılıyordu, ertelenen iş Ü-27). Panellerin rozet ve alt bilgi satırı tek sınıf kümesini kullanır.
+Görünür etkiler: geçersiz `page`/`per` (harf, sıfır, ondalık, taşan sayı) yok sayılır — sayfa 1'e, boy varsayılana
+düşer ve bağlantılara yazılmaz (önceden `parseInt` baştaki sayıyı alıyor, `per` bağlantılara yazılıyordu; ertelenen iş
+Ü-27). Panellerin rozet ve alt bilgi satırı tek sınıf kümesini kullanır, panellerdeki sipariş bağlantıları ortak bağlantı
+stilindedir, eylemsiz panelde alt bilgi şeridi çizilmez.
 
 ## 3. PR 2 — sorgu performansı
 
@@ -45,6 +47,11 @@ inmesi, sipariş listesinin iade adetlerini okumaması, bozuk adreste yönlendir
 dışı yönlendirmede panel sorgusunun koşmaması, kargo KPI'larının bekleyenlerle aynı turda başlaması, denetim
 KPI'larının imleç gezintisinde koşmaması. Her kalem için önce sonuç eşitliği testi (eski ve yeni yol aynı sayıyı
 verir), sonra değişiklik.
+
+**Bu turda yapılmayanlar (YOL_HARITASI Ü-38):** İçe Aktarım'ın dört KPI sayımı (tek sorguya inmesi "kart = satır" tek
+koşulunu bozar; tablo küçük) · Denetim KPI'larının imleç gezintisinde koşması (önbellek ister) · sayfa dışı
+yönlendirmede panel sorgusu (paralel okumanın nadir yoldaki bedeli) · Raporlar dönem cirosunun bellekte hesaplanması
+(okuma tekleşti; SQL toplamı ikinci hesap yolu olur — KARARLAR §0.4, ancak karar değişikliğiyle).
 
 ## 4. PR 3 — küçük düzeltmeler (davranış)
 

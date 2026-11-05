@@ -107,7 +107,7 @@ describe("vadesiGecmisUyarisi — tutar değil varlık, yalnız borçluyken (X-6
     await borc("100", "2026-09-01");
     await borc("200", "2026-08-15");
     await borc("300", "2026-12-01"); // vadesi gelmemiş
-    expect(await vadesiGecmisUyarisi(doktorId, BUGUN)).toEqual({
+    expect(await vadesiGecmisUyarisi(doktorId, { gun: BUGUN })).toEqual({
       kademe: "BILGI",
       kural_kodu: "VADESI_GECMIS_HAREKET",
       parametreler: { enEskiVade: "2026-08-15" },
@@ -116,15 +116,15 @@ describe("vadesiGecmisUyarisi — tutar değil varlık, yalnız borçluyken (X-6
 
   it("vadesi bugün olan hareket geçmiş sayılmaz", async () => {
     await borc("100", "2026-10-20");
-    expect(await vadesiGecmisUyarisi(doktorId, BUGUN)).toBeNull();
+    expect(await vadesiGecmisUyarisi(doktorId, { gun: BUGUN })).toBeNull();
   });
 
   it("bakiye kapalı ya da alacaklıysa vadesi geçmiş borç olsa da uyarı yoktur (20.10 eki)", async () => {
     await borc("100", "2026-08-15");
     await hareket("TAHSILAT", "ALACAK", "100");
-    expect(await vadesiGecmisUyarisi(doktorId, BUGUN)).toBeNull();
+    expect(await vadesiGecmisUyarisi(doktorId, { gun: BUGUN })).toBeNull();
     await hareket("TAHSILAT", "ALACAK", "50");
-    expect(await vadesiGecmisUyarisi(doktorId, BUGUN)).toBeNull();
+    expect(await vadesiGecmisUyarisi(doktorId, { gun: BUGUN })).toBeNull();
   });
 
   it("ters kayıtla çevrilmiş borç sayılmaz", async () => {
@@ -141,6 +141,6 @@ describe("vadesiGecmisUyarisi — tutar değil varlık, yalnız borçluyken (X-6
       },
     });
     await borc("50", "2026-09-10");
-    expect((await vadesiGecmisUyarisi(doktorId, BUGUN))?.parametreler).toEqual({ enEskiVade: "2026-09-10" });
+    expect((await vadesiGecmisUyarisi(doktorId, { gun: BUGUN }))?.parametreler).toEqual({ enEskiVade: "2026-09-10" });
   });
 });

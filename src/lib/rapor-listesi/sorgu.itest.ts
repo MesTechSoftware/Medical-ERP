@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/db";
 import { degistirDoktorSahibi } from "@/lib/sahiplik";
 import { doktorSiralamasi, saticiSecenekleri } from "@/lib/rapor-listesi/sorgu";
+import { ciroOku, ciroOzeti, ciroOzetiAraligi, getSellerReports, kapsayanAralik, saticiCiroSerileri } from "@/lib/reports-service";
+import { sonAylar } from "@/lib/donem";
 import { BOS_SUZGEC, SAHIPSIZ, type RaporSuzgeci } from "@/lib/rapor-listesi/suzgec";
 import { referansVeri, yeniDoktorVerisi } from "../../../test/integration/referans";
 
@@ -159,3 +161,59 @@ describe("Raporum: satıcı kapsamlı sıralama (Ü-33, X-1-3)", () => {
   });
 });
 
+describe("paylaşılan ciro okuması — rapor ekranı satırları bir kez okur, sonuç ayrı okumayla aynıdır", () => {
+  const EYLUL = { baslangic: new Date("2026-08-31T21:00:00Z"), bitis: new Date("2026-09-30T21:00:00Z") };
+  const AN = new Date("2026-11-15T09:00:00Z");
+  const yon = { id: "y", role: "YONETICI" as const };
+
+  beforeEach(async () => {
+    // Satıcılı sevkler: Ekim'de Bora'ya (Ali), Kasım'da Işık'a (Ali) — kapsam ve aralık süzgeci sınansın.
+    await sevk(ids.b, "120.5", new Date("2026-10-20T09:00:00Z"), ali.id);
+    await sevk(ids.c, "80", new Date("2026-11-03T09:00:00Z"), ali.id);
+  });
+
+  const tl = (d: { toFixed: (n: number) => string }) => d.toFixed(2);
+
+  it("şirket okuması: sıralama, satıcı raporu, satıcı serisi ve KPI özeti ayrı okumayla aynı", async () => {
+    const aylar = sonAylar(3, { yil: 2026, ay: 11 }, AN);
+    const g = { kovalar: aylar, simdi: EKIM, onceki: EYLUL };
+    const okuma = ciroOku(kapsayanAralik([ciroOzetiAraligi(g), EKIM]), SIRKET);
+
+    expect(ozet(await doktorSiralamasi(EKIM, BOS_SUZGEC, SAYFA, SIRKET, okuma))).toEqual(ozet(await doktorSiralamasi(EKIM, BOS_SUZGEC, SAYFA, SIRKET)));
+
+    const rapor = (r: Awaited<ReturnType<typeof getSellerReports>>) => r.map((x) => [x.sellerId, tl(x.ciro), tl(x.hakedis), x.ortalamaIskonto?.toFixed(2) ?? null]);
+    const paylasilan = await getSellerReports(yon, EKIM, okuma);
+    expect(rapor(paylasilan)).toEqual(rapor(await getSellerReports(yon, EKIM)));
+    expect(paylasilan.find((x) => x.sellerId === ali.id)!.ciro.toFixed(2)).toBe("120.50");
+
+    const seri = (m: Map<string, { toFixed: (n: number) => string }[]>) => m.get(ali.id)!.map(tl);
+    expect(seri(await saticiCiroSerileri(aylar, [ali.id], okuma))).toEqual(seri(await saticiCiroSerileri(aylar, [ali.id], ciroOku(kapsayanAralik(aylar.map((a) => a.aralik)), SIRKET))));
+    expect(seri(await saticiCiroSerileri(aylar, [ali.id], okuma))).toEqual(["0.00", "120.50", "80.00"]);
+
+    const kpi = (o: Awaited<ReturnType<typeof ciroOzeti>>) => [o.seri.map(tl), tl(o.simdi.ciro), tl(o.simdi.iade), o.onceki && tl(o.onceki.ciro)];
+    expect(kpi(await ciroOzeti(g, SIRKET, okuma))).toEqual(kpi(await ciroOzeti(g, SIRKET)));
+  });
+
+  it("satıcı okuması: Raporum'un sıralaması ve özeti ayrı okumayla aynı; başkasının cirosu girmez", async () => {
+    const kapsam = { tur: "satici", saticiId: ali.id } as const;
+    const g = { kovalar: sonAylar(2, { yil: 2026, ay: 10 }, AN), simdi: EKIM, onceki: EYLUL };
+    const okuma = ciroOku(kapsayanAralik([ciroOzetiAraligi(g), EKIM]), kapsam);
+    const paylasilan = await doktorSiralamasi(EKIM, BOS_SUZGEC, SAYFA, kapsam, okuma);
+    expect(ozet(paylasilan)).toEqual(ozet(await doktorSiralamasi(EKIM, BOS_SUZGEC, SAYFA, kapsam)));
+    expect(ozet(paylasilan)).toEqual([[ids.b, 1, "120.50"]]);
+    expect(tl((await ciroOzeti(g, kapsam, okuma)).simdi.ciro)).toBe("120.50");
+  });
+
+  it("paylaşılan okuma düşerse hesap kendi okumasını yapar — bir okumanın hatası ekrandaki bütün hesapları düşürmez", async () => {
+    const dusen = Promise.reject(new Error("okuma düştü"));
+    dusen.catch(() => {});
+    expect(ozet(await doktorSiralamasi(EKIM, BOS_SUZGEC, SAYFA, SIRKET, dusen))).toEqual(ozet(await doktorSiralamasi(EKIM, BOS_SUZGEC, SAYFA, SIRKET)));
+  });
+
+  it("okuma hesabın aralığını ya da kapsamını karşılamıyorsa hata verir (sessizce eksik sayılmaz)", async () => {
+    const kasimOkumasi = ciroOku({ baslangic: new Date("2026-10-31T21:00:00Z"), bitis: new Date("2026-11-30T21:00:00Z") }, SIRKET);
+    await expect(doktorSiralamasi(EKIM, BOS_SUZGEC, SAYFA, SIRKET, kasimOkumasi)).rejects.toThrow(/karşılamıyor/);
+    const saticiOkumasi = ciroOku(EKIM, { tur: "satici", saticiId: ali.id });
+    await expect(doktorSiralamasi(EKIM, BOS_SUZGEC, SAYFA, SIRKET, saticiOkumasi)).rejects.toThrow(/karşılamıyor/);
+  });
+});

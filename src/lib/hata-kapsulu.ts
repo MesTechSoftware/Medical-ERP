@@ -19,10 +19,16 @@ export async function hataKapsulu<T>(
   try {
     return { tamam: true, deger: await getir() };
   } catch (hata) {
-    const referans = randomUUID().slice(0, 8);
-    console.error(
-      teknikHataLogSatiri({ zaman: simdi(), referans, yol: baglam.yol, kullaniciId: baglam.kullaniciId, hata })
-    );
-    return { tamam: false, referans };
+    return { tamam: false, referans: teknikHataYaz(hata, baglam) };
   }
+}
+
+/**
+ * Teknik hatayı log'a referansla yazar ve referansı döner (X-3 §(2)/(6)). Kapsül ve yedek yola düşen paylaşılan
+ * okumalar (hata yutulmaz: yedek yol koşsa da hata log'dadır) bunu kullanır.
+ */
+export function teknikHataYaz(hata: unknown, baglam: { yol: string; kullaniciId: string | null }): string {
+  const referans = randomUUID().slice(0, 8);
+  console.error(teknikHataLogSatiri({ zaman: simdi(), referans, yol: baglam.yol, kullaniciId: baglam.kullaniciId, hata }));
+  return referans;
 }

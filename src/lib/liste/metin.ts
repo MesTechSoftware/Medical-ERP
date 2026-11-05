@@ -10,3 +10,11 @@ export function metinVaryantlari(q: string): string[] {
   const varyantlar = [q, kucuk, kucuk.replace(/ı/g, "I"), kucuk.replace(/(^|[^\p{L}])ı/gu, "$1I")];
   return varyantlar.filter((v, i) => varyantlar.indexOf(v) === i);
 }
+
+/**
+ * Ham SQL `ILIKE ANY(...)` için "içerir" desenleri: Türkçe varyantların her biri, `%`/`_`/`\` kaçışlı
+ * (`ILIKE`'ın varsayılan kaçış karakteri `\`). Prisma'nın `contains` + `insensitive` aramasıyla aynı eşleşme.
+ */
+export function icerirDesenleri(q: string): string[] {
+  return metinVaryantlari(q).map((v) => `%${v.replace(/[\\%_]/g, "\\$&")}%`);
+}

@@ -49,16 +49,18 @@ export default async function DoctorDetailPage({
 
   const an = simdi();
   const aylar = sonAylar(6, takvimAyi(an), an);
+  // Bakiye bir kez hesaplanır: kart ve vade uyarısı aynı değeri kullanır.
+  const bakiyeP = hesaplaDoktorBakiye(id);
   const [cari, vadeUyarisi, orders, payments] = await Promise.all([
     // Bakiye ve ay sonu trendi tek hata alanıdır: biri düşerse kart referansla düşer (X-3).
     kpiGetir(
-      async () => ({
-        bakiye: await hesaplaDoktorBakiye(id),
-        seri: await bakiyeSerisi(id, aylar.map((a) => a.aralik.bitis)),
-      }),
+      async () => {
+        const [bakiye, seri] = await Promise.all([bakiyeP, bakiyeSerisi(id, aylar.map((a) => a.aralik.bitis))]);
+        return { bakiye, seri };
+      },
       { yol: `/doctors/${id}`, kullaniciId: session.user.id }
     ),
-    vadesiGecmisUyarisi(id),
+    vadesiGecmisUyarisi(id, { bakiye: bakiyeP.then((b) => b.bakiye) }),
     prisma.order.findMany({
       where: { doctorId: id },
       orderBy: { orderDate: "desc" },

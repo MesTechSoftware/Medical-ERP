@@ -1,9 +1,9 @@
 import type { Prisma } from "@/generated/prisma/client";
 import type { FreeReason, OrderStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
-import { metinVaryantlari } from "@/lib/liste/metin";
+import { icerirDesenleri } from "@/lib/liste/metin";
 import { BOS_SUZGEC, ESKI_ONAY_SAATI, type OnaySuzgeci } from "@/lib/onay-listesi/suzgec";
-import { kalemMiktarlari } from "@/lib/siparis";
+import { kalanMiktar } from "@/lib/siparis";
 import { gunleriAraliga } from "@/lib/liste/parametreler";
 import { hesaplaStoklar, varsayilanDepoId } from "@/lib/stok";
 
@@ -37,22 +37,23 @@ export function onayKosulu(s: OnaySuzgeci, an: Date, qBelgeleri: readonly string
 }
 
 /**
- * Metni taşıyan belgelerin kimlikleri: SIP/KNS numarası ya da carisi, TRF/DZL numarası (Türkçe varyantlı).
- * Arama yalnız onay bloğu olan belgelerde yapılır: geniş bir metin bütün siparişleri döndürmez, liste sınırlı kalır.
+ * Metni taşıyan bloklu belgelerin kimlikleri: SIP/KNS numarası ya da carisi, TRF/DZL numarası (Türkçe varyantlı).
+ * Arama blokların belgeleriyle birleşerek yapılır — bütün bloklu belge kimlikleri okunmaz, geniş bir metin bütün
+ * siparişleri döndürmez; sonuç yalnız eşleşen bloklu belgelerdir.
  */
 async function metinBelgeleri(q: string): Promise<string[]> {
-  const bloklu = (await prisma.approvalBlock.findMany({ distinct: ["documentId"], select: { documentId: true } })).map((b) => b.documentId);
-  const kapsam = { id: { in: bloklu } };
-  const icerir = metinVaryantlari(q).map((v) => ({ contains: v, mode: "insensitive" as const }));
-  const noVeCari = icerir.flatMap((c) => [{ documentNo: c }, { doctor: { fullName: c } }]);
-  const yalnizNo = icerir.map((c) => ({ documentNo: c }));
-  const [sip, kns, trf, dzl] = await Promise.all([
-    prisma.order.findMany({ where: { ...kapsam, OR: noVeCari }, select: { id: true } }),
-    prisma.consignmentIssue.findMany({ where: { ...kapsam, OR: noVeCari }, select: { id: true } }),
-    prisma.stockTransfer.findMany({ where: { ...kapsam, OR: yalnizNo }, select: { id: true } }),
-    prisma.stockAdjustment.findMany({ where: { ...kapsam, OR: yalnizNo }, select: { id: true } }),
-  ]);
-  return [...sip, ...kns, ...trf, ...dzl].map((r) => r.id);
+  const desenler = icerirDesenleri(q);
+  const satirlar = await prisma.$queryRaw<{ id: string }[]>`
+    SELECT DISTINCT b."documentId" AS id
+    FROM "ApprovalBlock" b
+    LEFT JOIN "Order" o ON b."documentType" = 'SIP' AND o."id" = b."documentId"
+    LEFT JOIN "ConsignmentIssue" k ON b."documentType" = 'KNS' AND k."id" = b."documentId"
+    LEFT JOIN "StockTransfer" t ON b."documentType" = 'TRF' AND t."id" = b."documentId"
+    LEFT JOIN "StockAdjustment" a ON b."documentType" = 'DZL' AND a."id" = b."documentId"
+    LEFT JOIN "Doctor" d ON d."id" = COALESCE(o."doctorId", k."doctorId")
+    WHERE COALESCE(o."documentNo", k."documentNo", t."documentNo", a."documentNo") ILIKE ANY(${desenler}::text[])
+       OR d."fullName" ILIKE ANY(${desenler}::text[])`;
+  return satirlar.map((r) => r.id);
 }
 
 export type OnaySatiri = {
@@ -74,18 +75,23 @@ export type OnaySatiri = {
 
 type HamBlok = Prisma.ApprovalBlockGetPayload<object>;
 
-/** Blokların belge numarası, carisi ve kişi adları — tür başına tek okuma. */
+/** Kimlik listesi boşsa sorgu koşmaz (`IN ()` yerine boş sonuç). */
+function varsa<T>(idler: string[], oku: (idler: string[]) => Promise<T[]>): Promise<T[]> {
+  return idler.length === 0 ? Promise.resolve([]) : oku(idler);
+}
+
+/** Blokların belge numarası, carisi ve kişi adları — tür başına tek okuma; o türden blok yoksa okuma yok. */
 async function satirlar(bloklar: readonly HamBlok[]): Promise<OnaySatiri[]> {
   const idler = (tur: string) => bloklar.filter((b) => b.documentType === tur).map((b) => b.documentId);
+  const kisiIdleri = [...new Set(bloklar.flatMap((b) => (b.decidedById ? [b.openedById, b.decidedById] : [b.openedById])))];
   const [sip, kns, trf, dzl, kisiler] = await Promise.all([
-    prisma.order.findMany({ where: { id: { in: idler("SIP") } }, select: { id: true, documentNo: true, doctor: { select: { fullName: true } } } }),
-    prisma.consignmentIssue.findMany({ where: { id: { in: idler("KNS") } }, select: { id: true, documentNo: true, doctor: { select: { fullName: true } } } }),
-    prisma.stockTransfer.findMany({ where: { id: { in: idler("TRF") } }, select: { id: true, documentNo: true } }),
-    prisma.stockAdjustment.findMany({ where: { id: { in: idler("DZL") } }, select: { id: true, documentNo: true } }),
-    prisma.user.findMany({
-      where: { id: { in: [...new Set(bloklar.flatMap((b) => (b.decidedById ? [b.openedById, b.decidedById] : [b.openedById])))] } },
-      select: { id: true, name: true },
-    }),
+    varsa(idler("SIP"), (id) => prisma.order.findMany({ where: { id: { in: id } }, select: { id: true, documentNo: true, doctor: { select: { fullName: true } } } })),
+    varsa(idler("KNS"), (id) =>
+      prisma.consignmentIssue.findMany({ where: { id: { in: id } }, select: { id: true, documentNo: true, doctor: { select: { fullName: true } } } })
+    ),
+    varsa(idler("TRF"), (id) => prisma.stockTransfer.findMany({ where: { id: { in: id } }, select: { id: true, documentNo: true } })),
+    varsa(idler("DZL"), (id) => prisma.stockAdjustment.findMany({ where: { id: { in: id } }, select: { id: true, documentNo: true } })),
+    varsa(kisiIdleri, (id) => prisma.user.findMany({ where: { id: { in: id } }, select: { id: true, name: true } })),
   ]);
   const belgeler = new Map<string, { no: string; siparisId: string | null; cari: string | null }>([
     ...sip.map((o) => [`SIP|${o.id}`, { no: o.documentNo, siparisId: o.id, cari: o.doctor.fullName }] as const),
@@ -139,14 +145,14 @@ export type OnayKpileri = { bekleyen: number; enEski: Date | null; eski: number;
 export async function onayKpileri(bugun: string, an: Date): Promise<OnayKpileri> {
   const sayi = (s: Partial<OnaySuzgeci>) => prisma.approvalBlock.count({ where: onayKosulu({ ...BOS_SUZGEC, ...s }, an) });
   const gun = { baslangic: bugun, bitis: bugun };
-  const [bekleyen, enEski, eski, bugunOnay, bugunRed] = await Promise.all([
-    sayi({}),
-    prisma.approvalBlock.aggregate({ where: onayKosulu(BOS_SUZGEC, an), _min: { openedAt: true } }),
+  const [bekleyen, eski, bugunOnay, bugunRed] = await Promise.all([
+    // Bekleyen sayısı ve en eskisi aynı koşuldan, tek sorguda.
+    prisma.approvalBlock.aggregate({ where: onayKosulu(BOS_SUZGEC, an), _count: true, _min: { openedAt: true } }),
     sayi({ eski: true }),
     sayi({ durum: "ONAY", ...gun }),
     sayi({ durum: "RED", ...gun }),
   ]);
-  return { bekleyen, enEski: enEski._min.openedAt, eski, bugunOnay, bugunRed };
+  return { bekleyen: bekleyen._count, enEski: bekleyen._min.openedAt, eski, bugunOnay, bugunRed };
 }
 
 export type OnayPaneli = {
@@ -183,7 +189,6 @@ export async function onayPaneli(id: string): Promise<OnayPaneli | null> {
                 productId: true,
                 product: { select: { name: true, code: true } },
                 shipmentItems: { select: { quantity: true } },
-                returnItems: { select: { quantity: true } },
               },
             },
           },
@@ -200,7 +205,7 @@ export async function onayPaneli(id: string): Promise<OnayPaneli | null> {
     const urunler = new Map<string, { urun: string; kod: string; kalan: number }>();
     for (const k of siparis.items) {
       const u = urunler.get(k.productId) ?? { urun: k.product.name, kod: k.product.code, kalan: 0 };
-      u.kalan += kalemMiktarlari(k).kalan;
+      u.kalan += kalanMiktar(k);
       urunler.set(k.productId, u);
     }
     const stok = await hesaplaStoklar([...urunler.keys()], depoId);
