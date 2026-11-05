@@ -9,7 +9,7 @@ import {
   urunAdresi,
   type UrunSuzgeci,
 } from "@/lib/urun-listesi/suzgec";
-import { SUTUNLAR, SUTUN_CEREZI, SUTUN_YOLU } from "@/lib/urun-listesi/sutunlar";
+import { SUTUNLAR, SUTUN_CEREZI } from "@/lib/urun-listesi/sutunlar";
 import { gizliSutunlariCoz } from "@/lib/liste/sutunlar";
 
 // Ürün listesinin süzgeci ve sütunları — spec Ü-19 §3.2–3.4, §4.3.
@@ -85,6 +85,5 @@ describe("SUTUNLAR", () => {
     expect(SUTUNLAR.map((s) => s.anahtar)).toEqual(["kod", "fiyat", "fiyatKdvDahil", "kdv", "stok", "durum"]);
     expect([...gizliSutunlariCoz(SUTUNLAR, undefined)]).toEqual(["fiyatKdvDahil"]);
     expect(SUTUN_CEREZI).toBe("urun-sutunlar");
-    expect(SUTUN_YOLU).toBe("/products");
   });
 });

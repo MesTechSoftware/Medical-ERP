@@ -4,6 +4,7 @@ import {
   aralikCoz,
   dashboardAraligi,
   donemBitisAyi,
+  donemAnahtari,
   donemCoz,
   karsilastirmaNotu,
   sonAylar,
@@ -36,6 +37,14 @@ describe("donemCoz — rapor ekranının dönem parametresi", () => {
 
   it("geçersiz değer içinde bulunulan aya düşer", () => {
     for (const p of ["2026-13", "2026-00", "abc", "2026-1"]) expect(donemCoz(p, an).anahtar).toBe("2026-10");
+  });
+});
+
+describe("donemAnahtari — süzgecin dönem doğrulaması", () => {
+  it("ay ve tüm zamanlar geçer, başka değer null", () => {
+    expect(donemAnahtari("2026-03")).toBe("2026-03");
+    expect(donemAnahtari("tum")).toBe("tum");
+    for (const p of ["2026-13", "2026-00", "abc", "2026-1", "", null, undefined]) expect(donemAnahtari(p)).toBeNull();
   });
 });
 

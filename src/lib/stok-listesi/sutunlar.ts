@@ -16,4 +16,3 @@ export const SUTUNLAR: readonly SutunTanimi<StokSutunu>[] = [
 ];
 
 export const SUTUN_CEREZI = "stok-sutunlar";
-export const SUTUN_YOLU = "/stock";

@@ -4,8 +4,7 @@ import { requireStaff } from "@/lib/session";
 import { Card, PageHeader } from "@/components/ui";
 import { Ikon } from "@/components/Ikon";
 import CollectionForm from "../CollectionForm";
-
-const BAGLANTI = "text-link underline decoration-link/40 underline-offset-4 hover:decoration-link";
+import { BAGLANTI } from "@/components/stil";
 
 /** Yeni tahsilat (spec Ü-26 §3.6): bugünkü form; sonuç ve `BILGI` uyarıları (A-15, X-6) formun altında. */
 export default async function NewCollectionPage() {

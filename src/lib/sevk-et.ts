@@ -2,7 +2,7 @@ import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/db";
 import { IsHatasi } from "@/lib/hata";
 import { sevkiyatYaz, type SevkiyatGirdisi } from "@/lib/sevkiyat";
-import { kpiGetir } from "@/lib/kpi/getir";
+import { hataKapsulu } from "@/lib/hata-kapsulu";
 import { kalemMiktarlari } from "@/lib/siparis";
 import type { TopluSecim } from "@/lib/kargo-listesi/suzgec";
 import { sert, yumusak, type Bildirim, type IslemSonucu } from "@/lib/sonuc";
@@ -56,7 +56,7 @@ export type TopluSatirSonucu = {
  * kalanının tamamıyla; firma ortak, takip ve irsaliye satırın; gerekçe yok (negatif stokta onay gereken
  * sipariş yazılmaz, kısmi panelden gerekçeyle gönderilir). Bir siparişin sonucu öbürlerini etkilemez.
  * Kalan kilit dışında okunur; `sevkiyatYaz` kilit altında yeniden doğrular. Beklenmeyen (teknik) hata
- * yutulmaz: `kpiGetir` kapsülüyle log satırına referansla yazılır, sipariş "teknik hata" sonucuyla döner ve
+ * yutulmaz: `hataKapsulu` ile log satırına referansla yazılır, sipariş "teknik hata" sonucuyla döner ve
  * sıradaki siparişe geçilir (X-3 §(2)/(4); spec §5: bir siparişin hatası öbürlerini durdurmaz).
  */
 export async function topluKargo(
@@ -94,7 +94,7 @@ export async function topluKargo(
       sonuclar.push({ siparisId: o.id, documentNo: o.documentNo, cari: o.doctor.fullName, sonuc: { durum: "HATA", sonuc: new IsHatasi([sert("SIPARIS_DURUMU_UYGUN_DEGIL")]).sonuc } });
       continue;
     }
-    const r = await kpiGetir(
+    const r = await hataKapsulu(
       () =>
         siparisiSevkEt({
           siparisId: o.id,

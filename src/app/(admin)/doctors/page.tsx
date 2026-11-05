@@ -1,11 +1,9 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { requireStaff } from "@/lib/session";
 import { PageHeader, Card, LinkButton } from "@/components/ui";
-import Pagination from "@/components/Pagination";
-import { getPagination, pageCount } from "@/lib/pagination";
+import { ListeSayfalama } from "@/components/liste/ListeSayfalama";
+import { sayfaCoz, sayfaDisi } from "@/lib/liste/sayfa";
 import { doktorKpileri, doktorListesi, doktorPaneli, doktorSuzgecSecenekleri } from "@/lib/doktor-listesi/sorgu";
-import { SUTUNLAR, SUTUN_CEREZI, gizliSutunlariCoz } from "@/lib/doktor-listesi/sutunlar";
 import { doktorAdresi, saticiyiDogrula, suzgecCoz, type Parametreler } from "@/lib/doktor-listesi/suzgec";
 import { simdi } from "@/lib/zaman";
 import { kapsamliDoktorlariGetir } from "@/lib/doctor";
@@ -15,16 +13,15 @@ import { DoktorTablosu } from "./DoktorTablosu";
 import { KpiKartlari } from "./KpiKartlari";
 import { SuzgecCubugu } from "./SuzgecCubugu";
 import { SutunSecici } from "@/components/liste/SutunSecici";
-import { sutunlariKaydet } from "./sutunEylemi";
-
-const tek = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
+import { gizliSutunlar } from "@/lib/liste/sutun-tercihi";
 
 export default async function AdminDoctorsPage({ searchParams }: { searchParams: Promise<Parametreler> }) {
   const session = await requireStaff();
   // Cariyi OPERASYON da görür (X-13 §(1)); devir yalnız YONETICI (X-13 §(5)) — yetki action'dadır.
   const devirYetkisi = session.user.role === "YONETICI";
   const params = await searchParams;
-  const { page, perPage, skip, take } = getPagination({ page: tek(params.page), per: tek(params.per) });
+  const sayfa = sayfaCoz(params);
+  const { perPage, skip, take, yer } = sayfa;
   // X-8 §(5) hesap sınıfı, A-13 §(5) eksik fatura bilgisi ve diğer süzgeçler birleşir (X-8-4).
   const cozulen = suzgecCoz(params);
   const detay = cozulen.detay;
@@ -32,9 +29,8 @@ export default async function AdminDoctorsPage({ searchParams }: { searchParams:
   // Bilinmeyen ya da pasif satıcı süzgeci yok sayılır: liste, etiket ve sayaç aynı süzgeci görür.
   const secenekler = await doktorSuzgecSecenekleri();
   const suzgec = saticiyiDogrula(cozulen.suzgec, secenekler.saticilar.map((s) => s.id));
-  const yer = { page, per: tek(params.per) ? perPage : undefined };
   // Sütun tercihi çerezdedir; gizli sütun hiç çizilmez (spec §3.4).
-  const gizli = gizliSutunlariCoz((await cookies()).get(SUTUN_CEREZI)?.value);
+  const gizli = await gizliSutunlar("/doctors");
   const listeAdresi = doktorAdresi(suzgec, yer);
 
   // FR-05: admin TÜM doktorları görür.
@@ -46,15 +42,10 @@ export default async function AdminDoctorsPage({ searchParams }: { searchParams:
 
   // Son sayfanın satırı silinmiş ya da elle büyük sayfa yazılmışsa son sayfaya gidilir; boş durum
   // "hiç kayıt yok" demesin.
-  if (liste.satirlar.length === 0 && liste.toplam > 0) {
-    redirect(doktorAdresi(suzgec, { ...yer, page: pageCount(liste.toplam, perPage), ...(detay ? { detay } : {}) }));
+  const son = sayfaDisi(liste, perPage);
+  if (son !== null) {
+    redirect(doktorAdresi(suzgec, { ...yer, page: son, ...(detay ? { detay } : {}) }));
   }
-
-  // Sayfalama süzgeci ve sayfa boyunu korur; paneli taşımaz.
-  const sayfaParametreleri = {
-    ...Object.fromEntries(new URL(doktorAdresi(suzgec), "http://x").searchParams),
-    per: tek(params.per),
-  };
 
   return (
     <div>
@@ -73,7 +64,7 @@ export default async function AdminDoctorsPage({ searchParams }: { searchParams:
         </div>
       )}
 
-      <SuzgecCubugu suzgec={suzgec} secenekler={secenekler} sutunMenusu={<SutunSecici sutunlar={SUTUNLAR} gizli={gizli} action={sutunlariKaydet} donus={listeAdresi} />} />
+      <SuzgecCubugu suzgec={suzgec} secenekler={secenekler} sutunMenusu={<SutunSecici liste="/doctors" gizli={gizli} donus={listeAdresi} />} />
 
       {/* Toplu devir (X-17 §(4)): satırlardaki kutular bu forma `form` niteliğiyle bağlıdır. */}
       {devirYetkisi && (
@@ -86,13 +77,7 @@ export default async function AdminDoctorsPage({ searchParams }: { searchParams:
 
       <DoktorTablosu satirlar={liste.satirlar} gizli={gizli} devirYetkisi={devirYetkisi} suzgec={suzgec} yer={yer} an={an} />
 
-      <Pagination
-        page={page}
-        totalPages={pageCount(liste.toplam, perPage)}
-        total={liste.toplam}
-        basePath="/doctors"
-        params={sayfaParametreleri}
-      />
+      <ListeSayfalama sayfa={sayfa} toplam={liste.toplam} adres={doktorAdresi(suzgec)} />
 
       {/* Geçersiz ya da bulunamayan kimlikte panel açılmaz (spec §3.6). */}
       {panel && (

@@ -3,8 +3,8 @@ import { KpiCard } from "@/components/kpi/KpiCard";
 import { KpiSatiri } from "@/components/kpi/KpiSatiri";
 import type { ListeKpileri } from "@/lib/fiyat-listesi-listesi/sorgu";
 import { BOS_SUZGEC, listeAdresi } from "@/lib/fiyat-listesi-listesi/suzgec";
+import { KPI_BAGLANTISI } from "@/components/stil";
 
-const KART = "block h-full rounded-xl transition hover:opacity-90";
 const ANLIK = { anlik: "şu an" } as const;
 
 /**
@@ -34,10 +34,10 @@ export function KpiKartlari({
   return (
     <section aria-label="Fiyat listesi sayıları">
       <KpiSatiri>
-        <Link href={listeAdresi(BOS_SUZGEC)} className={KART}>
+        <Link href={listeAdresi(BOS_SUZGEC)} className={KPI_BAGLANTISI}>
           <KpiCard etiket="Toplam liste" varyant="birincil" iyiYon="notr" bosDavranisi="sifir" adet={sayilar.toplam} karsilastirma={ANLIK} />
         </Link>
-        <Link href={listeAdresi({ durum: "aktif" })} className={KART}>
+        <Link href={listeAdresi({ durum: "aktif" })} className={KPI_BAGLANTISI}>
           <KpiCard etiket="Aktif liste" varyant="ikincil" iyiYon="notr" bosDavranisi="sifir" adet={sayilar.aktif} karsilastirma={ANLIK} />
         </Link>
         <KpiCard
@@ -50,7 +50,7 @@ export function KpiKartlari({
           ikincilMetrik={sayilar.varsayilanListeId ? `${sayilar.varsayilanKullanan} cari varsayılanı kullanır` : "varsayılan liste yok"}
         />
         {fiyatsizAdresi ? (
-          <Link href={fiyatsizAdresi} scroll={false} className={KART}>
+          <Link href={fiyatsizAdresi} scroll={false} className={KPI_BAGLANTISI}>
             {fiyatsiz}
           </Link>
         ) : (

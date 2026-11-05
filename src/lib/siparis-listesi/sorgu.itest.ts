@@ -4,7 +4,8 @@ import type { OrderStatus } from "@/generated/prisma/enums";
 import { siparisDagilimi } from "@/lib/dashboard";
 import { prisma } from "@/lib/db";
 import { siparisToplami } from "@/lib/siparis";
-import { gunleriAraliga, siparisKpileri, siparisListesi, siparisPaneli } from "@/lib/siparis-listesi/sorgu";
+import { gunleriAraliga } from "@/lib/liste/parametreler";
+import { siparisKpileri, siparisListesi, siparisPaneli } from "@/lib/siparis-listesi/sorgu";
 import { BOS_SUZGEC, TUM_SIPARISLER, type SiparisKapsami, type SiparisSuzgeci } from "@/lib/siparis-listesi/suzgec";
 import { referansVeri, yeniDoktorVerisi } from "../../../test/integration/referans";
 

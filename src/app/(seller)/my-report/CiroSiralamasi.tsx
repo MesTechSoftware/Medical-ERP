@@ -5,7 +5,7 @@ import { BosDurum } from "@/components/liste/BosDurum";
 import { EtkinSuzgecler } from "@/components/liste/EtkinSuzgecler";
 import { AcilirPanel } from "@/components/liste/AcilirPanel";
 import { SuzgecFormu } from "@/components/liste/SuzgecFormu";
-import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
+import { BAGLANTI, KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import { Tutar } from "@/components/Tutar";
 import { OranCubugu } from "@/components/grafik/BarMicro";
 import { MATRAH, tabanli } from "@/lib/taban";
@@ -14,7 +14,6 @@ import type { SiraSatiri } from "@/lib/rapor-listesi/sorgu";
 import { bosDurum, etkinSuzgecler, raporAdresi, type RaporSuzgeci } from "@/lib/rapor-listesi/suzgec";
 
 const YOL = "/my-report";
-const BAGLANTI = "text-link underline decoration-link/40 underline-offset-4 hover:decoration-link";
 
 /**
  * Raporum'un doktor ciro sıralaması (spec Ü-33 §3.2): satıcının dönemde ciro yaptığı bütün carileri, sayfalı. Ciro

@@ -1,22 +1,18 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/session";
 import { PageHeader } from "@/components/ui";
-import Pagination from "@/components/Pagination";
+import { ListeSayfalama } from "@/components/liste/ListeSayfalama";
 import { SutunSecici } from "@/components/liste/SutunSecici";
+import { gizliSutunlar } from "@/lib/liste/sutun-tercihi";
 import { kpiGetir } from "@/lib/kpi/getir";
-import { gizliSutunlariCoz } from "@/lib/liste/sutunlar";
-import { ilk } from "@/lib/liste/parametreler";
 import { acanSecenekleri, onayKpileri, onayListesi, onayPaneli } from "@/lib/onay-listesi/sorgu";
-import { SUTUNLAR, SUTUN_CEREZI } from "@/lib/onay-listesi/sutunlar";
 import { onayAdresi, suzgecCoz, type Parametreler } from "@/lib/onay-listesi/suzgec";
-import { getPagination, pageCount } from "@/lib/pagination";
+import { sayfaCoz, sayfaDisi } from "@/lib/liste/sayfa";
 import { simdi, yerelGunMetni } from "@/lib/zaman";
 import { KpiKartlari } from "./KpiKartlari";
 import { OnayPaneli } from "./OnayPaneli";
 import { OnayTablosu } from "./OnayTablosu";
 import { SuzgecCubugu } from "./SuzgecCubugu";
-import { sutunlariKaydet } from "./sutunEylemi";
 
 /**
  * Onay bekleyenler (A-8, spec Ü-25): bekleyen talepler en eskisi önce; verilmiş kararlar geçmiş sekmelerinde.
@@ -27,11 +23,10 @@ export default async function ApprovalsPage({ searchParams }: { searchParams: Pr
   const params = await searchParams;
   const an = simdi();
   const bugun = yerelGunMetni(an);
-  const per = ilk(params, "per") ?? undefined;
-  const { page, perPage, skip, take } = getPagination({ page: ilk(params, "page") ?? undefined, per });
+  const sayfa = sayfaCoz(params);
+  const { perPage, skip, take, yer } = sayfa;
   const { suzgec, detay } = suzgecCoz(params);
-  const yer = { page, per: per ? perPage : undefined };
-  const gizli = gizliSutunlariCoz(SUTUNLAR, (await cookies()).get(SUTUN_CEREZI)?.value);
+  const gizli = await gizliSutunlar("/approvals");
   const adres = onayAdresi(suzgec, yer);
 
   const [kullanicilar, liste, kpi, panel] = await Promise.all([
@@ -45,14 +40,10 @@ export default async function ApprovalsPage({ searchParams }: { searchParams: Pr
     redirect(onayAdresi({ ...suzgec, acan: null }, { ...yer, ...(detay ? { detay } : {}) }));
   }
   // Sayfa dışı adres son sayfaya gider; boş durum "hiç kayıt yok" demesin.
-  if (liste.satirlar.length === 0 && liste.toplam > 0) {
-    redirect(onayAdresi(suzgec, { ...yer, page: pageCount(liste.toplam, perPage), ...(detay ? { detay } : {}) }));
+  const son = sayfaDisi(liste, perPage);
+  if (son !== null) {
+    redirect(onayAdresi(suzgec, { ...yer, page: son, ...(detay ? { detay } : {}) }));
   }
-
-  const sayfaParametreleri = {
-    ...Object.fromEntries(new URL(onayAdresi(suzgec), "http://x").searchParams),
-    per: yer.per === undefined ? undefined : String(yer.per),
-  };
 
   return (
     <div>
@@ -64,12 +55,12 @@ export default async function ApprovalsPage({ searchParams }: { searchParams: Pr
         suzgec={suzgec}
         per={yer.per}
         kullanicilar={kullanicilar}
-        sutunMenusu={<SutunSecici sutunlar={SUTUNLAR} gizli={gizli} action={sutunlariKaydet} donus={adres} />}
+        sutunMenusu={<SutunSecici liste="/approvals" gizli={gizli} donus={adres} />}
       />
 
       <OnayTablosu satirlar={liste.satirlar} gizli={gizli} suzgec={suzgec} yer={yer} />
 
-      <Pagination page={page} totalPages={pageCount(liste.toplam, perPage)} total={liste.toplam} basePath="/approvals" params={sayfaParametreleri} />
+      <ListeSayfalama sayfa={sayfa} toplam={liste.toplam} adres={onayAdresi(suzgec)} />
 
       {/* Bulunmayan talep için panel açılmaz (spec §5). */}
       {panel && <OnayPaneli key={panel.blok.id} veri={panel} kapatAdresi={adres} />}

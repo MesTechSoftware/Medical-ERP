@@ -10,15 +10,20 @@ export type Kova = { aralik: Aralik; devamEdiyor: boolean };
 /** Bir takvim ayı: yarı açık aralığı ve `an`ın o ayın içinde olup olmadığı (devam eden ay). */
 export type Ay = Kova & { yil: number; ay: number };
 
+/** Geçerli dönem anahtarı — `YYYY-AA` (ay 01–12) ya da `tum`; başka değer `null` (süzgeç onu yok sayar). */
+export function donemAnahtari(metin: string | null | undefined): string | null {
+  if (metin === "tum") return "tum";
+  return metin != null && /^\d{4}-(0[1-9]|1[0-2])$/.test(metin) ? metin : null;
+}
+
 /**
  * Rapor ekranının `?donem=` parametresi (X-1 §(2)): `YYYY-AA` bir takvim ayıdır, `tum`
  * tüm zamanlardır. Parametre yoksa ya da geçersizse içinde bulunulan ay.
  */
 export function donemCoz(param: string | undefined, an: Date = simdi()): Donem {
-  if (param === "tum") return { anahtar: "tum", aralik: TUM_ZAMANLAR };
-  const m = param?.match(/^(\d{4})-(\d{2})$/);
-  const ay = m ? parseInt(m[2], 10) : 0;
-  if (m && ay >= 1 && ay <= 12) return { anahtar: param!, aralik: ayAraligi(parseInt(m[1], 10), ay) };
+  const gecerli = donemAnahtari(param);
+  if (gecerli === "tum") return { anahtar: "tum", aralik: TUM_ZAMANLAR };
+  if (gecerli !== null) return { anahtar: gecerli, aralik: ayAraligi(parseInt(gecerli.slice(0, 4), 10), parseInt(gecerli.slice(5), 10)) };
   const simdiki = takvimAyi(an);
   const anahtar = `${simdiki.yil}-${String(simdiki.ay).padStart(2, "0")}`;
   return { anahtar, aralik: ayAraligi(simdiki.yil, simdiki.ay) };

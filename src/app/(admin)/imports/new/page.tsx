@@ -5,8 +5,7 @@ import { Card, PageHeader } from "@/components/ui";
 import { Ikon } from "@/components/Ikon";
 import { TANIMLAR, VERI_TIPI_ADI } from "@/lib/ice-aktarim";
 import IceAktarimFormu from "../IceAktarimFormu";
-
-const BAGLANTI = "text-link underline decoration-link/40 underline-offset-4 hover:decoration-link";
+import { BAGLANTI } from "@/components/stil";
 
 /** Yeni içe aktarım (spec Ü-30 §3.5): bugünkü form — doğrula → önizle → yaz (D-6). */
 export default async function NewImportPage() {

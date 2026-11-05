@@ -3,7 +3,8 @@
  * Geçersiz değer `null` döner; süzgeç onu yok sayar. Saf modül.
  */
 
-import { yerelGunAraligi } from "@/lib/zaman";
+import type { Aralik } from "@/lib/donem";
+import { TUM_ZAMANLAR, yerelGunAraligi } from "@/lib/zaman";
 
 export type Parametreler = Record<string, string | string[] | undefined>;
 
@@ -39,4 +40,12 @@ export function secenek<T extends string>(metin: string | null, gecerli: readonl
 /** Kayıt kimliği (cuid ve benzeri): harf, rakam, tire; en çok 64 karakter. */
 export function kimlik(metin: string | null): string | null {
   return metin !== null && KIMLIK.test(metin) ? metin : null;
+}
+
+/** İstanbul gün metinlerini yarı açık aralığa çevirir; boş uç `TUM_ZAMANLAR`'ın ucudur. */
+export function gunleriAraliga(a: { baslangic: string | null; bitis: string | null }): Aralik {
+  return {
+    baslangic: (a.baslangic && yerelGunAraligi(a.baslangic)?.baslangic) || TUM_ZAMANLAR.baslangic,
+    bitis: (a.bitis && yerelGunAraligi(a.bitis)?.bitis) || TUM_ZAMANLAR.bitis,
+  };
 }

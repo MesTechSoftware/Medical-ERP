@@ -7,19 +7,7 @@ import { SuzgecFormu } from "@/components/liste/SuzgecFormu";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import { HAREKET_TURLERI } from "@/lib/stok-hareket-turu";
 import { etkinSekme, etkinSuzgecler, hizliSekmeler, sekmeAdresi, stokAdresi, type StokSuzgeci } from "@/lib/stok-listesi/suzgec";
-
-const ETIKET = "mb-1 block font-medium text-slate-700";
-
-function Alan({ id, etiket, children }: { id: string; etiket: string; children: React.ReactNode }) {
-  return (
-    <div className="text-sm">
-      <label htmlFor={id} className={ETIKET}>
-        {etiket}
-      </label>
-      {children}
-    </div>
-  );
-}
+import { SuzgecAlani } from "@/components/liste/SuzgecAlani";
 
 /**
  * Hareket geçmişinin süzgeç çubuğu (spec Ü-20 §3.3): tarih kısayolları, Filtrele paneli (GET formu;
@@ -59,13 +47,13 @@ export function SuzgecCubugu({
               aria-label="Hareket süzgeci"
               className="absolute right-0 z-20 mt-2 grid w-[min(36rem,calc(100vw-2rem))] gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-lg sm:grid-cols-2"
             >
-              <Alan id="suzgec-baslangic" etiket="Başlangıç">
+              <SuzgecAlani id="suzgec-baslangic" etiket="Başlangıç">
                 <input type="date" id="suzgec-baslangic" name="baslangic" defaultValue={suzgec.baslangic ?? ""} className={KONTROL_TEK_SATIR} />
-              </Alan>
-              <Alan id="suzgec-bitis" etiket="Bitiş">
+              </SuzgecAlani>
+              <SuzgecAlani id="suzgec-bitis" etiket="Bitiş">
                 <input type="date" id="suzgec-bitis" name="bitis" defaultValue={suzgec.bitis ?? ""} className={KONTROL_TEK_SATIR} />
-              </Alan>
-              <Alan id="suzgec-tur" etiket="Tür">
+              </SuzgecAlani>
+              <SuzgecAlani id="suzgec-tur" etiket="Tür">
                 <select id="suzgec-tur" name="tur" defaultValue={suzgec.tur ?? ""} className={KONTROL_TEK_SATIR}>
                   <option value="">Tümü</option>
                   {HAREKET_TURLERI.map((t) => (
@@ -74,16 +62,16 @@ export function SuzgecCubugu({
                     </option>
                   ))}
                 </select>
-              </Alan>
-              <Alan id="suzgec-yon" etiket="Yön">
+              </SuzgecAlani>
+              <SuzgecAlani id="suzgec-yon" etiket="Yön">
                 <select id="suzgec-yon" name="yon" defaultValue={suzgec.yon ?? ""} className={KONTROL_TEK_SATIR}>
                   <option value="">Tümü</option>
                   <option value="GIRIS">Giriş</option>
                   <option value="CIKIS">Çıkış</option>
                 </select>
-              </Alan>
+              </SuzgecAlani>
               <div className="sm:col-span-2">
-                <Alan id="suzgec-urun" etiket="Ürün">
+                <SuzgecAlani id="suzgec-urun" etiket="Ürün">
                   <select id="suzgec-urun" name="urunId" defaultValue={suzgec.urunId ?? ""} className={KONTROL_TEK_SATIR}>
                     <option value="">Tümü</option>
                     {urunler.map((u) => (
@@ -92,7 +80,7 @@ export function SuzgecCubugu({
                       </option>
                     ))}
                   </select>
-                </Alan>
+                </SuzgecAlani>
               </div>
               <div className="flex items-center gap-3 sm:col-span-2">
                 <button type="submit" className={buton("birincil")}>

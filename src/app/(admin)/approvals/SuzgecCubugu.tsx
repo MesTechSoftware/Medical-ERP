@@ -5,21 +5,9 @@ import { HizliSekmeler } from "@/components/liste/HizliSekmeler";
 import { AcilirPanel } from "@/components/liste/AcilirPanel";
 import { SuzgecFormu } from "@/components/liste/SuzgecFormu";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
-import { durumSekmeleri, etkinSuzgecler, onayAdresi, type OnaySuzgeci } from "@/lib/onay-listesi/suzgec";
+import { ONAY_KURALLARI, durumSekmeleri, etkinSuzgecler, onayAdresi, type OnaySuzgeci } from "@/lib/onay-listesi/suzgec";
 import { BLOK_KURAL_ADI } from "@/lib/sozluk";
-
-const ETIKET = "mb-1 block font-medium text-slate-700";
-
-function Alan({ id, etiket, children }: { id: string; etiket: string; children: React.ReactNode }) {
-  return (
-    <div className="text-sm">
-      <label htmlFor={id} className={ETIKET}>
-        {etiket}
-      </label>
-      {children}
-    </div>
-  );
-}
+import { SuzgecAlani } from "@/components/liste/SuzgecAlani";
 
 /**
  * Onay ekranının süzgeç çubuğu (spec Ü-25 §3.3): durum sekmeleri, Filtrele paneli (GET formu; olay günü, kural,
@@ -57,23 +45,23 @@ export function SuzgecCubugu({
               {suzgec.durum !== "bekleyen" && <input type="hidden" name="durum" value={suzgec.durum} />}
               {suzgec.eski && <input type="hidden" name="eski" value="1" />}
               {per !== undefined && <input type="hidden" name="per" value={per} />}
-              <Alan id="onay-baslangic" etiket="Başlangıç (olay günü)">
+              <SuzgecAlani id="onay-baslangic" etiket="Başlangıç (olay günü)">
                 <input type="date" id="onay-baslangic" name="baslangic" defaultValue={suzgec.baslangic ?? ""} className={KONTROL_TEK_SATIR} />
-              </Alan>
-              <Alan id="onay-bitis" etiket="Bitiş">
+              </SuzgecAlani>
+              <SuzgecAlani id="onay-bitis" etiket="Bitiş">
                 <input type="date" id="onay-bitis" name="bitis" defaultValue={suzgec.bitis ?? ""} className={KONTROL_TEK_SATIR} />
-              </Alan>
-              <Alan id="onay-kural" etiket="Kural">
+              </SuzgecAlani>
+              <SuzgecAlani id="onay-kural" etiket="Kural">
                 <select id="onay-kural" name="kural" defaultValue={suzgec.kural ?? ""} className={KONTROL_TEK_SATIR}>
                   <option value="">Tümü</option>
-                  {(Object.keys(BLOK_KURAL_ADI) as (keyof typeof BLOK_KURAL_ADI)[]).map((k) => (
+                  {ONAY_KURALLARI.map((k) => (
                     <option key={k} value={k}>
                       {BLOK_KURAL_ADI[k]}
                     </option>
                   ))}
                 </select>
-              </Alan>
-              <Alan id="onay-acan" etiket="Açan">
+              </SuzgecAlani>
+              <SuzgecAlani id="onay-acan" etiket="Açan">
                 <select id="onay-acan" name="acan" defaultValue={suzgec.acan ?? ""} className={KONTROL_TEK_SATIR}>
                   <option value="">Tümü</option>
                   {kullanicilar.map((u) => (
@@ -82,11 +70,11 @@ export function SuzgecCubugu({
                     </option>
                   ))}
                 </select>
-              </Alan>
+              </SuzgecAlani>
               <div className="sm:col-span-2">
-                <Alan id="onay-q" etiket="Ara">
+                <SuzgecAlani id="onay-q" etiket="Ara">
                   <input type="search" id="onay-q" name="q" maxLength={100} placeholder="Belge no ya da cari" defaultValue={suzgec.q ?? ""} className={KONTROL_TEK_SATIR} />
-                </Alan>
+                </SuzgecAlani>
               </div>
               <div className="flex items-center gap-3 sm:col-span-2">
                 <button type="submit" className={buton("birincil")}>

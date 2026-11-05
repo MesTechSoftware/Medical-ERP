@@ -6,8 +6,7 @@ import type { KpiSonucu } from "@/lib/kpi/getir";
 import type { KargoKpileri } from "@/lib/kargo-listesi/sorgu";
 import { BOS_SUZGEC, kargoAdresi } from "@/lib/kargo-listesi/suzgec";
 import { siparisAdresi, BOS_SUZGEC as BOS_SIPARIS } from "@/lib/siparis-listesi/suzgec";
-
-const KART = "block h-full rounded-xl transition hover:opacity-90";
+import { KPI_BAGLANTISI } from "@/components/stil";
 
 /**
  * Kargo ekranının üst kartları (spec Ü-24 §3.2): süzgeçten bağımsız. Bugün kargolanan sevkiyat listesinin
@@ -43,13 +42,13 @@ export function KpiKartlari({ sonuc, bugun, yonetici }: { sonuc: KpiSonucu<Kargo
           hataReferansi={hataReferansi}
         />
         {yonetici ? (
-          <Link href="/approvals" className={KART}>
+          <Link href="/approvals" className={KPI_BAGLANTISI}>
             {onay}
           </Link>
         ) : (
           onay
         )}
-        <Link href={kargoAdresi({ ...BOS_SUZGEC, baslangic: bugun, bitis: bugun })} className={KART}>
+        <Link href={kargoAdresi({ ...BOS_SUZGEC, baslangic: bugun, bitis: bugun })} className={KPI_BAGLANTISI}>
           <KpiCard
             etiket="Bugün kargolanan"
             varyant="ikincil"
@@ -60,7 +59,7 @@ export function KpiKartlari({ sonuc, bugun, yonetici }: { sonuc: KpiSonucu<Kargo
             hataReferansi={hataReferansi}
           />
         </Link>
-        <Link href={siparisAdresi({ ...BOS_SIPARIS, durum: "KARGOLANDI" })} className={KART}>
+        <Link href={siparisAdresi({ ...BOS_SIPARIS, durum: "KARGOLANDI" })} className={KPI_BAGLANTISI}>
           <KpiCard
             etiket="Teslim bekleyen"
             varyant="ikincil"

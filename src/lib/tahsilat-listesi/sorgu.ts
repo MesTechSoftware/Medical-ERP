@@ -3,7 +3,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { hesaplaDoktorBakiye, type DoktorBakiye } from "@/lib/doctor-cari";
 import { metinVaryantlari } from "@/lib/liste/metin";
-import { gunleriAraliga } from "@/lib/siparis-listesi/sorgu";
+import { gunleriAraliga } from "@/lib/liste/parametreler";
 import { BOS_SUZGEC, TIPLER, type TahsilatSuzgeci, type TahsilatTipi } from "@/lib/tahsilat-listesi/suzgec";
 
 /**

@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { SUTUNLAR, gizliSutunCerezi, gizliSutunlariCoz, guvenliDonus } from "@/lib/doktor-listesi/sutunlar";
+import { SUTUNLAR } from "@/lib/doktor-listesi/sutunlar";
+import * as ortak from "@/lib/liste/sutunlar";
+
+const gizliSutunlariCoz = (deger: string | undefined) => ortak.gizliSutunlariCoz(SUTUNLAR, deger);
+const gizliSutunCerezi = (gizli: Iterable<string>) => ortak.gizliSutunCerezi(SUTUNLAR, gizli);
+const guvenliDonus = (donus: string) => ortak.guvenliDonus("/doctors", donus);
 
 // Cari listesinin sütun seçicisi — spec Ü-18 §3.4 (çerez biçimi).
 

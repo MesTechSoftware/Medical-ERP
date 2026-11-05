@@ -7,7 +7,8 @@ import { FIRMASIZ, type KargoSuzgeci } from "@/lib/kargo-listesi/suzgec";
 import { metinVaryantlari } from "@/lib/liste/metin";
 import { belgeOnayDurumlari } from "@/lib/onay-blogu";
 import { kalemMiktarlari, SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
-import { gunleriAraliga, siparisKosulu } from "@/lib/siparis-listesi/sorgu";
+import { gunleriAraliga } from "@/lib/liste/parametreler";
+import { siparisKosulu } from "@/lib/siparis-listesi/sorgu";
 import { BOS_SUZGEC as BOS_SIPARIS, TUM_SIPARISLER } from "@/lib/siparis-listesi/suzgec";
 
 /**

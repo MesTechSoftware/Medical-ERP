@@ -1,14 +1,12 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { PageHeader, Card } from "@/components/ui";
-import Pagination from "@/components/Pagination";
+import { ListeSayfalama } from "@/components/liste/ListeSayfalama";
 import { SutunSecici } from "@/components/liste/SutunSecici";
-import { gizliSutunlariCoz } from "@/lib/liste/sutunlar";
+import { gizliSutunlar } from "@/lib/liste/sutun-tercihi";
 import { ilk, type Parametreler } from "@/lib/liste/parametreler";
-import { getPagination, pageCount } from "@/lib/pagination";
+import { sayfaCoz, sayfaDisi } from "@/lib/liste/sayfa";
 import { konsinyedekiMal, mevcutStok, stokHareketleri, stokKpileri } from "@/lib/stok-listesi/sorgu";
-import { SUTUNLAR, SUTUN_CEREZI } from "@/lib/stok-listesi/sutunlar";
 import { bosDurum, stokAdresi, suzgecCoz } from "@/lib/stok-listesi/suzgec";
 import { requireStaff } from "@/lib/session";
 import { bugun, yerelGunMetni } from "@/lib/zaman";
@@ -20,19 +18,18 @@ import { HareketTablosu } from "./HareketTablosu";
 import { KpiKartlari } from "./KpiKartlari";
 import { MevcutStokKarti } from "./MevcutStokKarti";
 import { SuzgecCubugu } from "./SuzgecCubugu";
-import { sutunlariKaydet } from "./sutunEylemi";
 
 export default async function StockPage({ searchParams }: { searchParams: Promise<Parametreler> }) {
   const session = await requireStaff();
   const params = await searchParams;
   const urun = ilk(params, "urun");
   const yonetici = session.user.role === "YONETICI";
-  const { page, perPage, skip, take } = getPagination({ page: ilk(params, "page") ?? undefined, per: ilk(params, "per") ?? undefined });
+  const sayfa = sayfaCoz(params);
+  const { perPage, skip, take, yer } = sayfa;
   const suzgec = suzgecCoz(params);
-  const yer = { page, per: ilk(params, "per") ? perPage : undefined };
   const gun = yerelGunMetni(bugun());
   // Sütun tercihi çerezdedir; gizli sütun hiç çizilmez (spec §3.5).
-  const gizli = gizliSutunlariCoz(SUTUNLAR, (await cookies()).get(SUTUN_CEREZI)?.value);
+  const gizli = await gizliSutunlar("/stock");
   const listeAdresi = stokAdresi(suzgec, yer);
 
   const [tumUrunler, liste, sayilar, konumlar, doktorlar, sebepler, konsinyeStok, mevcut] = await Promise.all([
@@ -69,14 +66,10 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
     redirect(stokAdresi({ ...suzgec, urunId: null }, yer));
   }
   // Son sayfanın satırı kalmamış ya da elle büyük sayfa yazılmışsa son sayfaya gidilir (PR #85).
-  if (liste.satirlar.length === 0 && liste.toplam > 0) {
-    redirect(stokAdresi(suzgec, { ...yer, page: pageCount(liste.toplam, perPage) }));
+  const son = sayfaDisi(liste, perPage);
+  if (son !== null) {
+    redirect(stokAdresi(suzgec, { ...yer, page: son }));
   }
-  // Sayfalama süzgeci ve sayfa boyunu korur.
-  const sayfaParametreleri = {
-    ...Object.fromEntries(new URL(stokAdresi(suzgec), "http://x").searchParams),
-    per: ilk(params, "per") ?? undefined,
-  };
 
   const products = tumUrunler.filter((p) => p.status === "AKTIF").map(({ id, name, code }) => ({ id, name, code }));
   const secenek = (p: { id: string; name: string; code: string }) => ({ value: p.id, label: `${p.name} (${p.code})` });
@@ -197,16 +190,10 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
               suzgec={suzgec}
               bugun={gun}
               urunler={urunSuzgeci}
-              sutunMenusu={<SutunSecici sutunlar={SUTUNLAR} gizli={gizli} action={sutunlariKaydet} donus={listeAdresi} />}
+              sutunMenusu={<SutunSecici liste="/stock" gizli={gizli} donus={listeAdresi} />}
             />
             <HareketTablosu satirlar={liste.satirlar} gizli={gizli} suzgecli={bosDurum(suzgec) === "suzgecli"} />
-            <Pagination
-              page={page}
-              totalPages={pageCount(liste.toplam, perPage)}
-              total={liste.toplam}
-              basePath="/stock"
-              params={sayfaParametreleri}
-            />
+            <ListeSayfalama sayfa={sayfa} toplam={liste.toplam} adres={stokAdresi(suzgec)} />
           </Card>
         </div>
       </div>

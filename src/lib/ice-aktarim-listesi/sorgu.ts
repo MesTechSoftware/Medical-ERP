@@ -3,7 +3,7 @@ import type { ImportDataType } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import { TANIMLAR } from "@/lib/ice-aktarim";
 import { metinVaryantlari } from "@/lib/liste/metin";
-import { gunleriAraliga } from "@/lib/siparis-listesi/sorgu";
+import { gunleriAraliga } from "@/lib/liste/parametreler";
 import { kartSuzgecleri, type PartiSuzgeci } from "@/lib/ice-aktarim-listesi/suzgec";
 
 /**

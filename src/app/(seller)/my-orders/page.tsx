@@ -1,22 +1,20 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { requireSeller } from "@/lib/session";
 import { PageHeader, LinkButton } from "@/components/ui";
-import Pagination from "@/components/Pagination";
+import { ListeSayfalama } from "@/components/liste/ListeSayfalama";
 import { KpiKartlari } from "@/components/siparis/KpiKartlari";
 import { SiparisPaneli } from "@/components/siparis/SiparisPaneli";
 import { SiparisTablosu } from "@/components/siparis/SiparisTablosu";
 import { SuzgecCubugu } from "@/components/siparis/SuzgecCubugu";
 import { SutunSecici } from "@/components/liste/SutunSecici";
+import { gizliSutunlar } from "@/lib/liste/sutun-tercihi";
 import { kpiGetir } from "@/lib/kpi/getir";
-import { gizliSutunlariCoz } from "@/lib/liste/sutunlar";
 import { ilk } from "@/lib/liste/parametreler";
-import { getPagination, pageCount } from "@/lib/pagination";
-import { gunleriAraliga, siparisKpileri, siparisListesi, siparisPaneli } from "@/lib/siparis-listesi/sorgu";
-import { SATICI_SUTUNLARI, SATICI_SUTUN_CEREZI } from "@/lib/siparis-listesi/sutunlar";
+import { sayfaCoz, sayfaDisi } from "@/lib/liste/sayfa";
+import { gunleriAraliga } from "@/lib/liste/parametreler";
+import { siparisKpileri, siparisListesi, siparisPaneli } from "@/lib/siparis-listesi/sorgu";
 import { kpiAraligi, siparisAdresi, suzgecCoz, type Parametreler } from "@/lib/siparis-listesi/suzgec";
 import { simdi, yerelGunMetni } from "@/lib/zaman";
-import { sutunlariKaydet } from "./sutunEylemi";
 
 const YOL = "/my-orders";
 
@@ -30,16 +28,15 @@ export default async function MyOrdersPage({ searchParams }: { searchParams: Pro
   const saticiId = session.user.id;
   const kapsam = { tur: "satici", saticiId } as const;
   const params = await searchParams;
-  const per = ilk(params, "per") ?? undefined;
-  const { page, perPage, skip, take } = getPagination({ page: ilk(params, "page") ?? undefined, per });
+  const sayfa = sayfaCoz(params);
+  const { perPage, skip, take, yer } = sayfa;
   const cozulen = suzgecCoz(params);
   const detay = cozulen.detay;
-  const yer = { page, per: per ? perPage : undefined };
   // Satıcı süzgeci bu ekranda yoktur; adreste kalmışsa (yönetici bağlantısı, elle) sorgulardan önce adresten düşer.
   // Kapsam zaten sorgudadır — bu yalnız adres çubuğunun uygulanan süzgeci göstermesi içindir.
   const suzgec = { ...cozulen.suzgec, satici: null };
   if (ilk(params, "satici") !== null) redirect(siparisAdresi(suzgec, { ...yer, ...(detay ? { detay } : {}) }, YOL));
-  const gizli = gizliSutunlariCoz(SATICI_SUTUNLARI, (await cookies()).get(SATICI_SUTUN_CEREZI)?.value);
+  const gizli = await gizliSutunlar("/my-orders");
   const adres = siparisAdresi(suzgec, yer, YOL);
   const aralik = kpiAraligi(suzgec, yerelGunMetni(simdi()));
 
@@ -51,14 +48,10 @@ export default async function MyOrdersPage({ searchParams }: { searchParams: Pro
   ]);
 
   // Sayfa dışı adres son sayfaya gider; boş durum "hiç kayıt yok" demesin.
-  if (liste.satirlar.length === 0 && liste.toplam > 0) {
-    redirect(siparisAdresi(suzgec, { ...yer, page: pageCount(liste.toplam, perPage), ...(detay ? { detay } : {}) }, YOL));
+  const son = sayfaDisi(liste, perPage);
+  if (son !== null) {
+    redirect(siparisAdresi(suzgec, { ...yer, page: son, ...(detay ? { detay } : {}) }, YOL));
   }
-
-  const sayfaParametreleri = {
-    ...Object.fromEntries(new URL(siparisAdresi(suzgec, {}, YOL), "http://x").searchParams),
-    per: yer.per === undefined ? undefined : String(yer.per),
-  };
 
   return (
     <div>
@@ -74,12 +67,12 @@ export default async function MyOrdersPage({ searchParams }: { searchParams: Pro
         suzgec={suzgec}
         per={yer.per}
         yol={YOL}
-        sutunMenusu={<SutunSecici sutunlar={SATICI_SUTUNLARI} gizli={gizli} action={sutunlariKaydet} donus={adres} />}
+        sutunMenusu={<SutunSecici liste="/my-orders" gizli={gizli} donus={adres} />}
       />
 
       <SiparisTablosu satirlar={liste.satirlar} gizli={gizli} suzgec={suzgec} yer={yer} yol={YOL} />
 
-      <Pagination page={page} totalPages={pageCount(liste.toplam, perPage)} total={liste.toplam} basePath={YOL} params={sayfaParametreleri} />
+      <ListeSayfalama sayfa={sayfa} toplam={liste.toplam} adres={siparisAdresi(suzgec, {}, YOL)} />
 
       {/* Bulunamayan ya da başka satıcının kimliğinde panel açılmaz. */}
       {panel && <SiparisPaneli key={panel.siparis.id} veri={panel} kapatAdresi={adres} yol={YOL} />}

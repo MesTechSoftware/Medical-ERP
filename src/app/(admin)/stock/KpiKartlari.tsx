@@ -4,10 +4,9 @@ import { KpiSatiri } from "@/components/kpi/KpiSatiri";
 import { formatSayi } from "@/lib/format";
 import { BOS_SUZGEC, stokAdresi } from "@/lib/stok-listesi/suzgec";
 import { urunAdresi } from "@/lib/urun-listesi/suzgec";
+import { KPI_BAGLANTISI } from "@/components/stil";
 
 type Sayilar = { stoktaki: number; toplamAdet: number; kritik: number; bugunGiris: number; bugunCikis: number };
-
-const KART = "block h-full rounded-xl transition hover:opacity-90";
 
 /**
  * Stok ekranının üst kartları (spec Ü-20 §3.2): süzgeçten bağımsız. Bugünkü kartlar listeyle aynı
@@ -27,7 +26,7 @@ export function KpiKartlari({ sayilar, bugun }: { sayilar: Sayilar; bugun: strin
           ikincilMetrik={`toplam ${formatSayi(sayilar.toplamAdet)} adet`}
           karsilastirma={{ anlik: "şu an" }}
         />
-        <Link href={urunAdresi({ durum: "AKTIF", stok: "kritik" })} className={KART}>
+        <Link href={urunAdresi({ durum: "AKTIF", stok: "kritik" })} className={KPI_BAGLANTISI}>
           <KpiCard
             etiket="Kritik stok"
             varyant="ikincil"
@@ -38,10 +37,10 @@ export function KpiKartlari({ sayilar, bugun }: { sayilar: Sayilar; bugun: strin
             vurgu={sayilar.kritik > 0 ? "uyari" : undefined}
           />
         </Link>
-        <Link href={bugunku("GIRIS")} className={KART}>
+        <Link href={bugunku("GIRIS")} className={KPI_BAGLANTISI}>
           <KpiCard etiket="Bugün giriş" varyant="ikincil" iyiYon="notr" bosDavranisi="sifir" adet={sayilar.bugunGiris} karsilastirma={{ anlik: "bugün" }} />
         </Link>
-        <Link href={bugunku("CIKIS")} className={KART}>
+        <Link href={bugunku("CIKIS")} className={KPI_BAGLANTISI}>
           <KpiCard etiket="Bugün çıkış" varyant="ikincil" iyiYon="notr" bosDavranisi="sifir" adet={sayilar.bugunCikis} karsilastirma={{ anlik: "bugün" }} />
         </Link>
       </KpiSatiri>

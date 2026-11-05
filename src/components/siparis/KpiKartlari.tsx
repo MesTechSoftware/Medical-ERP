@@ -6,8 +6,7 @@ import type { KpiSonucu } from "@/lib/kpi/getir";
 import { aralikEtiketi } from "@/lib/liste/parametreler";
 import type { SiparisKpileri } from "@/lib/siparis-listesi/sorgu";
 import { DURUMLAR, kartAdresi, type kpiAraligi, type SiparisYolu } from "@/lib/siparis-listesi/suzgec";
-
-const KART = "block h-full rounded-xl transition hover:opacity-90";
+import { KPI_BAGLANTISI } from "@/components/stil";
 
 type Aralik = ReturnType<typeof kpiAraligi>;
 
@@ -59,7 +58,7 @@ export function KpiKartlari({ sonuc, aralik, yol }: { sonuc: KpiSonucu<SiparisKp
           hataReferansi={hataReferansi}
         />
         {kartlar.map(({ durum, etiket }) => (
-          <Link key={durum} href={kartAdresi(durum, aralik, yol)} className={KART}>
+          <Link key={durum} href={kartAdresi(durum, aralik, yol)} className={KPI_BAGLANTISI}>
             <KpiCard
               etiket={etiket}
               varyant="ikincil"

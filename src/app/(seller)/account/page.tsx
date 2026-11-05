@@ -11,7 +11,8 @@ import { sayilanBelgeler } from "@/lib/sayilan-belgeler";
 import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
 import { kartSayisi } from "@/lib/doktor-listesi/sorgu";
 import { BOS_SUZGEC as TUM_DOKTORLAR } from "@/lib/doktor-listesi/suzgec";
-import { gunleriAraliga, siparisKpileri } from "@/lib/siparis-listesi/sorgu";
+import { gunleriAraliga } from "@/lib/liste/parametreler";
+import { siparisKpileri } from "@/lib/siparis-listesi/sorgu";
 import { BOS_SUZGEC, kpiAraligi } from "@/lib/siparis-listesi/suzgec";
 import { MATRAH } from "@/lib/taban";
 import { simdi, yerelGunMetni } from "@/lib/zaman";
@@ -19,8 +20,7 @@ import { Card, PageHeader } from "@/components/ui";
 import { KovaOzeti } from "@/components/kpi/KovaOzeti";
 import { KpiCard } from "@/components/kpi/KpiCard";
 import { KpiSatiri } from "@/components/kpi/KpiSatiri";
-
-const KART = "block h-full rounded-xl transition hover:opacity-90";
+import { KPI_BAGLANTISI } from "@/components/stil";
 
 /**
  * FR-61: satıcının bütün siparişlerinde ortalama iskonto (tutar ağırlıklı) — tek hesap `siparisToplami`. Siparişler
@@ -87,7 +87,7 @@ export default async function AccountPage() {
 
       <section aria-label="Hesap özeti">
         <KpiSatiri>
-          <Link href="/my-doctors" className={KART}>
+          <Link href="/my-doctors" className={KPI_BAGLANTISI}>
             <KpiCard
               etiket="Doktorlarım"
               varyant="birincil"
@@ -98,7 +98,7 @@ export default async function AccountPage() {
               hataReferansi={doktorSayisi.tamam ? undefined : doktorSayisi.referans}
             />
           </Link>
-          <Link href="/my-orders" className={KART}>
+          <Link href="/my-orders" className={KPI_BAGLANTISI}>
             <KpiCard
               etiket="Bu ay siparişim"
               varyant="ikincil"
@@ -109,7 +109,7 @@ export default async function AccountPage() {
               hataReferansi={siparisler.tamam ? undefined : siparisler.referans}
             />
           </Link>
-          <Link href="/my-report" className={KART}>
+          <Link href="/my-report" className={KPI_BAGLANTISI}>
             <KpiCard
               etiket="Bu ay cirom"
               varyant="ikincil"

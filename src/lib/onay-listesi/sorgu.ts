@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { metinVaryantlari } from "@/lib/liste/metin";
 import { BOS_SUZGEC, ESKI_ONAY_SAATI, type OnaySuzgeci } from "@/lib/onay-listesi/suzgec";
 import { kalemMiktarlari } from "@/lib/siparis";
-import { gunleriAraliga } from "@/lib/siparis-listesi/sorgu";
+import { gunleriAraliga } from "@/lib/liste/parametreler";
 import { hesaplaStoklar, varsayilanDepoId } from "@/lib/stok";
 
 /**

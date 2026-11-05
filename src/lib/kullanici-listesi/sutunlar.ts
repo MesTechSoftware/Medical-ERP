@@ -17,4 +17,3 @@ export const SUTUNLAR: readonly SutunTanimi<KullaniciSutunu>[] = [
 ];
 
 export const SUTUN_CEREZI = "kullanici-sutunlar";
-export const SUTUN_YOLU = "/users";
