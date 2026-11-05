@@ -6,11 +6,10 @@ import { bakiyeYonu } from "@/lib/doctor-cari";
 import type { DoktorSatiri } from "@/lib/doktor-listesi/sorgu";
 import { SUTUNLAR, type SutunAnahtari } from "@/lib/doktor-listesi/sutunlar";
 import { bosDurum, doktorAdresi, type BosDurum as BosTur, type DoktorSuzgeci } from "@/lib/doktor-listesi/suzgec";
-import { formatDate } from "@/lib/format";
 import { formatPhone } from "@/lib/phone";
-import { bugun } from "@/lib/zaman";
-import { BAKIYE_BASLIGI, BakiyeHucresi } from "./bakiye";
-import { DurumRozetleri } from "./DurumRozetleri";
+import { BAKIYE_BASLIGI, BakiyeHucresi } from "@/components/doktor/bakiye";
+import { DurumRozetleri } from "@/components/doktor/DurumRozetleri";
+import { SonSiparisHucresi } from "@/components/doktor/SonSiparisHucresi";
 
 /** Sütun başlıkları; Bakiye'nin tabanı başlıktadır (`BAKIYE_BASLIGI` — Ü-3-1). */
 const BASLIK: Record<SutunAnahtari, { metin: string; sinif?: string }> = {
@@ -31,13 +30,6 @@ const BOS: Record<BosTur, { ikon: "yeni" | "onayla" | "filtrele"; baslik: string
   suzgecli: { ikon: "filtrele", baslik: "Bu süzgeçlere uyan cari bulunamadı." },
 };
 
-const GUN_MS = 86_400_000;
-
-/** İstanbul günü farkı (E-1). */
-function kacGunOnce(son: Date, an: Date): string {
-  const gun = Math.round((bugun(an).getTime() - bugun(son).getTime()) / GUN_MS);
-  return gun <= 0 ? "bugün" : `${gun} gün önce`;
-}
 
 /**
  * Cari listesinin tablosu (spec Ü-18 §3.3). Eksik fatura bilgisi olan satır uyarı arka planı taşır
@@ -136,18 +128,7 @@ export function DoktorTablosu({
                   </td>
                 )}
                 {acik("siparis") && <td className="sayi oncelik-dusuk">{d._count.orders}</td>}
-                {acik("sonSiparis") && (
-                  <td className="whitespace-nowrap oncelik-dusuk">
-                    {d.sonSiparis ? (
-                      <>
-                        <span className="tabular-nums text-slate-700">{formatDate(d.sonSiparis)}</span>
-                        <span className="block text-xs text-slate-500">{kacGunOnce(d.sonSiparis, an)}</span>
-                      </>
-                    ) : (
-                      <span className="text-slate-400">—</span>
-                    )}
-                  </td>
-                )}
+                {acik("sonSiparis") && <SonSiparisHucresi son={d.sonSiparis} an={an} />}
                 {acik("bakiye") && (
                   <td className="sayi whitespace-nowrap">
                     <BakiyeHucresi bakiye={d.risk.bakiye} yon={bakiyeYonu(d.risk.bakiye)} />
