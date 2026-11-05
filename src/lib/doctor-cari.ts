@@ -5,6 +5,7 @@ import { sayilanBelgeler } from "@/lib/sayilan-belgeler";
 import { kalanMiktar, SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
 import { bilgi, type Bildirim } from "@/lib/sonuc";
 import { bugun, gunAraligi } from "@/lib/zaman";
+import { teknikHataYaz } from "@/lib/hata-kapsulu";
 
 type Db = Prisma.TransactionClient | typeof prisma;
 
@@ -98,7 +99,13 @@ export async function vadesiGecmisUyarisi(
   if (bakiye) {
     // Verilen bakiye riskle/kartla aynı turda hesaplanıyor; vade okuması onu beklemez. Verilen okuma düşerse
     // uyarı kendi bakiyesini hesaplar — paylaşılan okumanın hatası uyarıyı (ve sayfayı) birlikte düşürmesin.
-    [b, enEski] = await Promise.all([bakiye.catch(kendiBakiyesi), enEskiVade()]);
+    [b, enEski] = await Promise.all([
+      bakiye.catch((hata) => {
+        teknikHataYaz(hata, { yol: "vadesiGecmisUyarisi", kullaniciId: null });
+        return kendiBakiyesi();
+      }),
+      enEskiVade(),
+    ]);
   } else {
     b = await kendiBakiyesi();
     if (bakiyeYonu(b) !== "BORC") return null;

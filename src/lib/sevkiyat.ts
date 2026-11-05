@@ -9,6 +9,7 @@ import { hesaplaSatirTutarlari } from "@/lib/satir-tutarlari";
 import { sert, yumusak, type Bildirim } from "@/lib/sonuc";
 import { negatifStokOnizle, stokHareketiYaz, stokKilitle, varsayilanDepoId } from "@/lib/stok";
 import { bugun, gunEkle, simdi } from "@/lib/zaman";
+import { kalanMiktar } from "@/lib/siparis";
 
 /**
  * Sevkiyat — A-3. Bir sipariş satırına birden çok sevkiyat bağlanabilir; **doktor borcu, satıcı
@@ -88,7 +89,7 @@ export async function sevkiyatYaz(tx: Prisma.TransactionClient, girdi: SevkiyatG
     },
   });
   const kalan = new Map(
-    satirlar.map((s) => [s.id, { ...s, kalan: s.quantity - s.shipmentItems.reduce((t, i) => t + i.quantity, 0) }])
+    satirlar.map((s) => [s.id, { ...s, kalan: kalanMiktar(s) }])
   );
 
   const hatalar: Bildirim[] = [];

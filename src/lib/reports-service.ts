@@ -6,6 +6,7 @@ import { hesaplaSatirTutarlari, type SatirGirdisi } from "@/lib/satir-tutarlari"
 import { sayilanBelgeler } from "@/lib/sayilan-belgeler";
 import type { Ay, Kova } from "@/lib/donem";
 import { kovalaraBol } from "@/lib/kpi/seri";
+import { teknikHataYaz } from "@/lib/hata-kapsulu";
 import { siparisToplami } from "@/lib/siparis";
 
 /**
@@ -65,7 +66,12 @@ function net(sevk: SevkSatiri[], iade: SevkSatiri[]) {
 
 function grupla<T>(satirlar: T[], anahtar: (s: T) => string): Map<string, T[]> {
   const m = new Map<string, T[]>();
-  for (const s of satirlar) m.set(anahtar(s), [...(m.get(anahtar(s)) ?? []), s]);
+  for (const s of satirlar) {
+    const k = anahtar(s);
+    const grup = m.get(k);
+    if (grup) grup.push(s);
+    else m.set(k, [s]);
+  }
   return m;
 }
 
@@ -137,7 +143,10 @@ async function okumaFor(aralik: Donem, kapsam: KpiKapsami, verilen: PaylasilanOk
   if (!verilen) return ciroOku(aralik, kapsam);
   // Paylaşılan okuma düşerse hesap kendi okumasını dener: bir okumanın hatası ekrandaki bütün hesapları birlikte
   // düşürmesin (kart düzeyinde hata alanı, X-3). Kendi okuması da düşerse hata olduğu gibi fırlar.
-  const okuma = await Promise.resolve(verilen).catch(() => null);
+  const okuma = await Promise.resolve(verilen).catch((hata) => {
+    teknikHataYaz(hata, { yol: "ciroOku", kullaniciId: null });
+    return null;
+  });
   if (okuma === null) return ciroOku(aralik, kapsam);
   const kapsar = okuma.aralik.baslangic <= aralik.baslangic && okuma.aralik.bitis >= aralik.bitis;
   const yeter = okuma.kapsam.tur === "sirket" || (kapsam.tur === "satici" && kapsam.saticiId === okuma.kapsam.saticiId);
