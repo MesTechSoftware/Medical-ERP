@@ -138,10 +138,12 @@ export type DoktorPaneliVerisi = {
 export async function doktorPaneli(id: string): Promise<DoktorPaneliVerisi | null> {
   const doktor = await prisma.doctor.findUnique({ where: { id }, include: { ownerSeller: { select: { name: true } } } });
   if (!doktor) return null;
+  // Bakiye bir kez hesaplanır: risk onu taşır, vade uyarısı aynı değeri kullanır.
+  const riskP = hesaplaDoktorRisk(id);
   const [eksik, risk, vadeUyarisi, siparisler, hareketler, devirler] = await Promise.all([
     prisma.doctor.count({ where: { AND: [{ id }, EKSIK_FATURA_BILGISI] } }),
-    hesaplaDoktorRisk(id),
-    vadesiGecmisUyarisi(id),
+    riskP,
+    vadesiGecmisUyarisi(id, undefined, prisma, riskP.then((r) => r.bakiye)),
     prisma.order.findMany({
       where: { doctorId: id },
       orderBy: { orderDate: "desc" },
@@ -216,9 +218,11 @@ export type SaticiDoktorPaneli = {
 export async function saticiDoktorPaneli(id: string, kapsam: Prisma.DoctorWhereInput, saticiId: string): Promise<SaticiDoktorPaneli | null> {
   const doktor = await prisma.doctor.findFirst({ where: { AND: [{ id }, kapsam] } });
   if (!doktor) return null;
+  // Bakiye bir kez hesaplanır: risk onu taşır, vade uyarısı aynı değeri kullanır.
+  const riskP = hesaplaDoktorRisk(id);
   const [risk, vadeUyarisi, siparisler] = await Promise.all([
-    hesaplaDoktorRisk(id),
-    vadesiGecmisUyarisi(id),
+    riskP,
+    vadesiGecmisUyarisi(id, undefined, prisma, riskP.then((r) => r.bakiye)),
     prisma.order.findMany({
       where: { doctorId: id, sellerId: saticiId },
       orderBy: [{ orderDate: "desc" }, { id: "desc" }],

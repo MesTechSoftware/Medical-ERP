@@ -25,18 +25,20 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   const adres = siparisAdresi(suzgec, yer);
   const aralik = kpiAraligi(suzgec, yerelGunMetni(simdi()));
 
+  // Seçeneklerde olmayan satıcı süzgeci (eski yer imi, elle yazılmış kimlik) liste sorgularından önce adresten
+  // düşer: formda "Tümü" görünürken uygulanırsa bir sonraki Uygula onu sessizce kaldırırdı (B-4-12 deseni).
+  const saticilarP = saticiSecenekleri();
+  if (suzgec.satici && suzgec.satici !== SATICISIZ && !(await saticilarP).some((s) => s.id === suzgec.satici)) {
+    redirect(siparisAdresi({ ...suzgec, satici: null }, { ...yer, ...(detay ? { detay } : {}) }));
+  }
+
   const [liste, kpi, panel, saticilar] = await Promise.all([
     siparisListesi(suzgec, { skip, take }, TUM_SIPARISLER),
     kpiGetir(() => siparisKpileri(gunleriAraliga(aralik), TUM_SIPARISLER), { yol: "/orders", kullaniciId: session.user.id }),
     detay ? siparisPaneli(detay, TUM_SIPARISLER) : null,
-    saticiSecenekleri(),
+    saticilarP,
   ]);
 
-  // Seçeneklerde olmayan satıcı süzgeci (eski yer imi, elle yazılmış kimlik) adresten düşer: formda
-  // "Tümü" görünürken uygulanırsa bir sonraki Uygula onu sessizce kaldırırdı (B-4-12 deseni).
-  if (suzgec.satici && suzgec.satici !== SATICISIZ && !saticilar.some((s) => s.id === suzgec.satici)) {
-    redirect(siparisAdresi({ ...suzgec, satici: null }, { ...yer, ...(detay ? { detay } : {}) }));
-  }
   // Sayfa dışı adres son sayfaya gider; boş durum "hiç kayıt yok" demesin.
   const son = sayfaDisi(liste, perPage);
   if (son !== null) {

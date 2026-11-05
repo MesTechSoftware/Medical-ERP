@@ -77,16 +77,33 @@ export async function bakiyeSerisi(doktorId: string, sinirlar: readonly Date[], 
  * cari borçluyken (bakiye yönü `BORC`) vadesi `gun`den önce olan, ters kayıtla çevrilmemiş bir
  * `BORC` hareketi varsa en eski vadesiyle döner. Tutar gösterilmez (§(7)); tahsilat borçlarla
  * eşleştirilmez (§(1)/(2)) — tarih o borcun açık olduğunu söylemez.
+ *
+ * `bakiye` verilirse (aynı istekte riskle ya da kartla zaten hesaplanmışsa) yeniden hesaplanmaz ve en eski
+ * vade okuması onunla aynı turda gider. Verilmezse okumalar sıralıdır: transaction içinde (`db = tx`) paralel
+ * sorgu gönderilmez.
  */
-export async function vadesiGecmisUyarisi(doktorId: string, gun: Date = bugun(), db: Db = prisma): Promise<Bildirim | null> {
-  const { yon } = await hesaplaDoktorBakiye(doktorId, undefined, db);
-  if (yon !== "BORC") return null;
-  const enEski = await db.ledgerEntry.findFirst({
-    where: { doctorId: doktorId, direction: "BORC", dueDate: { lt: gun }, reversal: { is: null } },
-    orderBy: { dueDate: "asc" },
-    select: { dueDate: true },
-  });
-  if (!enEski?.dueDate) return null;
+export async function vadesiGecmisUyarisi(
+  doktorId: string,
+  gun: Date = bugun(),
+  db: Db = prisma,
+  bakiye?: Promise<Decimal>
+): Promise<Bildirim | null> {
+  const enEskiVade = () =>
+    db.ledgerEntry.findFirst({
+      where: { doctorId: doktorId, direction: "BORC", dueDate: { lt: gun }, reversal: { is: null } },
+      orderBy: { dueDate: "asc" },
+      select: { dueDate: true },
+    });
+  let b: Decimal;
+  let enEski: { dueDate: Date | null } | null;
+  if (bakiye) {
+    [b, enEski] = await Promise.all([bakiye, enEskiVade()]);
+  } else {
+    b = (await hesaplaDoktorBakiye(doktorId, undefined, db)).bakiye;
+    if (bakiyeYonu(b) !== "BORC") return null;
+    enEski = await enEskiVade();
+  }
+  if (bakiyeYonu(b) !== "BORC" || !enEski?.dueDate) return null;
   return bilgi("VADESI_GECMIS_HAREKET", { enEskiVade: enEski.dueDate.toISOString().slice(0, 10) });
 }
 

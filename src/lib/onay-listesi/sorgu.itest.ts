@@ -127,6 +127,19 @@ describe("kartlar ve süzgeç (A-8-11)", () => {
     expect(await idler(S({ q: o.documentNo }))).toEqual([a.id, b.id].sort());
     expect(await idler(S({ q: "ışık" }))).toEqual([a.id, b.id, k.id].sort());
     expect(await idler(S({ q: konsinye.documentNo }))).toEqual([k.id]);
+    // Bloksuz eşleşen sipariş listeye girmez; joker karakter kullanıcı metninde düz karakterdir.
+    await siparis({ cari: "Dr. Işık Bloksuz" });
+    expect(await idler(S({ q: "bloksuz" }))).toEqual([]);
+    expect(await idler(S({ q: "%" }))).toEqual([]);
+    expect(await idler(S({ q: "SIP_ON" }))).toEqual([]);
+    const trf = await prisma.stockTransfer.create({
+      data: { documentNo: `TRF-ON-${no}`, fromLocationId: ref.depo.id, toLocationId: ref.depo.id, createdById: yon.id },
+    });
+    const dzl = await prisma.stockAdjustment.create({ data: { documentNo: `DZL-ON-${no}`, createdById: yon.id } });
+    const t = await blok({ belge: trf.id, tur: "TRF", acildi: new Date(AN.getTime() - 5 * SAAT) });
+    const z = await blok({ belge: dzl.id, tur: "DZL", acildi: new Date(AN.getTime() - 6 * SAAT) });
+    expect(await idler(S({ q: trf.documentNo.toLowerCase() }))).toEqual([t.id]);
+    expect(await idler(S({ q: dzl.documentNo }))).toEqual([z.id]);
 
     const satirlar = (await onayListesi(BOS_SUZGEC, SAYFA, AN)).satirlar;
     expect(satirlar.find((r) => r.id === a.id)).toMatchObject({ belge: { no: o.documentNo, siparisId: o.id }, cari: "Dr. Işık Ilgaz", acan: "Operasyon Işık" });

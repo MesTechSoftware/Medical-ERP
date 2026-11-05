@@ -15,8 +15,11 @@ import { doktorSiralamasi, saticiSecenekleri } from "@/lib/rapor-listesi/sorgu";
 import { SAHIPSIZ, korunanlar, raporAdresi, saticiAdresi, suzgecCoz } from "@/lib/rapor-listesi/suzgec";
 import { DoktorSiralamasi } from "./DoktorSiralamasi";
 import {
+  ciroOku,
   ciroOzeti,
+  ciroOzetiAraligi,
   getSellerReports,
+  kapsayanAralik,
   saticiCiroSerileri,
   tahsilatToplamlari,
 } from "@/lib/reports-service";
@@ -57,13 +60,18 @@ export default async function ReportsPage({
     redirect(raporAdresi({ ...suzgec, satici: null }, yer));
   }
 
-  const sellers = await getSellerReports(session.user, donem.aralik);
-  const [siralama, ozet, tahsilat, seriler] = await Promise.all([
-    doktorSiralamasi(donem.aralik, suzgec, { skip, take }, { tur: "sirket" }),
-    kpiGetir(() => ciroOzeti({ kovalar: aylar, ...k }, { tur: "sirket" }), baglam),
+  // Dönemin sevk ve iade satırları bir kez okunur: KPI özeti, satıcı raporu, satıcı serileri ve doktor sıralaması
+  // aynı okumadan hesaplanır (aynı satırlar dört kez okunmaz); her hesabın kendi sorguları okumayla aynı turdadır.
+  const g = { kovalar: aylar, ...k };
+  const sirket = { tur: "sirket" } as const;
+  const okuma = ciroOku(kapsayanAralik([ciroOzetiAraligi(g), donem.aralik]), sirket);
+  const [sellers, siralama, ozet, tahsilat] = await Promise.all([
+    getSellerReports(session.user, donem.aralik, okuma),
+    doktorSiralamasi(donem.aralik, suzgec, { skip, take }, sirket, okuma),
+    kpiGetir(() => ciroOzeti(g, sirket, okuma), baglam),
     kpiGetir(() => tahsilatToplamlari(k.onceki ? [k.simdi, k.onceki] : [k.simdi]), baglam),
-    saticiCiroSerileri(aylar, sellers.map((s) => s.sellerId)),
   ]);
+  const seriler = await saticiCiroSerileri(aylar, sellers.map((s) => s.sellerId), okuma);
   const karsilastir = <T,>(onceki: T | null | undefined) => (k.onceki ? { onceki: onceki ?? null, not } : undefined);
   // Sayfa dışı adres son sayfaya gider.
   const son = sayfaDisi(siralama, perPage);

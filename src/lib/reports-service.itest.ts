@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import { prisma } from "@/lib/db";
 import { degistirDoktorSahibi } from "@/lib/sahiplik";
-import { getCiroTotal, getDoctorReports, getSellerReports } from "@/lib/reports-service";
+import { getCiroTotal, getDoctorReports, getSellerReports, saticiOrtalamaIskontosu } from "@/lib/reports-service";
+import { sayilanBelgeler } from "@/lib/sayilan-belgeler";
+import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
 import { TUM_ZAMANLAR } from "@/lib/zaman";
 import { referansVeri, yeniDoktorVerisi } from "../../test/integration/referans";
 
@@ -263,5 +265,40 @@ describe("satıcı raporu — yetki sorguda (X-1 §(8), D-2 §(4))", () => {
   it("OPERASYON prim raporunu alamaz", async () => {
     const o = await kullanici("Operasyon", "o@medikal.local", "OPERASYON");
     await expect(getSellerReports({ id: o.id, role: "OPERASYON" }, EKIM)).rejects.toThrow();
+  });
+});
+
+describe("saticiOrtalamaIskontosu — FR-61, gruplanmış okuma", () => {
+  it("kalem kalem hesapla aynı sonucu verir; teklif, iptal, bedelsiz ve başka satıcı girmez", async () => {
+    const ayse = await kullanici("Ayşe", "ayse-isk@x");
+    const ali = await kullanici("Ali", "ali-isk@x");
+    const d = await doktor("Dr. İskonto", ayse.id);
+    const an = new Date("2026-11-02T09:00:00Z");
+    // Aynı fiyat çifti iki siparişte (gruplanır), ayrık fiyatlar, liste üstü satış, bedelsiz satır.
+    await sevkliSiparis(ayse.id, d.id, an, [
+      { unitPrice: "90.1234", listPrice: "100", quantity: 3 },
+      { unitPrice: "45", listPrice: "50", quantity: 1 },
+      { unitPrice: "0", listPrice: "70", quantity: 2, isFree: true },
+    ]);
+    await sevkliSiparis(ayse.id, d.id, an, [
+      { unitPrice: "90.1234", listPrice: "100", quantity: 7 },
+      { unitPrice: "110", listPrice: "100", quantity: 1 },
+    ]);
+    await sevkliSiparis(ayse.id, d.id, an, [{ unitPrice: "1", listPrice: "100", quantity: 50 }], { stage: "TEKLIF" });
+    await sevkliSiparis(ayse.id, d.id, an, [{ unitPrice: "1", listPrice: "100", quantity: 50 }], { status: "IPTAL" });
+    await sevkliSiparis(ali.id, d.id, an, [{ unitPrice: "1", listPrice: "100", quantity: 50 }]);
+
+    const kalemler = await prisma.orderItem.findMany({
+      where: { order: { ...sayilanBelgeler.siparis, sellerId: ayse.id } },
+      select: SIPARIS_SATIRI,
+    });
+    const beklenen = siparisToplami(kalemler).iskontoOran;
+    expect(beklenen).not.toBeNull();
+    expect((await saticiOrtalamaIskontosu(ayse.id))?.toFixed()).toBe(beklenen!.toFixed());
+  });
+
+  it("siparişi yoksa boştur", async () => {
+    const veli = await kullanici("Veli", "veli-isk@x");
+    expect(await saticiOrtalamaIskontosu(veli.id)).toBeNull();
   });
 });

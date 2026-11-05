@@ -78,11 +78,16 @@ export async function kargoBekleyenler(): Promise<BekleyenSatir[]> {
 export type KargoKpileri = { bekleyen: number; bekleyenAdet: number; onayBekleyen: number; bugunKargolanan: number; teslimBekleyen: number };
 
 /** Kartlar (spec §3.2): bekleyen sayıları sayfanın okuduğu listeden; bugün ve teslim bekleyen sayımla. */
-export async function kargoKpileri(bugun: string, bekleyenler: readonly BekleyenSatir[]): Promise<KargoKpileri> {
-  const [bugunKargolanan, teslimBekleyen] = await Promise.all([
+export async function kargoKpileri(
+  bugun: string,
+  bekleyenOkumasi: readonly BekleyenSatir[] | Promise<readonly BekleyenSatir[]>
+): Promise<KargoKpileri> {
+  // Sayımlar bekleyenlerin okunmasını beklemez; ekran okumayı söz olarak verirse aynı turda gider.
+  const [bugunKargolanan, teslimBekleyen, bekleyenler] = await Promise.all([
     prisma.shipment.count({ where: sevkiyatKosulu({ baslangic: bugun, bitis: bugun, firma: null, durum: null, q: null }) }),
     // Siparişler ekranının `durum=KARGOLANDI` süzgeciyle aynı koşul (D-3-2: kart = satır).
     prisma.order.count({ where: siparisKosulu({ ...BOS_SIPARIS, durum: "KARGOLANDI" }, TUM_SIPARISLER) }),
+    bekleyenOkumasi,
   ]);
   return {
     bekleyen: bekleyenler.length,

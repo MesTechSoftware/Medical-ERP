@@ -4,7 +4,7 @@ import { donemBitisAyi, donemCoz, karsilastirmaAraliklari, karsilastirmaNotu, so
 import { kpiGetir } from "@/lib/kpi/getir";
 import { BRUT, MATRAH } from "@/lib/taban";
 import { simdi } from "@/lib/zaman";
-import { ciroOzeti, getSellerReports, saticiTahsilatOzeti } from "@/lib/reports-service";
+import { ciroOku, ciroOzeti, ciroOzetiAraligi, getSellerReports, kapsayanAralik, saticiTahsilatOzeti } from "@/lib/reports-service";
 import DonemSecici from "@/components/DonemSecici";
 import { ilk, type Parametreler } from "@/lib/liste/parametreler";
 import SaticiRaporTablosu from "@/components/SaticiRaporTablosu";
@@ -49,13 +49,16 @@ export default async function MyReportPage({
   const { page, perPage, skip, take, yer } = sayfa;
   if (ilk(params, "satici") !== null) redirect(raporAdresi(suzgec, yer, YOL));
 
-  // Dört okuma birbirinden bağımsızdır; tek turda gider.
+  // Satıcının dönem sevk ve iade satırları bir kez okunur: rapor satırı, Cirom özeti ve doktorlarıma göre cirom aynı
+  // okumadan hesaplanır. Okumalar tek turdadır.
+  const g = { kovalar: aylar, ...k };
+  const okuma = ciroOku(kapsayanAralik([ciroOzetiAraligi(g), donem.aralik]), kapsam);
   const [satirlar, ozet, tahsilat, siralama] = await Promise.all([
-    getSellerReports(session.user, donem.aralik),
-    kpiGetir(() => ciroOzeti({ kovalar: aylar, ...k }, kapsam), baglam),
+    getSellerReports(session.user, donem.aralik, okuma),
+    kpiGetir(() => ciroOzeti(g, kapsam, okuma), baglam),
     kpiGetir(() => saticiTahsilatOzeti(k, session.user.id), baglam),
-    // Sıralama da kart gibi kapsüllüdür: okuma düşerse yalnız o bölüm hata referansı gösterir, KPI'lar kalır.
-    kpiGetir(() => doktorSiralamasi(donem.aralik, suzgec, { skip, take }, kapsam), baglam),
+    // Sıralama da kart gibi kapsüllüdür: hesap düşerse yalnız o bölüm hata referansı gösterir, KPI'lar kalır.
+    kpiGetir(() => doktorSiralamasi(donem.aralik, suzgec, { skip, take }, kapsam, okuma), baglam),
   ]);
   // Sayfa dışı adres son sayfaya gider.
   // Sonuçsuz aramada ikinci sayfadan sonrası birinci sayfaya (sayfalama "3 / 1" demesin).

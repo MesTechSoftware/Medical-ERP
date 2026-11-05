@@ -25,13 +25,20 @@ export default async function ShippingPage({ searchParams }: { searchParams: Pro
   const adres = kargoAdresi(suzgec, yer);
   const bugun = yerelGunMetni(simdi());
 
-  const [bekleyenler, liste, firmalar] = await Promise.all([kargoBekleyenler(), sevkiyatListesi(suzgec, { skip, take }), firmaSecenekleri()]);
-  const kpi = await kpiGetir(() => kargoKpileri(bugun, bekleyenler), { yol: "/shipping", kullaniciId: session.user.id });
-
-  // Seçeneklerde olmayan firma süzgeci (eski yer imi, elle yazılmış kimlik) adresten düşer.
-  if (suzgec.firma && suzgec.firma !== FIRMASIZ && !firmalar.some((f) => f.id === suzgec.firma)) {
+  // Seçeneklerde olmayan firma süzgeci (eski yer imi, elle yazılmış kimlik) liste sorgularından önce adresten düşer.
+  const firmalarP = firmaSecenekleri();
+  if (suzgec.firma && suzgec.firma !== FIRMASIZ && !(await firmalarP).some((f) => f.id === suzgec.firma)) {
     redirect(kargoAdresi({ ...suzgec, firma: null }, { ...yer, ...(kismi ? { kismi } : {}) }));
   }
+
+  // KPI sayımları bekleyenler okunurken başlar; bekleyen kartları aynı okumadan sayılır.
+  const bekleyenlerP = kargoBekleyenler();
+  const [bekleyenler, liste, firmalar, kpi] = await Promise.all([
+    bekleyenlerP,
+    sevkiyatListesi(suzgec, { skip, take }),
+    firmalarP,
+    kpiGetir(() => kargoKpileri(bugun, bekleyenlerP), { yol: "/shipping", kullaniciId: session.user.id }),
+  ]);
   // Sayfa dışı adres son sayfaya gider; boş durum "hiç kayıt yok" demesin.
   const son = sayfaDisi(liste, perPage);
   if (son !== null) {

@@ -7,7 +7,7 @@ import type { Aralik } from "@/lib/donem";
 import { takipLinki } from "@/lib/kargo";
 import { belgeOnayDurumlari } from "@/lib/onay-blogu";
 import type { BelgeTutari } from "@/lib/satir-tutarlari";
-import { kalemMiktarlari, SIPARIS_SATIRI, siparisToplami, siparisTutarlari } from "@/lib/siparis";
+import { kalemMiktarlari, SIPARIS_SATIRI, sevkMiktari, siparisToplami, siparisTutarlari } from "@/lib/siparis";
 import { metinVaryantlari } from "@/lib/liste/metin";
 import { gunleriAraliga } from "@/lib/liste/parametreler";
 import { kapsamKosulu, SATICISIZ, type SiparisKapsami, type SiparisSuzgeci } from "@/lib/siparis-listesi/suzgec";
@@ -72,7 +72,8 @@ const SATIR_SECIMI = {
   sellerId: true,
   doctor: { select: { id: true, fullName: true, clinic: true, ownerSellerId: true, accountClass: true } },
   seller: { select: { name: true } },
-  items: { select: { ...SIPARIS_SATIRI, shipmentItems: { select: { quantity: true } }, returnItems: { select: { quantity: true } } } },
+  // Liste satırı yalnız sevk adedini gösterir; iade adetleri panelde okunur.
+  items: { select: { ...SIPARIS_SATIRI, shipmentItems: { select: { quantity: true } } } },
 } satisfies Prisma.OrderSelect;
 
 /** Panel: liste satırı + vade ve kalem ayrıntısı (ürün, iade). */
@@ -105,7 +106,7 @@ function satir(o: HamSiparis, onay: SiparisSatiri["onay"], toplam: Decimal = sip
     cariSaticida: o.sellerId !== null && o.doctor.ownerSellerId === o.sellerId && o.doctor.accountClass === "DOKTOR",
     satici: o.seller?.name ?? null,
     toplam,
-    sevk: o.items.reduce((t, k) => t + kalemMiktarlari(k).sevk, 0),
+    sevk: o.items.reduce((t, k) => t + sevkMiktari(k), 0),
     adet: o.items.reduce((t, k) => t + k.quantity, 0),
     onay,
   };

@@ -32,8 +32,10 @@ aç/kapa liste ya da KPI sorgusu koşturmaz (e2e ölçer).
 | `OnayKurali` ↔ `BlokKuralKodu`/`BLOK_KURAL_ADI` | `BlokKuralKodu`; süzgecin seçenekleri `BLOK_KURAL_ADI`'dan |
 | `kpiGetir` toplu kargoda | nötr `lib/hata-kapsulu.ts` `hataKapsulu`; `kpiGetir` KPI çağrılarında takma ad |
 
-Tek görünür etki: geçersiz `per` (harf, sıfır, ondalık) artık sayfalama ve süzgeç bağlantılarına yazılmaz
-(önceden yazılıyordu, ertelenen iş Ü-27). Panellerin rozet ve alt bilgi satırı tek sınıf kümesini kullanır.
+Görünür etkiler: geçersiz `page`/`per` (harf, sıfır, ondalık, taşan sayı) yok sayılır — sayfa 1'e, boy varsayılana
+düşer ve bağlantılara yazılmaz (önceden `parseInt` baştaki sayıyı alıyor, `per` bağlantılara yazılıyordu; ertelenen iş
+Ü-27). Panellerin rozet ve alt bilgi satırı tek sınıf kümesini kullanır, panellerdeki sipariş bağlantıları ortak bağlantı
+stilindedir, eylemsiz panelde alt bilgi şeridi çizilmez.
 
 ## 3. PR 2 — sorgu performansı
 
