@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { requireSeller } from "@/lib/session";
 import { PageHeader, LinkButton } from "@/components/ui";
 import Pagination from "@/components/Pagination";
-import { KpiKartlari, SATICI_DURUM_KARTLARI } from "@/components/siparis/KpiKartlari";
+import { KpiKartlari } from "@/components/siparis/KpiKartlari";
 import { SiparisPaneli } from "@/components/siparis/SiparisPaneli";
 import { SiparisTablosu } from "@/components/siparis/SiparisTablosu";
 import { SuzgecCubugu } from "@/components/siparis/SuzgecCubugu";
@@ -23,7 +23,7 @@ const YOL = "/my-orders";
 /**
  * Siparişlerim (spec Ü-31): yönetici Siparişler ekranının (Ü-23) satıcı kapsamlı hâli — KPI, durum sekmeleri,
  * Filtrele (tarih, metin), sütun seçici, sayfalı liste, yan panel. Kapsam sorgudadır (`kapsam`, X-13):
- * liste, kartlar ve panel yalnız bu satıcının siparişlerini okur; adresteki `satici` yok sayılır.
+ * liste, kartlar ve panel yalnız bu satıcının siparişlerini okur; adresteki `satici` adresten düşer.
  */
 export default async function MyOrdersPage({ searchParams }: { searchParams: Promise<Parametreler> }) {
   const session = await requireSeller();
@@ -33,10 +33,12 @@ export default async function MyOrdersPage({ searchParams }: { searchParams: Pro
   const per = ilk(params, "per") ?? undefined;
   const { page, perPage, skip, take } = getPagination({ page: ilk(params, "page") ?? undefined, per });
   const cozulen = suzgecCoz(params);
-  // Satıcı süzgeci bu ekranda yoktur; adreste kalmışsa (yönetici bağlantısı, elle) etiket ve adres yazmasın.
-  const suzgec = { ...cozulen.suzgec, satici: null };
   const detay = cozulen.detay;
   const yer = { page, per: per ? perPage : undefined };
+  // Satıcı süzgeci bu ekranda yoktur; adreste kalmışsa (yönetici bağlantısı, elle) sorgulardan önce adresten düşer.
+  // Kapsam zaten sorgudadır — bu yalnız adres çubuğunun uygulanan süzgeci göstermesi içindir.
+  const suzgec = { ...cozulen.suzgec, satici: null };
+  if (cozulen.suzgec.satici) redirect(siparisAdresi(suzgec, { ...yer, ...(detay ? { detay } : {}) }, YOL));
   const gizli = gizliSutunlariCoz(SATICI_SUTUNLARI, (await cookies()).get(SATICI_SUTUN_CEREZI)?.value);
   const adres = siparisAdresi(suzgec, yer, YOL);
   const aralik = kpiAraligi(suzgec, yerelGunMetni(simdi()));
@@ -66,7 +68,7 @@ export default async function MyOrdersPage({ searchParams }: { searchParams: Pro
         action={<LinkButton href="/my-orders/new" ikon="yeni">Yeni Sipariş</LinkButton>}
       />
 
-      <KpiKartlari sonuc={kpi} aralik={aralik} yol={YOL} kartlar={SATICI_DURUM_KARTLARI} />
+      <KpiKartlari sonuc={kpi} aralik={aralik} yol={YOL} />
 
       <SuzgecCubugu
         suzgec={suzgec}

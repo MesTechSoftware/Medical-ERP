@@ -166,13 +166,13 @@ export type SiparisPaneli = {
 };
 
 export async function siparisPaneli(id: string, kapsam: SiparisKapsami): Promise<SiparisPaneli | null> {
-  // Dört okuma tek turda gider; her biri kapsamlıdır — başka satıcının kimliğinde boş döner, sipariş
-  // yoksa sonuç atılır.
-  const siparisi = { id, ...kapsamKosulu(kapsam) };
+  // Dört okuma tek turda gider. Satıcı kapsamında her biri kapsamlıdır (başka satıcının kimliğinde boş döner);
+  // bütün siparişlerde doğrudan yabancı anahtarla okunur, birleştirme eklenmez. Sipariş yoksa sonuç atılır.
+  const kapsamli = kapsam.tur === "satici";
   const [o, sevkiyatlar, iadeler, onay] = await Promise.all([
-    prisma.order.findFirst({ where: siparisi, select: PANEL_SECIMI }),
+    prisma.order.findFirst({ where: { id, ...kapsamKosulu(kapsam) }, select: PANEL_SECIMI }),
     prisma.shipment.findMany({
-      where: { order: siparisi },
+      where: { orderId: id, ...(kapsamli ? { order: kapsamKosulu(kapsam) } : {}) },
       orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       select: {
         id: true,
@@ -185,7 +185,7 @@ export async function siparisPaneli(id: string, kapsam: SiparisKapsami): Promise
       },
     }),
     prisma.returnNote.findMany({
-      where: { items: { some: { orderItem: { order: siparisi } } } },
+      where: { items: { some: { orderItem: { orderId: id, ...(kapsamli ? { order: kapsamKosulu(kapsam) } : {}) } } } },
       orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       select: { id: true, documentNo: true, createdAt: true, items: { where: { orderItem: { orderId: id } }, select: { quantity: true } } },
     }),

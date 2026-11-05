@@ -27,7 +27,7 @@ test("4 kart; Bekliyor kartı aralığıyla süzgeci açar ve satır sayısına 
   await expect(page).toHaveURL(/\/my-orders\?durum=BEKLIYOR&baslangic=\d{4}-\d{2}-01&bitis=\d{4}-\d{2}-\d{2}/);
   await expect(etkinler(page).getByText("Durum: Bekliyor")).toBeVisible();
   await page.goto(`${page.url()}&per=100`);
-  await expect(satirlar(page)).toHaveCount(deger);
+  await expect(satirlar(page)).toHaveCount(Math.min(deger, 100));
 });
 
 test("Filtrele'de satıcı alanı yok; adresteki satıcı süzgeci kapsamı değiştirmez; başka satıcının siparişi panelde açılmaz", async ({ page }) => {
@@ -43,10 +43,17 @@ test("Filtrele'de satıcı alanı yok; adresteki satıcı süzgeci kapsamı değ
   await expect(form.getByLabel("Ara")).toBeVisible();
   await expect(form.getByLabel("Satıcı")).toHaveCount(0);
 
-  const tumu = await satirlar(page).count();
-  await page.goto(`/my-orders?satici=${baska.sellerId}`);
-  await expect(satirlar(page)).toHaveCount(tumu);
+  // Adresteki satıcı adresten düşer; görünen her satır bu satıcının (sayı değil kimlik denetlenir).
+  await page.goto(`/my-orders?satici=${baska.sellerId}&per=100`);
+  await expect(page).toHaveURL(/\/my-orders\?per=100$/);
   await expect(etkinler(page)).toHaveCount(0);
+  const kimlikler = await satirlar(page).locator("a[data-kayit]").evaluateAll((a) => a.map((e) => e.getAttribute("data-kayit")!));
+  expect(kimlikler.length).toBeGreaterThan(0);
+  const [{ yabanci }] = await sorgu<{ yabanci: number }>(
+    `SELECT count(*)::int AS yabanci FROM "Order" WHERE id = ANY($1) AND "sellerId" IS DISTINCT FROM $2`,
+    [kimlikler, id]
+  );
+  expect(yabanci, "listede başka satıcının siparişi").toBe(0);
 
   await page.goto(`/my-orders?detay=${baska.id}`);
   await expect(page.getByRole("heading", { level: 1, name: "Siparişlerim" })).toBeVisible();
