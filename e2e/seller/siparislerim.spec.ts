@@ -47,6 +47,8 @@ test("Filtrele'de satıcı alanı yok; adresteki satıcı süzgeci kapsamı değ
   await page.goto(`/my-orders?satici=${baska.sellerId}&per=100`);
   await expect(page).toHaveURL(/\/my-orders\?per=100$/);
   await expect(etkinler(page)).toHaveCount(0);
+  // Yönlendirme akış başladıktan sonra (loading.tsx) istemcide olur; satırlar çizilene kadar beklenir.
+  await expect(satirlar(page).first()).toBeVisible();
   const kimlikler = await satirlar(page).locator("a[data-kayit]").evaluateAll((a) => a.map((e) => e.getAttribute("data-kayit")!));
   expect(kimlikler.length).toBeGreaterThan(0);
   const [{ yabanci }] = await sorgu<{ yabanci: number }>(

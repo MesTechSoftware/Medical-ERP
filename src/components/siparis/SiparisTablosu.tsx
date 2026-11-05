@@ -7,8 +7,7 @@ import { buton } from "@/components/stil";
 import { Tutar } from "@/components/Tutar";
 import { formatDate } from "@/lib/format";
 import type { SiparisSatiri } from "@/lib/siparis-listesi/sorgu";
-import { SUTUNLAR, type SiparisSutunu } from "@/lib/siparis-listesi/sutunlar";
-import type { SutunTanimi } from "@/lib/liste/sutunlar";
+import { ekranSutunlari, type SiparisSutunu } from "@/lib/siparis-listesi/sutunlar";
 import { bosDurum, siparisAdresi, type SiparisSuzgeci, type SiparisYolu } from "@/lib/siparis-listesi/suzgec";
 import { SATIR_TABANI, tabanli } from "@/lib/taban";
 
@@ -38,7 +37,7 @@ export function sevkMetni(sevk: number, adet: number): string {
 /**
  * Sipariş tablosu (spec Ü-23 §3.4). Gizli sütunun başlığı ve hücresi çizilmez. Cari adı yan paneli açar;
  * onay bloğu (A-8) çipi adın yanında, teklif işareti Durum sütunundadır (`DurumRozeti`). Siparişlerim
- * (Ü-31) aynı tabloyu kendi yolu ve satıcı sütunsuz tanımla (`SATICI_SUTUNLARI`) çizer.
+ * (Ü-31) aynı tabloyu kendi yolu ve yolun sütun setiyle (`ekranSutunlari` — satıcı sütunu yok) çizer.
  */
 export function SiparisTablosu({
   satirlar,
@@ -46,16 +45,14 @@ export function SiparisTablosu({
   suzgec,
   yer,
   yol = "/orders",
-  sutunlar = SUTUNLAR,
 }: {
   satirlar: SiparisSatiri[];
   gizli: ReadonlySet<SiparisSutunu>;
   suzgec: SiparisSuzgeci;
   yer: { page?: number; per?: number };
   yol?: SiparisYolu;
-  sutunlar?: readonly SutunTanimi<SiparisSutunu>[];
 }) {
-  const gorunur = sutunlar.filter((s) => !gizli.has(s.anahtar));
+  const gorunur = ekranSutunlari(yol).filter((s) => !gizli.has(s.anahtar));
   const acikKume = new Set(gorunur.map((s) => s.anahtar));
   const acik = (k: SiparisSutunu) => acikKume.has(k);
   const tur = bosDurum(suzgec);
@@ -85,7 +82,7 @@ export function SiparisTablosu({
               <BosDurum
                 colSpan={4 + gorunur.length}
                 ikon={tur === "suzgecli" ? "filtrele" : "yeni"}
-                baslik={tur === "suzgecli" ? "Bu süzgeçlere uyan sipariş yok." : "Henüz sipariş yok."}
+                baslik={tur === "suzgecli" ? "Bu süzgeçlere uyan sipariş yok." : yol === "/orders" ? "Henüz sipariş yok." : "Henüz sipariş oluşturmadınız."}
                 temizleAdresi={tur === "suzgecli" ? yol : undefined}
                 eylem={
                   tur === "hic-kayit" ? (

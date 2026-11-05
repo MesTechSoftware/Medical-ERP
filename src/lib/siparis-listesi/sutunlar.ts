@@ -26,3 +26,8 @@ export const SUTUN_YOLU = "/orders";
 export const SATICI_SUTUNLARI: readonly SutunTanimi<SiparisSutunu>[] = SUTUNLAR.filter((s) => s.anahtar !== "satici");
 export const SATICI_SUTUN_CEREZI = "siparislerim-sutunlar";
 export const SATICI_SUTUN_YOLU = "/my-orders";
+
+/** Ekranın sütun seti yolundan türer (kart seti gibi): satıcı ekranı satıcı sütununu hiç çizmez. */
+export function ekranSutunlari(yol: "/orders" | "/my-orders"): readonly SutunTanimi<SiparisSutunu>[] {
+  return yol === "/orders" ? SUTUNLAR : SATICI_SUTUNLARI;
+}

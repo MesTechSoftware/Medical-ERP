@@ -166,8 +166,9 @@ export type SiparisPaneli = {
 };
 
 export async function siparisPaneli(id: string, kapsam: SiparisKapsami): Promise<SiparisPaneli | null> {
-  // Dört okuma tek turda gider. Satıcı kapsamında her biri kapsamlıdır (başka satıcının kimliğinde boş döner);
-  // bütün siparişlerde doğrudan yabancı anahtarla okunur, birleştirme eklenmez. Sipariş yoksa sonuç atılır.
+  // Dört okuma tek turda gider. Koruma siparişin kapsamlı okumasıdır: sipariş yoksa ya da kapsam dışıysa bütün
+  // sonuç atılır. Sevkiyat ve iade okumaları satıcı kapsamında ayrıca kapsamlıdır (ek savunma); bütün siparişlerde
+  // doğrudan yabancı anahtarla okunur, birleştirme eklenmez.
   const kapsamli = kapsam.tur === "satici";
   const [o, sevkiyatlar, iadeler, onay] = await Promise.all([
     prisma.order.findFirst({ where: { id, ...kapsamKosulu(kapsam) }, select: PANEL_SECIMI }),

@@ -1,6 +1,6 @@
 import { KpiSatiriIskeleti, SayfaBasligiIskeleti, SuzgecCubuguIskeleti, TabloIskeleti } from "@/components/Iskelet";
 import { BOS_SUZGEC, hizliSekmeler } from "@/lib/siparis-listesi/suzgec";
-import { DURUM_KARTLARI } from "@/components/siparis/KpiKartlari";
+import { ekranKartlari } from "@/components/siparis/KpiKartlari";
 
 /** Siparişler iskeleti: başlık, KPI satırı (kartlarla aynı metinler, varsayılan aralık), süzgeç çubuğu, tablo. */
 export default function Loading() {
@@ -12,7 +12,7 @@ export default function Loading() {
       <KpiSatiriIskeleti
         kartlar={[
           { etiket: "Toplam sipariş", varyant: "birincil", ...kart, altNot: "Bu ay · teklif hariç" },
-          ...DURUM_KARTLARI.map((d) => ({ etiket: d.etiket, varyant: "ikincil" as const, ...kart, altNot: "Bu ay" })),
+          ...ekranKartlari("/orders").map((d) => ({ etiket: d.etiket, varyant: "ikincil" as const, ...kart, altNot: "Bu ay" })),
         ]}
       />
       <SuzgecCubuguIskeleti sekmeler={hizliSekmeler(BOS_SUZGEC).map((s) => s.etiket)} dugmeler={["Filtrele", "Sütunlar"]} />

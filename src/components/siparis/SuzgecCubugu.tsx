@@ -23,7 +23,7 @@ function Alan({ id, etiket, children }: { id: string; etiket: string; children: 
 /**
  * Sipariş listesinin süzgeç çubuğu (spec Ü-23 §3.3): durum sekmeleri, Filtrele paneli (GET formu; tarih,
  * satıcı, metin — durum ve sayfa boyu gizli alanla korunur), etkin süzgeç etiketleri, sütun menüsü yuvası.
- * Siparişlerim'de (`yol="/my-orders"`, Ü-31) `saticilar` verilmez: satıcı alanı çizilmez, liste zaten kendi
+ * Satıcı alanı yalnız yönetici ekranında (`/orders`) çizilir; Siparişlerim (Ü-31) liste zaten kendi
  * siparişleridir.
  */
 export function SuzgecCubugu({
@@ -68,7 +68,7 @@ export function SuzgecCubugu({
               <Alan id="suzgec-bitis" etiket="Bitiş">
                 <input type="date" id="suzgec-bitis" name="bitis" defaultValue={suzgec.bitis ?? ""} className={KONTROL_TEK_SATIR} />
               </Alan>
-              {saticilar && (
+              {yol === "/orders" && saticilar && (
                 <Alan id="suzgec-satici" etiket="Satıcı">
                   <select id="suzgec-satici" name="satici" defaultValue={suzgec.satici ?? ""} className={KONTROL_TEK_SATIR}>
                     <option value="">Tümü</option>

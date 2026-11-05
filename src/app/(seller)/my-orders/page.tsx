@@ -77,7 +77,7 @@ export default async function MyOrdersPage({ searchParams }: { searchParams: Pro
         sutunMenusu={<SutunSecici sutunlar={SATICI_SUTUNLARI} gizli={gizli} action={sutunlariKaydet} donus={adres} />}
       />
 
-      <SiparisTablosu satirlar={liste.satirlar} gizli={gizli} suzgec={suzgec} yer={yer} yol={YOL} sutunlar={SATICI_SUTUNLARI} />
+      <SiparisTablosu satirlar={liste.satirlar} gizli={gizli} suzgec={suzgec} yer={yer} yol={YOL} />
 
       <Pagination page={page} totalPages={pageCount(liste.toplam, perPage)} total={liste.toplam} basePath={YOL} params={sayfaParametreleri} />
 
