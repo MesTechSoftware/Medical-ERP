@@ -9,7 +9,7 @@ import { belgeOnayDurumlari } from "@/lib/onay-blogu";
 import type { BelgeTutari } from "@/lib/satir-tutarlari";
 import { kalemMiktarlari, SIPARIS_SATIRI, siparisToplami, siparisTutarlari } from "@/lib/siparis";
 import { metinVaryantlari } from "@/lib/liste/metin";
-import { SATICISIZ, type SiparisSuzgeci } from "@/lib/siparis-listesi/suzgec";
+import { kapsamKosulu, SATICISIZ, type SiparisKapsami, type SiparisSuzgeci } from "@/lib/siparis-listesi/suzgec";
 import { TUM_ZAMANLAR, yerelGunAraligi } from "@/lib/zaman";
 
 /**
@@ -17,8 +17,8 @@ import { TUM_ZAMANLAR, yerelGunAraligi } from "@/lib/zaman";
  * açtığı listenin sayısı aynıdır (A-5-8). KPI dashboard'un dağılımıyla tek yoldur (`siparisDagilimi`).
  * Kalem miktarları `kalemMiktarlari`'ndan, tutar `siparisToplami` / `siparisTutarlari`'ndan (A-3-2).
  *
- * `saticiId` satıcı ekranının kapsamıdır (Siparişlerim, Ü-31; X-13): verilirse liste, KPI ve panel yalnız
- * o satıcının siparişlerini okur. Kapsam sorgudadır; adresin `satici` süzgeci onu genişletemez.
+ * `kapsam` zorunludur (`SiparisKapsami`, X-13): satıcı kapsamında (Siparişlerim, Ü-31) liste, KPI ve panel
+ * yalnız o satıcının siparişlerini okur. Kapsam sorgudadır; adresin `satici` süzgeci onu genişletemez.
  */
 
 /** İstanbul gün metinlerini yarı açık aralığa çevirir; boş uç `TUM_ZAMANLAR`'ın ucudur. */
@@ -29,9 +29,8 @@ export function gunleriAraliga(a: { baslangic: string | null; bitis: string | nu
   };
 }
 
-export function siparisKosulu(s: SiparisSuzgeci, saticiId?: string): Prisma.OrderWhereInput {
-  const ve: Prisma.OrderWhereInput[] = [];
-  if (saticiId) ve.push({ sellerId: saticiId });
+export function siparisKosulu(s: SiparisSuzgeci, kapsam: SiparisKapsami): Prisma.OrderWhereInput {
+  const ve: Prisma.OrderWhereInput[] = [kapsamKosulu(kapsam)];
   if (s.durum === "TEKLIF") ve.push({ stage: "TEKLIF" });
   else if (s.durum) ve.push({ stage: "ONAYLI", status: s.durum });
   if (s.baslangic || s.bitis) {
@@ -118,9 +117,9 @@ function satir(o: HamSiparis, onay: SiparisSatiri["onay"], toplam: Decimal = sip
 export async function siparisListesi(
   s: SiparisSuzgeci,
   sayfa: { skip: number; take: number },
-  saticiId?: string
+  kapsam: SiparisKapsami
 ): Promise<{ satirlar: SiparisSatiri[]; toplam: number }> {
-  const where = siparisKosulu(s, saticiId);
+  const where = siparisKosulu(s, kapsam);
   const [kayitlar, toplam] = await Promise.all([
     prisma.order.findMany({ where, orderBy: [{ orderDate: "desc" }, { id: "desc" }], ...sayfa, select: SATIR_SECIMI }),
     prisma.order.count({ where }),
@@ -132,8 +131,8 @@ export async function siparisListesi(
 export type SiparisKpileri = Record<OrderStatus, number> & { toplam: number };
 
 /** Aralıkta açılan onaylı siparişler durumlarına göre; dashboard dağılımının kendisi (A-5-8). */
-export async function siparisKpileri(aralik: Aralik, saticiId?: string): Promise<SiparisKpileri> {
-  const d = await siparisDagilimi(aralik, saticiId);
+export async function siparisKpileri(aralik: Aralik, kapsam: SiparisKapsami): Promise<SiparisKpileri> {
+  const d = await siparisDagilimi(aralik, kapsam);
   return { ...d, toplam: d.BEKLIYOR + d.HAZIRLANIYOR + d.KARGOLANDI + d.TESLIM_EDILDI + d.IPTAL };
 }
 
@@ -166,13 +165,14 @@ export type SiparisPaneli = {
   iadeler: { id: string; documentNo: string; createdAt: Date; adet: number }[];
 };
 
-export async function siparisPaneli(id: string, saticiId?: string): Promise<SiparisPaneli | null> {
-  // Dört okuma yalnız kimliğe bağlıdır; tek turda gider. Sipariş yoksa ya da kapsam dışıysa (başka satıcının)
-  // sonuç atılır — öbür üç okuma hiçbir şey göstermez.
+export async function siparisPaneli(id: string, kapsam: SiparisKapsami): Promise<SiparisPaneli | null> {
+  // Dört okuma tek turda gider; her biri kapsamlıdır — başka satıcının kimliğinde boş döner, sipariş
+  // yoksa sonuç atılır.
+  const siparisi = { id, ...kapsamKosulu(kapsam) };
   const [o, sevkiyatlar, iadeler, onay] = await Promise.all([
-    prisma.order.findFirst({ where: { id, ...(saticiId ? { sellerId: saticiId } : {}) }, select: PANEL_SECIMI }),
+    prisma.order.findFirst({ where: siparisi, select: PANEL_SECIMI }),
     prisma.shipment.findMany({
-      where: { orderId: id },
+      where: { order: siparisi },
       orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       select: {
         id: true,
@@ -185,7 +185,7 @@ export async function siparisPaneli(id: string, saticiId?: string): Promise<Sipa
       },
     }),
     prisma.returnNote.findMany({
-      where: { items: { some: { orderItem: { orderId: id } } } },
+      where: { items: { some: { orderItem: { order: siparisi } } } },
       orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       select: { id: true, documentNo: true, createdAt: true, items: { where: { orderItem: { orderId: id } }, select: { quantity: true } } },
     }),

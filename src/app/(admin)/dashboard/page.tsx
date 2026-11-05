@@ -10,7 +10,7 @@ import { kpiGetir } from "@/lib/kpi/getir";
 import { cubukOranlari, medyanGun } from "@/lib/kpi/olcek";
 import { ciroOzeti, enCokSevkEdilenler, tahsilatToplamlari } from "@/lib/reports-service";
 import { seritKutulari } from "@/lib/sayfa-ozetleri";
-import { dagilimAdresi } from "@/lib/siparis-listesi/suzgec";
+import { dagilimAdresi, TUM_SIPARISLER } from "@/lib/siparis-listesi/suzgec";
 import { requireStaff } from "@/lib/session";
 import { aktifUrunStoklari } from "@/lib/stok";
 import { simdi } from "@/lib/zaman";
@@ -86,7 +86,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     kpiGetir(() => prisma.order.count({ where: { status: "BEKLIYOR" } }), baglam),
     kpiGetir(() => prisma.order.count({ where: { status: "HAZIRLANIYOR" } }), baglam),
     kpiGetir(() => hazirlamaSureleri(r.simdi), baglam),
-    kpiGetir(() => siparisDagilimi(r.simdi), baglam),
+    kpiGetir(() => siparisDagilimi(r.simdi, TUM_SIPARISLER), baglam),
     kpiGetir(() => enCokSevkEdilenler(r.simdi, 5), baglam),
     stoklar.tamam ? kpiGetir(() => istisnalar(rol, stoklar.deger, an), baglam) : stoklar,
     yonetici ? kpiGetir(() => aktiviteAkisi(rol, 15), baglam) : null,

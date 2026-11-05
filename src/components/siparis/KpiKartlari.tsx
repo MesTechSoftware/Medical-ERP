@@ -45,7 +45,7 @@ export function KpiKartlari({
   sonuc: KpiSonucu<SiparisKpileri>;
   aralik: Aralik;
   yol?: SiparisYolu;
-  kartlar?: readonly { durum: OrderStatus; etiket: string }[];
+  kartlar?: typeof DURUM_KARTLARI;
 }) {
   const k = sonuc.tamam ? sonuc.deger : null;
   const hataReferansi = sonuc.tamam ? undefined : sonuc.referans;

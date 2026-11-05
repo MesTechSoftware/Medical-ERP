@@ -10,7 +10,7 @@ import { ilk } from "@/lib/liste/parametreler";
 import { getPagination, pageCount } from "@/lib/pagination";
 import { gunleriAraliga, saticiSecenekleri, siparisKpileri, siparisListesi, siparisPaneli } from "@/lib/siparis-listesi/sorgu";
 import { SUTUNLAR, SUTUN_CEREZI } from "@/lib/siparis-listesi/sutunlar";
-import { kpiAraligi, SATICISIZ, siparisAdresi, suzgecCoz, type Parametreler } from "@/lib/siparis-listesi/suzgec";
+import { kpiAraligi, SATICISIZ, siparisAdresi, suzgecCoz, TUM_SIPARISLER, type Parametreler } from "@/lib/siparis-listesi/suzgec";
 import { simdi, yerelGunMetni } from "@/lib/zaman";
 import { KpiKartlari } from "@/components/siparis/KpiKartlari";
 import { SiparisPaneli } from "@/components/siparis/SiparisPaneli";
@@ -30,9 +30,9 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   const aralik = kpiAraligi(suzgec, yerelGunMetni(simdi()));
 
   const [liste, kpi, panel, saticilar] = await Promise.all([
-    siparisListesi(suzgec, { skip, take }),
-    kpiGetir(() => siparisKpileri(gunleriAraliga(aralik)), { yol: "/orders", kullaniciId: session.user.id }),
-    detay ? siparisPaneli(detay) : null,
+    siparisListesi(suzgec, { skip, take }, TUM_SIPARISLER),
+    kpiGetir(() => siparisKpileri(gunleriAraliga(aralik), TUM_SIPARISLER), { yol: "/orders", kullaniciId: session.user.id }),
+    detay ? siparisPaneli(detay, TUM_SIPARISLER) : null,
     saticiSecenekleri(),
   ]);
 

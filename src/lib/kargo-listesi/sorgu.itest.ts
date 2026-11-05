@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/db";
 import { kalemMiktarlari } from "@/lib/siparis";
 import { siparisListesi } from "@/lib/siparis-listesi/sorgu";
-import { BOS_SUZGEC as BOS_SIPARIS } from "@/lib/siparis-listesi/suzgec";
+import { BOS_SUZGEC as BOS_SIPARIS, TUM_SIPARISLER } from "@/lib/siparis-listesi/suzgec";
 import { firmaSecenekleri, kargoBekleyenler, kargoKpileri, kismiSecimi, sevkiyatListesi } from "@/lib/kargo-listesi/sorgu";
 import { BOS_SUZGEC, type KargoSuzgeci } from "@/lib/kargo-listesi/suzgec";
 import { referansVeri, yeniDoktorVerisi } from "../../../test/integration/referans";
@@ -88,7 +88,7 @@ describe("kargo bekleyenler ve KPI", () => {
     const bugun = await sevkiyatListesi(S({ baslangic: "2026-11-03", bitis: "2026-11-03" }), SAYFA);
     expect(k.bugunKargolanan).toBe(1);
     expect(k.bugunKargolanan).toBe(bugun.toplam);
-    expect(k.teslimBekleyen).toBe((await siparisListesi({ ...BOS_SIPARIS, durum: "KARGOLANDI" }, SAYFA)).toplam);
+    expect(k.teslimBekleyen).toBe((await siparisListesi({ ...BOS_SIPARIS, durum: "KARGOLANDI" }, SAYFA, TUM_SIPARISLER)).toplam);
   });
 
   it("kismiSecimi yalnız kargo bekleyeni döner", async () => {

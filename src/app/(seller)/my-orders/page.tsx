@@ -22,12 +22,13 @@ const YOL = "/my-orders";
 
 /**
  * Siparişlerim (spec Ü-31): yönetici Siparişler ekranının (Ü-23) satıcı kapsamlı hâli — KPI, durum sekmeleri,
- * Filtrele (tarih, metin), sütun seçici, sayfalı liste, yan panel. Kapsam sorgudadır (`saticiId`, X-13):
+ * Filtrele (tarih, metin), sütun seçici, sayfalı liste, yan panel. Kapsam sorgudadır (`kapsam`, X-13):
  * liste, kartlar ve panel yalnız bu satıcının siparişlerini okur; adresteki `satici` yok sayılır.
  */
 export default async function MyOrdersPage({ searchParams }: { searchParams: Promise<Parametreler> }) {
   const session = await requireSeller();
   const saticiId = session.user.id;
+  const kapsam = { tur: "satici", saticiId } as const;
   const params = await searchParams;
   const per = ilk(params, "per") ?? undefined;
   const { page, perPage, skip, take } = getPagination({ page: ilk(params, "page") ?? undefined, per });
@@ -42,9 +43,9 @@ export default async function MyOrdersPage({ searchParams }: { searchParams: Pro
 
   // Üç okuma birbirinden bağımsızdır; tek turda gider.
   const [liste, kpi, panel] = await Promise.all([
-    siparisListesi(suzgec, { skip, take }, saticiId),
-    kpiGetir(() => siparisKpileri(gunleriAraliga(aralik), saticiId), { yol: YOL, kullaniciId: saticiId }),
-    detay ? siparisPaneli(detay, saticiId) : null,
+    siparisListesi(suzgec, { skip, take }, kapsam),
+    kpiGetir(() => siparisKpileri(gunleriAraliga(aralik), kapsam), { yol: YOL, kullaniciId: saticiId }),
+    detay ? siparisPaneli(detay, kapsam) : null,
   ]);
 
   // Sayfa dışı adres son sayfaya gider; boş durum "hiç kayıt yok" demesin.

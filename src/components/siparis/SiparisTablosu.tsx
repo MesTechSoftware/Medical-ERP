@@ -56,7 +56,8 @@ export function SiparisTablosu({
   sutunlar?: readonly SutunTanimi<SiparisSutunu>[];
 }) {
   const gorunur = sutunlar.filter((s) => !gizli.has(s.anahtar));
-  const acik = (k: SiparisSutunu) => gorunur.some((s) => s.anahtar === k);
+  const acikKume = new Set(gorunur.map((s) => s.anahtar));
+  const acik = (k: SiparisSutunu) => acikKume.has(k);
   const tur = bosDurum(suzgec);
 
   return (

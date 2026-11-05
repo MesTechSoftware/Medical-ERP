@@ -36,6 +36,7 @@ test("Filtrele'de satıcı alanı yok; adresteki satıcı süzgeci kapsamı değ
     `SELECT id, "sellerId" FROM "Order" WHERE "sellerId" IS NOT NULL AND "sellerId" <> $1 LIMIT 1`,
     [id]
   );
+  expect(baska, "demo verisinde başka satıcının siparişi olmalı").toBeDefined();
   await page.goto("/my-orders");
   await page.getByText("Filtrele", { exact: true }).click();
   const form = page.getByRole("form", { name: "Sipariş süzgeci" });

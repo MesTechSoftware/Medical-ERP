@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { hazirlamaSureleri, siparisDagilimi } from "@/lib/dashboard";
+import { TUM_SIPARISLER } from "@/lib/siparis-listesi/suzgec";
 import { prisma } from "@/lib/db";
 import { yeniDoktorVerisi } from "../../test/integration/referans";
 
@@ -44,7 +45,7 @@ describe("siparisDagilimi — sipariş durum dağılımı (brief §3.3)", () => 
     await siparis({ orderDate: ekim(8), status: "TESLIM_EDILDI" });
     await siparis({ orderDate: ekim(9), stage: "TEKLIF" });
     await siparis({ orderDate: new Date("2026-09-20T00:00:00Z") });
-    expect(await siparisDagilimi(ARALIK)).toEqual({ BEKLIYOR: 2, HAZIRLANIYOR: 0, KARGOLANDI: 0, TESLIM_EDILDI: 1, IPTAL: 1 });
+    expect(await siparisDagilimi(ARALIK, TUM_SIPARISLER)).toEqual({ BEKLIYOR: 2, HAZIRLANIYOR: 0, KARGOLANDI: 0, TESLIM_EDILDI: 1, IPTAL: 1 });
   });
 });
 

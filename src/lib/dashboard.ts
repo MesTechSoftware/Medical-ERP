@@ -1,18 +1,19 @@
 import type { OrderStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import type { Aralik } from "@/lib/donem";
+import { kapsamKosulu, type SiparisKapsami } from "@/lib/siparis-listesi/suzgec";
 
 /** Teklif (A-5) hiçbir sayıma girmez; durum dağılımı iptali de gösterir, o yüzden `sayilanBelgeler.siparis` değil. */
 const ONAYLI = { stage: "ONAYLI" } as const;
 
 /**
  * Sipariş durum dağılımı (brief §3.3): aralıkta açılan onaylı siparişlerin bugünkü durumları.
- * Kaydı olmayan durum 0'dır. `saticiId` verilirse yalnız o satıcının siparişleri (Siparişlerim, Ü-31).
+ * Kaydı olmayan durum 0'dır. Satıcı kapsamında yalnız o satıcının siparişleri (Siparişlerim, Ü-31).
  */
-export async function siparisDagilimi(aralik: Aralik, saticiId?: string): Promise<Record<OrderStatus, number>> {
+export async function siparisDagilimi(aralik: Aralik, kapsam: SiparisKapsami): Promise<Record<OrderStatus, number>> {
   const gruplar = await prisma.order.groupBy({
     by: ["status"],
-    where: { ...ONAYLI, orderDate: { gte: aralik.baslangic, lt: aralik.bitis }, ...(saticiId ? { sellerId: saticiId } : {}) },
+    where: { ...ONAYLI, orderDate: { gte: aralik.baslangic, lt: aralik.bitis }, ...kapsamKosulu(kapsam) },
     _count: { _all: true },
   });
   const sayi = (s: OrderStatus) => gruplar.find((g) => g.status === s)?._count._all ?? 0;

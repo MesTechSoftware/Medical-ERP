@@ -45,6 +45,18 @@ export type { Parametreler };
  */
 export type SiparisYolu = "/orders" | "/my-orders";
 
+/**
+ * Sorguların kapsamı (X-13): bütün siparişler (yönetici ekranları) ya da bir satıcının kendi siparişleri
+ * (Siparişlerim). Zorunludur ve açıkça seçilir — unutulan ya da boş bir kimlik "herkes"e düşmesin.
+ */
+export type SiparisKapsami = { tur: "tum" } | { tur: "satici"; saticiId: string };
+export const TUM_SIPARISLER: SiparisKapsami = { tur: "tum" };
+
+/** Kapsamın sipariş koşulu; satıcı kapsamında `sellerId` eşitliği. */
+export function kapsamKosulu(k: SiparisKapsami): { sellerId?: string } {
+  return k.tur === "satici" ? { sellerId: k.saticiId } : {};
+}
+
 export function suzgecCoz(p: Parametreler): { suzgec: SiparisSuzgeci; detay: string | null } {
   let baslangic = gun(ilk(p, "baslangic"));
   let bitis = gun(ilk(p, "bitis"));

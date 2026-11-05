@@ -5,7 +5,7 @@ import { siparisDagilimi } from "@/lib/dashboard";
 import { prisma } from "@/lib/db";
 import { siparisToplami } from "@/lib/siparis";
 import { gunleriAraliga, siparisKpileri, siparisListesi, siparisPaneli } from "@/lib/siparis-listesi/sorgu";
-import { BOS_SUZGEC, type SiparisSuzgeci } from "@/lib/siparis-listesi/suzgec";
+import { BOS_SUZGEC, TUM_SIPARISLER, type SiparisKapsami, type SiparisSuzgeci } from "@/lib/siparis-listesi/suzgec";
 import { referansVeri, yeniDoktorVerisi } from "../../../test/integration/referans";
 
 // Siparişler ekranı sorguları — KABUL_KRITERLERI A-5-8, A-3-2 (spec Ü-23 §4); Siparişlerim kapsamı X-13-3 (Ü-31).
@@ -62,10 +62,10 @@ describe("durum kartları (A-5-8)", () => {
     await siparis({ orderDate: new Date(Date.UTC(2026, 9, 10)) });
 
     const aralik = gunleriAraliga(KASIM);
-    const k = await siparisKpileri(aralik);
-    const dagilim = await siparisDagilimi(aralik);
+    const k = await siparisKpileri(aralik, TUM_SIPARISLER);
+    const dagilim = await siparisDagilimi(aralik, TUM_SIPARISLER);
     for (const d of DURUMLAR) {
-      expect(k[d]).toBe((await siparisListesi(S({ durum: d, ...KASIM }), SAYFA)).toplam);
+      expect(k[d]).toBe((await siparisListesi(S({ durum: d, ...KASIM }), SAYFA, TUM_SIPARISLER)).toplam);
       expect(k[d]).toBe(dagilim[d]);
     }
     expect(k.BEKLIYOR).toBe(2);
@@ -75,7 +75,7 @@ describe("durum kartları (A-5-8)", () => {
   it("teklif (durumu BEKLIYOR) Bekliyor listesinde yok; Teklif sekmesinde ve Tümü'de var", async () => {
     await siparis({ orderDate: kasim(3), documentNo: "SIP-ONAYLI" });
     await siparis({ orderDate: kasim(3), stage: "TEKLIF", documentNo: "SIP-TEKLIF" });
-    const belgeler = async (s: SiparisSuzgeci) => (await siparisListesi(s, SAYFA)).satirlar.map((r) => r.documentNo).sort();
+    const belgeler = async (s: SiparisSuzgeci) => (await siparisListesi(s, SAYFA, TUM_SIPARISLER)).satirlar.map((r) => r.documentNo).sort();
     expect(await belgeler(S({ durum: "BEKLIYOR" }))).toEqual(["SIP-ONAYLI"]);
     expect(await belgeler(S({ durum: "TEKLIF" }))).toEqual(["SIP-TEKLIF"]);
     expect(await belgeler(BOS_SUZGEC)).toEqual(["SIP-ONAYLI", "SIP-TEKLIF"]);
@@ -84,16 +84,16 @@ describe("durum kartları (A-5-8)", () => {
   it("gün sınırı İstanbul günüdür: 1 Kasım 00:00 (İstanbul) Kasım'da, bir dakika öncesi Ekim'de", async () => {
     await siparis({ orderDate: new Date("2026-10-31T21:00:00Z"), documentNo: "SIP-KASIM" });
     await siparis({ orderDate: new Date("2026-10-31T20:59:00Z"), documentNo: "SIP-EKIM" });
-    expect((await siparisKpileri(gunleriAraliga(KASIM))).toplam).toBe(1);
-    expect((await siparisKpileri(gunleriAraliga({ baslangic: "2026-10-01", bitis: "2026-10-31" }))).toplam).toBe(1);
-    const kasimListe = await siparisListesi(S({ ...KASIM }), SAYFA);
+    expect((await siparisKpileri(gunleriAraliga(KASIM), TUM_SIPARISLER)).toplam).toBe(1);
+    expect((await siparisKpileri(gunleriAraliga({ baslangic: "2026-10-01", bitis: "2026-10-31" }), TUM_SIPARISLER)).toplam).toBe(1);
+    const kasimListe = await siparisListesi(S({ ...KASIM }), SAYFA, TUM_SIPARISLER);
     expect(kasimListe.satirlar.map((r) => r.documentNo)).toEqual(["SIP-KASIM"]);
   });
 
   it("açık uçlu aralık: yalnız başlangıç", async () => {
     await siparis({ orderDate: kasim(3) });
     await siparis({ orderDate: new Date(Date.UTC(2026, 9, 3)) });
-    expect((await siparisKpileri(gunleriAraliga({ baslangic: "2026-11-01", bitis: null }))).toplam).toBe(1);
+    expect((await siparisKpileri(gunleriAraliga({ baslangic: "2026-11-01", bitis: null }), TUM_SIPARISLER)).toplam).toBe(1);
   });
 });
 
@@ -102,20 +102,20 @@ describe("liste süzgeçleri", () => {
     const ayse = await satici("Ayşe");
     await siparis({ orderDate: kasim(3), sellerId: ayse.id, documentNo: "SIP-AYSE", cari: { fullName: "Dr. Kemal Ak" } });
     await siparis({ orderDate: kasim(3), documentNo: "SIP-BAYI", cari: { clinic: "Merkez Hastanesi" } });
-    const belgeler = async (s: SiparisSuzgeci) => (await siparisListesi(s, SAYFA)).satirlar.map((r) => r.documentNo).sort();
+    const belgeler = async (s: SiparisSuzgeci) => (await siparisListesi(s, SAYFA, TUM_SIPARISLER)).satirlar.map((r) => r.documentNo).sort();
     expect(await belgeler(S({ satici: ayse.id }))).toEqual(["SIP-AYSE"]);
     expect(await belgeler(S({ satici: "yok" }))).toEqual(["SIP-BAYI"]);
     expect(await belgeler(S({ q: "sip-ayse" }))).toEqual(["SIP-AYSE"]);
     expect(await belgeler(S({ q: "kemal" }))).toEqual(["SIP-AYSE"]);
     expect(await belgeler(S({ q: "merkez" }))).toEqual(["SIP-BAYI"]);
-    const satir = (await siparisListesi(S({ satici: ayse.id }), SAYFA)).satirlar[0];
+    const satir = (await siparisListesi(S({ satici: ayse.id }), SAYFA, TUM_SIPARISLER)).satirlar[0];
     expect(satir.satici).toBe("Ayşe");
   });
 
   it("metin araması Türkçe I/ı/İ'yi bulur: büyük harfli klinik, baş harfi I olan ad", async () => {
     await siparis({ orderDate: kasim(3), documentNo: "SIP-KILIC", cari: { clinic: "KILIÇ TIP MERKEZİ" } });
     await siparis({ orderDate: kasim(3), documentNo: "SIP-ISIK", cari: { fullName: "Dr. Işık Ilgaz" } });
-    const belgeler = async (q: string) => (await siparisListesi(S({ q }), SAYFA)).satirlar.map((r) => r.documentNo).sort();
+    const belgeler = async (q: string) => (await siparisListesi(S({ q }), SAYFA, TUM_SIPARISLER)).satirlar.map((r) => r.documentNo).sort();
     expect(await belgeler("kılıç")).toEqual(["SIP-KILIC"]);
     expect(await belgeler("merkezi")).toEqual(["SIP-KILIC"]);
     expect(await belgeler("ışık")).toEqual(["SIP-ISIK"]);
@@ -126,9 +126,9 @@ describe("liste süzgeçleri", () => {
   it("aynı anda açılan siparişlerde sayfalama kararlıdır (orderDate desc, id desc)", async () => {
     const an = kasim(3);
     for (let i = 0; i < 4; i++) await siparis({ orderDate: an });
-    const tum = (await siparisListesi(BOS_SUZGEC, SAYFA)).satirlar.map((r) => r.id);
-    const s1 = (await siparisListesi(BOS_SUZGEC, { skip: 0, take: 2 })).satirlar.map((r) => r.id);
-    const s2 = (await siparisListesi(BOS_SUZGEC, { skip: 2, take: 2 })).satirlar.map((r) => r.id);
+    const tum = (await siparisListesi(BOS_SUZGEC, SAYFA, TUM_SIPARISLER)).satirlar.map((r) => r.id);
+    const s1 = (await siparisListesi(BOS_SUZGEC, { skip: 0, take: 2 }, TUM_SIPARISLER)).satirlar.map((r) => r.id);
+    const s2 = (await siparisListesi(BOS_SUZGEC, { skip: 2, take: 2 }, TUM_SIPARISLER)).satirlar.map((r) => r.id);
     expect([...s1, ...s2]).toEqual(tum);
     expect(tum).toEqual([...tum].sort().reverse());
   });
@@ -173,12 +173,12 @@ describe("satır tutarı, sevk ve yan panel (A-3-2)", () => {
     const satirlar = await prisma.orderItem.findMany({ where: { orderId: s.id } });
     const beklenen = siparisToplami(satirlar);
 
-    const satir = (await siparisListesi(BOS_SUZGEC, SAYFA)).satirlar[0];
+    const satir = (await siparisListesi(BOS_SUZGEC, SAYFA, TUM_SIPARISLER)).satirlar[0];
     expect(satir.sevk).toBe(3);
     expect(satir.adet).toBe(6);
     expect(satir.toplam.toFixed(2)).toBe(beklenen.toplam.toFixed(2));
 
-    const panel = (await siparisPaneli(s.id))!;
+    const panel = (await siparisPaneli(s.id, TUM_SIPARISLER))!;
     const stent = panel.kalemler.find((k) => k.kod === "STN-1")!;
     expect(stent).toMatchObject({ adet: 5, sevk: 3, kalan: 2, iade: 1, bedelsiz: false });
     expect(panel.kalemler.find((k) => k.kod === "KLV-1")).toMatchObject({ bedelsiz: true, sevk: 0, kalan: 1 });
@@ -200,7 +200,7 @@ describe("satır tutarı, sevk ve yan panel (A-3-2)", () => {
   });
 
   it("bulunmayan kimlikte panel null", async () => {
-    expect(await siparisPaneli("yok-boyle-bir-siparis")).toBeNull();
+    expect(await siparisPaneli("yok-boyle-bir-siparis", TUM_SIPARISLER)).toBeNull();
   });
 });
 
@@ -208,27 +208,28 @@ describe("Siparişlerim kapsamı (Ü-31, X-13-3)", () => {
   it("liste, KPI ve panel yalnız satıcının kendi siparişleri; adresin satıcı süzgeci kapsamı genişletemez", async () => {
     const ayse = await satici("Ayşe");
     const can = await satici("Can");
+    const AYSE: SiparisKapsami = { tur: "satici", saticiId: ayse.id };
     const kendi = await siparis({ orderDate: kasim(3), sellerId: ayse.id, documentNo: "SIP-AYSE-1" });
     await siparis({ orderDate: kasim(3), sellerId: ayse.id, status: "KARGOLANDI", documentNo: "SIP-AYSE-2" });
     const baska = await siparis({ orderDate: kasim(3), sellerId: can.id, documentNo: "SIP-CAN-1" });
     await siparis({ orderDate: kasim(3), sellerId: null, documentNo: "SIP-BAYI-1" });
 
     const belgeler = async (s: SiparisSuzgeci) =>
-      (await siparisListesi(s, SAYFA, ayse.id)).satirlar.map((r) => r.documentNo).sort();
+      (await siparisListesi(s, SAYFA, AYSE)).satirlar.map((r) => r.documentNo).sort();
     expect(await belgeler(BOS_SUZGEC)).toEqual(["SIP-AYSE-1", "SIP-AYSE-2"]);
     expect(await belgeler(S({ satici: can.id }))).toEqual([]);
     expect(await belgeler(S({ q: "SIP-CAN" }))).toEqual([]);
 
     const aralik = gunleriAraliga(KASIM);
-    const k = await siparisKpileri(aralik, ayse.id);
+    const k = await siparisKpileri(aralik, AYSE);
     expect(k).toMatchObject({ toplam: 2, BEKLIYOR: 1, KARGOLANDI: 1 });
     // Kart = açtığı süzgecin satır sayısı, aynı kapsamla (A-5-8).
-    for (const d of DURUMLAR) expect(k[d]).toBe((await siparisListesi(S({ durum: d, ...KASIM }), SAYFA, ayse.id)).toplam);
+    for (const d of DURUMLAR) expect(k[d]).toBe((await siparisListesi(S({ durum: d, ...KASIM }), SAYFA, AYSE)).toplam);
     // Kapsamsız çağrı (yönetici) dördünü de sayar.
-    expect((await siparisKpileri(aralik)).toplam).toBe(4);
+    expect((await siparisKpileri(aralik, TUM_SIPARISLER)).toplam).toBe(4);
 
-    expect((await siparisPaneli(kendi.id, ayse.id))?.siparis.documentNo).toBe("SIP-AYSE-1");
-    expect(await siparisPaneli(baska.id, ayse.id)).toBeNull();
-    expect((await siparisPaneli(baska.id))?.siparis.documentNo).toBe("SIP-CAN-1");
+    expect((await siparisPaneli(kendi.id, AYSE))?.siparis.documentNo).toBe("SIP-AYSE-1");
+    expect(await siparisPaneli(baska.id, AYSE)).toBeNull();
+    expect((await siparisPaneli(baska.id, TUM_SIPARISLER))?.siparis.documentNo).toBe("SIP-CAN-1");
   });
 });
