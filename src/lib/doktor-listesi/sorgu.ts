@@ -65,12 +65,14 @@ export type DoktorSatiri = Prisma.DoctorGetPayload<{ include: typeof LISTE_EKI }
 /**
  * `kapsam` zorunludur: `kapsamliDoktorlariGetir(kullanici)`'nın çıktısı (D-2 §(3), X-13-1) — yöneticide `{}`,
  * satıcıda kendi `DOKTOR` carileri. Unutulan kapsam "herkes"e düşmesin diye varsayılanı yoktur.
+ * `eksikFaturaOku: false` (Doktorlarım — işaret çizilmez) eksik fatura okumasını atlar; alan `false` gelir.
  */
 export async function doktorListesi(
   s: DoktorSuzgeci,
   sayfa: { skip: number; take: number },
   kapsam: Prisma.DoctorWhereInput,
-  an: Date = simdi()
+  an: Date = simdi(),
+  eksikFaturaOku = true
 ): Promise<{ satirlar: DoktorSatiri[]; toplam: number }> {
   const where = { AND: [kapsam, doktorWhere(s, an)] };
   const [doktorlar, toplam] = await Promise.all([
@@ -81,7 +83,7 @@ export async function doktorListesi(
   const [sonlar, riskler, eksikler] = await Promise.all([
     prisma.order.groupBy({ by: ["doctorId"], where: { ...siparis, doctorId: { in: idler } }, _max: { orderDate: true } }),
     hesaplaDoktorRiskleri(idler),
-    prisma.doctor.findMany({ where: { AND: [{ id: { in: idler } }, EKSIK_FATURA_BILGISI] }, select: { id: true } }),
+    eksikFaturaOku ? prisma.doctor.findMany({ where: { AND: [{ id: { in: idler } }, EKSIK_FATURA_BILGISI] }, select: { id: true } }) : [],
   ]);
   const son = new Map(sonlar.map((o) => [o.doctorId, o._max.orderDate]));
   const eksik = new Set(eksikler.map((d) => d.id));

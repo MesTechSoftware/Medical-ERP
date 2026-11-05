@@ -46,7 +46,7 @@ export default async function MyDoctorsPage({ searchParams }: { searchParams: Pr
 
   // Dört okuma birbirinden bağımsızdır; tek turda gider.
   const [liste, kpi, bolgeler, panel] = await Promise.all([
-    doktorListesi(suzgec, { skip, take }, kapsam, an),
+    doktorListesi(suzgec, { skip, take }, kapsam, an, false),
     kpiGetir(() => saticiDoktorKpileri(kapsam, an), { yol: YOL, kullaniciId: session.user.id }),
     doktorBolgeleri(kapsam),
     detay ? saticiDoktorPaneli(detay, kapsam, session.user.id) : null,
