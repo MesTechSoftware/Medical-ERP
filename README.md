@@ -50,7 +50,7 @@ npm run dev                 # http://localhost:3000
 
 Tek sunucuda uygulama + PostgreSQL + HTTPS (Caddy, Let's Encrypt): `docker-compose.demo.yml`.
 **Canlı kurulum değildir** — veri demo verisidir; canlıya alma YOL_HARITASI §5'in işidir.
-Sunucuda Docker (compose eklentisiyle) olmalı, 80 ve 443 açık olmalı, alan adının A kaydı sunucuyu
+Sunucuda Docker (compose eklentisiyle) ve en az 2 GB RAM olmalı (imaj sunucuda derlenir), 80 ve 443 açık olmalı, alan adının A kaydı sunucuyu
 göstermeli (alan adı yoksa `<IP>.sslip.io`).
 
 ```bash
