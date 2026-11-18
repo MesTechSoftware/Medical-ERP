@@ -3,12 +3,11 @@
 # Kullanım: README "Demo ortamı" bölümü.
 name: medikal-demo
 
+# İmaj bir kez `app` servisinde derlenir; `migrate` aynı imajı kullanır.
 x-app: &app
-  build: .
   image: medikal-demo-app
   environment:
     DATABASE_URL: postgresql://medikal:${POSTGRES_PASSWORD}@postgres:5432/medikal_demo?schema=public
-    TZ: UTC
 
 services:
   postgres:
@@ -39,6 +38,7 @@ services:
 
   app:
     <<: *app
+    build: .
     restart: unless-stopped
     depends_on:
       migrate:

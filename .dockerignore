@@ -13,3 +13,7 @@ CLAUDE-SECURITY-*
 .superpowers
 .DS_Store
 tsconfig.tsbuildinfo
+playwright
+MD_files
+PRD.md
+screenshots.db*

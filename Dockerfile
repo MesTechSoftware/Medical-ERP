@@ -22,4 +22,5 @@ RUN npx prisma generate \
     && DATABASE_URL="postgresql://derleme:derleme@localhost:5432/derleme" npm run build
 
 EXPOSE 3000
-CMD ["npm", "start"]
+# npm PID 1 olursa SIGTERM'i iletmez; Next doğrudan çalışır.
+CMD ["node_modules/.bin/next", "start"]

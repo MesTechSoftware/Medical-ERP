@@ -1,6 +1,5 @@
 # Demo ortamı ters vekili. Alan adı için Let's Encrypt sertifikasını kendiliğinden alır;
 # oturum çerezi canlı derlemede `secure` olduğu için HTTPS zorunludur (src/lib/session.ts).
 {$DOMAIN} {
-	encode zstd gzip
 	reverse_proxy app:3000
 }
