@@ -1,0 +1,15 @@
+.git
+node_modules
+.next
+.env*
+!.env.example
+*.db
+backups
+playwright-report
+test-results
+sunum-gorseller
+CLAUDE-SECURITY-*
+.claude
+.superpowers
+.DS_Store
+tsconfig.tsbuildinfo

@@ -46,6 +46,28 @@ npm run dev                 # http://localhost:3000
 > `DATABASE_URL` yoksa uygulama **başlangıçta hata fırlatır** (`src/lib/db.ts` fail-fast) — sessizce
 > yanlış veritabanına bağlanmaz. Oturum veritabanındadır; imza anahtarı gerekmez (`docs/adr/ADR-003`).
 
+## Demo Ortamı (sunucu)
+
+Tek sunucuda uygulama + PostgreSQL + HTTPS (Caddy, Let's Encrypt): `docker-compose.demo.yml`.
+**Canlı kurulum değildir** — veri demo verisidir; canlıya alma YOL_HARITASI §5'in işidir.
+Sunucuda Docker (compose eklentisiyle) olmalı, 80 ve 443 açık olmalı, alan adının A kaydı sunucuyu
+göstermeli (alan adı yoksa `<IP>.sslip.io`).
+
+```bash
+git clone <repo> && cd medikal_satis_operasyon
+cp .env.demo.example .env          # DOMAIN ve POSTGRES_PASSWORD (openssl rand -hex 24)
+docker compose -f docker-compose.demo.yml up -d --build    # migration'lar kendiliğinden uygulanır
+
+# Demo verisi — bütün tabloları boşaltıp yeniden basar; yalnız ilk kurulumda ya da sıfırlarken:
+docker compose -f docker-compose.demo.yml run --rm migrate npm run db:seed:demo
+# İsteğe bağlı: 6 aylık geçmiş (raporlar ve grafikler dolu görünür)
+docker compose -f docker-compose.demo.yml run --rm -e DEMO_GECMIS=evet -e DEMO_GECMIS_HOST=postgres \
+  migrate npm run db:seed:gecmis
+```
+
+Güncelleme: `git pull && docker compose -f docker-compose.demo.yml up -d --build`. Hesaplar aşağıdaki
+demo hesaplarıdır; adres herkese açıksa parolaları bilinen bir yönetici hesabı olduğunu unutma.
+
 ## Demo Hesapları
 
 Yalnızca geliştirme içindir; üretime taşınmamalıdır.

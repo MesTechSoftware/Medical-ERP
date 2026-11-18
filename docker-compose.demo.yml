@@ -1,0 +1,65 @@
+# Demo ortamı — tek sunucuda uygulama + PostgreSQL + HTTPS (Caddy).
+# Canlı kurulum DEĞİLDİR (KARARLAR K-9, YOL_HARITASI §5): içindeki veri demo verisidir.
+# Kullanım: README "Demo ortamı" bölümü.
+name: medikal-demo
+
+x-app: &app
+  build: .
+  image: medikal-demo-app
+  environment:
+    DATABASE_URL: postgresql://medikal:${POSTGRES_PASSWORD}@postgres:5432/medikal_demo?schema=public
+    TZ: UTC
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: medikal
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD .env'de tanımlı olmalı}
+      POSTGRES_DB: medikal_demo
+      TZ: UTC
+      PGTZ: UTC
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U medikal -d medikal_demo"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Her `up`'ta bekleyen migration'ları uygular ve çıkar; uygulama bunun başarısını bekler.
+  migrate:
+    <<: *app
+    command: ["npx", "prisma", "migrate", "deploy"]
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  app:
+    <<: *app
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?DOMAIN .env'de tanımlı olmalı}
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
