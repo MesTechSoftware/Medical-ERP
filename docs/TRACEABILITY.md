@@ -6,7 +6,7 @@
 > Kod yeri, kriter metninde anılan fonksiyonun tanımlandığı dosyadır. Eski PRD matrisi (8 Ağustos 2026)
 > `docs/arsiv/TRACEABILITY_PRD_V2.md`'dedir.
 
-**Özet:** 160 KANITLI · 0 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.0** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
+**Özet:** 161 KANITLI · 0 TESTSIZ · 0 YOK · 13 KAPSAM DIŞI — **TESTSIZ oranı %0.0** (Faz 1 çıkış sınırı %15; YOL_HARITASI §3).
 
 | Kriter | Karar | Durum | Kod yeri | Test | Kriter metni |
 |---|---|---|---|---|---|
@@ -42,6 +42,7 @@
 | A-5-6 | A-5 | KANITLI | — | `src/lib/reports-service.itest.ts` | Ciro raporları sevk satırlarını yalnız bu filtreyle okur (K-4 §(2), X-1 §(5)); `TEKLIF`, iptal ve bedelsiz satır ciroya yansımaz. |
 | A-5-7 | A-5 | KANITLI | — | `src/lib/doktor-listesi/sorgu.itest.ts` | Cari listesinde "Son sipariş" sütunu ve son sipariş süzgeçleri yalnız sayılan siparişi okur (`ONAYLI`, iptal edilmemiş); `TEKLIF` ve `IPT… |
 | A-5-8 | A-5 | KANITLI | — | `src/lib/siparis-listesi/sorgu.itest.ts`<br>`src/lib/siparis-listesi/suzgec.test.ts` | Siparişler ekranının durum kartları aralıkta (`orderDate`, İstanbul günü, iki uç dahil; varsayılan bu ay) açılan **onaylı** siparişleri b… |
+| A-5-9 | A-5 | KANITLI | — | `src/lib/doktor-listesi/sorgu.itest.ts` | Doktorlar ve Doktorlarım listesindeki "Sipariş" sütunu carinin sayılan siparişlerini sayar (`sayilanBelgeler.siparis`: `TEKLIF` ve iptal… |
 | A-6-1 | A-6 | KANITLI | — | `src/lib/ice-aktarim/acilis.itest.ts`<br>`e2e/admin/ice-aktarim.spec.ts` | Açılış bakiyesi carinin **tek** `ACILIS` hareketidir; yalnız içe aktarımla yazılır, `ACL` numarası alır, iki yön de olabilir, vade yalnız… |
 | A-7-1 | A-7 | KANITLI | — | `src/lib/sevkiyat.itest.ts` | Borç doğuran cari harekette vade tarihi vardır ve sevk gününden işler: vade = sevk günü (İstanbul takvim günü) + siparişin `odeme_vadesi_… |
 | A-7-2 | A-7 | KANITLI | — | `src/app/(admin)/doctors/cari-hareket.itest.ts`<br>`e2e/admin/vade-farki.spec.ts` | Vade farkı yalnız elle ve yalnız `YONETICI` tarafından girilir (cari detayı): tutar (> 0, KDV kırılımsız), vade ve gerekçe zorunlu (alanı… |

@@ -57,13 +57,16 @@ yönlendirmede panel sorgusu (paralel okumanın nadir yoldaki bedeli) · Raporla
 
 - Doktorlar ve Doktorlarım "Sipariş" sütunu **sayılan siparişleri** sayar (teklif ve iptal hariç, A-5) — kullanıcı
   kararı 05.11.2026.
-- Sekme, kart ve etiket bağlantıları geçerli `per`'i taşır.
+- Sekme ve süzgeç etiketi bağlantıları adresteki geçerli `per`'i taşır (ortak bileşenler `perEkle` ile; KPI kartı
+  bağlantıları süzgeci baştan kurduğu için taşımaz); Raporlar'da dönem değişince `per` korunur.
 - Sipariş durum sekmesi ile rozet aynı metni kullanır; dashboard şeridi teklifi saymaz ve onay sayımını `onayKosulu`
   ile yapar; KPI notu "Bu ay" aralığını adıyla yazar.
-- Tahsilat: iptal gerekçesi uzunluk sınırı; yalnız iptal edilmiş tahsilat varken doğru boş durum metni; iptal onay
-  metni gerçek etkiyi yazar.
+- Gerekçe uzunluğu: bütün gerekçe isteyen akışlarda tek sınır (`GEREKCE_AZAMI` = 500, `gerekceHatasi` →
+  `GEREKCE_UZUN`; formlarda `maxLength`) — yalnız tahsilat iptaline koymak akışlar arasında tutarsızlık olurdu.
+- Tahsilat: yalnız iptal edilmiş tahsilat varken boş durum bunu söyler ve iptal edilenlere götürür; iptal onay metni
+  gerçek etkiyi (ters kayıt) yazar.
 - Kargo: kısmi sevk sonrası sevkiyat listesinin süzgeçleri korunur; toplu kargo üst sonucu satır sonuçlarından
-  türer; bilinmeyen/pasif firma toplu işlemde bir kez reddedilir.
+  türer (`topluUstSonuc`); bilinmeyen/pasif firma sevkiyatta (`KARGO_FIRMASI_GECERSIZ`) ve toplu işlemde bir kez reddedilir.
 - Denetim boş satırı görünür sütun sayısına yayılır; Dışa Aktarım kısayolları günü istek anında hesaplar; Hesabım
   profil iskeleti tanım listesi biçimindedir.
 

@@ -119,7 +119,7 @@ test("adres kenarları: sayfa dışı son sayfaya, eski ?status= okunur, olmayan
   await expect(satirlar(page).first()).toBeVisible();
 
   await page.goto("/orders?status=IPTAL");
-  await expect(sekmeler(page).getByRole("link", { name: "İptal", exact: true })).toHaveAttribute("aria-current", "page");
+  await expect(sekmeler(page).getByRole("link", { name: "İptal Edildi", exact: true })).toHaveAttribute("aria-current", "page");
   await expect(etkinler(page).getByText("Durum: İptal")).toBeVisible();
 
   await page.goto("/orders?satici=cm0000000000000000000000x&durum=BEKLIYOR");
@@ -143,7 +143,7 @@ test("dashboard 'Sipariş durumları' dilimi aynı sayıyı açar (A-5-8)", asyn
   expect(await sayi(kpi(page).getByRole("link", { name: /^Bekliyor/ }))).toBe(deger);
 });
 
-const KARTLAR = ["Toplam sipariş", "Bekliyor", "Hazırlanıyor", "Kargolandı", "Teslim Edildi", "İptal"];
+const KARTLAR = ["Toplam sipariş", "Bekliyor", "Hazırlanıyor", "Kargolandı", "Teslim Edildi", "İptal Edildi"];
 const kartKutulari = (page: Page) =>
   Promise.all(KARTLAR.map(async (ad) => (await page.getByRole("group", { name: ad, exact: true }).boundingBox())!));
 

@@ -122,6 +122,19 @@ describe("son sipariş — sayılan sipariş (A-5-7)", () => {
   });
 });
 
+describe("Sipariş sütunu — sayılan siparişler (A-5-9)", () => {
+  it("teklif ve iptal sayılmaz; liste son siparişle aynı kümeyi sayar", async () => {
+    const d = await doktor("Dr. Sayım");
+    await siparis(d.id, "2026-10-01T09:00:00Z");
+    await siparis(d.id, "2026-10-02T09:00:00Z");
+    await siparis(d.id, "2026-10-03T09:00:00Z", "TEKLIF");
+    await siparis(d.id, "2026-10-04T09:00:00Z", "ONAYLI", "IPTAL");
+    const satir = (await doktorListesi(BOS_SUZGEC, SAYFA, {}, AN)).satirlar.find((r) => r.id === d.id)!;
+    expect(satir._count.orders).toBe(2);
+    expect(satir.sonSiparis).toEqual(new Date("2026-10-02T09:00:00Z"));
+  });
+});
+
 describe("birleşik süzgeç (X-8-4)", () => {
   it("bütün alanlar birlikte daraltır", async () => {
     const satici = await prisma.user.create({ data: { name: "Ayşe", email: "a@medikal.local", passwordHash: "x", role: "SATICI" } });

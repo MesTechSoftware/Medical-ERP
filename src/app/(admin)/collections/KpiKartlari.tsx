@@ -2,18 +2,14 @@ import Link from "next/link";
 import { KpiCard } from "@/components/kpi/KpiCard";
 import { KpiSatiri } from "@/components/kpi/KpiSatiri";
 import type { KpiSonucu } from "@/lib/kpi/getir";
-import { aralikEtiketi } from "@/lib/liste/parametreler";
+import { kpiDonemNotu, type KpiAraligi } from "@/lib/liste/parametreler";
 import { BRUT } from "@/lib/taban";
 import type { TahsilatKpileri } from "@/lib/tahsilat-listesi/sorgu";
-import { TIP_ADI, kartAdresi, type TahsilatTipi, type kpiAraligi } from "@/lib/tahsilat-listesi/suzgec";
+import { TIP_ADI, kartAdresi, type TahsilatTipi } from "@/lib/tahsilat-listesi/suzgec";
 import { KPI_BAGLANTISI } from "@/components/stil";
 
-type Aralik = ReturnType<typeof kpiAraligi>;
+type Aralik = KpiAraligi;
 
-/** Kartların alt notu: varsayılan aralık "Bu ay", yoksa süzgecin gün aralığı. */
-export function kpiDonemNotu(a: Aralik): string {
-  return a.varsayilan ? "Bu ay" : aralikEtiketi(a.baslangic, a.bitis);
-}
 
 export const adetMetni = (adet: number) => `${adet} tahsilat`;
 

@@ -6,6 +6,7 @@ import { TextArea } from "@/components/form";
 import type { IslemSonucu } from "@/lib/sonuc";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import { Ikon } from "@/components/Ikon";
+import { GEREKCE_AZAMI } from "@/lib/sonuc";
 
 /**
  * İade formu (A-1): kalem başına iade miktarı (varsayılan 0) ve zorunlu sebep. Hata sonrası
@@ -51,7 +52,7 @@ export default function IadeFormu({
           </div>
         ))}
       </div>
-      <TextArea label="İade sebebi" name="reason" sonuc={sonuc} />
+      <TextArea label="İade sebebi" name="reason" maxLength={GEREKCE_AZAMI} sonuc={sonuc} />
       <button
         type="submit"
         className={buton("ikincil")}

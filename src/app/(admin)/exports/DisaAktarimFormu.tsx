@@ -7,6 +7,7 @@ import { StatusChip } from "@/components/ui";
 import { buton } from "@/components/stil";
 import { Ikon } from "@/components/Ikon";
 import { donemKisayollari } from "@/lib/disa-aktarim-donem";
+import { simdi, yerelGunMetni } from "@/lib/zaman";
 import { ARALIKLI, VERI_SETLERI, type VeriSeti } from "@/lib/disa-aktarim-katalog";
 import { disaAktar, type DisaAktarimSonucu } from "./actions";
 
@@ -108,7 +109,11 @@ export default function DisaAktarimFormu({ bugun, faturaSablonuVar }: { bugun: s
                       key={k.etiket}
                       type="button"
                       className={buton("ikincil")}
-                      onClick={() => setAralik((a) => ({ baslangic: k.baslangic, bitis: k.bitis, surum: a.surum + 1 }))}
+                      onClick={() => {
+                        // Gün tıklama anında hesaplanır: sayfa gece yarısını geçerek açık kaldıysa kısayol bayatlamaz.
+                        const guncel = donemKisayollari(yerelGunMetni(simdi())).find((x) => x.etiket === k.etiket) ?? k;
+                        setAralik((a) => ({ baslangic: guncel.baslangic, bitis: guncel.bitis, surum: a.surum + 1 }));
+                      }}
                     >
                       <Ikon ad="donem" />
                       {k.etiket}

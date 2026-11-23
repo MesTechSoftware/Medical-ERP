@@ -10,7 +10,7 @@ import { amountSchema } from "@/lib/validation";
 import { benzersizIhlali, IsHatasi } from "@/lib/hata";
 import { requireAdmin } from "@/lib/session";
 import { degistirDoktorSahibi } from "@/lib/sahiplik";
-import { basarili, engel, sert, sonucOlustur, type IslemSonucu } from "@/lib/sonuc";
+import { type IslemSonucu, basarili, engel, gerekceEngeli, gerekceHatasi, sert, sonucOlustur } from "@/lib/sonuc";
 
 /**
  * FR-06 / X-13 §(5): yönetici doktorları başka satıcıya devreder; gerekçe zorunlu, iz tutulur.
@@ -29,7 +29,8 @@ export async function transferDoctor(
   const reason = ((formData.get("reason") as string) || "").trim();
 
   if (doctorIds.length === 0) return engel("DEVIR_DOKTOR_SECILMEDI");
-  if (!reason) return engel("GEREKCE_ZORUNLU", {}, "reason");
+  const gerekceSonucu = gerekceEngeli(reason, "reason");
+  if (gerekceSonucu) return gerekceSonucu;
 
   // Boş seçim = sahipsiz bırak (X-17 §(5)).
   const targetSellerId = newSellerId || null;
@@ -128,7 +129,7 @@ export async function addVadeFarki(doctorId: string, _prev: unknown, formData: F
   const hatalar = [
     ...(tutar.success ? [] : [sert("GECERSIZ_TUTAR", {}, "amount")]),
     ...(vade ? [] : [sert("GECERSIZ_TARIH", {}, "dueDate")]),
-    ...(gerekce ? [] : [sert("GEREKCE_ZORUNLU", {}, "reason")]),
+    ...[gerekceHatasi(gerekce, "reason")].filter((h) => h !== null),
   ];
   if (!tutar.success || !vade || !gerekce) return sonucOlustur(hatalar);
   const doktor = await prisma.doctor.findUnique({ where: { id: doctorId }, select: { id: true } });
@@ -160,7 +161,8 @@ export async function addVadeFarki(doctorId: string, _prev: unknown, formData: F
 export async function reverseLedgerEntry(entryId: string, _prev: unknown, formData: FormData): Promise<IslemSonucu> {
   const session = await requireAdmin();
   const gerekce = String(formData.get("reason") ?? "").trim();
-  if (!gerekce) return engel("GEREKCE_ZORUNLU", {}, "reason");
+  const gerekceSonucu = gerekceEngeli(gerekce, "reason");
+  if (gerekceSonucu) return gerekceSonucu;
   const h = await prisma.ledgerEntry.findUnique({ where: { id: entryId }, include: { reversal: { select: { id: true } } } });
   if (!h) return engel("CARI_HAREKET_BULUNAMADI");
   if (h.type !== "ACILIS" && h.type !== "VADE_FARKI") return engel("TERS_KAYIT_UYGUN_DEGIL");

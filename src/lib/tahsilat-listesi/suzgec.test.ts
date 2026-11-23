@@ -4,12 +4,12 @@ import {
   bosDurum,
   etkinSuzgecler,
   kartAdresi,
-  kpiAraligi,
   sekmeAdresi,
   suzgecCoz,
   tahsilatAdresi,
   type TahsilatSuzgeci,
 } from "./suzgec";
+import { kpiAraligi } from "@/lib/liste/parametreler";
 
 const S = (ek: Partial<TahsilatSuzgeci>): TahsilatSuzgeci => ({ ...BOS_SUZGEC, ...ek });
 

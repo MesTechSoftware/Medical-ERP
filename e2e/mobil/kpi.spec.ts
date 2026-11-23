@@ -28,7 +28,7 @@ test("siparişler 6 kart (ADR-010 eki): birincil ve son kart tam satır, arası 
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   const satir = (await page.locator("[data-kpi-satiri]").boundingBox())!;
   const kutu = async (ad: string) => (await page.getByRole("group", { name: ad, exact: true }).boundingBox())!;
-  const [t, b, h, k, te, i] = await Promise.all(["Toplam sipariş", "Bekliyor", "Hazırlanıyor", "Kargolandı", "Teslim Edildi", "İptal"].map(kutu));
+  const [t, b, h, k, te, i] = await Promise.all(["Toplam sipariş", "Bekliyor", "Hazırlanıyor", "Kargolandı", "Teslim Edildi", "İptal Edildi"].map(kutu));
   expect(Math.abs(t.width - satir.width), "birincil tam genişlik").toBeLessThanOrEqual(2);
   expect(Math.abs(i.width - satir.width), "son kart tam genişlik").toBeLessThanOrEqual(2);
   expect(Math.abs(b.y - h.y), "2'li sıra").toBeLessThanOrEqual(1);

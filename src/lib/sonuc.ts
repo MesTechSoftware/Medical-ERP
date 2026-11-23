@@ -16,6 +16,7 @@ export const KURAL_KODLARI = [
   // Form girdisi
   "ALAN_ZORUNLU",
   "GEREKCE_ZORUNLU",
+  "GEREKCE_UZUN",
   "GECERSIZ_TUTAR",
   "GECERSIZ_MIKTAR",
   "GECERSIZ_TARIH",
@@ -65,6 +66,9 @@ export const KURAL_KODLARI = [
   "SIPARIS_DURUMU_UYGUN_DEGIL",
   "SIPARIS_IPTAL_EDILEMEZ",
   "SEVK_KALEMI_YOK",
+  "KARGO_FIRMASI_GECERSIZ",
+  "TOPLU_HICBIRI_YAZILMADI",
+  "TOPLU_KISMEN_YAZILDI",
   "SEVK_MIKTARI_ASILDI",
   "TOPLU_SECIM_YOK",
   "TOPLU_SINIR_ASILDI",
@@ -168,6 +172,33 @@ export function sonucOlustur(bildirimler: readonly Bildirim[], parametreler?: Pa
 
 export function basarili(parametreler?: Parametreler): IslemSonucu {
   return sonucOlustur([], parametreler);
+}
+
+/**
+ * Toplu işlemin üst sonucu satır sonuçlarından türer: hepsi yazıldıysa başarılı, hiçbiri yazılmadıysa engel,
+ * bir kısmı yazıldıysa bilgi kademesinde uyarılı. Satır ayrıntısı `satirlar`'dadır (toplu kargo, A-3-3).
+ */
+export function topluUstSonuc(yazildi: readonly boolean[]): IslemSonucu {
+  const yazilan = yazildi.filter(Boolean).length;
+  if (yazilan === yazildi.length) return basarili();
+  if (yazilan === 0) return engel("TOPLU_HICBIRI_YAZILMADI", { toplam: yazildi.length });
+  return sonucOlustur([bilgi("TOPLU_KISMEN_YAZILDI", { yazilan, toplam: yazildi.length })]);
+}
+
+/** Gerekçe metninin azami uzunluğu — bütün gerekçe isteyen akışlarda aynı (X-18). */
+export const GEREKCE_AZAMI = 500;
+
+/** Gerekçe denetimi (metin kırpılmış verilir): boşsa `GEREKCE_ZORUNLU`, uzunsa `GEREKCE_UZUN`; geçerliyse `null`. */
+export function gerekceHatasi(metin: string, alan?: string): Bildirim | null {
+  if (metin === "") return sert("GEREKCE_ZORUNLU", {}, alan);
+  if (metin.length > GEREKCE_AZAMI) return sert("GEREKCE_UZUN", { azami: GEREKCE_AZAMI }, alan);
+  return null;
+}
+
+/** `gerekceHatasi`'nın action dönüşü: geçersiz gerekçede engel, geçerliyse `null`. */
+export function gerekceEngeli(metin: string, alan?: string): IslemSonucu | null {
+  const h = gerekceHatasi(metin, alan);
+  return h ? sonucOlustur([h]) : null;
 }
 
 /** Tek `SERT` bildirimle engel — action'ların en sık dönüşü. */

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { hesaplaDoktorBakiye, type DoktorBakiye } from "@/lib/doctor-cari";
 import { metinVaryantlari } from "@/lib/liste/metin";
 import { gunleriAraliga } from "@/lib/liste/parametreler";
-import { BOS_SUZGEC, TIPLER, type TahsilatSuzgeci, type TahsilatTipi } from "@/lib/tahsilat-listesi/suzgec";
+import { BOS_SUZGEC, TIPLER, type TahsilatSuzgeci, type TahsilatTipi, bosDurum } from "@/lib/tahsilat-listesi/suzgec";
 
 /**
  * Tahsilat ekranının sorguları (spec Ü-26 §4). Liste, toplam satırı ve KPI kartları tek koşuldan
@@ -100,11 +100,14 @@ async function ozet(where: Prisma.DoctorPaymentWhereInput): Promise<Ozet> {
   return { tutar: a._sum.amount ?? new Decimal(0), adet: a._count };
 }
 
-/** Liste: satırlar, satır sayısı ve (yalnız aktif süzgeçte) süzgecin bütün sayfalarının toplamı. */
+/**
+ * Liste: satırlar, satır sayısı ve (yalnız aktif süzgeçte) süzgecin bütün sayfalarının toplamı. `yalnizIptal`:
+ * varsayılan liste boş ama iptal edilmiş tahsilat var.
+ */
 export async function tahsilatListesi(
   s: TahsilatSuzgeci,
   sayfa: { skip: number; take: number }
-): Promise<{ satirlar: TahsilatSatiri[]; toplam: number; ozet: Ozet | null }> {
+): Promise<{ satirlar: TahsilatSatiri[]; toplam: number; ozet: Ozet | null; yalnizIptal: boolean }> {
   const where = tahsilatKosulu(s);
   // Aktif süzgeçte özet aynı koşulun sayısını da taşır; ayrı COUNT koşmaz.
   const sayim: Promise<{ toplam: number; ozet: Ozet | null }> =
@@ -115,8 +118,12 @@ export async function tahsilatListesi(
     prisma.doctorPayment.findMany({ where, orderBy: [{ paidAt: "desc" }, { id: "desc" }], skip: sayfa.skip, take: sayfa.take, select: SATIR }),
     sayim,
   ]);
-  const ad = await adlar(hamlar.map((p) => p.recordedBy));
-  return { satirlar: hamlar.map((p) => satir(p, ad)), toplam, ozet: o };
+  // Varsayılan (aktif) liste boşken iptal edilmiş tahsilat var mı: boş durum "henüz kayıt yok" demesin.
+  const [ad, iptalli] = await Promise.all([
+    adlar(hamlar.map((p) => p.recordedBy)),
+    toplam === 0 && bosDurum(s) === "hic-kayit" ? prisma.doctorPayment.findFirst({ where: { status: "IPTAL" }, select: { id: true } }) : null,
+  ]);
+  return { satirlar: hamlar.map((p) => satir(p, ad)), toplam, ozet: o, yalnizIptal: iptalli !== null };
 }
 
 export type TahsilatKpileri = Record<"toplam" | TahsilatTipi, Ozet>;

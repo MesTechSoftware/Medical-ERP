@@ -117,6 +117,17 @@ describe("tahsilat süzgeci — gün sınırı ve metin", () => {
   });
 });
 
+describe("boş liste — yalnız iptal edilmiş tahsilat (Ü-35)", () => {
+  it("varsayılan liste boşken iptal varsa işaretlenir; süzgeçli boş listede ve hiç kayıt yokken işaret yok", async () => {
+    expect((await tahsilatListesi(BOS_SUZGEC, SAYFA)).yalnizIptal).toBe(false);
+    await tahsilat({ tip: "NAKIT", tutar: "10", an: "2026-11-02T09:00:00Z", iptal: "yanlış kayıt" });
+    expect((await tahsilatListesi(BOS_SUZGEC, SAYFA)).yalnizIptal).toBe(true);
+    expect((await tahsilatListesi(S({ tip: "POS" }), SAYFA)).yalnizIptal).toBe(false);
+    await tahsilat({ tip: "NAKIT", tutar: "20", an: "2026-11-02T09:00:00Z" });
+    expect((await tahsilatListesi(BOS_SUZGEC, SAYFA)).yalnizIptal).toBe(false);
+  });
+});
+
 describe("tahsilat paneli (A-11-3)", () => {
   it("komisyon kayıttaki donmuş oran ve tutardır; bakiye tek kaynaktan", async () => {
     const p = await tahsilat({ tip: "POS", tutar: "5000", an: "2026-11-02T09:00:00Z", oran: "2.5", komisyon: "125.00" });

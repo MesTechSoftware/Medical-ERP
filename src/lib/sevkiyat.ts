@@ -47,11 +47,21 @@ export type SevkiyatSonucu =
   | { durum: "SEVK_EDILDI"; sevkiyatId: string; documentNo: string; tamamlandi: boolean }
   | { durum: "ONAYA_GONDERILDI"; ihlaller: BlokIhlali[] };
 
+/** Kargo firması tanımlı ve aktif mi — sevkiyat ve toplu kargonun ortak denetimi. */
+export async function aktifFirmaMi(db: Pick<Prisma.TransactionClient, "carrier">, carrierId: string): Promise<boolean> {
+  const firma = await db.carrier.findUnique({ where: { id: carrierId }, select: { isActive: true } });
+  return firma?.isActive === true;
+}
+
 export async function sevkiyatYaz(tx: Prisma.TransactionClient, girdi: SevkiyatGirdisi): Promise<SevkiyatSonucu> {
   // 0 bu sevkiyatta gönderilmeyen kalemdir; tam sayı olmayan ya da negatif miktar reddedilir.
   const kalemler = girdi.kalemler.filter((k) => k.miktar !== 0);
   if (kalemler.length === 0 || kalemler.some((k) => !Number.isInteger(k.miktar) || k.miktar < 0)) {
     throw new IsHatasi([sert("SEVK_KALEMI_YOK")]);
+  }
+  // Firma tanımlı ve aktif olmalı (pasif firma yeni sevkiyat almaz; bilinmeyen kimlik teknik hataya düşmesin).
+  if (girdi.carrierId !== null && !(await aktifFirmaMi(tx, girdi.carrierId))) {
+    throw new IsHatasi([sert("KARGO_FIRMASI_GECERSIZ", {}, "carrierId")]);
   }
 
   const siparis = await tx.order.findUnique({

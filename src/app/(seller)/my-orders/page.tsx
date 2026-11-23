@@ -13,8 +13,9 @@ import { ilk } from "@/lib/liste/parametreler";
 import { sayfaCoz, sayfaDisi } from "@/lib/liste/sayfa";
 import { gunleriAraliga } from "@/lib/liste/parametreler";
 import { siparisKpileri, siparisListesi, siparisPaneli } from "@/lib/siparis-listesi/sorgu";
-import { kpiAraligi, siparisAdresi, suzgecCoz, type Parametreler } from "@/lib/siparis-listesi/suzgec";
+import { siparisAdresi, suzgecCoz, type Parametreler } from "@/lib/siparis-listesi/suzgec";
 import { simdi, yerelGunMetni } from "@/lib/zaman";
+import { kpiAraligi } from "@/lib/liste/parametreler";
 
 const YOL = "/my-orders";
 

@@ -8,6 +8,7 @@ import type { OnayPaneli as Veri } from "@/lib/onay-listesi/sorgu";
 import { BEDELSIZ_SEBEP_ADI } from "@/lib/sozluk";
 import { blokKarari } from "./actions";
 import { BelgeBaglantisi, KararRozeti, kuralAdi } from "./OnayTablosu";
+import { GEREKCE_AZAMI } from "@/lib/sonuc";
 
 /**
  * Onay talebinin paneli (spec Ü-25 §3.5, A-8-12): talep, karar bağlamı (negatif stokta kalan ve depo stoğu,
@@ -112,7 +113,7 @@ export function OnayPaneli({ veri, kapatAdresi }: { veri: Veri; kapatAdresi: str
               <label htmlFor={`not_${b.id}`} className="block text-xs text-slate-500">
                 Karar notu
               </label>
-              <textarea id={`not_${b.id}`} name="not" required rows={2} className={`w-full ${KONTROL_COK_SATIR}`} />
+              <textarea id={`not_${b.id}`} name="not" required maxLength={GEREKCE_AZAMI} rows={2} className={`w-full ${KONTROL_COK_SATIR}`} />
               <div className="flex gap-2">
                 <button type="submit" name="karar" value="ONAY" className={buton("birincil")}>
                   <Ikon ad="onayla" />

@@ -5,6 +5,7 @@ import type { IslemSonucu, Parametreler } from "@/lib/sonuc";
 import { bildirimMetni } from "@/lib/sozluk";
 import { KONTROL_COK_SATIR, buton } from "@/components/stil";
 import { Ikon } from "@/components/Ikon";
+import { GEREKCE_AZAMI } from "@/lib/sonuc";
 
 /**
  * İş sonucunun TEK gösterimi — X-4 §(4) kapalı liste, kademe başına bir desen:
@@ -79,6 +80,7 @@ export function SonucGosterimi({
               id="gerekce"
               name="gerekce"
               required
+              maxLength={GEREKCE_AZAMI}
               rows={2}
               className={`w-full ${KONTROL_COK_SATIR}`}
             />
