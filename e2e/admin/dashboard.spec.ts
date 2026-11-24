@@ -26,6 +26,7 @@ test("Dikkat gerektirenler tek yerde: her madde eylem bağlantılı; üstte ayr�
   const kart = page.locator("#dikkat");
   await expect(kart).toContainText(/ürün (kritik stokta|tükendi)/); // demo verisinde kritik stok var
   const maddeler = kart.getByRole("listitem");
+  await expect(maddeler.first()).toBeVisible();
   const adet = await maddeler.count();
   expect(adet).toBeGreaterThan(0);
   for (let i = 0; i < adet; i++) await expect(maddeler.nth(i).getByRole("link")).toHaveCount(1);

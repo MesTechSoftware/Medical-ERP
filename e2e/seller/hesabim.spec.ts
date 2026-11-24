@@ -19,8 +19,17 @@ test("Doktorlarım, Bu ay siparişim ve Bu ay cirom kartları Doktorlarım, Sipa
 
   await page.goto("/my-doctors");
   expect(await deger(page, "Doktorlarım")).toBe(hesap.doktor);
-  await page.goto("/my-orders");
-  expect(await deger(page, "Toplam sipariş")).toBe(hesap.siparis);
+  // Siparişlerim'de "Toplam sipariş" kartı yoktur (A-5-9); karşılığı bu ayın durum sekmelerinin toplamıdır (teklif hariç).
+  const simdi = new Date();
+  const ay = `${simdi.getFullYear()}-${String(simdi.getMonth() + 1).padStart(2, "0")}`;
+  const sonGun = new Date(simdi.getFullYear(), simdi.getMonth() + 1, 0).getDate();
+  await page.goto(`/my-orders?baslangic=${ay}-01&bitis=${ay}-${sonGun}`);
+  const sekmeler = page.getByRole("navigation", { name: "Hızlı süzgeçler" });
+  let siparisToplami = 0;
+  for (const ad of [/^Bekliyor/, /^Hazırlanıyor/, /^Kargolandı/, /^Teslim Edildi/, /^İptal/]) {
+    siparisToplami += Number((await sekmeler.getByRole("link", { name: ad }).innerText()).match(/\d+/)![0]);
+  }
+  expect(String(siparisToplami)).toBe(hesap.siparis);
   await page.goto("/my-report");
   expect(await deger(page, "Cirom")).toBe(hesap.ciro);
 });

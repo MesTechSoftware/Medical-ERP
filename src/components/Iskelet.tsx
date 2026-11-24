@@ -174,7 +174,16 @@ export function KpiSatiriIskeleti({ kartlar }: { kartlar: readonly KpiIskeletYap
  * metinle (saydam) çizilir — dar ekranda kırılım gerçekle aynıdır. Etkin süzgeç etiketi yoktur
  * (varsayılan adres).
  */
-export function SuzgecCubuguIskeleti({ sekmeler, dugmeler }: { sekmeler: readonly string[]; dugmeler: readonly string[] }) {
+/** `arama`: süzgeç çubuğunda arama kutusu + "Ara" düğmesi varsa (Ürünler) onun yerini tutar. */
+export function SuzgecCubuguIskeleti({
+  sekmeler,
+  dugmeler,
+  arama = false,
+}: {
+  sekmeler: readonly string[];
+  dugmeler: readonly string[];
+  arama?: boolean;
+}) {
   return (
     <div aria-hidden="true" className="mb-4">
       <div className="flex flex-wrap items-start gap-2">
@@ -188,6 +197,15 @@ export function SuzgecCubuguIskeleti({ sekmeler, dugmeler }: { sekmeler: readonl
           ))}
         </div>
         <div className="ml-auto flex flex-wrap items-start gap-2">
+          {arama && (
+            <div className="flex gap-2">
+              <span className="block h-(--control-h) w-56 animate-skeleton rounded-lg bg-slate-100" />
+              <span className={`${buton("ikincil")} animate-skeleton border-transparent bg-slate-100 text-transparent`}>
+                <span className="size-[1.15em] shrink-0" />
+                <span data-metin="Ara" className="before:content-[attr(data-metin)]" />
+              </span>
+            </div>
+          )}
           {dugmeler.map((d) => (
             <span key={d} className={`${buton("ikincil")} animate-skeleton border-transparent bg-slate-100 text-transparent`}>
               <span className="size-[1.15em] shrink-0" />
