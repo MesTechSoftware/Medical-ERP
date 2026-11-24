@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import type { OrderStatus } from "@/generated/prisma/enums";
 import { BRUT, MATRAH } from "@/lib/taban";
 import { aktiviteAkisi } from "@/lib/aktivite";
-import { hazirlamaSureleri, siparisDagilimi } from "@/lib/dashboard";
+import { hazirlamaSureleri, operasyonSayilari, siparisDagilimi } from "@/lib/dashboard";
 import { aralikCoz, dashboardAraligi } from "@/lib/donem";
 import { formatGunSuresi, formatSayi } from "@/lib/format";
 import { istisnalar } from "@/lib/istisnalar";
@@ -24,6 +24,7 @@ import { KpiSatiri } from "@/components/kpi/KpiSatiri";
 import { AktiviteAkisi } from "@/components/dashboard/AktiviteAkisi";
 import { AkisYenileyici } from "@/components/dashboard/AkisYenileyici";
 import { DikkatListesi } from "@/components/dashboard/DikkatListesi";
+import { OperasyonKpiSatiri } from "@/components/dashboard/OperasyonKpiSatiri";
 import { IstisnaBandi } from "@/components/dashboard/IstisnaBandi";
 import { KritikStokListesi } from "@/components/dashboard/KritikStokListesi";
 import { ZamanFiltresi } from "@/components/dashboard/ZamanFiltresi";
@@ -79,10 +80,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   // Stok bir kez okunur: kritik stok listesi, istisnalar ve sayfa şeridi aynı okumayı paylaşır.
   const stoklar = await kpiGetir(() => aktifUrunStoklari(), baglam);
-  const [ciro, tahsilat, bekleyen, kargolanacak, sureler, dagilim, enCok, istisna, akis, kutular] = await Promise.all([
-    kpiGetir(() => ciroOzeti(r, { tur: "sirket" }), baglam),
+  // D-2: Ciro ve Tahsilat yalnız yöneticinindir; OPERASYON onların yerine onay ve kalan kartlarını görür.
+  const [ciro, tahsilat, bekleyen, kargolanacak, sureler, dagilim, enCok, istisna, akis, kutular, sayilar] = await Promise.all([
+    yonetici ? kpiGetir(() => ciroOzeti(r, { tur: "sirket" }), baglam) : null,
     // Tek sorgu: kovalar + bu dönem + karşılaştırma dönemi.
-    kpiGetir(() => tahsilatToplamlari([...r.kovalar.map((k) => k.aralik), r.simdi, r.onceki]), baglam),
+    yonetici ? kpiGetir(() => tahsilatToplamlari([...r.kovalar.map((k) => k.aralik), r.simdi, r.onceki]), baglam) : null,
     kpiGetir(() => prisma.order.count({ where: { status: "BEKLIYOR" } }), baglam),
     kpiGetir(() => prisma.order.count({ where: { status: "HAZIRLANIYOR" } }), baglam),
     kpiGetir(() => hazirlamaSureleri(r.simdi), baglam),
@@ -91,10 +93,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     stoklar.tamam ? kpiGetir(() => istisnalar(rol, stoklar.deger, an), baglam) : stoklar,
     yonetici ? kpiGetir(() => aktiviteAkisi(rol, 15), baglam) : null,
     seritKutulari(rol, { aralik: r.simdi, an, stoklar: stoklar.tamam ? stoklar.deger : null }, baglam),
+    yonetici ? null : kpiGetir(() => operasyonSayilari(an), baglam),
   ]);
 
   const n = r.kovalar.length;
-  const tahsilatSerisi = tahsilat.tamam ? tahsilat.deger.slice(0, n) : [];
+  const tahsilatSerisi = tahsilat?.tamam ? tahsilat.deger.slice(0, n) : [];
   const medyan = sureler.tamam ? medyanGun(sureler.deger) : null;
   const hazirlama = `Medyan hazırlama (${r.donemNotu.toLocaleLowerCase("tr-TR")}): ${
     !sureler.tamam ? "yüklenemedi" : medyan === null ? "yetersiz veri" : formatGunSuresi(medyan)
@@ -114,69 +117,73 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       {/* Telefonda filtre KPI'ların hemen üstünde, tam genişlik (brief §2). */}
       <ZamanFiltresi secili={r.anahtar} className="mb-4 md:hidden" />
 
-      <KpiSatiri>
-        <KpiCard
-          etiket="Ciro"
-          varyant="birincil"
-          iyiYon="yukari-iyi"
-          bosDavranisi="sifir"
-          tutar={ciro.tamam ? ciro.deger.simdi.ciro : null}
-          taban={MATRAH}
-          karsilastirma={ciro.tamam ? { onceki: ciro.deger.onceki?.ciro ?? null, not: r.karsilastirmaNotu } : undefined}
-          trend={
-            ciro.tamam
-              ? {
-                  seri: ciro.deger.seri,
-                  sonDevamEdiyor: true,
-                  ozet: <KovaOzeti baslik={`${r.seriBasligi} ciro`} kovalar={r.kovalar} tur={r.kovaTuru} seri={ciro.deger.seri} taban={MATRAH} />,
-                }
-              : undefined
-          }
-          donemNotu={r.donemNotu}
-          hataReferansi={ciro.tamam ? undefined : ciro.referans}
-        />
-        <KpiCard
-          etiket="Tahsilat"
-          varyant="ikincil"
-          iyiYon="yukari-iyi"
-          bosDavranisi="sifir"
-          tutar={tahsilat.tamam ? tahsilat.deger[n] : null}
-          taban={BRUT}
-          karsilastirma={tahsilat.tamam ? { onceki: tahsilat.deger[n + 1] ?? null, not: r.karsilastirmaNotu } : undefined}
-          trend={
-            tahsilat.tamam
-              ? {
-                  seri: tahsilatSerisi,
-                  sonDevamEdiyor: true,
-                  ozet: <KovaOzeti baslik={`${r.seriBasligi} tahsilat`} kovalar={r.kovalar} tur={r.kovaTuru} seri={tahsilatSerisi} taban={BRUT} />,
-                }
-              : undefined
-          }
-          donemNotu={r.donemNotu}
-          hataReferansi={tahsilat.tamam ? undefined : tahsilat.referans}
-        />
-        <KpiCard
-          etiket="Bekleyen sipariş"
-          varyant="ikincil"
-          iyiYon="asagi-iyi"
-          bosDavranisi="sifir"
-          adet={bekleyen.tamam ? bekleyen.deger : null}
-          karsilastirma={{ anlik: "şu an" }}
-          ikincilMetrik={hazirlama}
-          vurgu={bekleyen.tamam && bekleyen.deger > 0 ? "uyari" : undefined}
-          hataReferansi={bekleyen.tamam ? undefined : bekleyen.referans}
-        />
-        <KpiCard
-          etiket="Kargolanacak"
-          varyant="baglamsal"
-          iyiYon="asagi-iyi"
-          bosDavranisi="sifir"
-          adet={kargolanacak.tamam ? kargolanacak.deger : null}
-          karsilastirma={{ anlik: "şu an" }}
-          vurgu={kargolanacak.tamam && kargolanacak.deger > 0 ? "uyari" : undefined}
-          hataReferansi={kargolanacak.tamam ? undefined : kargolanacak.referans}
-        />
-      </KpiSatiri>
+      {ciro && tahsilat ? (
+        <KpiSatiri>
+          <KpiCard
+            etiket="Ciro"
+            varyant="birincil"
+            iyiYon="yukari-iyi"
+            bosDavranisi="sifir"
+            tutar={ciro.tamam ? ciro.deger.simdi.ciro : null}
+            taban={MATRAH}
+            karsilastirma={ciro.tamam ? { onceki: ciro.deger.onceki?.ciro ?? null, not: r.karsilastirmaNotu } : undefined}
+            trend={
+              ciro.tamam
+                ? {
+                    seri: ciro.deger.seri,
+                    sonDevamEdiyor: true,
+                    ozet: <KovaOzeti baslik={`${r.seriBasligi} ciro`} kovalar={r.kovalar} tur={r.kovaTuru} seri={ciro.deger.seri} taban={MATRAH} />,
+                  }
+                : undefined
+            }
+            donemNotu={r.donemNotu}
+            hataReferansi={ciro.tamam ? undefined : ciro.referans}
+          />
+          <KpiCard
+            etiket="Tahsilat"
+            varyant="ikincil"
+            iyiYon="yukari-iyi"
+            bosDavranisi="sifir"
+            tutar={tahsilat.tamam ? tahsilat.deger[n] : null}
+            taban={BRUT}
+            karsilastirma={tahsilat.tamam ? { onceki: tahsilat.deger[n + 1] ?? null, not: r.karsilastirmaNotu } : undefined}
+            trend={
+              tahsilat.tamam
+                ? {
+                    seri: tahsilatSerisi,
+                    sonDevamEdiyor: true,
+                    ozet: <KovaOzeti baslik={`${r.seriBasligi} tahsilat`} kovalar={r.kovalar} tur={r.kovaTuru} seri={tahsilatSerisi} taban={BRUT} />,
+                  }
+                : undefined
+            }
+            donemNotu={r.donemNotu}
+            hataReferansi={tahsilat.tamam ? undefined : tahsilat.referans}
+          />
+          <KpiCard
+            etiket="Bekleyen sipariş"
+            varyant="ikincil"
+            iyiYon="asagi-iyi"
+            bosDavranisi="sifir"
+            adet={bekleyen.tamam ? bekleyen.deger : null}
+            karsilastirma={{ anlik: "şu an" }}
+            ikincilMetrik={hazirlama}
+            vurgu={bekleyen.tamam && bekleyen.deger > 0 ? "uyari" : undefined}
+            hataReferansi={bekleyen.tamam ? undefined : bekleyen.referans}
+          />
+          <KpiCard
+            etiket="Kargolanacak"
+            varyant="baglamsal"
+            iyiYon="asagi-iyi"
+            bosDavranisi="sifir"
+            adet={kargolanacak.tamam ? kargolanacak.deger : null}
+            karsilastirma={{ anlik: "şu an" }}
+            vurgu={kargolanacak.tamam && kargolanacak.deger > 0 ? "uyari" : undefined}
+            hataReferansi={kargolanacak.tamam ? undefined : kargolanacak.referans}
+          />
+        </KpiSatiri>
+      ) : (
+        sayilar && <OperasyonKpiSatiri bekleyen={bekleyen} kargolanacak={kargolanacak} stoklar={stoklar} sayilar={sayilar} hazirlama={hazirlama} />
+      )}
 
       <div className="@container">
         <div className={`grid items-start gap-6 ${yonetici ? YERLESIM.yonetici : YERLESIM.operasyon}`}>

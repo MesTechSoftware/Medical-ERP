@@ -33,11 +33,15 @@ test("menü raporları ve denetim kaydını göstermez; rol etiketi Operasyon", 
   await expect(page.locator("header").getByText("Operasyon", { exact: true })).toBeVisible();
 });
 
-test("dashboard KPI'ları görünür (bu ay ciro ve tahsilat); prim ve hakediş yok (D-2 §(1))", async ({ page }) => {
+test("dashboard KPI'ları: Ciro ve Tahsilat yok; bekleyen, kargolanacak, kritik stok, kalanı açık/onay bekleyen var; prim ve hakediş yok (D-2-4)", async ({ page }) => {
   await page.goto("/dashboard");
-  await expect(page.getByRole("group", { name: "Ciro", exact: true })).toContainText("KDV hariç");
-  await expect(page.getByRole("group", { name: "Tahsilat", exact: true })).toContainText("KDV dahil");
+  await expect(page.locator("[data-kpi-satiri]").first()).toHaveAttribute("data-kpi-satiri", "4");
+  await expect(page.getByRole("group", { name: "Ciro", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("group", { name: "Tahsilat", exact: true })).toHaveCount(0);
   await expect(page.getByRole("group", { name: "Bekleyen sipariş" })).toBeVisible();
+  await expect(page.getByRole("group", { name: "Kargolanacak" })).toBeVisible();
+  await expect(page.getByRole("group", { name: "Kritik stok" })).toBeVisible();
+  await expect(page.getByRole("group", { name: "Kalanı açık sipariş" })).toContainText("Onay bekleyen");
   await expect(page.getByRole("main").getByText(/hakediş|prim/i)).toHaveCount(0);
 });
 
