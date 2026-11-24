@@ -32,6 +32,7 @@ export const SABLONLAR = {
   STOCK_ADJUSTMENT: "stok düzeltmesi yaptı",
   PRODUCT_CREATE: "yeni ürün ekledi",
   PRODUCT_UPDATE: "ürünü güncelledi",
+  PRODUCT_DELETE: "ürünü sildi",
   PRICE_LIST_CREATE: "fiyat listesi oluşturdu",
   PRICE_LIST_ITEM_SET: "fiyat listesine fiyat girdi",
   PRICE_LIST_ITEM_DELETE: "fiyat listesinden satır sildi",

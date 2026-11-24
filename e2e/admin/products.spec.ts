@@ -1,6 +1,30 @@
 import { test, expect } from "@playwright/test";
 import { unique } from "../helpers";
 
+test("admin bağı olmayan ürünü düzenleme ekranından siler; listede arar (C-3)", async ({ page }) => {
+  const name = unique("Silinecek Ürün");
+  const code = unique("SIL");
+  await page.goto("/products/new");
+  await page.getByLabel("Ürün Adı").fill(name);
+  await page.getByLabel("Ürün Kodu").fill(code);
+  await page.getByLabel("Liste Fiyatı — KDV hariç (₺)").fill("10");
+  await page.getByRole("button", { name: "Ürün Ekle" }).click();
+  await expect(page).toHaveURL(/\/products$/);
+
+  await page.goto(`/products?q=${encodeURIComponent(code)}`);
+  const row = page.getByRole("row", { name: new RegExp(code) });
+  await expect(row).toBeVisible();
+  // Satırda Sil yok; silme düzenleme ekranındadır.
+  await expect(row.getByRole("button", { name: "Sil" })).toHaveCount(0);
+  await row.getByRole("link", { name: "Düzenle" }).click();
+
+  page.once("dialog", (d) => d.accept());
+  await page.getByRole("button", { name: "Sil" }).click();
+  await expect(page).toHaveURL(/\/products$/);
+  await page.goto(`/products?q=${encodeURIComponent(code)}`);
+  await expect(page.getByText(name)).toHaveCount(0);
+});
+
 test("admin yeni ürün oluşturur ve listede görür", async ({ page }) => {
   const name = unique("Test Ürün");
   const code = unique("TST");

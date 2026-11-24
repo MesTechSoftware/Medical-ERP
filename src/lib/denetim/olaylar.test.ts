@@ -16,7 +16,7 @@ describe("olay tablosu — kapsama", () => {
       .filter(([, s]) => s.tur === "SILME")
       .map(([olay]) => olay)
       .sort();
-    expect(silme).toEqual(["IMPORT_REVERT", "PRICE_LIST_ITEM_DELETE"]);
+    expect(silme).toEqual(["IMPORT_REVERT", "PRICE_LIST_ITEM_DELETE", "PRODUCT_DELETE"]);
   });
 
   it("oturum olayları Oturum türünde, kullanıcı modülündedir", () => {

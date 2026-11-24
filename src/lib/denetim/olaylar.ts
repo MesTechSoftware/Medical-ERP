@@ -8,6 +8,7 @@ import type { AuditActionType, AuditModule } from "@/generated/prisma/enums";
 export const AUDIT_ACTIONS = {
   PRODUCT_CREATE: "PRODUCT_CREATE",
   PRODUCT_UPDATE: "PRODUCT_UPDATE",
+  PRODUCT_DELETE: "PRODUCT_DELETE",
   PRICE_LIST_CREATE: "PRICE_LIST_CREATE",
   PRICE_LIST_ITEM_SET: "PRICE_LIST_ITEM_SET",
   PRICE_LIST_ITEM_DELETE: "PRICE_LIST_ITEM_DELETE",
@@ -42,6 +43,7 @@ export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];
 export const AUDIT_ACTION_LABELS: Record<string, string> = {
   PRODUCT_CREATE: "Ürün oluşturma",
   PRODUCT_UPDATE: "Ürün güncelleme",
+  PRODUCT_DELETE: "Ürün silme",
   PRICE_LIST_CREATE: "Fiyat listesi oluşturma",
   PRICE_LIST_ITEM_SET: "Fiyat listesi satırı",
   PRICE_LIST_ITEM_DELETE: "Fiyat listesi satırı silme",
@@ -111,6 +113,7 @@ export const ISLEM_SINIFI: Record<AuditAction, IslemSinifi> = {
   DOCTOR_TRANSFER: { tur: "GUNCELLEME", modul: "CARI" },
   PRODUCT_CREATE: { tur: "EKLEME", modul: "URUN_FIYAT" },
   PRODUCT_UPDATE: { tur: "GUNCELLEME", modul: "URUN_FIYAT" },
+  PRODUCT_DELETE: { tur: "SILME", modul: "URUN_FIYAT" },
   PRICE_LIST_CREATE: { tur: "EKLEME", modul: "URUN_FIYAT" },
   PRICE_LIST_ITEM_SET: { tur: "GUNCELLEME", modul: "URUN_FIYAT" },
   PRICE_LIST_ITEM_DELETE: { tur: "SILME", modul: "URUN_FIYAT" },

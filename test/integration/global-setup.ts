@@ -14,6 +14,7 @@ import { ITEST_DATABASE_URL } from "./database-url";
 export function setup() {
   execFileSync("npx", ["prisma", "migrate", "deploy"], {
     stdio: "inherit",
+    shell: process.platform === "win32", // Windows: npx bir .cmd dosyasıdır
     env: { ...process.env, DATABASE_URL: ITEST_DATABASE_URL },
   });
 }

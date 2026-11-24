@@ -42,18 +42,22 @@ describe("değişmezlik — kaynak taraması (X-18-1)", () => {
   });
 });
 
+// Migration'dan sonra eklenen olaylar eski satırları doldurmaz (yeni olayın sınıfı yazımda `islemSinifi()`'ndan gelir).
+const SONRADAN_EKLENEN: readonly string[] = ["PRODUCT_DELETE"];
+const SINIF = Object.entries(ISLEM_SINIFI).filter(([olay]) => !SONRADAN_EKLENEN.includes(olay));
+
 describe("sınıf tablosu — migration ile aynı (X-18-3)", () => {
   const sql = readFileSync(MIGRATION, "utf8");
   const blok = (ad: string) => sql.slice(sql.indexOf(`-- ${ad}:başla`), sql.indexOf(`-- ${ad}:bitir`));
   const eslemeler = (metin: string) => Object.fromEntries([...metin.matchAll(/WHEN '([A-Z_]+)' THEN '([A-Z_]+)'/g)].map((m) => [m[1], m[2]]));
 
   it("modül eşlemesi birebir aynıdır", () => {
-    const beklenen = Object.fromEntries(Object.entries(ISLEM_SINIFI).map(([olay, s]) => [olay, s.modul]));
+    const beklenen = Object.fromEntries(SINIF.map(([olay, s]) => [olay, s.modul]));
     expect(eslemeler(blok("modül"))).toEqual(beklenen);
   });
 
   it("tür eşlemesi birebir aynıdır; fiyat satırı önceki değere göre seçilir", () => {
-    const tek = Object.entries(ISLEM_SINIFI).filter(([olay]) => olay !== "PRICE_LIST_ITEM_SET");
+    const tek = SINIF.filter(([olay]) => olay !== "PRICE_LIST_ITEM_SET");
     expect(eslemeler(blok("tür"))).toEqual(Object.fromEntries(tek.map(([olay, s]) => [olay, s.tur])));
     expect(blok("tür")).toContain(`WHEN 'PRICE_LIST_ITEM_SET' THEN (CASE WHEN "beforeData" IS NULL THEN 'EKLEME' ELSE 'GUNCELLEME' END)`);
     expect(ISLEM_SINIFI["PRICE_LIST_ITEM_SET" satisfies AuditAction].tur).toBe("GUNCELLEME");

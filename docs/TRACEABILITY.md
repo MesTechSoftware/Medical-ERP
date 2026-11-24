@@ -118,7 +118,7 @@
 | C-1-1 | C-1 | KANITLI | — | `src/lib/sevkiyat.itest.ts`<br>`e2e/admin/sevkiyat.spec.ts` | Sevkiyat müşterinin irsaliye numarasını isteğe bağlı salt kayıt olarak taşır (en çok 32 karakter; doğrulanmaz, hiçbir hesaba girmez) ve s… |
 | C-2-1 | C-2 | KANITLI | — | `src/lib/disa-aktarim.itest.ts` | Müşavir verisi dışa aktarımla verilir: cari hareket, tahsilat ve stok veri setleri tarih parametresi alır; stok veri seti gün sonu itibar… |
 | C-3-1 | C-3 | KANITLI | — | `src/lib/denetim/maske.test.ts`<br>`src/lib/cari.itest.ts`<br>`src/lib/ice-aktarim/ice-aktarim.itest.ts` | Denetim kaydı vergi kimliği ve fatura alanlarının değerini yazmaz (yalnız değişen alan adı, A-13 §(7)). Belgeye bağlı olmayan cari yalnız… |
-| C-3-2 | C-3 | KANITLI | — | `src/lib/kisitlar.itest.ts`<br>`e2e/admin/products.spec.ts` | Stok hareketi ya da sipariş kalemi olan ürün silinemez (sert red, "pasifleştirin" yönlendirmesi); bağı olmayan ürün ve fiyat satırları te… |
+| C-3-2 | C-3 | KANITLI | — | `src/app/(admin)/products/urun-silme.itest.ts`<br>`src/lib/urun-listesi/suzgec.test.ts`<br>`e2e/admin/products.spec.ts` | Stok hareketi ya da sipariş kalemi olan ürün silinemez (sert red, "pasifleştirin" yönlendirmesi); bağı olmayan ürün ve fiyat satırları te… |
 | C-4-1 | C-4 | KAPSAM DIŞI | — | — | — |
 | C-5-1 | C-5 | KAPSAM DIŞI | — | — | — |
 | C-6-1 | C-6 | KANITLI | `src/lib/satir-tutarlari.ts` | `src/lib/satir-tutarlari.test.ts`<br>`src/app/(seller)/my-orders/orders.itest.ts` | Satır hesabı ve yuvarlama tek fonksiyondadır (`hesaplaSatirTutarlari()`): matrah = birim fiyat × miktar ve KDV = matrah × oran, her ikisi… |
