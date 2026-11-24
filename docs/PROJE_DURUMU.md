@@ -273,6 +273,10 @@ yokken ya da geçmiş zaten varken çalışmaz.
 Demo hesapları (yalnız `db:seed:demo`, üretime taşınmaz): `admin@medikal.local` / `admin123` ·
 `ahmet@…`, `ayse@…`, `mehmet@…` / `satici123`.
 
+Demo verisi jenerik estetik/tıbbi cihaz kataloğudur (toksin ve gerçek marka yok; Paket 12): 8 ürün, barem 1+/10+/25+,
+özel liste atanmış cari (Burak Şahin), 2 bayi, konsinye klinik (Elif Yıldız), 2 onay bekleyen sevkiyat, Kurye ve Elden teslim
+(takip bağlantısız) ve üç fatura senaryosu (tam / eksik / 7 günden eski sevk).
+
 ## Faz 1B'de gelecekler (henüz kodda yok)
 
 Sıra ve ayrıntı `FAZ1_UYGULAMA_KAPSAMI.md` §D.3'tedir. Özetle: tek çağrı noktası

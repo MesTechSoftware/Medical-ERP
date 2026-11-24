@@ -47,12 +47,11 @@ test("alansız işlemin SERT bildirimi form kutusunda; kayıt yerinde kalır (X-
   );
   expect(urun, "seed'de siparişte kullanılmış ürün olmalı").toBeDefined();
 
-  // Liste sayfalıdır (Ü-19); seed ürünü e2e'nin eklediklerinin altında kalabilir.
-  await page.goto("/products?per=100");
+  // Silme düzenleme sayfasındadır (ürün listesinde sil düğmesi yok).
+  await page.goto(`/products/${urun.id}/edit`);
   page.once("dialog", (d) => d.accept());
-  const satir = page.getByRole("row").filter({ hasText: urun.name }).first();
-  await satir.getByRole("button", { name: "Sil" }).click();
+  await page.getByRole("button", { name: "Sil" }).click();
 
-  await expect(satir.getByRole("alert")).toHaveText(/siparişlerde kullanıldığı için silinemez/);
+  await expect(page.locator("main").getByRole("alert")).toHaveText(/stok hareketi ya da siparişi olduğu için silinemez/);
   expect(await query(`SELECT 1 FROM "Product" WHERE id = $1`, [urun.id])).toHaveLength(1);
 });

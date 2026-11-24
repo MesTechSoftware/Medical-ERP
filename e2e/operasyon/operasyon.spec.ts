@@ -74,7 +74,7 @@ test("ürünleri ve satıcıları salt okur — ekleme/düzenleme/silme yok", as
   // Liste sayfalıdır (Ü-19); seed ürünü e2e'nin eklediklerinin altında kalabilir.
   await page.goto("/products?per=100");
   await expect(page.getByRole("heading", { name: "Ürünler" })).toBeVisible();
-  await expect(page.getByText("Cerrahi Eldiven (Kutu)")).toBeVisible();
+  await expect(page.getByText("Hyaluronik Asit Dolgu 1 ml")).toBeVisible();
   await expect(page.getByRole("link", { name: "Yeni Ürün" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Düzenle" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Sil" })).toHaveCount(0);
