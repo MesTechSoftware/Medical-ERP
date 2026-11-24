@@ -79,6 +79,25 @@ describe("konsinye çıkış (A-4-1)", () => {
   });
 });
 
+describe("pasif doktor (A-4-2, A-4-3)", () => {
+  it("pasif doktora konsinye çıkışı DOKTOR_PASIF ile reddedilir; hiçbir hareket ve konum yazılmaz", async () => {
+    await prisma.doctor.update({ where: { id: s.doktor.id }, data: { status: "PASIF" } });
+    expect(await bildirimler(konsinye(1))).toEqual([["SERT", "DOKTOR_PASIF", {}]]);
+    expect(await prisma.stockMovement.count({ where: { consignmentIssueId: { not: null } } })).toBe(0);
+    expect(await prisma.consignmentIssue.count()).toBe(0);
+    expect(await prisma.stockLocation.count({ where: { type: "KONSINYE" } })).toBe(0);
+  });
+
+  it("doktor sonradan pasife alınırsa konsinye konumundaki mal depoya transferle geri çekilebilir", async () => {
+    await konsinye(4);
+    const konum = await konsinyeKonumu();
+    await prisma.doctor.update({ where: { id: s.doktor.id }, data: { status: "PASIF" } });
+    const r = await transfer(konum.id, s.depo.id, 4);
+    expect(r.documentNo).toBe(`TRF-${takvimYili()}-000001`);
+    expect([await hesaplaStok(s.urun.id, s.depo.id), await hesaplaStok(s.urun.id, konum.id)]).toEqual([10, 0]);
+  });
+});
+
 describe("stok transferi (B-4-5)", () => {
   it("TRF: konsinyeden depoya; hedef depo olmalı, kaynak ve hedef farklı olmalı", async () => {
     await konsinye(4);

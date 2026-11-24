@@ -228,3 +228,22 @@ test("aynı adrese varan eylemde açılır paneller kapanır, form sıfırlanır
   await expect(page).not.toHaveURL(/baslangic=/);
   await expect(sutunlar).toBeHidden();
 });
+
+test("transfer kaynak listesinde yalnız konsinye konumları vardır; Merkez Depo yoktur (A-4-4)", async ({ page }) => {
+  const ek = Date.now().toString().slice(-7);
+  await sorgu(
+    `INSERT INTO "Doctor" (id, "accountClass", "fullName", clinic, region, "phoneNormalized", "partyType", status)
+     VALUES ($1, 'DOKTOR', $2, 'Klinik', 'Bölge', $3, 'TUZEL_KISI', 'AKTIF')`,
+    [`e2e-trf-${ek}`, `Dr. Kaynak ${ek}`, `+90537${ek}`]
+  );
+  await sorgu(
+    `INSERT INTO "StockLocation" (id, code, name, type, "doctorId") VALUES ($1, $2, $3, 'KONSINYE', $4)`,
+    [`e2e-loc-${ek}`, `KONSINYE-e2e-trf-${ek}`, `Konsinye — Dr. Kaynak ${ek}`, `e2e-trf-${ek}`]
+  );
+  await page.goto("/stock");
+  const kaynak = page.locator("form").filter({ has: page.getByRole("button", { name: "Transfer Kaydet" }) }).getByLabel("Kaynak");
+  await expect(kaynak.locator("option", { hasText: `Konsinye — Dr. Kaynak ${ek}` })).toHaveCount(1);
+  const secenekler = (await kaynak.locator("option").allInnerTexts()).filter((t) => t.trim() !== "" && !t.startsWith("Seç"));
+  expect(secenekler.filter((t) => !t.startsWith("Konsinye —"))).toEqual([]);
+  expect(secenekler).not.toContain("Merkez Depo");
+});

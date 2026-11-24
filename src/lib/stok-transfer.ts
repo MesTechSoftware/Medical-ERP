@@ -83,8 +83,10 @@ async function tasi(
 
 /** Doktorun konsinye konumu; yoksa açılır (doktor başına tek — DB `UNIQUE`). */
 export async function konsinyeKonumu(tx: Prisma.TransactionClient, doktorId: string): Promise<string> {
-  const doktor = await tx.doctor.findUnique({ where: { id: doktorId }, select: { id: true, fullName: true } });
+  const doktor = await tx.doctor.findUnique({ where: { id: doktorId }, select: { id: true, fullName: true, status: true } });
   if (!doktor) throw new IsHatasi([sert("DOKTOR_KAPSAM_DISI", {}, "doctorId")]);
+  // A-4-2 (D1): pasif doktora yeni konsinye çıkışı yok. Pasif doktordan depoya transfer (`stokTransferYaz`) açık kalır.
+  if (doktor.status !== "AKTIF") throw new IsHatasi([sert("DOKTOR_PASIF", {}, "doctorId")]);
   const konum = await tx.stockLocation.upsert({
     where: { doctorId: doktor.id },
     create: { code: `KONSINYE-${doktor.id}`, name: `Konsinye — ${doktor.fullName}`, type: "KONSINYE", doctorId: doktor.id },

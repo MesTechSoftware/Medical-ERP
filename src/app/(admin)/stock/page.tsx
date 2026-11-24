@@ -143,7 +143,8 @@ export default async function StockPage({ searchParams }: { searchParams: Promis
                   ad="transfer"
                   action={addTransfer}
                   secimler={[
-                    { name: "fromLocationId", label: "Kaynak", options: konumlar.map((k) => ({ value: k.id, label: k.name })) },
+                    // A-4-4 (F-5): kaynak yalnız konsinye konumudur; Merkez Depo kaynak olarak listelenmez.
+                    { name: "fromLocationId", label: "Kaynak", options: konsinyeler.map((k) => ({ value: k.id, label: k.name })) },
                     // B-4: tek depoda hedef seçimi görünmez (UI satır sayısından türer).
                     ...(depolar.length > 1
                       ? [{ name: "toLocationId", label: "Hedef depo", options: depolar.map((k) => ({ value: k.id, label: k.name })) }]
