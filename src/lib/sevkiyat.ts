@@ -121,6 +121,9 @@ export async function sevkiyatYaz(tx: Prisma.TransactionClient, girdi: SevkiyatG
   const bedelsiz = await sonBlokDurumu("SIP", siparis.id, "BEDELSIZ_ONAYI", tx);
   if (bedelsiz === "BEKLIYOR") throw new IsHatasi([sert("ONAY_BEKLIYOR")]);
   if (bedelsiz === "RED") throw new IsHatasi([sert("ONAY_REDDEDILDI")]);
+  const iskonto = await sonBlokDurumu("SIP", siparis.id, "ISKONTO_TAVANI", tx);
+  if (iskonto === "BEKLIYOR") throw new IsHatasi([sert("ONAY_BEKLIYOR")]);
+  if (iskonto === "RED") throw new IsHatasi([sert("ONAY_REDDEDILDI")]);
   const onay = await sonBlokDurumu("SIP", siparis.id, "NEGATIF_STOK", tx);
   if (onay === "BEKLIYOR") throw new IsHatasi([sert("ONAY_BEKLIYOR")]);
   if (onay !== "ONAY") {

@@ -118,6 +118,8 @@ export const KURAL_METNI: Record<KuralKodu, (p: Parametreler) => string> = {
   ACILIS_STOGU_TEKRAR: (p) => `Aynı ürün ve konum dosyada birden çok kez geçiyor (satır ${p.satirlar}).`,
   NEGATIF_STOK: (p) => `Stok yetersiz${p.urun ? ` (${p.urun})` : ""}: işlem sonrası stok ${p.sonra} adet olur.`,
   BEDELSIZ_ONAYI: (p) => `Bedelsiz satır (${p.urun}, ${BEDELSIZ_SEBEP_ADI[p.sebep as FreeReason] ?? p.sebep}) yönetici onayı gerektirir.`,
+  ISKONTO_TAVANI: (p) => `İskonto tavanı aşıldı (${p.urun}: %${p.oran}, tavan %${p.tavan}); yönetici onayı gerektirir.`,
+  BIRIM_FIYAT_GECERSIZ: (p) => `Birim fiyat sıfırdan büyük olmalı${p.urun ? ` (${p.urun})` : ""}; ücretsiz kalem için Bedelsiz seçin.`,
   NEGATIF_STOK_YONETICI_GEREKIR: (p) =>
     `Stok yetersiz${p.urun ? ` (${p.urun})` : ""}: işlem sonrası stok ${p.sonra} adet olur. Bu işlemi yalnız yönetici gerekçeyle yapabilir; önce stok düzeltmesi gerekebilir.`,
   ONAY_BEKLIYOR: () => "Bu sipariş yönetici onayı bekliyor; karar verilmeden sevk edilemez.",
@@ -129,6 +131,7 @@ export const KURAL_METNI: Record<KuralKodu, (p: Parametreler) => string> = {
 export const BLOK_KURAL_ADI: Record<BlokKuralKodu, string> = {
   NEGATIF_STOK: "Negatif stok",
   BEDELSIZ_ONAYI: "Bedelsiz satır",
+  ISKONTO_TAVANI: "İskonto tavanı",
 };
 
 /** Bedelsiz satır sebebi (A-2 eki 20.10.2026). */

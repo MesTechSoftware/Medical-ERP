@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { Client } from "pg";
-import { sorgu, stoksuzSiparis, sevkKartiAc } from "../helpers";
+import { aramaliSec, sorgu, stoksuzSiparis, sevkKartiAc } from "../helpers";
 
 /**
  * D-2-1 — OPERASYON ekran matrisi (D-2 §(1) ve 17.10 eki). Oturum `auth.setup.ts`'te
@@ -187,8 +187,8 @@ test("bayiye sipariş girer; sipariş satıcısız açılır (X-8-3, D-2 §(1))"
     [`e2e-bayi-${ek}`, ad, `+90537${ek}`]
   );
   await page.goto("/orders/new");
-  await page.getByLabel("Doktor").selectOption({ label: `[Bayi] ${ad}` });
-  await page.getByLabel("Ürün").selectOption({ index: 1 });
+  await aramaliSec(page, "Doktor", ad);
+  await aramaliSec(page, "Ürün");
   await page.getByRole("button", { name: "Siparişi Oluştur" }).click();
   await expect(page).toHaveURL(/\/orders\/(?!new$)[^/]+$/);
   const [o] = await sorgu<{ sellerId: string | null }>(`SELECT "sellerId" FROM "Order" WHERE "doctorId" = $1`, [`e2e-bayi-${ek}`]);

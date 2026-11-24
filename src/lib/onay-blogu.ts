@@ -18,7 +18,7 @@ type Db = Prisma.TransactionClient | typeof prisma;
  */
 
 /** Blok doğuran kural kodları — X-4 kataloğunun alt kümesi (§(3)); veritabanında `varchar`. */
-export type BlokKuralKodu = Extract<KuralKodu, "NEGATIF_STOK" | "BEDELSIZ_ONAYI">;
+export type BlokKuralKodu = Extract<KuralKodu, "NEGATIF_STOK" | "BEDELSIZ_ONAYI" | "ISKONTO_TAVANI">;
 
 /**
  * A-2 eki (20.10.2026): bedelsiz satırın onay kuralı sebebe bağlıdır — numune onaysız geçer,

@@ -9,7 +9,7 @@ import { OrderStatus } from "@/generated/prisma/enums";
 import { stokHareketiYaz, stokKilitle } from "@/lib/stok";
 import { IsHatasi } from "@/lib/hata";
 import { iadeYaz } from "@/lib/iade";
-import { siparisAc, siparisSatirlariniOku } from "@/lib/siparis-giris";
+import { siparisAc, siparisFiyatiOnizle, siparisSatirlariniOku, type FiyatOnizlemeSonucu } from "@/lib/siparis-giris";
 import { siparisiHazirla, teslimEdildiIsaretle } from "@/lib/siparis-durum";
 import { basarili, engel, type IslemSonucu } from "@/lib/sonuc";
 
@@ -148,6 +148,12 @@ export async function createReturn(orderId: string, _prev: unknown, formData: Fo
  * satıcı ekranıyla aynı yoldan (`siparisAc`); satıcı sipariş anındaki sahiptir, bayide yoktur.
  * Yönetici girerse bedelsiz onayı aynı işlemde verilir (A-8-5).
  */
+/** Formda cari ve miktara göre liste fiyatı önizlemesi (A-10-2). */
+export async function fiyatOnizle(doctorId: string, productId: string, quantity: number): Promise<FiyatOnizlemeSonucu> {
+  await requireStaff();
+  return { ...basarili(), listeFiyat: await siparisFiyatiOnizle(doctorId, productId, quantity) };
+}
+
 export async function createStaffOrder(_prev: unknown, formData: FormData): Promise<IslemSonucu> {
   const session = await requireStaff();
   const doctorId = String(formData.get("doctorId") ?? "").trim();

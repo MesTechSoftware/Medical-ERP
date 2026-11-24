@@ -385,6 +385,23 @@ describe("bedelsiz satır onayı sevkiyatı durdurur (A-2-2)", () => {
   });
 });
 
+describe("iskonto tavanı onayı sevkiyatı durdurur (A-10-4)", () => {
+  it("kararsız blok ONAY_BEKLIYOR, RED ONAY_REDDEDILDI; ONAY'dan sonra sevk edilir", async () => {
+    const o = await siparis({ kalemler: [{ miktar: 1, birim: "100" }] });
+    const blok = await prisma.approvalBlock.create({
+      data: { documentType: "SIP", documentId: o.id, ruleCode: "ISKONTO_TAVANI", openedById: s.satici.id, openReason: "Rakip" },
+    });
+    const dene = () => kodlar(sevk(o.id, [{ siparisKalemiId: o.items[0].id, miktar: 1 }]));
+    expect(await dene()).toEqual(["ONAY_BEKLIYOR"]);
+    await prisma.$transaction((tx) => blokKarariVer(tx, { blokId: blok.id, karar: "RED", not: "Hayır", yapanId: s.yonetici.id }));
+    expect(await dene()).toEqual(["ONAY_REDDEDILDI"]);
+    await prisma.approvalBlock.create({
+      data: { documentType: "SIP", documentId: o.id, ruleCode: "ISKONTO_TAVANI", openedById: s.satici.id, openReason: "Yeniden", decision: "ONAY", decidedById: s.yonetici.id, decidedAt: new Date(), decisionNote: "Tamam" },
+    });
+    expect(await dene()).toEqual([]);
+  });
+});
+
 describe("F-06 — eşzamanlı sevkiyat negatif stoğa düşerse aşım izlidir (B-4-4, A-8-8)", () => {
   it("iki eşzamanlı sevkiyat: ikincisi kilitte bekler, düşüşü görür; gerekçeyle yazılır ve ONAY'lı blok bırakır", async () => {
     // Stok 100; her sipariş 60 adet.

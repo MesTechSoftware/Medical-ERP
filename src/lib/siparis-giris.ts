@@ -11,6 +11,7 @@ import { BEDELSIZ_ONAY_GEREKIR, blokKontrolleriniCalistir, type BlokIhlali } fro
 import { policy } from "@/lib/policy";
 import { personelSiparisSaticisi, siparisSahibiniKilitle } from "@/lib/sahiplik";
 import { engel, sert, yumusak, type Bildirim, type IslemSonucu } from "@/lib/sonuc";
+import { birimFiyatPozitifMi, iskontoTavaniAsimi } from "@/lib/satir-tutarlari";
 import { priceSchema, quantitySchema } from "@/lib/validation";
 import { bugun } from "@/lib/zaman";
 
@@ -61,6 +62,8 @@ export async function siparisAc(
     satirlar: SiparisSatirlari;
     gerekce: string | null;
     yapan: { id: string; rol: "YONETICI" | "OPERASYON" | "SATICI" };
+    /** İskonto tavanı (yüzde). Verilmezse `policy.pricing.iskontoTavani` (varsayılan `null` = devrede değil); testte eşik verilir. */
+    iskontoTavani?: number | null;
   }
 ): Promise<{ id: string; documentNo: string; onayaGonderildi: boolean }> {
   // Kilit sırası: doktor satırı → belge sayacı (ADR-008 §(1)); stok yazılmadığı için ürün kilidi yok.
@@ -78,6 +81,7 @@ export async function siparisAc(
   const doktor = await tx.doctor.findUniqueOrThrow({ where: { id: g.doktorId }, select: { fullName: true, paymentTermDays: true } });
 
   const gun = bugun();
+  const tavan = g.iskontoTavani === undefined ? policy.pricing.iskontoTavani : g.iskontoTavani;
   const items = [];
   const ihlaller: BlokIhlali[] = [];
   // Kalem hataları toplanır, hepsi birlikte döner (X-4 §(7)).
@@ -102,18 +106,27 @@ export async function siparisAc(
       hatalar.push(sert("FIYAT_COZUMLENEMEDI", { urun: product.name }));
       continue;
     }
+    // A-10-5: bedelsiz olmayan satırın birim fiyatı sıfırdan büyük olmalıdır (DB CHECK aynı koşulu zorlar).
+    const birimFiyat = line.bedelsiz ? "0" : (line.birimFiyat ?? fiyat.listeFiyat);
+    if (!line.bedelsiz && !birimFiyatPozitifMi(birimFiyat)) {
+      hatalar.push(sert("BIRIM_FIYAT_GECERSIZ", { urun: product.name }));
+      continue;
+    }
     // Fiyat ve oran sipariş anında DONDURULUR (RULE-04, C-6 §(2-a)). Bedelsiz satırın liste fiyatı
     // görünür kalır, tutarı 0'dır (A-2, C-6 §(8)).
     items.push({
       productId: product.id,
       quantity: line.quantity,
       listPrice: fiyat.listeFiyat,
-      unitPrice: line.bedelsiz ? "0" : (line.birimFiyat ?? fiyat.listeFiyat),
+      unitPrice: birimFiyat,
       vatRate: product.taxRate.rate,
       isFree: !!line.bedelsiz,
       freeReason: line.bedelsiz?.sebep ?? null,
       freeNote: line.bedelsiz?.aciklama || null,
     });
+    // A-10-4: tavan doluysa ve satırın iskontosu onu aşıyorsa onay bloğu; bedelsiz satıra dokunmaz.
+    const asim = line.bedelsiz ? null : iskontoTavaniAsimi(fiyat.listeFiyat, birimFiyat, tavan);
+    if (asim) ihlaller.push({ kuralKodu: "ISKONTO_TAVANI", parametreler: { urun: product.name, oran: asim, tavan: tavan! } });
     if (line.bedelsiz && BEDELSIZ_ONAY_GEREKIR[line.bedelsiz.sebep]) {
       ihlaller.push({ kuralKodu: "BEDELSIZ_ONAYI", parametreler: { urun: product.name, sebep: line.bedelsiz.sebep } });
     }
@@ -179,4 +192,17 @@ export async function siparisFormuUrunleri() {
       };
     })
   );
+}
+
+/** Form önizleme action'larının dönüşü: `listeFiyat` çözülemediyse `null`. */
+export type FiyatOnizlemeSonucu = IslemSonucu & { listeFiyat: string | null };
+
+/**
+ * Sipariş formu önizlemesi (A-10-2): seçili cari ve miktar için liste fiyatı, `cozumleBirimFiyat()` ile —
+ * sunucunun siparişte kullandığı yolun aynısı. Çözülemezse `null` (varsayılana düşülmez, X-10 §(3)).
+ */
+export async function siparisFiyatiOnizle(doktorId: string, urunId: string, miktar: number): Promise<string | null> {
+  if (!Number.isInteger(miktar) || miktar <= 0) return null;
+  const fiyat = await cozumleBirimFiyat(urunId, doktorId || null, { miktar, gun: bugun() });
+  return fiyat.durum === "TAMAM" ? formatla(fiyat.listeFiyat, "ham") : null;
 }

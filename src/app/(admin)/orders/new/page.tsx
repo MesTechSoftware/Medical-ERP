@@ -3,7 +3,7 @@ import { requireStaff } from "@/lib/session";
 import { siparisFormuUrunleri } from "@/lib/siparis-giris";
 import { PageHeader, Card } from "@/components/ui";
 import OrderForm from "../../../(seller)/my-orders/OrderForm";
-import { createStaffOrder } from "../actions";
+import { createStaffOrder, fiyatOnizle } from "../actions";
 
 /**
  * Personel sipariş girişi (D-2 §(1): OPERASYON sipariş girer; X-8 §(4): bayi siparişi SIP). Her aktif cari
@@ -27,6 +27,7 @@ export default async function StaffNewOrderPage() {
           products={products}
           doctors={cariler.map((c) => ({ ...c, title: c.accountClass === "BAYI" ? "[Bayi]" : c.title }))}
           action={createStaffOrder}
+          fiyatOnizle={fiyatOnizle}
           iptalHref="/orders"
         />
       </Card>

@@ -18,6 +18,7 @@ vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
 vi.mock("next/navigation", () => ({ redirect: () => {} }));
 
 const { createOrder } = await import("./actions");
+const { siparisAc, siparisSatirlariniOku } = await import("@/lib/siparis-giris");
 
 async function seed() {
   const ref = await referansVeri();
@@ -185,6 +186,77 @@ describe("sipariş oluşturma (CM)", () => {
     const sonuc = await createOrder(null, siparisFormu(s.doctor.id, s.product.id, "10.12345"));
     expect(sonuc?.durum).toBe("ENGELLENDI");
     expect(await prisma.order.count()).toBe(0);
+  });
+});
+
+describe("birim fiyat ve iskonto tavanı (A-10-1, A-10-4, A-10-5)", () => {
+  let s: Awaited<ReturnType<typeof seed>>;
+  beforeEach(async () => {
+    s = await seed();
+  });
+
+  it("bedelsiz olmayan satırda birimFiyat 0 sert reddedilir; sipariş ve numara yazılmaz", async () => {
+    const r = await createOrder(null, siparisFormu(s.doctor.id, s.product.id, "0"));
+    expect(r?.bildirimler.map((b) => [b.kademe, b.kural_kodu, b.parametreler])).toEqual([
+      ["SERT", "BIRIM_FIYAT_GECERSIZ", { urun: "Stent" }],
+    ]);
+    expect(await prisma.order.count()).toBe(0);
+    expect(await prisma.documentCounter.count()).toBe(0);
+  });
+
+  it("liste fiyatı da 0 ise fiyat girilmeyen bedelli satır reddedilir", async () => {
+    await prisma.priceListItem.updateMany({ data: { listPrice: "0" } });
+    const r = await createOrder(null, siparisFormu(s.doctor.id, s.product.id));
+    expect(r?.bildirimler[0].kural_kodu).toBe("BIRIM_FIYAT_GECERSIZ");
+  });
+
+  it("varsayılan politikada tavan yoktur: %50 iskonto onay bloğu açmaz", async () => {
+    expect(await createOrder(null, siparisFormu(s.doctor.id, s.product.id, "500"))).toBeUndefined();
+    expect(await prisma.approvalBlock.count()).toBe(0);
+  });
+
+  describe("ISKONTO_TAVANI (eşik testte verilir, tavan %10)", () => {
+    const ac = (ham: object[], gerekce: string | null, rol: "SATICI" | "YONETICI" = "SATICI") => {
+      const okunan = siparisSatirlariniOku(JSON.stringify(ham));
+      if ("hata" in okunan) throw new Error("satırlar okunamadı");
+      return prisma.$transaction((tx) =>
+        siparisAc(tx, { doktorId: s.doctor.id, satirlar: okunan.satirlar, gerekce, yapan: { id: h.sellerId, rol }, iskontoTavani: 10 })
+      );
+    };
+
+    it("tavanı aşan satır gerekçesiz YUMUSAK döner; hiçbir şey yazılmaz", async () => {
+      const hata = await ac([{ productId: s.product.id, quantity: 1, birimFiyat: "800" }], null).catch((e) => e);
+      expect(hata.sonuc.durum).toBe("ONAY_GEREKLI");
+      expect(hata.sonuc.bildirimler.map((b: { kural_kodu: string; parametreler: unknown }) => [b.kural_kodu, b.parametreler])).toEqual([
+        ["ISKONTO_TAVANI", { urun: "Stent", oran: "20.00", tavan: 10 }],
+      ]);
+      expect(await prisma.order.count()).toBe(0);
+    });
+
+    it("gerekçeyle sipariş kaydolur ve onay bloğu açılır", async () => {
+      const o = await ac([{ productId: s.product.id, quantity: 1, birimFiyat: "800" }], "Rakip teklifi");
+      expect(o.onayaGonderildi).toBe(true);
+      expect(await prisma.approvalBlock.findMany({ select: { documentId: true, ruleCode: true, openReason: true, decision: true } })).toEqual([
+        { documentId: o.id, ruleCode: "ISKONTO_TAVANI", openReason: "Rakip teklifi", decision: null },
+      ]);
+    });
+
+    it("tavan sınırı, liste üstü fiyat ve numune blok açmaz", async () => {
+      await ac(
+        [
+          { productId: s.product.id, quantity: 1, birimFiyat: "900" }, // tam %10: aşmaz
+          { productId: s.product.id, quantity: 1, birimFiyat: "1300" }, // liste üstü
+          { productId: s.product.id, quantity: 1, bedelsiz: { sebep: "NUMUNE" } }, // %100 ama bedelsiz
+        ],
+        null
+      );
+      expect(await prisma.approvalBlock.count()).toBe(0);
+    });
+
+    it("yönetici girerse blok aynı işlemde ONAY ile kapanır", async () => {
+      await ac([{ productId: s.product.id, quantity: 1, birimFiyat: "800" }], "Anlaşma", "YONETICI");
+      expect((await prisma.approvalBlock.findFirstOrThrow()).decision).toBe("ONAY");
+    });
   });
 });
 

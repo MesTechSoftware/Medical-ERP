@@ -1,4 +1,4 @@
-import { type Page, expect } from "@playwright/test";
+import { type Locator, type Page, expect } from "@playwright/test";
 
 // Seed'lenen sabit kullanıcılar (prisma/seed.ts ile birebir).
 export const USERS = {
@@ -36,6 +36,21 @@ export async function login(
   await page.getByLabel("Şifre").fill(user.password);
   await page.getByRole("button", { name: "Giriş Yap" }).click();
   await expect(page).not.toHaveURL(/\/login/);
+}
+
+/**
+ * Aramalı seçimde (`AramaliSecim`) kayıt seçer: kutuya `metin` yazılır (verilmezse yazılmaz) ve listenin
+ * ilk seçeneği alınır. Seçilen kaydın başlık metnini döner.
+ */
+export async function aramaliSec(kapsam: Page | Locator, etiket: string, metin?: string): Promise<string> {
+  const kutu = kapsam.getByRole("combobox", { name: etiket, exact: true }).first();
+  await kutu.click();
+  if (metin) await kutu.fill(metin);
+  const secenek = kapsam.getByRole("option").first();
+  await expect(secenek).toBeVisible();
+  const ad = ((await secenek.locator("span").first().textContent()) ?? "").trim();
+  await secenek.click();
+  return ad;
 }
 
 /** Politikaya uyan iki parola (E-2-6): yöneticinin verdiği geçici parola ve kullanıcının yenisi. */

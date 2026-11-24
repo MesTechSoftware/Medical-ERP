@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { unique } from "../helpers";
+import { aramaliSec, unique } from "../helpers";
 import { yatayTasmaYok } from "./ortak";
 
 test.use({ storageState: "playwright/.auth/seller.json" });
@@ -14,8 +14,8 @@ test("satıcı telefondan sipariş oluşturur", async ({ page }) => {
   await page.goto("/my-orders/new");
   await expect(page.getByLabel("Doktor")).toBeVisible();
   await yatayTasmaYok(page);
-  await page.getByLabel("Doktor").selectOption({ index: 1 });
-  await page.getByLabel("Ürün").selectOption({ index: 1 });
+  await aramaliSec(page, "Doktor");
+  await aramaliSec(page, "Ürün");
   await page.getByRole("button", { name: "Siparişi Oluştur" }).click();
   await expect(page).toHaveURL(/\/my-orders$/);
   await expect(page.getByRole("heading", { level: 1, name: "Siparişlerim" })).toBeVisible();

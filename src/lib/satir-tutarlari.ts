@@ -63,6 +63,26 @@ function iskonto(liste: Decimal, birim: Decimal): Decimal | null {
   return liste.minus(birim).div(liste).times(100).toDecimalPlaces(2);
 }
 
+/**
+ * Satırın iskonto yüzdesi (A-10-3): liste altı artı, liste üstü eksi; 2 hane. Liste fiyatı 0 ise `null`.
+ * Sipariş formunun canlı yüzdesi, toplam hesabı ve `ISKONTO_TAVANI` denetimi bu tek fonksiyondandır.
+ */
+export function iskontoYuzdesi(listeFiyat: ParaDegeri, birimFiyat: ParaDegeri): Decimal | null {
+  return iskonto(new D(listeFiyat as Decimal.Value), new D(birimFiyat as Decimal.Value));
+}
+
+/** Bedelsiz olmayan satırda birim fiyat sıfırdan büyük olmalıdır (A-10-5). */
+export function birimFiyatPozitifMi(birimFiyat: ParaDegeri): boolean {
+  return new D(birimFiyat as Decimal.Value).gt(0);
+}
+
+/** İskonto tavanı aşıldıysa gerçekleşen yüzde (metin), aksi halde `null` (A-10-4). Tavan yüzdedir; `null` = devrede değil. */
+export function iskontoTavaniAsimi(listeFiyat: ParaDegeri, birimFiyat: ParaDegeri, tavan: number | null): string | null {
+  if (tavan === null) return null;
+  const oran = iskontoYuzdesi(listeFiyat, birimFiyat);
+  return oran && oran.gt(tavan) ? oran.toFixed(2) : null;
+}
+
 export function hesaplaSatirTutarlari(satirlar: readonly SatirGirdisi[]): {
   satirlar: SatirTutari[];
   toplam: BelgeTutari;

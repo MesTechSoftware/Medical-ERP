@@ -159,3 +159,21 @@ describe("blokKontrolleriniCalistir — yönetici (A-8-5)", () => {
     expect(await acikBlokVarMi("SIP", "o1")).toBe(false);
   });
 });
+
+describe("ISKONTO_TAVANI kuralı (A-10-4)", () => {
+  const iskonto: BlokIhlali = { kuralKodu: "ISKONTO_TAVANI", parametreler: { urun: "Stent", oran: "25.00", tavan: 10 } };
+
+  it("satıcı gerekçeyle gönderirse ISKONTO_TAVANI bloğu açılır ve belge onaya gider", async () => {
+    const s = await calistir({ id: saticiId, rol: "SATICI" }, "Hacimli sipariş", [iskonto]);
+    expect(s).toMatchObject({ durum: "BASARILI_UYARILI", onayaGonderildi: true });
+    const bloklar = await prisma.approvalBlock.findMany();
+    expect(bloklar.map((b) => b.ruleCode)).toEqual(["ISKONTO_TAVANI"]);
+    expect(await acikBlokVarMi("SIP", "o1")).toBe(true);
+  });
+
+  it("gerekçe yoksa ONAY_GEREKLI döner, blok yazılmaz", async () => {
+    const s = await calistir({ id: saticiId, rol: "SATICI" }, null, [iskonto]);
+    expect(s.durum).toBe("ONAY_GEREKLI");
+    expect(await prisma.approvalBlock.count()).toBe(0);
+  });
+});

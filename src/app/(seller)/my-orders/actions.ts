@@ -6,9 +6,19 @@ import { prisma } from "@/lib/db";
 import { requireSeller } from "@/lib/session";
 import { canSellerOrderForDoctor, kapsamliDoktorlariGetir } from "@/lib/doctor";
 import { IsHatasi } from "@/lib/hata";
-import { siparisAc, siparisSatirlariniOku } from "@/lib/siparis-giris";
-import { engel, type IslemSonucu } from "@/lib/sonuc";
+import { siparisAc, siparisFiyatiOnizle, siparisSatirlariniOku, type FiyatOnizlemeSonucu } from "@/lib/siparis-giris";
+import { basarili, engel, type IslemSonucu } from "@/lib/sonuc";
 
+/** Formda cari ve miktara göre liste fiyatı önizlemesi (A-10-2). Kapsam dışı cari için sonuç yok. */
+export async function fiyatOnizle(doctorId: string, productId: string, quantity: number): Promise<FiyatOnizlemeSonucu> {
+  const session = await requireSeller();
+  const doctor = await prisma.doctor.findFirst({
+    where: { AND: [kapsamliDoktorlariGetir(session.user), { id: doctorId }] },
+    select: { id: true },
+  });
+  if (!doctor) return { ...basarili(), listeFiyat: null };
+  return { ...basarili(), listeFiyat: await siparisFiyatiOnizle(doctor.id, productId, quantity) };
+}
 
 export async function createOrder(
   _prev: unknown,
