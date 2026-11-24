@@ -7,7 +7,7 @@
 > "Karar bekleyenler" bölümlerindeki soru metinleri **buraya taşındı**. O bölümler
 > bundan sonra yalnız "bkz. `KARARLAR.md`" der.
 >
-> Son güncelleme: 1 Kasım 2026 (**B-4 eki — stok hareketi işlemi yapan kullanıcıyı taşır**) · 27 Ekim 2026 (**X-18 kararı — denetim kaydı modülü: değişmez kayıt, veritabanında zincirli SHA-256 mührü, IP/oturum/gerekçe, alan bazlı değişiklik, üç katmanlı ekran**) · 20 Ekim 2026 (**B-7 eki — stok veri setinde düzeltme satırları yıl başından seçilen güne** · **A-4 eki — konsinye konumu doktor başına, satış transfer + sevkiyatla, konum belgelerinde negatif stokta yalnız yönetici** · **A-2 eki — bedelsiz sebebi kapalı liste; numune onaysız, diğerleri yönetici onayı ister** · **A-1 eki — iadede prim oranı en son sevkiyattan, ciro iade tarihinde düşer, iadeyi yönetici ve operasyon girer** · **A-8 eki — negatif stok sevkiyatta denetlenir; blok siparişe bağlanır ve sevkiyatı durdurur**) · 17 Ekim 2026 (**D-2 eki — `OPERASYON` ekran matrisi: cari açmaz, ürün kartını yalnız görür, rapor ve denetim kaydı görmez; Dashboard'u görür, Satıcılar ekranını salt okur · X-1 eki — dönem tahsilatı tahsilat anındaki sahibe sayılır**) · 16 Ekim 2026 (**A-8 eki — `RED`'in sonucu: her kural için son blok geçerli**) · 13 Ekim 2026 (**X-16 kararı — içe aktarım elle girişin toplu hâli, şablon tek tanımdan (ADR-006), kısmi yazma yok · X-15 §(5) kişisel telefon varsayımı 🟦**) · 12 Ekim 2026 (**C-1 revizyon 3 — modül sınırı §1.3 §F, zamanlayıcı altyapısı, e-belge durum makinesi, cari uzantısı, istisna/tevkifat çekirdek kararı · K-8 kontör 🟦 · K-9 §B kargo anahtarı**) · 10 Ekim 2026 (**C-1 revizyon 2 — e-belge modülü çekirdek sonrası ilk modül, ilk adaptör müşterinin entegratörü, tek çatı partnerlikle · D-3 kargo e-belgeden sonra, BYOI · 🟦 tarama: X-11/X-12/A-4/A-8 ✅, K-10 yeni kilit, K-4 ayrıştı**) · 9 Ekim 2026 (**C-1 iç karar olarak ✅ — 🟦 varsayılan kaydı ve kilitlenme anı kaldırıldı; §0.6'nın otomatik ✅ kuralı kaldırıldı — tarih tek başına hiçbir kaydı kapatmaz**) · 1 Ekim 2026 (**X-17 kararı — sahipliğin tek yazma noktası, toplu devir; tek çağrı noktası listesi 11 → 12; `CM`'in önündeki son açık kalem kapandı**) · 24 Eylül 2026 (**D-6 ekleri — açılış bakiyesi import'u**) · 16 Eylül 2026 (**X-11…X-15 kararı + PRD taraması**) · **Faz 0'ın karar adımları tamamlandı · Faz 1A'da açılan X-8…X-17 kapandı (X-16: 13.10.2026) · PRD taraması kapandı — açık (⬜) madde yok.**
+> Son güncelleme: 24 Kasım 2026 (**demo öncesi revizyon — A-10, A-3, A-12, A-4, A-8, D-2, C-3, X-18, E-2, K-4 §(6)-(k) ekleri; sipariş ekranlarında durum sayıları sekmede**) · 1 Kasım 2026 (**B-4 eki — stok hareketi işlemi yapan kullanıcıyı taşır**) · 27 Ekim 2026 (**X-18 kararı — denetim kaydı modülü: değişmez kayıt, veritabanında zincirli SHA-256 mührü, IP/oturum/gerekçe, alan bazlı değişiklik, üç katmanlı ekran**) · 20 Ekim 2026 (**B-7 eki — stok veri setinde düzeltme satırları yıl başından seçilen güne** · **A-4 eki — konsinye konumu doktor başına, satış transfer + sevkiyatla, konum belgelerinde negatif stokta yalnız yönetici** · **A-2 eki — bedelsiz sebebi kapalı liste; numune onaysız, diğerleri yönetici onayı ister** · **A-1 eki — iadede prim oranı en son sevkiyattan, ciro iade tarihinde düşer, iadeyi yönetici ve operasyon girer** · **A-8 eki — negatif stok sevkiyatta denetlenir; blok siparişe bağlanır ve sevkiyatı durdurur**) · 17 Ekim 2026 (**D-2 eki — `OPERASYON` ekran matrisi: cari açmaz, ürün kartını yalnız görür, rapor ve denetim kaydı görmez; Dashboard'u görür, Satıcılar ekranını salt okur · X-1 eki — dönem tahsilatı tahsilat anındaki sahibe sayılır**) · 16 Ekim 2026 (**A-8 eki — `RED`'in sonucu: her kural için son blok geçerli**) · 13 Ekim 2026 (**X-16 kararı — içe aktarım elle girişin toplu hâli, şablon tek tanımdan (ADR-006), kısmi yazma yok · X-15 §(5) kişisel telefon varsayımı 🟦**) · 12 Ekim 2026 (**C-1 revizyon 3 — modül sınırı §1.3 §F, zamanlayıcı altyapısı, e-belge durum makinesi, cari uzantısı, istisna/tevkifat çekirdek kararı · K-8 kontör 🟦 · K-9 §B kargo anahtarı**) · 10 Ekim 2026 (**C-1 revizyon 2 — e-belge modülü çekirdek sonrası ilk modül, ilk adaptör müşterinin entegratörü, tek çatı partnerlikle · D-3 kargo e-belgeden sonra, BYOI · 🟦 tarama: X-11/X-12/A-4/A-8 ✅, K-10 yeni kilit, K-4 ayrıştı**) · 9 Ekim 2026 (**C-1 iç karar olarak ✅ — 🟦 varsayılan kaydı ve kilitlenme anı kaldırıldı; §0.6'nın otomatik ✅ kuralı kaldırıldı — tarih tek başına hiçbir kaydı kapatmaz**) · 1 Ekim 2026 (**X-17 kararı — sahipliğin tek yazma noktası, toplu devir; tek çağrı noktası listesi 11 → 12; `CM`'in önündeki son açık kalem kapandı**) · 24 Eylül 2026 (**D-6 ekleri — açılış bakiyesi import'u**) · 16 Eylül 2026 (**X-11…X-15 kararı + PRD taraması**) · **Faz 0'ın karar adımları tamamlandı · Faz 1A'da açılan X-8…X-17 kapandı (X-16: 13.10.2026) · PRD taraması kapandı — açık (⬜) madde yok.**
 > **24.09.2026 — D-6 ekleri (şema değişmedi):** açılış bakiyesi import'unda **işaret kuralı** ve
 > **önizleme özeti** yazıldı. Boşluğun kaynağı 19.09 incelemesinin 4. bulgusudur; D-6 üç aşamayı
 > (doğrula → önizle → yaz) koyuyor ama hiçbirinin içeriğini yazmıyordu. Yeni kural kodu: `TUTAR_NEGATIF`.
@@ -5109,6 +5109,94 @@ merkezî ve temizlenmiş kaydı kurdu. Kaydın **kendisini** koruyan bir hüküm
 - **`docs/adr/ADR-011`** ve **`ADR-012`** yazıldı; ADR-008'in Durum satırı ve `docs/adr/README.md` dizini.
 - **`KABUL_KRITERLERI.md`** — `X-18-1` … `X-18-7`.
 - **`YOL_HARITASI.md`** §7-5 kapsam satırı.
+
+### 5.22 Demo öncesi revizyon — ürün sahibi kararı ekleri *(24.11.2026)*
+
+*Kaynak: ürün sahibi kararı, 24.11.2026; kapsam donduruldu. Plan girdisi:
+`docs/superpowers/specs/2026-11-24-demo-oncesi-revizyon-karar-ozeti.md` (karar üretmez, §7.1-A). Eski hükümlerin gövdesi
+değişmez; ekler tarihlidir. Kabul kriterleri `KABUL_KRITERLERI.md`'dedir; mimari karar `docs/adr/ADR-013`.*
+
+> **✅ Ek (24.11.2026 · ürün sahibi kararı) — A-10 fiyat / iskonto.**
+> · Sipariş formunda seçili cariye ve satır miktarına göre **cari / barem fiyatı çözülür**; ürünün liste fiyatının
+>   olmaması satırı kilitlemez. Birim fiyat liste fiyatından farklıysa satırda **canlı % iskonto** (liste altı) ya da
+>   % fark (liste üstü) görünür.
+> · **`ISKONTO_TAVANI`** kuralı `ApprovalBlock` üzerinde `BEDELSIZ_ONAYI` deseniyle **YUMUŞAK** onay bloğu olarak
+>   **kurulur ve testlenir**; `policy.pricing.iskontoTavani` varsayılanı **`null`**'dır (tavan müşteri kararıdır), bu
+>   yüzden çalışma anında devrede değildir. Liste üstü satış serbesttir. `NUMUNE`'ye dokunulmaz.
+> · Bedelsiz olmayan satırda `birimFiyat <= 0` **SERT** reddedilir; veritabanı `CHECK` kısıtı aynı koşulu zorlar.
+> · `A-10-1` bu doğrultuda güncellendi.
+
+> **✅ Ek (24.11.2026 · ürün sahibi kararı) — A-3 kalanı kapat (short-close).**
+> · Sipariş düzeyinde **"Kalanı Kapat"**: yalnız **en az bir sevkiyatı olan `HAZIRLANIYOR`** siparişte; yetki
+>   `YONETICI` + `OPERASYON` (`SATICI` değil); onay bloğu yoktur.
+> · Gerekçe kataloğu: `TEDARIK_EDILEMEDI` · `MUSTERI_VAZGECTI` · `DIGER` (`DIGER`'de açıklama zorunlu).
+> · Veri: satıra `closedQuantity` (varsayılan 0); siparişe `closedById` + `closedAt` + `closeReason` + `closeNote`
+>   (B-4 `createdById` deseni). **Hiçbir kayıt silinmez** (§0.2); `AuditLog` yazılır.
+> · **Kalan = `quantity − sevk − closedQuantity`** — tek kaynaktan (A-3-2 gösterimi ve A-12-2 açık sipariş riski dahil).
+> · Kapanınca sipariş `KARGOLANDI`'ya geçer; detayda "Kısmi kapatıldı" rozeti ve sebep görünür. Sipariş detayı
+>   **tüm sevkiyatları** ve satır bazında sevk/kalanı gösterir. Firmanın takip adresi şablonu doluysa takip numarası
+>   dış bağlantıdır, boşsa düz metindir.
+> · Kilit: ürün satırları id sırasıyla (`stokKilitle`) + koşullu güncelleme (`status = HAZIRLANIYOR`); **`Order`
+>   satırına `FOR UPDATE` alınmaz** — ADR-012 sırası değişmez, yeni kilit kaynağı açılmaz.
+> · **Kalanı kapatma, X-6'daki kalem kapatma (tahsilat-borç eşleştirmesi) değildir; yalnız açık sipariş miktarını düşürür.**
+
+> **✅ Ek (24.11.2026 · ürün sahibi kararı) — A-12 risk / vade BİLGİ şeridi.**
+> · `hesaplaDoktorRisk()` ve `vadesiGecmisUyarisi()` sonuçları sipariş (`siparisAc`) ve sevkiyat (`sevkiyatYaz`)
+>   dönüşlerine, toplu kargo sonuç satırına **BİLGİ** olarak bağlanır; hiçbir işlemi engellemez. Metinler:
+>   "Limit aşıldı: risk X / limit Y" · "Vadesi geçmiş borç var (en eski vade: …)" — borç tutarı yazılmaz (X-6 §7).
+> · Formda cari seçilince risk, limit ve vade uyarısı anlık görünür; cari detayda risk/limit tutarları gösterilir.
+> · `creditLimit >= 0` ortak şemadandır (`cari.ts` + içe aktarım): `0` = "Peşin çalışılan cari", `null` = limitsiz.
+
+> **✅ Ek (24.11.2026 · ürün sahibi kararı) — A-4 pasif doktor.**
+> · Pasif doktora **yeni konsinye çıkışı** `DOKTOR_PASIF` ile **SERT** reddedilir.
+> · **Pasif doktordan depoya transfer AÇIK KALIR** — aksi hâlde pasif doktordaki konsinye mal depoya geri çekilemez
+>   (B-7 tahliye vanası deseni). Bunu koruyan regresyon testi vardır.
+> · Stok ekranında transfer **kaynak** listesinden "Merkez Depo" çıkarılır, yalnız konsinye konumları listelenir
+>   (yalnız arayüz; sunucu depoyu kaynak olarak zaten `TRANSFER_KONUMU_GECERSIZ` ile reddeder).
+
+> **✅ Ek (24.11.2026 · ürün sahibi kararı) — A-8 öksüz onay bloğu.** İptal edilmiş **ve** kalanı kapatılmış
+> siparişlerin bekleyen blokları `/approvals` kuyruğundan düşer.
+
+> **✅ Ek (24.11.2026 · ürün sahibi kararı) — D-2 `OPERASYON` panosu.** `OPERASYON` dashboard'undan Ciro ve Tahsilat
+> KPI'ları kalkar (§0.1.a); öne çıkanlar: Bekleyen sipariş, Kargolanacak, Kritik stok, Onay bekleyen / kalanı açık siparişler.
+
+> **✅ Ek (24.11.2026 · ürün sahibi kararı) — C-3 ürün silme.** Stok hareketi ya da sipariş kalemi olan ürün
+> **silinmez** (SERT; "pasifleştirin" yönlendirmesi). Bağı yoksa ürün ve fiyat satırları tek transaction'da silinir ve
+> denetim kaydına yazılır. Stok hareketi hiçbir koşulda silinmez. Kilit: `stokKilitle` → bağ kontrolü → silme.
+
+> **✅ Ek (24.11.2026 · ürün sahibi kararı) — A-11 tahsilat doğrulaması.** Geçersiz `paidAt` 500 yerine iş hatası
+> döner. `tahsilatYaz` doktorun **varlığını** denetler; pasif doktor **reddedilmez** (B-7 tahliye vanası).
+
+> **✅ Ek (24.11.2026 · ürün sahibi kararı) — X-18 denetim kapsamı.** Konsinye çıkış, konumlar arası transfer ve onay
+> bloğunun onay/red kararı denetim kaydına, işlemin kendi transaction'ında yazılır (zincir kilidi commit anındadır —
+> ADR-012).
+
+> **✅ Ek (24.11.2026 · ürün sahibi kararı) — E-2 yapılandırma ve marka.**
+> · Marka sunucu tarafı **`APP_BRAND`** ortam değişkenindedir (`NEXT_PUBLIC` değil — derlemede gömülmez). Giriş sayfası
+>   markayı prop olarak alır; `global-error` markasızdır; sekme başlığı "Sayfa · Marka" biçimindedir. Logo nötr
+>   varsayılandır ve ortam değişkeniyle değiştirilebilir.
+> · Demo parolaları ortam değişkeninden gelir; yedek değer yalnız yerel/demo içindir; seed ortamdan gelen parolayı
+>   konsola yazmaz. **Yayındaki demo sunucusunda `admin123` geçerlidir: parola sıfırlama / yeni seed açık bir deploy
+>   adımıdır**, kendiliğinden olmaz.
+
+> **✅ Ek (24.11.2026 · ürün sahibi kararı) — K-4 §(6)-(k) Fatura Hazırlık Kartı.**
+> · Yönetici sipariş detayında her sevkiyat (SVK) için **salt okunur kart**; satıcı sayfasında yoktur. `YONETICI` +
+>   `OPERASYON` görür, `SATICI` görmez.
+> · Kart **dosya üretmez ve `ExportLog`'a yazılmaz**; bu yüzden **D-5 §4 (dışa aktarım yalnız yönetici) kapsamına
+>   girmez** — gerekçe: kart bir dışa aktarım değil, ekranda okunan bilgidir.
+> · Veri tek kaynaktandır: `faturaHazirlik` (`disa-aktarim.ts`) tek sevkiyat süzgeciyle paylaşılır; ikinci hesap yolu
+>   yoktur. Kart muhatap alanlarını (A-13), satırları, KDV kırılımını, eksik fatura bilgisi uyarısını (A-13 §5), 7 gün
+>   uyarısını ve bedelsiz satır notunu gösterir; "Bilgi amaçlıdır — mali belge değildir" (C-1) yazar.
+> · **Canlı şartı:** K-7 §(4) yazılı teyidi alınmadan canlıda açılmaz. "Faturalandı" işareti (C-1 §(4)) Aşama 2'dedir.
+
+> **✅ Ek (24.11.2026 · ürün sahibi kararı) — sipariş ekranlarında durum sayıları sekmede (ADR-013).**
+> · **Siparişler (yönetici) ve Siparişlerim (satıcı)** ekranlarında KPI kart bloğu kalkar; sayılar durum
+>   sekmelerine taşınır ("Bekliyor 1"). **Sekmedeki sayı = o sekmenin o anki dönem ve süzgeçlerdeki satır sayısıdır**;
+>   "Tümü" teklifleri de içerir (sekme neyi listeliyorsa sayı onu söyler).
+> · Etkin dönem sekmelerin yanında görünür kalır; telefonda sekmeler yatay kayan şerittir. Dashboard "Sipariş
+>   durumları" eşitliği korunur. `A-5-8` ve `X-13-3` yeniden yazıldı.
+
+---
 
 ## 6. Faz 0 çıkış kontrol listesi
 
