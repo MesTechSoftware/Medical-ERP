@@ -12,13 +12,17 @@ import { kalanMiktar } from "@/lib/siparis";
 import { formatDateTime } from "@/lib/format";
 import { buton } from "@/components/stil";
 import { Ikon } from "@/components/Ikon";
+import { BilgiSeridi } from "@/components/BilgiSeridi";
 
 export default async function AdminOrderDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ bilgi?: string | string[] }>;
 }) {
   const { id } = await params;
+  const { bilgi } = await searchParams;
 
   const order = await prisma.order.findUnique({
     where: { id },
@@ -78,6 +82,8 @@ export default async function AdminOrderDetailPage({
           </Link>
         }
       />
+
+      <BilgiSeridi ham={bilgi} />
 
       <OrderDetail order={order} showSeller />
 

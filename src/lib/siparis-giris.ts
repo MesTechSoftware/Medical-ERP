@@ -4,6 +4,7 @@ import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { uretBelgeNo } from "@/lib/belge-no";
 import { cozumleBirimFiyat } from "@/lib/fiyat";
 import { prisma } from "@/lib/db";
+import { riskBilgileri } from "@/lib/doctor-cari";
 import { formatla } from "@/lib/money";
 import { hesaplaStok, varsayilanDepoId } from "@/lib/stok";
 import { IsHatasi } from "@/lib/hata";
@@ -65,7 +66,7 @@ export async function siparisAc(
     /** İskonto tavanı (yüzde). Verilmezse `policy.pricing.iskontoTavani` (varsayılan `null` = devrede değil); testte eşik verilir. */
     iskontoTavani?: number | null;
   }
-): Promise<{ id: string; documentNo: string; onayaGonderildi: boolean }> {
+): Promise<{ id: string; documentNo: string; onayaGonderildi: boolean; bildirimler: Bildirim[] }> {
   // Kilit sırası: doktor satırı → belge sayacı (ADR-008 §(1)); stok yazılmadığı için ürün kilidi yok.
   // Satıcı: sahip kilit altında yeniden okunur; arada devir olduysa reddedilir (X-17 §(8)).
   let saticiId: string | null;
@@ -165,7 +166,8 @@ export async function siparisAc(
     },
     tx
   );
-  return { id: order.id, documentNo, onayaGonderildi };
+  // A-12-6: limit ve vade BİLGİ şeridi; yeni sipariş açık siparişe girmiş olarak hesaplanır, işlemi engellemez.
+  return { id: order.id, documentNo, onayaGonderildi, bildirimler: await riskBilgileri(g.doktorId, tx) };
 }
 
 /**

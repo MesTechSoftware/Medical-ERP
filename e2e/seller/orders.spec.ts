@@ -10,7 +10,7 @@ test("satıcı yeni sipariş oluşturur ve listesinde görür", async ({ page })
   await aramaliSec(page, "Ürün");
   await page.getByRole("button", { name: "Siparişi Oluştur" }).click();
 
-  await expect(page).toHaveURL(/\/my-orders$/);
+  await expect(page).toHaveURL(/\/my-orders(\?bilgi=.*)?$/);
   await expect(
     page.getByRole("heading", { level: 1, name: "Siparişlerim" })
   ).toBeVisible();
@@ -38,7 +38,7 @@ test("promosyon bedelsiz satır gerekçe ister; sipariş kaydolur ve onay bekler
   await diyalog.getByLabel("Gerekçe").fill("Kongre standı için");
   await diyalog.getByRole("button", { name: "Gerekçeyle devam et" }).click();
 
-  await expect(page).toHaveURL(/\/my-orders$/);
+  await expect(page).toHaveURL(/\/my-orders(\?bilgi=.*)?$/);
   await expect(page.getByText("Onay bekliyor").first()).toBeVisible();
 });
 

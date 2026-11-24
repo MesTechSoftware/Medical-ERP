@@ -119,6 +119,17 @@ describe("satır doğrulaması = elle giriş (X-16 §(1)), kısmi yazma yok (§(
   });
 });
 
+describe("kredi limiti (A-12-7)", () => {
+  it("0 kabul edilir ve yazılır; negatif limit satır hatasıdır", async () => {
+    const baslik = [...BASLIK, "Kredi limiti"];
+    const iyi = dosya([["DOKTOR", "Dr. Pesin", "K", "B", "0532 111 22 33", null, null, "0"]], baslik);
+    expect((await calistir(iyi, "yaz")).durum).toBe("BASARILI");
+    expect((await prisma.doctor.findFirstOrThrow({ where: { fullName: "Dr. Pesin" } })).creditLimit?.toFixed(2)).toBe("0.00");
+    const kotu = await calistir(dosya([["DOKTOR", "Dr. Eksi", "K", "B", "0532 111 22 34", null, null, "-5"]], baslik));
+    expect(hatalar(kotu)).toEqual([[2, "Kredi limiti", "GECERSIZ_TUTAR"]]);
+  });
+});
+
 describe("parti geri alma (X-12 §(3), X-16 §(10))", () => {
   it("belgeye bağlı cari varsa hiçbir kayıt silinmez; yoksa parti bütünüyle geri alınır; ikinci kez alınmaz", async () => {
     const d = dosya([

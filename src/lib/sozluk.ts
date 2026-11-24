@@ -90,6 +90,11 @@ export const KURAL_METNI: Record<KuralKodu, (p: Parametreler) => string> = {
   VADESI_GECMIS_HAREKET: (p) =>
     `Vadesi geçmiş hareket var; en eski vade ${String(p.enEskiVade).split("-").reverse().join(".")}. ` +
     "Tahsilatlar borçlarla eşleştirilmez; bu tarih o borcun hâlâ açık olduğunu göstermez.",
+  // A-12-6: sipariş ve sevkiyat bilgi şeridi; borç tutarı yazılmaz (X-6 §(7)). Limit 0 = peşin çalışılan cari (A-12-7).
+  LIMIT_ASILDI: (p) =>
+    `${String(p.limit).replace(/[.,]0+$/, "") === "0" ? "Peşin çalışılan cari. " : ""}Limit aşıldı: risk ${formatla(p.risk)} / limit ${formatla(p.limit)}`,
+  VADESI_GECMIS_BORC: (p) =>
+    `Vadesi geçmiş borç var (en eski vade: ${String(p.enEskiVade).split("-").reverse().join(".")})`,
   FATURA_SABLONU_TANIMSIZ: () =>
     "Fatura hazırlık şablonu tanımlı değil; dosya, entegratörün sütun eşlemesi kurulumda girildikten sonra üretilir.",
   // K-4 §(6)-d: sistem tarih hesaplar, vergisel sonucu hesaplamaz.

@@ -81,7 +81,7 @@ export default function CariFormu({
           )}
           <SelectField label="Fiyat listesi (boş: varsayılan)" name="priceListId" defaultValue={d("priceListId")} options={[{ value: "", label: "Varsayılan" }, ...listeler]} sonuc={sonuc} />
           <Field label="Ödeme vadesi (gün)" name="paymentTermDays" type="number" min="0" defaultValue={d("paymentTermDays")} sonuc={sonuc} />
-          <Field label={`${tabanli("Kredi limiti", BRUT)} — boş: limitsiz`} name="creditLimit" defaultValue={d("creditLimit")} sonuc={sonuc} />
+          <Field label={`${tabanli("Kredi limiti", BRUT)} — boş: limitsiz, 0: peşin`} name="creditLimit" defaultValue={d("creditLimit")} sonuc={sonuc} />
         </div>
       </section>
 

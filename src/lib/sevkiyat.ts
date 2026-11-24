@@ -1,6 +1,7 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { uretBelgeNo } from "@/lib/belge-no";
 import { sevkiyatHareketiYaz } from "@/lib/cari-hareket";
+import { riskBilgileri } from "@/lib/doctor-cari";
 import { IsHatasi } from "@/lib/hata";
 import { onSevkiyatTamamlandi } from "@/lib/olaylar";
 import { blokKontrolleriniCalistir, sonBlokDurumu, type BlokIhlali } from "@/lib/onay-blogu";
@@ -44,7 +45,7 @@ export type SevkiyatGirdisi = {
 };
 
 export type SevkiyatSonucu =
-  | { durum: "SEVK_EDILDI"; sevkiyatId: string; documentNo: string; tamamlandi: boolean }
+  | { durum: "SEVK_EDILDI"; sevkiyatId: string; documentNo: string; tamamlandi: boolean; bildirimler: Bildirim[] }
   | { durum: "ONAYA_GONDERILDI"; ihlaller: BlokIhlali[] };
 
 export async function sevkiyatYaz(tx: Prisma.TransactionClient, girdi: SevkiyatGirdisi): Promise<SevkiyatSonucu> {
@@ -200,5 +201,6 @@ export async function sevkiyatYaz(tx: Prisma.TransactionClient, girdi: SevkiyatG
     await tx.order.update({ where: { id: siparis.id }, data: { status: "KARGOLANDI" } });
   }
   onSevkiyatTamamlandi({ sevkiyatId: sevkiyat.id, siparisId: siparis.id, siparisTamamlandi: tamamlandi }); // D-1
-  return { durum: "SEVK_EDILDI", sevkiyatId: sevkiyat.id, documentNo, tamamlandi };
+  // A-12-6: limit ve vade BİLGİ şeridi; sevkiyat yazıldıktan sonraki riskle hesaplanır, işlemi engellemez.
+  return { durum: "SEVK_EDILDI", sevkiyatId: sevkiyat.id, documentNo, tamamlandi, bildirimler: await riskBilgileri(siparis.doctorId, tx) };
 }

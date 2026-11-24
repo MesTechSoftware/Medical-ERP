@@ -198,6 +198,7 @@ export function TopluKargoSonucListesi({ satirlar }: { satirlar: readonly TopluS
                       ? `Onay gerekli: ${metin} — Kısmi sevk panelinden gerekçeyle gönderin.`
                       : metin}
               </span>
+              {r.durum === "SEVK_EDILDI" && metin && <span className="text-information">{metin}</span>}
             </li>
           );
         })}

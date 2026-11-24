@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { prisma } from "@/lib/db";
-import { hesaplaDoktorRisk, hesaplaDoktorRiskleri } from "@/lib/doctor-cari";
+import { hesaplaDoktorRisk, hesaplaDoktorRiskleri, riskBilgileri } from "@/lib/doctor-cari";
+import { bildirimMetni } from "@/lib/sozluk";
 import { referansVeri, yeniDoktorVerisi } from "../../test/integration/referans";
 
 // `hesaplaDoktorRisk(doktor)` — KABUL_KRITERLERI A-12-1…A-12-4; toplu sürüm A-12-5.
@@ -206,5 +207,50 @@ describe("hesaplaDoktorRiskleri — toplu ≡ tekli (A-12-5)", () => {
     await hareket("SEVKIYAT", "BORC", "75");
     const r = await prisma.$transaction((tx) => hesaplaDoktorRiskleri([doktorId], tx));
     expect(r.get(doktorId)!.risk.toFixed(2)).toBe("75.00");
+  });
+});
+
+describe("riskBilgileri — BİLGİ şeridi (A-12-6)", () => {
+  const limit = (creditLimit: string | null) => prisma.doctor.update({ where: { id: doktorId }, data: { creditLimit } });
+  const kodlar = async () => (await riskBilgileri(doktorId)).map((b) => b.kural_kodu);
+
+  it("limit aşılmışsa LIMIT_ASILDI; eşitlikte, limitsizde (null) ve limit altında bilgi yoktur", async () => {
+    await hareket("SEVKIYAT", "BORC", "500");
+    expect(await kodlar()).toEqual([]);
+    await limit("500");
+    expect(await kodlar()).toEqual([]);
+    await limit("499.99");
+    const [b] = await riskBilgileri(doktorId);
+    expect(b.kural_kodu).toBe("LIMIT_ASILDI");
+    expect(bildirimMetni(b)).toMatch(/^Limit aşıldı: risk .*500,00.* \/ limit .*499,99/);
+    expect(b.kademe).toBe("BILGI");
+  });
+
+  it("limit 0 = peşin çalışılan cari: herhangi bir risk aşımdır ve metin bunu söyler", async () => {
+    await limit("0");
+    expect(await kodlar()).toEqual([]); // risk 0: aşım yok
+    await siparis([{ miktar: 1, birim: "100" }]);
+    const [b] = await riskBilgileri(doktorId);
+    expect(b.kural_kodu).toBe("LIMIT_ASILDI");
+    expect(bildirimMetni(b)).toMatch(/^Peşin çalışılan cari\. Limit aşıldı/);
+  });
+
+  it("kapatılan miktar riske girmez (A-3-5)", async () => {
+    const o = await siparis([{ miktar: 4, birim: "100" }]); // açık: 4 × 120 = 480
+    await limit("200");
+    expect(await kodlar()).toEqual(["LIMIT_ASILDI"]);
+    await prisma.orderItem.update({ where: { id: o.items[0].id }, data: { closedQuantity: 3 } }); // açık: 1 × 120
+    expect(await kodlar()).toEqual([]);
+  });
+
+  it("vadesi geçmiş borç varsa VADESI_GECMIS_BORC; metinde borç tutarı yoktur (X-6 §(7))", async () => {
+    await prisma.ledgerEntry.create({
+      data: { doctorId: doktorId, type: "SEVKIYAT", direction: "BORC", amount: "777", documentNo: "T", createdById: yapanId, dueDate: new Date("2020-01-15T00:00:00Z") },
+    });
+    const bilgiler = await riskBilgileri(doktorId);
+    expect(bilgiler.map((b) => b.kural_kodu)).toContain("VADESI_GECMIS_BORC");
+    const metin = bilgiler.map(bildirimMetni).join(" ");
+    expect(metin).toMatch(/en eski vade: 15\.01\.2020/);
+    expect(metin).not.toMatch(/777/);
   });
 });

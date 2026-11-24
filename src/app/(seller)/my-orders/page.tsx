@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { requireSeller } from "@/lib/session";
 import { PageHeader, LinkButton } from "@/components/ui";
+import { BilgiSeridi } from "@/components/BilgiSeridi";
 import { ListeSayfalama } from "@/components/liste/ListeSayfalama";
 import { KpiKartlari } from "@/components/siparis/KpiKartlari";
 import { SiparisPaneli } from "@/components/siparis/SiparisPaneli";
@@ -60,6 +61,8 @@ export default async function MyOrdersPage({ searchParams }: { searchParams: Pro
         description="Oluşturduğunuz siparişler"
         action={<LinkButton href="/my-orders/new" ikon="yeni">Yeni Sipariş</LinkButton>}
       />
+
+      <BilgiSeridi ham={params.bilgi} />
 
       <KpiKartlari sonuc={kpi} aralik={aralik} yol={YOL} />
 

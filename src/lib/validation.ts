@@ -28,6 +28,9 @@ function paraSemasi(ondalik: number) {
 /** Ödeme tutarı: > 0, en fazla 2 ondalık (tutar ölçeği, X-5 §(1)). */
 export const amountSchema = paraSemasi(2).refine((d) => d.gt(0));
 
+/** Kredi limiti: >= 0, en fazla 2 ondalık; 0 = peşin çalışılan cari (A-12-7). */
+export const creditLimitSchema = paraSemasi(2);
+
 /** Birim fiyat: >= 0 (ücretsiz olabilir), en fazla 4 ondalık (X-5 §(1)). */
 export const priceSchema = paraSemasi(4);
 

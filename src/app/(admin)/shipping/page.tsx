@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { requireStaff } from "@/lib/session";
 import { PageHeader, Card } from "@/components/ui";
+import { BilgiSeridi } from "@/components/BilgiSeridi";
 import { ListeSayfalama } from "@/components/liste/ListeSayfalama";
 import { SutunSecici } from "@/components/liste/SutunSecici";
 import { gizliSutunlar } from "@/lib/liste/sutun-tercihi";
@@ -51,6 +52,8 @@ export default async function ShippingPage({ searchParams }: { searchParams: Pro
   return (
     <div>
       <PageHeader title="Kargo" description="Hazırlanan siparişleri kargoya verin" />
+
+      <BilgiSeridi ham={params.bilgi} />
 
       <KpiKartlari sonuc={kpi} bugun={bugun} yonetici={session.user.role === "YONETICI"} />
 

@@ -20,6 +20,7 @@ const ACTION_YETKISI: Record<string, "requireAdmin" | "requireStaff" | "requireS
   "(admin)/orders/actions.ts#closeRemainder": "requireStaff", // A-3 eki: kalanı kapat, YONETICI + OPERASYON
   "(admin)/orders/actions.ts#createStaffOrder": "requireStaff", // D-2 §(1): OPERASYON sipariş; X-8 §(4) bayi
   "(admin)/orders/actions.ts#fiyatOnizle": "requireStaff", // A-10-2: form fiyat önizlemesi
+  "(admin)/orders/actions.ts#cariRiskiOnizle": "requireStaff", // A-12-8: formda limit/vade bilgisi
   "(admin)/stock/actions.ts#addConsignment": "requireStaff", // A-4: stok hareketi (D-2 §(1))
   "(admin)/stock/actions.ts#addTransfer": "requireStaff", // B-4
   "(admin)/stock/actions.ts#addStockAdjustment": "requireAdmin", // B-7: yalnız YONETICI (D-2 §(2))
@@ -51,6 +52,7 @@ const ACTION_YETKISI: Record<string, "requireAdmin" | "requireStaff" | "requireS
   // SATICI ekranları.
   "(seller)/my-orders/actions.ts#createOrder": "requireSeller",
   "(seller)/my-orders/actions.ts#fiyatOnizle": "requireSeller", // A-10-2: kapsamlı cari için önizleme
+  "(seller)/my-orders/actions.ts#cariRiskiOnizle": "requireSeller", // A-12-8: kapsamlı cari için limit/vade bilgisi
   "(seller)/my-doctors/actions.ts#createDoctor": "requireSeller",
   "(seller)/my-doctors/actions.ts#updateDoctor": "requireSeller",
 };

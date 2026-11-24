@@ -4,7 +4,7 @@ import { kapsamliDoktorlariGetir } from "@/lib/doctor";
 import { PageHeader, Card } from "@/components/ui";
 import OrderForm from "../OrderForm";
 import { siparisFormuUrunleri } from "@/lib/siparis-giris";
-import { createOrder, fiyatOnizle } from "../actions";
+import { cariRiskiOnizle, createOrder, fiyatOnizle } from "../actions";
 
 export default async function NewOrderPage() {
   const session = await requireSeller();
@@ -25,7 +25,7 @@ export default async function NewOrderPage() {
         description="Ürünleri seçip sipariş oluşturun"
       />
       <Card>
-        <OrderForm products={products} doctors={doctors} action={createOrder} fiyatOnizle={fiyatOnizle} />
+        <OrderForm products={products} doctors={doctors} action={createOrder} fiyatOnizle={fiyatOnizle} riskOnizle={cariRiskiOnizle} />
       </Card>
     </div>
   );

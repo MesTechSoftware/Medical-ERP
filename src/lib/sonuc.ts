@@ -84,6 +84,9 @@ export const KURAL_KODLARI = [
   "TERS_KAYIT_VAR",
   "NAKIT_TEVSIK_LIMITI",
   "VADESI_GECMIS_HAREKET",
+  // Sipariş ve sevkiyat bilgi şeridi (A-12-6)
+  "LIMIT_ASILDI",
+  "VADESI_GECMIS_BORC",
   // Dışa aktarım (D-5, K-4 §(6))
   "FATURA_SABLONU_TANIMSIZ",
   "FATURA_GERIYE_DONUK",

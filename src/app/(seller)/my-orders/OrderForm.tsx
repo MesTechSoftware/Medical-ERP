@@ -53,6 +53,7 @@ export default function OrderForm({
   doctors,
   action,
   fiyatOnizle,
+  riskOnizle,
   iptalHref = "/my-orders",
 }: {
   products: Product[];
@@ -61,12 +62,15 @@ export default function OrderForm({
   action: (prev: SonucDurumu, formData: FormData) => Promise<IslemSonucu>;
   /** Cari ve miktara göre liste fiyatını çözer (sunucu `cozumleBirimFiyat`); yoksa `null`. */
   fiyatOnizle?: (doctorId: string, productId: string, quantity: number) => Promise<FiyatOnizlemeSonucu>;
+  /** Seçili carinin limit ve vade bilgisi (A-12-8); yalnız bilgi şeridi, gönderimi engellemez. */
+  riskOnizle?: (doctorId: string) => Promise<IslemSonucu>;
   iptalHref?: string;
 }) {
   const [state, formAction, gonderiliyor] = useActionState<SonucDurumu, FormData>(action, null);
   const [rows, setRows] = useState<Row[]>([{ key: 1, ...YENI_SATIR }]);
   const [doctorId, setDoctorId] = useState("");
   const doctorRef = useRef("");
+  const [riskBilgisi, setRiskBilgisi] = useState<IslemSonucu | null>(null);
 
   const doktorSecenekleri = useMemo(
     () =>
@@ -159,6 +163,12 @@ export default function OrderForm({
   function doktorSec(id: string) {
     setDoctorId(id);
     doctorRef.current = id;
+    setRiskBilgisi(null);
+    if (riskOnizle && id) {
+      void riskOnizle(id).then((s) => {
+        if (doctorRef.current === id) setRiskBilgisi(s);
+      });
+    }
     const yeni = rows.map((r) => ({ ...r, listPrice: undefined }));
     setRows(yeni);
     yeni.forEach((r) => void fiyatiCoz(r, id));
@@ -218,6 +228,11 @@ export default function OrderForm({
             onSec={doktorSec}
             yerTutucu="Ad, klinik ya da unvan yazın…"
           />
+        )}
+        {riskBilgisi && riskBilgisi.bildirimler.length > 0 && (
+          <div data-cari-risk className="mt-2">
+            <SonucGosterimi sonuc={riskBilgisi} />
+          </div>
         )}
       </div>
 
