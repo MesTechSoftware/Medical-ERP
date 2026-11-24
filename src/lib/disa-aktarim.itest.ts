@@ -314,6 +314,19 @@ describe("fatura hazırlık veri seti (K-4-1)", () => {
     expect(await prisma.exportLog.count()).toBe(0);
   });
 
+  it("kart KDV kırılımı oranları sayısal sıralar (%8, %10, %20 — alfabetik değil)", async () => {
+    const a = await sevkiyat("SVK-1", new Date("2020-01-15T00:00:00Z"));
+    for (const vatRate of ["10", "8"]) {
+      const k = await prisma.orderItem.create({
+        data: { orderId: a.orderId, productId: s.urun.id, quantity: 1, listPrice: "100", unitPrice: "100", vatRate },
+      });
+      await prisma.shipmentItem.create({ data: { shipmentId: a.id, orderItemId: k.id, quantity: 1 } });
+    }
+
+    const kart = await faturaKartiVerisi(a.id);
+    expect(kart.kdvKirilimi.map((r) => r.oran)).toEqual(["8.00", "10.00", "20.00"]);
+  });
+
   it("şablon tanımsızken dosya verilmez ve kütüğe yazılmaz; tanımlıyken şablonla iner, uyarı sonuçla döner", async () => {
     await sevkiyat("SVK-1", new Date("2020-01-15T00:00:00Z"));
     await sevkiyat("SVK-4", bugun());

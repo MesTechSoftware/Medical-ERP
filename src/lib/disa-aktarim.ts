@@ -477,7 +477,7 @@ export async function faturaKartiVerisi(sevkiyatId: string, db: Db = prisma): Pr
   const [iOran, iMatrah] = [k("KDV_ORANI"), k("MATRAH")];
   // Kırılım satır tutarlarının oran bazında toplamıdır; yeni yuvarlama yoktur (satır tutarı ×1 → aynı).
   const girdi = (r: Hucre[]) => ({ birimFiyat: r[iMatrah]!, listeFiyat: r[iMatrah]!, miktar: 1, kdvOrani: r[iOran]! });
-  const oranlar = [...new Set(veri.satirlar.map((r) => r[iOran]!))].sort();
+  const oranlar = [...new Set(veri.satirlar.map((r) => r[iOran]!))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   const kdvKirilimi = oranlar.map((oran) => {
     const { toplam } = hesaplaSatirTutarlari(veri.satirlar.filter((r) => r[iOran] === oran).map(girdi));
     return { oran, matrah: toplam.matrah.toFixed(2), kdv: toplam.kdvTutar.toFixed(2), toplam: toplam.toplam.toFixed(2) };
