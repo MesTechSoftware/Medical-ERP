@@ -214,7 +214,8 @@ export async function toplamlarKolonlaHizali(page: Page) {
   await page.goto("/orders");
   await page.getByRole("link", { name: "Detay" }).first().click();
   await expect(page.getByRole("heading", { level: 1, name: "Sipariş Detayı" })).toBeVisible();
-  const tablo = page.getByRole("table").filter({ has: page.getByRole("columnheader", { name: "Ürün" }) });
+  // Sevkiyatlı siparişte Fatura Hazırlık kartının tablosu da "Ürün" sütununu taşır; siparişin kendi tablosu ilktir.
+  const tablo = page.getByRole("table").filter({ has: page.getByRole("columnheader", { name: "Ürün" }) }).first();
   // Gizli kolon colSpan hesabını kaydırır: altı kolonun hepsi görünür olmalı.
   await expect(tablo.getByRole("columnheader")).toHaveCount(6);
   for (const baslik of await tablo.getByRole("columnheader").all()) await expect(baslik).toBeVisible();
