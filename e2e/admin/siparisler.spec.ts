@@ -25,7 +25,7 @@ test("Bekliyor kartı aralığıyla süzgeci açar; kart sayısı satır sayıs�
   await expect(satirlar(page)).toHaveCount(deger);
 });
 
-test("teklif kartlara girmez; Teklif sekmesinde çipiyle listelenir (A-5-8)", async ({ page }) => {
+test("teklif kartlara ve sekmelere girmez; Tümü'nde çipiyle listelenir (A-5-8, B-6)", async ({ page }) => {
   const [d] = await sorgu<{ id: string }>(`SELECT id FROM "Doctor" ORDER BY "createdAt" LIMIT 1`);
   const no = `SIP-E2E-TEKLIF-${Date.now()}`;
   await page.goto("/orders");
@@ -38,8 +38,8 @@ test("teklif kartlara girmez; Teklif sekmesinde çipiyle listelenir (A-5-8)", as
   try {
     await page.reload();
     expect(await sayi(kpi(page).getByRole("link", { name: /^Bekliyor/ }))).toBe(bekliyor);
-    await sekmeler(page).getByRole("link", { name: "Teklif", exact: true }).click();
-    await expect(page).toHaveURL(/durum=TEKLIF/);
+    await expect(sekmeler(page).getByRole("link", { name: "Teklif", exact: true })).toHaveCount(0);
+    await page.goto(`/orders?q=${no}`);
     const satir = satirlar(page).first();
     await expect(satir).toContainText(no);
     await expect(satir.getByText("Teklif", { exact: true })).toBeVisible();
@@ -50,8 +50,6 @@ test("teklif kartlara girmez; Teklif sekmesinde çipiyle listelenir (A-5-8)", as
     await page.reload();
     await expect(satirlar(page).first().getByText("Teklif (iptal)", { exact: true })).toBeVisible();
     await expect(satirlar(page).first().getByText("İptal Edildi", { exact: true })).toHaveCount(0);
-    await page.getByText("Filtrele", { exact: true }).waitFor();
-    await expect(page.getByText("Filtrele · 1")).toHaveCount(0);
   } finally {
     await sorgu(`DELETE FROM "Order" WHERE "documentNo" = $1`, [no]);
   }

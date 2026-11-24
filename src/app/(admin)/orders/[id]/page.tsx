@@ -60,8 +60,9 @@ export default async function AdminOrderDetailPage({
     include: { items: { include: { orderItem: { select: { product: { select: { name: true } } } } } } },
   });
 
-  const canCancel =
-    order.status !== "IPTAL" && order.status !== "TESLIM_EDILDI";
+  // A-3-1: sevkiyatı olan sipariş iptal edilemez (iade sürecidir); kargolanmış siparişte buton yoktur.
+  // Stok sevkiyatta düşer; sevksiz siparişin iptali stoğa dokunmaz.
+  const canCancel = (order.status === "BEKLIYOR" || order.status === "HAZIRLANIYOR") && order.shipments.length === 0;
   // A-3 eki: kalanı kapat yalnız en az bir sevkiyatı olan HAZIRLANIYOR siparişte.
   const kapatilabilirKalan =
     order.status === "HAZIRLANIYOR" && order.shipments.length > 0
@@ -127,7 +128,7 @@ export default async function AdminOrderDetailPage({
           {canCancel && (
             <IslemFormu action={cancelOrder.bind(null, id)}>
               <ConfirmSubmit
-                confirmText="Sipariş iptal edilecek ve stok geri yüklenecek. Onaylıyor musunuz?"
+                confirmText="Sipariş iptal edilecek. Onaylıyor musunuz?"
                 className={buton("olumsuz-cerceve")}
                 ikon="iptalEt"
               >

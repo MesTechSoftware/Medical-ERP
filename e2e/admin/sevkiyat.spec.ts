@@ -96,6 +96,7 @@ test("kalanı kapat: gerekçe zorunlu, sipariş kargolandı olur, rozet ve sevk/
   // Sevkiyatsız siparişte kapatma sunulmaz; bir sevkiyattan sonra sunulur.
   await page.goto(`/orders/${siparisId}`);
   await expect(page.getByRole("heading", { name: "Kalanı Kapat" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Siparişi İptal Et" })).toBeVisible();
   const kart = await sevkKartiAc(page, doktorAdi);
   await kart.locator(`#miktar_${kalemId}`).fill("1");
   await kart.getByRole("button", { name: "Kargola" }).click();
@@ -105,6 +106,8 @@ test("kalanı kapat: gerekçe zorunlu, sipariş kargolandı olur, rozet ve sevk/
   await page.goto(`/orders/${siparisId}`);
   await expect(page.getByRole("heading", { name: "Kalanı Kapat" })).toBeVisible();
   await expect(page.locator("[data-sevkiyat]")).toHaveCount(1);
+  // A-3-1 / F-3: sevkiyatı olan sipariş iptal edilemez — buton sunulmaz.
+  await expect(page.getByRole("button", { name: "Siparişi İptal Et" })).toHaveCount(0);
 
   // DIGER'de açıklama zorunlu.
   await page.getByLabel("Kapatma gerekçesi").selectOption("DIGER");
@@ -118,4 +121,6 @@ test("kalanı kapat: gerekçe zorunlu, sipariş kargolandı olur, rozet ve sevk/
   await expect(page.getByRole("heading", { name: "Kalanı Kapat" })).toHaveCount(0);
   const [{ status }] = await sorgu<{ status: string }>(`SELECT status FROM "Order" WHERE id = $1`, [siparisId]);
   expect(status).toBe("KARGOLANDI");
+  // Kargolanmış siparişte de iptal sunulmaz (F-3).
+  await expect(page.getByRole("button", { name: "Siparişi İptal Et" })).toHaveCount(0);
 });

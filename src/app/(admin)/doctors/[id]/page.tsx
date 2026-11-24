@@ -164,7 +164,7 @@ export default async function DoctorDetailPage({
             {[
               [
                 "Sorumlu satıcı",
-                doctor.ownerSeller?.name ?? <StatusChip ton="uyari">Sahipsiz</StatusChip>,
+                doctor.accountClass === "BAYI" ? "—" : (doctor.ownerSeller?.name ?? <StatusChip ton="uyari">Sahipsiz</StatusChip>),
               ],
               ["Fiyat listesi", doctor.priceList ? `${doctor.priceList.code} — ${doctor.priceList.name}` : "Varsayılan"],
               ["Ödeme vadesi", doctor.paymentTermDays !== null ? `${doctor.paymentTermDays} gün` : "Varsayılan"],
@@ -212,8 +212,10 @@ export default async function DoctorDetailPage({
                 {orders.map((o) => {
                   return (
                     <tr key={o.id}>
-                      <td className="whitespace-nowrap text-slate-500">
-                        {o.documentNo}
+                      <td className="whitespace-nowrap">
+                        <Link href={`/orders/${o.id}`} className="text-link hover:underline">
+                          {o.documentNo}
+                        </Link>
                       </td>
                       <td className="whitespace-nowrap text-slate-500">
                         {formatDate(o.orderDate)}

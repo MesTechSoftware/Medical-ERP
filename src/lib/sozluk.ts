@@ -39,6 +39,7 @@ export const KURAL_METNI: Record<KuralKodu, (p: Parametreler) => string> = {
       : `Bu telefon numarası (${p.telefon}) sistemde zaten kayıtlı. Yöneticinize başvurun.`,
   DOKTOR_KAPSAM_DISI: () => "Bu doktor sizin portföyünüzde değil.",
   DOKTOR_PASIF: () => "Doktor kaydı pasif durumda.",
+  DOKTOR_BULUNAMADI: () => "Doktor bulunamadı.",
   DOKTOR_SAHIPSIZ: () =>
     "Bu doktorun sorumlu satıcısı yok. Yönetici bir satıcıya atayana kadar sipariş girilemez.",
   SAHIP_AKTIF_SATICI_DEGIL: () => "Doktorlar yalnız aktif bir satıcıya devredilebilir.",

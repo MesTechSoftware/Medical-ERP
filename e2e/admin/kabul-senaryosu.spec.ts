@@ -118,7 +118,7 @@ test("kabul senaryosu (F-11)", async ({ page, browser }) => {
   // 8 — tahsilat 714.000
   const tahsil = async (cari: string, tutar: string) => {
     await page.goto("/collections/new");
-    await page.getByLabel("Doktor").selectOption({ label: cari });
+    await page.getByLabel("Cari").selectOption({ label: cari });
     await page.getByLabel(/^Tutar/).fill(tutar);
     await page.getByLabel("Yöntem").selectOption({ label: "Havale / EFT" });
     await page.getByRole("button", { name: "Tahsilat Kaydet" }).click();

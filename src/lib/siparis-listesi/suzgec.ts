@@ -33,7 +33,6 @@ export const DURUMLAR: readonly { kod: SiparisDurumu; etiket: string }[] = [
   { kod: "KARGOLANDI", etiket: "Kargolandı" },
   { kod: "TESLIM_EDILDI", etiket: "Teslim Edildi" },
   { kod: "IPTAL", etiket: "İptal" },
-  { kod: "TEKLIF", etiket: "Teklif" },
 ];
 const DURUM_KODLARI = DURUMLAR.map((d) => d.kod);
 

@@ -61,6 +61,35 @@ function tahsilatFormu(doctorId: string, paymentMethodId: string, amount = "5000
   return fd;
 }
 
+describe("tahsilat — geçersiz tarih ve doktor varlığı (A-11-4)", () => {
+  it("geçersiz paidAt iş hatasıdır (500 değil); hiçbir şey yazılmaz", async () => {
+    const s = await seed();
+    expect(await recordCollection(null, tahsilatFormu(s.doctor.id, s.havale.id, "5000", "31.31.2026"))).toMatchObject({
+      durum: "ENGELLENDI",
+      bildirimler: [{ kademe: "SERT", kural_kodu: "GECERSIZ_TARIH", alan: "paidAt" }],
+    });
+    expect(await prisma.doctorPayment.count()).toBe(0);
+  });
+
+  it("olmayan doktor DOKTOR_BULUNAMADI ile reddedilir; numara harcanmaz", async () => {
+    const s = await seed();
+    expect(await recordCollection(null, tahsilatFormu("olmayan-cari", s.havale.id))).toMatchObject({
+      durum: "ENGELLENDI",
+      bildirimler: [{ kademe: "SERT", kural_kodu: "DOKTOR_BULUNAMADI", alan: "doctorId" }],
+    });
+    expect(await prisma.doctorPayment.count()).toBe(0);
+    expect((await recordCollection(null, tahsilatFormu(s.doctor.id, s.havale.id))).durum).toBe("BASARILI");
+    expect((await prisma.doctorPayment.findFirstOrThrow()).documentNo).toBe(`THS-${takvimYili()}-000001`);
+  });
+
+  it("pasif doktora tahsilat reddedilmez (tahliye vanası, B-7)", async () => {
+    const s = await seed();
+    await prisma.doctor.update({ where: { id: s.doctor.id }, data: { status: "PASIF" } });
+    expect((await recordCollection(null, tahsilatFormu(s.doctor.id, s.havale.id))).durum).toBe("BASARILI");
+    expect(await prisma.doctorPayment.count()).toBe(1);
+  });
+});
+
 describe("tahsilat — numara ve kayıt aynı transaction'da (X-2-1)", () => {
   let s: Awaited<ReturnType<typeof seed>>;
 
@@ -69,9 +98,11 @@ describe("tahsilat — numara ve kayıt aynı transaction'da (X-2-1)", () => {
   });
 
   it("tahsilat yazılamazsa THS numarası harcanmaz; teknik hata mesaja çevrilmez (X-3-3)", async () => {
-    // Numara alındıktan sonra kayıt yabancı anahtarda düşer: olmayan cari. Teknik hatadır —
+    // Numara alındıktan sonra kayıt yabancı anahtarda düşer: olmayan kullanıcı. Teknik hatadır —
     // iş mesajına dönmez, hata sınırına fırlar (X-3 §(4)).
-    await expect(recordCollection(null, tahsilatFormu("olmayan-cari", s.havale.id))).rejects.toThrow();
+    h.adminId = "olmayan-kullanici";
+    await expect(recordCollection(null, tahsilatFormu(s.doctor.id, s.havale.id))).rejects.toThrow();
+    h.adminId = s.admin.id;
     expect(await prisma.doctorPayment.count()).toBe(0);
     expect(await prisma.auditLog.count()).toBe(0);
 
