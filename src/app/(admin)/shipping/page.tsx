@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { requireStaff } from "@/lib/session";
 import { PageHeader, Card } from "@/components/ui";
@@ -15,6 +16,8 @@ import { KismiPanel } from "./KismiPanel";
 import { KpiKartlari } from "./KpiKartlari";
 import { SevkiyatTablosu } from "./SevkiyatTablosu";
 import { SuzgecCubugu } from "./SuzgecCubugu";
+
+export const metadata: Metadata = { title: "Kargo" };
 
 export default async function ShippingPage({ searchParams }: { searchParams: Promise<Parametreler> }) {
   const session = await requireStaff();

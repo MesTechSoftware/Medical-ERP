@@ -1,4 +1,4 @@
-# Anka West · Medikal Satış Operasyon Yönetim Sistemi
+# Medikal Satış Operasyon Yönetim Sistemi
 
 Merkezi depodaki medikal ürünlerin ~10 satıcı aracılığıyla doktorlara ulaştırıldığı bir firmanın
 operasyonlarını tek sistemde yöneten full-stack web uygulaması. **v2** kapsamı: ürün · merkezi stok ·
@@ -68,6 +68,13 @@ docker compose -f docker-compose.demo.yml run --rm -e DEMO_GECMIS=evet -e DEMO_G
 Güncelleme: `git pull && docker compose -f docker-compose.demo.yml up -d --build`. Hesaplar aşağıdaki
 demo hesaplarıdır; adres herkese açıksa parolaları bilinen bir yönetici hesabı olduğunu unutma.
 
+**Canlı demoyu açarken / sıfırlarken (zorunlu adım — E-2):** `.env` içinde `DEMO_ADMIN_PAROLA`,
+`DEMO_SATICI_PAROLA`, `DEMO_OPERASYON_PAROLA` doldurulur (boş bırakılırsa `admin123` gibi bilinen
+yerel varsayılanlar kurulur), ardından demo verisi yeniden basılır:
+`docker compose -f docker-compose.demo.yml run --rm migrate npm run db:seed:demo`. Daha önce
+`admin123` ile kurulmuş bir sunucuda parolalar yalnız bu yeniden basımla değişir. Seed, ortamdan
+gelen parolayı çıktıya yazmaz.
+
 ## Demo Hesapları
 
 Yalnızca geliştirme içindir; üretime taşınmamalıdır.
@@ -96,11 +103,12 @@ Giriş sonrası kök yönlendirme role göre yapılır: `/dashboard` · `/my-ord
 
 ## Marka & Arayüz
 
-Uygulama **Anka West** markasıyla giydirilmiştir: giriş ekranı ve sidebar logosu
-(`public/logo.png`, `public/logo-mark.png`), güncellenmiş favicon ve "Anka West · Medikal Satış
-Operasyon" başlığı. Logodan örneklenen `--color-brand` tokenı (`src/app/globals.css`) login form
-focus rengi ile aktif sidebar bağlantısının ikon vurgusunda kullanılır. Sidebar ve mobil nav
-bağlantılarının ikonları `lucide-react`'ten gelir.
+Marka sunucu ortamından gelir (`src/lib/marka.ts`): `APP_BRAND` görünen adı, `APP_LOGO` /
+`APP_LOGO_MARK` isteğe bağlı logo yollarını (`public/` altı; örn. `/logo.png`, `/logo-mark.png`)
+belirler. Boşsa nötr "Medikal Satış Operasyon" adı ve baş harften nötr işaret kullanılır; imaj
+yeniden derlenmeden değişir. Sekme başlıkları "Siparişler · {marka}" biçimindedir. `--color-brand`
+tokeni (`src/app/globals.css`) login form focus rengi ile aktif sidebar bağlantısının ikon
+vurgusunda kullanılır. Sidebar ve mobil nav bağlantılarının ikonları `lucide-react`'ten gelir.
 
 ## İş Kuralları (özet)
 

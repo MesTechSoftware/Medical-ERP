@@ -1,4 +1,5 @@
-import Image from "next/image";
+import { MarkaLogosu } from "@/components/MarkaLogosu";
+import { VARSAYILAN_MARKA, marka } from "@/lib/marka";
 import SidebarLink from "@/components/SidebarLink";
 import LogoutButton from "@/components/LogoutButton";
 import MobilNavSeridi from "@/components/MobilNavSeridi";
@@ -23,23 +24,16 @@ export default function AppShell({
       <aside className="hidden w-60 shrink-0 flex-col border-r border-slate-200 bg-white md:flex">
         {/* px-7 + gap-2: işaret ve metin, alttaki nav ikon/etiket sütunlarına hizalanır */}
         <div className="flex h-[61px] shrink-0 items-center gap-2 border-b border-slate-200 px-7">
-          <Image
-            src="/logo-mark.png"
-            // Küçük statik PNG; optimizasyon sunucusundan geçmez (CI'da /_next/image asılı kalıp sayfanın load olayını tutuyordu).
-            unoptimized
-            alt=""
-            width={278}
-            height={480}
-            priority
-            className="h-12 w-auto"
-          />
+          <MarkaLogosu tur="isaret" sinif="h-12 w-auto" kutu="size-10 text-lg" />
           <div className="min-w-0">
             <div className="truncate text-sm font-semibold leading-tight tracking-tight text-slate-900">
-              Anka West
+              {marka()}
             </div>
-            <div className="truncate text-[11px] leading-tight text-slate-500">
-              Medikal Satış Operasyon
-            </div>
+            {marka() !== VARSAYILAN_MARKA && (
+              <div className="truncate text-[11px] leading-tight text-slate-500">
+                Medikal Satış Operasyon
+              </div>
+            )}
           </div>
         </div>
         <nav aria-label="Ana menü" className="flex flex-1 flex-col gap-1 px-4 py-4">
@@ -60,14 +54,7 @@ export default function AppShell({
           {/* Telefonda iki satır: üstte işaret + kullanıcı, altta tam genişlik nav şeridi.
               Dokunmatikte py-2: 44 px'lik Çıkış ile satır yine 61 px, yan menünün logo bloğuyla hizalı. */}
           <div className="kenar-x flex items-center gap-3 py-3 dokunmatik:py-2">
-            <Image
-              src="/logo-mark.png"
-              unoptimized
-              alt=""
-              width={278}
-              height={480}
-              className="h-8 w-auto md:hidden"
-            />
+            <MarkaLogosu tur="isaret" sinif="h-8 w-auto md:hidden" kutu="size-8 text-base md:hidden" />
             <div className="ml-auto flex items-center gap-3">
               <div className="text-right">
                 <div className="text-sm font-medium text-slate-900">

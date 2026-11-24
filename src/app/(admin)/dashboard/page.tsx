@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import type { OrderStatus } from "@/generated/prisma/enums";
 import { BRUT, MATRAH } from "@/lib/taban";
@@ -69,6 +70,8 @@ function Blok({ alan, baslik, not, children }: { alan: string; baslik: string; n
  * süresi seçili aralıktan; bekleyen, kargolanacak, kritik stok ve istisnalar anlıktır. Her blok kendi
  * hata alanında (X-3). Ekran prim/hakediş taşımaz; aktivite akışı yalnız yöneticinin (D-2).
  */
+export const metadata: Metadata = { title: "Genel Bakış" };
+
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ aralik?: string }> }) {
   const session = await requireStaff();
   const rol = session.user.role;

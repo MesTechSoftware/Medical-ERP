@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
@@ -15,6 +16,8 @@ import {
 } from "@/components/ui";
 import { buton } from "@/components/stil";
 import { Ikon } from "@/components/Ikon";
+
+export const metadata: Metadata = { title: "Kullanıcı Detayı" };
 
 export default async function SellerDetailPage({
   params,

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
@@ -9,6 +10,8 @@ import { updateCari } from "../../actions";
 import { cariSecenekleri } from "../../secenekler";
 
 /** Cari düzeltme (X-16 §(9)): aynı alanlar, aynı doğrulama, aynı log. Sahip devirle değişir. */
+export const metadata: Metadata = { title: "Cari Düzenle" };
+
 export default async function EditCariPage({ params }: { params: Promise<{ id: string }> }) {
   await requireAdmin();
   const { id } = await params;

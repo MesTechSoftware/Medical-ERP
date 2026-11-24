@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/session";
 import { PageHeader, Card } from "@/components/ui";
@@ -9,6 +10,8 @@ import { createPriceList } from "../actions";
 const KUTU = `w-full ${KONTROL_TEK_SATIR}`;
 
 /** Yeni fiyat listesi (X-10 §(1)) — yalnız yönetici. Oluşturunca listenin detayına (satır ekleme) gider. */
+export const metadata: Metadata = { title: "Yeni Fiyat Listesi" };
+
 export default async function NewPriceListPage() {
   await requireAdmin();
   return (

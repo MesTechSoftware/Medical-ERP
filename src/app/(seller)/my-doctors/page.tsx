@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { requireSeller } from "@/lib/session";
 import { kapsamliDoktorlariGetir } from "@/lib/doctor";
@@ -23,6 +24,8 @@ const YOL = "/my-doctors";
  * Filtrele (bölge, durum, son sipariş), sütun seçici, sayfalı liste, yan panel. Kapsam tek kaynaktadır
  * (`kapsamliDoktorlariGetir`, X-13-1): liste, kartlar, bölge seçenekleri ve panel yalnız satıcının carilerini okur.
  */
+export const metadata: Metadata = { title: "Doktorlarım" };
+
 export default async function MyDoctorsPage({ searchParams }: { searchParams: Promise<Parametreler> }) {
   const session = await requireSeller();
   const kapsam = kapsamliDoktorlariGetir(session.user);

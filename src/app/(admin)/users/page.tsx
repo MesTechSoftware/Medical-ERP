@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { requireStaff } from "@/lib/session";
 import { PageHeader, LinkButton } from "@/components/ui";
@@ -14,6 +15,8 @@ import { SuzgecCubugu } from "./SuzgecCubugu";
 
 /** Kullanıcı sayısı küçüktür; varsayılan sayfa bütün ekibi gösterir (spec Ü-22 §3.4). */
 const SAYFA_BOYU = 100;
+
+export const metadata: Metadata = { title: "Kullanıcılar" };
 
 export default async function UsersPage({ searchParams }: { searchParams: Promise<Parametreler> }) {
   const session = await requireStaff();

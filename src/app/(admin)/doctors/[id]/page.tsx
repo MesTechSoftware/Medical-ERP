@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
@@ -33,6 +34,8 @@ import { Ikon } from "@/components/Ikon";
  * Kongre defteri C2'de (GÇ-5), yaşlandırma ve vadesi geçmiş tutar C3'te
  * söküldü (GÇ-3, X-6 §(5)/(7)).
  */
+export const metadata: Metadata = { title: "Cari Detayı" };
+
 export default async function DoctorDetailPage({
   params,
 }: {

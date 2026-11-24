@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/session";
 import { PageHeader, Card } from "@/components/ui";
 import { policy } from "@/lib/policy";
@@ -8,6 +9,8 @@ import DisaAktarimFormu from "./DisaAktarimFormu";
  * Dışa aktarım — D-5. Yalnız `YONETICI` (§(4)). Geçmiş ekranı yoktur; her çalıştırma
  * veritabanındaki kütüğe yazılır (§(5)). Veri seti kartları ve dönem kısayolları (spec Ü-29).
  */
+export const metadata: Metadata = { title: "Dışa Aktarım" };
+
 export default async function DisaAktarimPage() {
   await requireAdmin();
   return (

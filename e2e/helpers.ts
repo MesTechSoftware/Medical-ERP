@@ -1,10 +1,11 @@
 import { type Locator, type Page, expect } from "@playwright/test";
+import { demoParola } from "../src/lib/demo-parola";
 
 // Seed'lenen sabit kullanıcılar (prisma/seed.ts ile birebir).
 export const USERS = {
-  admin: { email: "admin@medikal.local", password: "admin123" },
-  seller: { email: "ahmet@medikal.local", password: "satici123" },
-  operasyon: { email: "operasyon@medikal.local", password: "operasyon123" },
+  admin: { email: "admin@medikal.local", password: demoParola("admin").parola },
+  seller: { email: "ahmet@medikal.local", password: demoParola("satici").parola },
+  operasyon: { email: "operasyon@medikal.local", password: demoParola("operasyon").parola },
 } as const;
 
 // Seed'lenen satıcı adları (cari/ödeme testleri için).

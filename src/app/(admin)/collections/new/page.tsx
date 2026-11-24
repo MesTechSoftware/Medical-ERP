@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireStaff } from "@/lib/session";
@@ -7,6 +8,8 @@ import CollectionForm from "../CollectionForm";
 import { BAGLANTI } from "@/components/stil";
 
 /** Yeni tahsilat (spec Ü-26 §3.6): bugünkü form; sonuç ve `BILGI` uyarıları (A-15, X-6) formun altında. */
+export const metadata: Metadata = { title: "Tahsilat Kaydı" };
+
 export default async function NewCollectionPage() {
   await requireStaff(); // tahsilat kaydı YONETICI ve OPERASYON (D-2-1)
   const [doctors, paymentMethods] = await Promise.all([

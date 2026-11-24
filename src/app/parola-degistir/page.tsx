@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { ASGARI_UZUNLUK } from "@/lib/parola";
@@ -8,6 +9,8 @@ import ParolaForm from "./ParolaForm";
  * Geçici parolanın değiştirildiği tek sayfa (E-2 §(2)/(3), E-2-7). `requireSession()` geçici
  * parolalı kullanıcıyı buraya gönderir; bu sayfa o guard'ı kullanmaz (döngü olurdu).
  */
+export const metadata: Metadata = { title: "Parola Değiştir" };
+
 export default async function ParolaDegistirPage() {
   const session = await getSession();
   if (!session) redirect("/login");

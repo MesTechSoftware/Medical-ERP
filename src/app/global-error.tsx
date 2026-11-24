@@ -11,7 +11,7 @@ export default function GlobalError({ error }: { error: Error & { digest?: strin
   return (
     <html lang="tr">
       <body className="bg-slate-50">
-        <title>Hata · Anka West</title>
+        <title>Hata</title>
         <HataEkrani referans={error.digest} />
       </body>
     </html>

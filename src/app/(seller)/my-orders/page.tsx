@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { requireSeller } from "@/lib/session";
 import { PageHeader, LinkButton } from "@/components/ui";
@@ -20,6 +21,8 @@ const YOL = "/my-orders";
  * Filtrele (tarih, metin), sütun seçici, sayfalı liste, yan panel. Kapsam sorgudadır (`kapsam`, X-13):
  * liste, kartlar ve panel yalnız bu satıcının siparişlerini okur; adresteki `satici` adresten düşer.
  */
+export const metadata: Metadata = { title: "Siparişlerim" };
+
 export default async function MyOrdersPage({ searchParams }: { searchParams: Promise<Parametreler> }) {
   const session = await requireSeller();
   const saticiId = session.user.id;

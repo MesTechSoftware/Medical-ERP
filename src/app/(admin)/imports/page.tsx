@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/session";
 import { LinkButton, PageHeader } from "@/components/ui";
@@ -18,6 +19,8 @@ import { SuzgecCubugu } from "./SuzgecCubugu";
  * İçe aktarım (D-6, X-16) — yalnız yönetici; devreye alma aracı. Partiler süzgeçli ve sayfalı; parti paneli kayıt
  * dağılımını ve geri almayı (X-12, gerekçeli) taşır. Yeni içe aktarım `/imports/new`'dedir (spec Ü-30).
  */
+export const metadata: Metadata = { title: "İçe Aktarım" };
+
 export default async function ImportsPage({ searchParams }: { searchParams: Promise<Parametreler> }) {
   const session = await requireAdmin();
   const params = await searchParams;

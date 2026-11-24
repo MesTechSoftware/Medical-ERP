@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
@@ -15,6 +16,8 @@ import { Ikon } from "@/components/Ikon";
 import { BilgiSeridi } from "@/components/BilgiSeridi";
 import FaturaHazirlikKarti from "@/components/siparis/FaturaHazirlikKarti";
 import { faturaKartiVerisi } from "@/lib/disa-aktarim";
+
+export const metadata: Metadata = { title: "Sipariş Detayı" };
 
 export default async function AdminOrderDetailPage({
   params,

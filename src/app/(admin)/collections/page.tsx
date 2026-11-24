@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { requireStaff } from "@/lib/session";
 import { LinkButton, PageHeader } from "@/components/ui";
@@ -18,6 +19,8 @@ import { TahsilatTablosu } from "./TahsilatTablosu";
  * Tahsilatlar (spec Ü-26): dönemin tahsilatı ve yöntem kırılımı, süzgeçli liste ve toplamı, tahsilat paneli
  * (donmuş komisyon, carinin bakiyesi, gerekçeli iptal). Yeni tahsilat `/collections/new`'dedir.
  */
+export const metadata: Metadata = { title: "Tahsilatlar" };
+
 export default async function CollectionsPage({ searchParams }: { searchParams: Promise<Parametreler> }) {
   const session = await requireStaff();
   const params = await searchParams;

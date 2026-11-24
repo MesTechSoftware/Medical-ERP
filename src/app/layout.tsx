@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { connection } from "next/server";
 import "./globals.css";
+import { marka } from "@/lib/marka";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -12,10 +14,18 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Anka West · Medikal Satış Operasyon",
-  description: "Merkezi stok, sipariş, kargo ve cari hesap yönetimi",
-};
+/**
+ * Marka ortamdan istek anında okunur (E-2): `connection()` ön üretimi durdurur, marka derlemede donmaz.
+ * Sayfa başlıkları "Siparişler · {marka}" biçimindedir; sayfa başlık vermezse yalnız marka.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  await connection();
+  const ad = marka();
+  return {
+    title: { template: `%s · ${ad}`, default: ad },
+    description: "Merkezi stok, sipariş, kargo ve cari hesap yönetimi",
+  };
+}
 
 export const viewport: Viewport = {
   width: "device-width",

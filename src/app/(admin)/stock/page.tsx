@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
@@ -24,6 +25,8 @@ import { MevcutStokKarti } from "./MevcutStokKarti";
 import { SuzgecCubugu } from "./SuzgecCubugu";
 
 type Islem = "giris" | "duzeltme" | "konsinye" | "transfer";
+
+export const metadata: Metadata = { title: "Stok" };
 
 export default async function StockPage({ searchParams }: { searchParams: Promise<Parametreler> }) {
   const session = await requireStaff();

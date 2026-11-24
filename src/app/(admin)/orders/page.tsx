@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { requireStaff } from "@/lib/session";
 import { PageHeader, LinkButton } from "@/components/ui";
@@ -10,6 +11,8 @@ import { SATICISIZ, siparisAdresi, suzgecCoz, TUM_SIPARISLER, type Parametreler 
 import { SiparisPaneli } from "@/components/siparis/SiparisPaneli";
 import { SiparisTablosu } from "@/components/siparis/SiparisTablosu";
 import { SuzgecCubugu } from "@/components/siparis/SuzgecCubugu";
+
+export const metadata: Metadata = { title: "Siparişler" };
 
 export default async function OrdersPage({ searchParams }: { searchParams: Promise<Parametreler> }) {
   await requireStaff();

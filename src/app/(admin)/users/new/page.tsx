@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/session";
 import { ASGARI_UZUNLUK } from "@/lib/parola";
 import { PageHeader, Card } from "@/components/ui";
 import UserForm from "../UserForm";
 import { createUser } from "../actions";
+
+export const metadata: Metadata = { title: "Yeni Kullanıcı" };
 
 export default async function NewUserPage() {
   await requireAdmin(); // kullanıcı yönetimi yalnız YONETICI (D-2 §(1))

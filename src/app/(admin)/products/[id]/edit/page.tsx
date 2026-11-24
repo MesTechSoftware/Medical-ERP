@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
@@ -9,6 +10,8 @@ import { deleteProduct, updateProduct } from "../../actions";
 import ConfirmSubmit from "@/components/ConfirmSubmit";
 import { IslemFormu } from "@/components/Sonuc";
 import { bugun } from "@/lib/zaman";
+
+export const metadata: Metadata = { title: "Ürün Düzenle" };
 
 export default async function EditProductPage({
   params,

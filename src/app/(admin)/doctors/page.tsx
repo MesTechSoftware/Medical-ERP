@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { requireStaff } from "@/lib/session";
 import { PageHeader, Card, LinkButton } from "@/components/ui";
@@ -14,6 +15,8 @@ import { KpiKartlari } from "./KpiKartlari";
 import { SuzgecCubugu } from "./SuzgecCubugu";
 import { SutunSecici } from "@/components/liste/SutunSecici";
 import { gizliSutunlar } from "@/lib/liste/sutun-tercihi";
+
+export const metadata: Metadata = { title: "Doktorlar" };
 
 export default async function AdminDoctorsPage({ searchParams }: { searchParams: Promise<Parametreler> }) {
   const session = await requireStaff();

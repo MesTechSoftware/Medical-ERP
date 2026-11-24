@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireSeller } from "@/lib/session";
@@ -45,6 +46,8 @@ function Satir({ ad, children }: { ad: string; children: React.ReactNode }) {
  *
  * BRK-01: satıcı şirkete borçlu değildir (D-01); vadesi geçmiş tutar gösterilmez (X-6 §(7)).
  */
+export const metadata: Metadata = { title: "Hesabım" };
+
 export default async function AccountPage() {
   const session = await requireSeller();
   const saticiId = session.user.id;

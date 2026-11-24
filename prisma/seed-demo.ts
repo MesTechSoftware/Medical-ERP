@@ -1,5 +1,6 @@
 import "dotenv/config";
 import bcrypt from "bcryptjs";
+import { demoParola } from "../src/lib/demo-parola";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { normalizePhone } from "../src/lib/phone";
@@ -40,8 +41,11 @@ async function main() {
 
   // Demo yöneticisi referans veriden ÖNCE açılır: referans seed bir YONETICI gördüğünde
   // ortam değişkenindeki ilk yöneticiyi açmaz (E-2 §(2) yalnız devreye almanın konusudur).
-  const adminPass = await bcrypt.hash("admin123", 10);
-  const sellerPass = await bcrypt.hash("satici123", 10);
+  const adminParola = demoParola("admin");
+  const saticiParola = demoParola("satici");
+  const operasyonParola = demoParola("operasyon");
+  const adminPass = await bcrypt.hash(adminParola.parola, 10);
+  const sellerPass = await bcrypt.hash(saticiParola.parola, 10);
   const admin = await prisma.user.create({
     data: {
       name: "Sistem Yöneticisi",
@@ -76,7 +80,7 @@ async function main() {
     data: {
       name: "Operasyon Sorumlusu",
       email: "operasyon@medikal.local",
-      passwordHash: await bcrypt.hash("operasyon123", 10),
+      passwordHash: await bcrypt.hash(operasyonParola.parola, 10),
       role: "OPERASYON",
     },
   });
@@ -420,9 +424,9 @@ async function main() {
   });
 
   console.log("Demo seed tamamlandı.");
-  console.log(`  Yönetici: ${admin.email} / admin123`);
-  console.log(`  Satıcı:   ${sellers.map((s) => s.email).join(", ")} / satici123`);
-  console.log(`  Operasyon: ${operasyon.email} / operasyon123`);
+  console.log(`  Yönetici: ${admin.email} / ${adminParola.ortamdan ? "(DEMO_ADMIN_PAROLA)" : adminParola.parola}`);
+  console.log(`  Satıcı:   ${sellers.map((s) => s.email).join(", ")} / ${saticiParola.ortamdan ? "(DEMO_SATICI_PAROLA)" : saticiParola.parola}`);
+  console.log(`  Operasyon: ${operasyon.email} / ${operasyonParola.ortamdan ? "(DEMO_OPERASYON_PAROLA)" : operasyonParola.parola}`);
   console.log("  Cariler: 5 doktor, 2 bayi · özel liste: Burak Şahin · konsinye: Elif Yıldız · onay bekleyen: 2");
 }
 

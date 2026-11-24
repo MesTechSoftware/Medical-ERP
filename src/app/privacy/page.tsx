@@ -4,7 +4,7 @@ import { buton } from "@/components/stil";
 import { Ikon } from "@/components/Ikon";
 
 export const metadata: Metadata = {
-  title: "Gizlilik Politikası — Medikal Satış Operasyon",
+  title: "Gizlilik Politikası",
   description: "KVKK kapsamında kişisel verilerin işlenmesine ilişkin aydınlatma.",
 };
 

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { requireSeller } from "@/lib/session";
 import { donemBitisAyi, donemCoz, karsilastirmaAraliklari, karsilastirmaNotu, sonAylar } from "@/lib/donem";
@@ -26,6 +27,8 @@ import { KpiSatiri } from "@/components/kpi/KpiSatiri";
  * kapsamlı doktor ciro sıralamasıdır (`doktorSiralamasi`, Raporlar'la tek yol); İadem kartı Cirom'un okumasından gelir.
  */
 const YOL = "/my-report";
+
+export const metadata: Metadata = { title: "Raporum" };
 
 export default async function MyReportPage({
   searchParams,
