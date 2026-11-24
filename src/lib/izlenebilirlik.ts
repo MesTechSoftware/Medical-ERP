@@ -37,13 +37,13 @@ export function matrisKur(kok: string): MatrisSatiri[] {
   const kabul = readFileSync(join(kok, "docs", "KABUL_KRITERLERI.md"), "utf8");
   const kaynaklar = dosyalar(join(kok, "src"), /\.tsx?$/).filter((y) => !/\.(i?test)\.ts$/.test(y));
   const testDosyalari = [...dosyalar(join(kok, "src"), /\.(i?test)\.ts$/), ...dosyalar(join(kok, "e2e"), /\.(spec|setup)\.ts$/)].map((y) =>
-    relative(kok, y)
+    relative(kok, y).split("\\").join("/")
   );
   // Dışa açılan fonksiyon/sabit adı → dosya (kriter metnindeki `ad` kod yerine çözülür).
   const tanim = new Map<string, string>();
   for (const y of kaynaklar) {
     for (const m of readFileSync(y, "utf8").matchAll(/^export (?:async )?(?:function|const|class) (\w+)/gm)) {
-      if (!tanim.has(m[1])) tanim.set(m[1], relative(kok, y));
+      if (!tanim.has(m[1])) tanim.set(m[1], relative(kok, y).split("\\").join("/"));
     }
   }
 

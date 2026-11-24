@@ -75,7 +75,7 @@ function dosyalar(dizin: string, ad: RegExp): string[] {
   return readdirSync(dizin).flatMap((d) => {
     const yol = join(dizin, d);
     if (statSync(yol).isDirectory()) return dosyalar(yol, ad);
-    return ad.test(d) ? [relative(APP, yol)] : [];
+    return ad.test(d) ? [relative(APP, yol).split("\\").join("/")] : [];
   });
 }
 
