@@ -13,6 +13,8 @@ import { formatDateTime } from "@/lib/format";
 import { buton } from "@/components/stil";
 import { Ikon } from "@/components/Ikon";
 import { BilgiSeridi } from "@/components/BilgiSeridi";
+import FaturaHazirlikKarti from "@/components/siparis/FaturaHazirlikKarti";
+import { faturaKartiVerisi } from "@/lib/disa-aktarim";
 
 export default async function AdminOrderDetailPage({
   params,
@@ -69,6 +71,11 @@ export default async function AdminOrderDetailPage({
       ? order.items.reduce((t, i) => t + kalanMiktar(i), 0)
       : 0;
 
+  // K-4 §(6)-k: sevkiyat başına salt okunur Fatura Hazırlık Kartı; sayfa YONETICI + OPERASYON'a açıktır (layout).
+  const faturaKartlari = await Promise.all(
+    order.shipments.map(async (s) => ({ belgeNo: s.documentNo, karti: await faturaKartiVerisi(s.id) }))
+  );
+
   return (
     <div>
       <PageHeader
@@ -87,6 +94,17 @@ export default async function AdminOrderDetailPage({
       <BilgiSeridi ham={bilgi} />
 
       <OrderDetail order={order} showSeller />
+
+      {faturaKartlari.length > 0 && (
+        <div className="mt-6">
+          <Card>
+            <h2 className="text-sm font-semibold text-slate-900">Fatura Hazırlık</h2>
+            {faturaKartlari.map((k) => (
+              <FaturaHazirlikKarti key={k.belgeNo} belgeNo={k.belgeNo} karti={k.karti} />
+            ))}
+          </Card>
+        </div>
+      )}
 
       <Card>
         <h2 className="mb-3 text-sm font-semibold text-slate-900">İşlemler</h2>

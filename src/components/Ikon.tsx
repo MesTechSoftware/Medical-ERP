@@ -9,6 +9,7 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  Copy,
   Download,
   Eye,
   FileSearch,
@@ -74,6 +75,7 @@ const IKONLAR = {
   hata: OctagonAlert,
   // Fark görünümü (denetim kaydı): eski değer eksi, yeni değer `yeni` (artı).
   eksi: Minus,
+  kopyala: Copy,
 } as const satisfies Record<string, LucideIcon>;
 
 export type IkonAdi = keyof typeof IKONLAR;

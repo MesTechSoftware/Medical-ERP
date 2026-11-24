@@ -109,6 +109,12 @@ test("kalanı kapat: gerekçe zorunlu, sipariş kargolandı olur, rozet ve sevk/
   // A-3-1 / F-3: sevkiyatı olan sipariş iptal edilemez — buton sunulmaz.
   await expect(page.getByRole("button", { name: "Siparişi İptal Et" })).toHaveCount(0);
 
+  // K-4-2: sevkiyat başına salt okunur Fatura Hazırlık Kartı; muhatabın fatura bilgisi eksik (A-13 §5).
+  const faturaKarti = page.locator("[data-fatura-karti]");
+  await expect(faturaKarti).toHaveCount(1);
+  await expect(faturaKarti).toContainText("Bilgi amaçlıdır — mali belge değildir.");
+  await expect(faturaKarti).toContainText("fatura bilgisi eksik");
+
   // DIGER'de açıklama zorunlu.
   await page.getByLabel("Kapatma gerekçesi").selectOption("DIGER");
   await page.getByRole("button", { name: /Kalanı Kapat \(2 adet\)/ }).click();

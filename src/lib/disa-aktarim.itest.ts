@@ -1,7 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { prisma } from "@/lib/db";
-import { calistirDisaAktarim, faturaGeriyeDonukUyarisi, sablonUygula, type FaturaSablonu } from "@/lib/disa-aktarim";
+import {
+  calistirDisaAktarim,
+  faturaGeriyeDonukUyarisi,
+  faturaKartiVerisi,
+  sablonUygula,
+  type FaturaSablonu,
+} from "@/lib/disa-aktarim";
 import { bugun } from "@/lib/zaman";
 import { referansVeri, yeniDoktorVerisi } from "../../test/integration/referans";
 
@@ -284,6 +290,28 @@ describe("fatura hazırlık veri seti (K-4-1)", () => {
       kural_kodu: "FATURA_GERIYE_DONUK",
       parametreler: { adet: 1, gun: 7 },
     });
+  });
+
+  it("kart verisi tek sevkiyat süzgeciyle aynı kaynaktan gelir; KDV kırılımı toplamı tutar, bedelsiz not düşülür, dosya ve kütük yok (K-4-3/K-4-4)", async () => {
+    const a = await sevkiyat("SVK-1", new Date("2020-01-15T00:00:00Z"));
+    await sevkiyat("SVK-2", new Date("2026-10-06T00:00:00Z"));
+
+    const kart = await faturaKartiVerisi(a.id);
+    // Aynı veri seti: tek sevkiyat süzgeci dışa aktarımın satırıyla birebir (SVK-2 karta girmez).
+    expect(kart.veri.satirlar).toHaveLength(1);
+    const tum = await calistirDisaAktarim({
+      kod: "FATURA_HAZIRLIK",
+      aralik: { baslangic: new Date("2019-12-31T21:00:00Z"), bitis: new Date("2020-01-31T21:00:00Z") },
+    });
+    expect(kart.veri.satirlar).toEqual(tum.satirlar);
+    expect(kart.kdvKirilimi).toEqual([{ oran: "20.00", matrah: "100.01", kdv: "20.00", toplam: "120.01" }]);
+    expect(kart.toplam).toEqual({ matrah: "100.01", kdv: "20.00", toplam: "120.01" });
+    expect(kart.bedelsizSatir).toBe(1);
+    // Muhatabın fatura adresi/ili yok (A-13 §(5)); 2020 sevki 7 günden eski; `sablonTanimi` tanımsız (h.sablon = null).
+    expect(kart.eksikFaturaBilgisi).toMatchObject({ kural_kodu: "EKSIK_FATURA_BILGISI" });
+    expect(kart.geriyeDonuk).toMatchObject({ kural_kodu: "FATURA_GERIYE_DONUK" });
+    // K-4-4: kart kütüğe yazmaz.
+    expect(await prisma.exportLog.count()).toBe(0);
   });
 
   it("şablon tanımsızken dosya verilmez ve kütüğe yazılmaz; tanımlıyken şablonla iner, uyarı sonuçla döner", async () => {
