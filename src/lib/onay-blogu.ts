@@ -1,5 +1,6 @@
 import type { Prisma } from "@/generated/prisma/client";
 import type { FreeReason } from "@/generated/prisma/enums";
+import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import type { BelgeOneki } from "@/lib/belge-no";
 import { prisma } from "@/lib/db";
 import type { KuralKodu } from "@/lib/sonuc";
@@ -177,6 +178,24 @@ export async function blokKarariVer(
     where: { id: girdi.blokId, decision: null },
     data: { decision: girdi.karar, decidedById: girdi.yapanId, decidedAt: simdi(), decisionNote: girdi.not },
   });
-  if (r.count === 1) onBlokKararaBaglandi({ blokId: girdi.blokId, karar: girdi.karar });
-  return r.count === 1;
+  if (r.count !== 1) return false;
+  // X-18-9: karar, kararın kendi transaction'ında denetim kaydına yazılır; karar notu gerekçe alanındadır.
+  const blok = await tx.approvalBlock.findUniqueOrThrow({
+    where: { id: girdi.blokId },
+    select: { ruleCode: true, documentType: true, documentId: true },
+  });
+  await createAuditLog(
+    {
+      actorId: girdi.yapanId,
+      action: AUDIT_ACTIONS.APPROVAL_DECIDE,
+      entityType: "ApprovalBlock",
+      entityId: girdi.blokId,
+      before: { decision: null },
+      after: { karar: girdi.karar, ruleCode: blok.ruleCode, documentType: blok.documentType, documentId: blok.documentId },
+      gerekce: girdi.not,
+    },
+    tx
+  );
+  onBlokKararaBaglandi({ blokId: girdi.blokId, karar: girdi.karar });
+  return true;
 }

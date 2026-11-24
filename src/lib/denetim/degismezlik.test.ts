@@ -43,7 +43,7 @@ describe("değişmezlik — kaynak taraması (X-18-1)", () => {
 });
 
 // Migration'dan sonra eklenen olaylar eski satırları doldurmaz (yeni olayın sınıfı yazımda `islemSinifi()`'ndan gelir).
-const SONRADAN_EKLENEN: readonly string[] = ["PRODUCT_DELETE", "ORDER_REMAINDER_CLOSE"];
+const SONRADAN_EKLENEN: readonly string[] = ["PRODUCT_DELETE", "ORDER_REMAINDER_CLOSE", "CONSIGNMENT_CREATE", "STOCK_TRANSFER_CREATE", "APPROVAL_DECIDE"];
 const SINIF = Object.entries(ISLEM_SINIFI).filter(([olay]) => !SONRADAN_EKLENEN.includes(olay));
 
 describe("sınıf tablosu — migration ile aynı (X-18-3)", () => {

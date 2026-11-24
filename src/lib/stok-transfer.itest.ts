@@ -79,6 +79,23 @@ describe("konsinye çıkış (A-4-1)", () => {
   });
 });
 
+describe("denetim kaydı (X-18-9)", () => {
+  it("konsinye çıkış ve transfer belgeyle aynı işlemde denetim kaydı bırakır; reddedilen işlem bırakmaz", async () => {
+    const k = await konsinye(4);
+    const konum = await konsinyeKonumu();
+    const t = await transfer(konum.id, s.depo.id, 1);
+    expect(await bildirimler(konsinye(99))).toHaveLength(1);
+
+    const kayitlar = await prisma.auditLog.findMany({ orderBy: { seq: "asc" } });
+    expect(kayitlar.map((a) => [a.action, a.entityType, a.entityId, a.actorId])).toEqual([
+      ["CONSIGNMENT_CREATE", "ConsignmentIssue", k.belgeId, s.operasyon.id],
+      ["STOCK_TRANSFER_CREATE", "StockTransfer", t.belgeId, s.operasyon.id],
+    ]);
+    expect(JSON.parse(kayitlar[0].afterData!)).toMatchObject({ documentNo: k.documentNo, doktorId: s.doktor.id });
+    expect(kayitlar.map((a) => [a.actionType, a.module])).toEqual([["EKLEME", "STOK"], ["EKLEME", "STOK"]]);
+  });
+});
+
 describe("pasif doktor (A-4-2, A-4-3)", () => {
   it("pasif doktora konsinye çıkışı DOKTOR_PASIF ile reddedilir; hiçbir hareket ve konum yazılmaz", async () => {
     await prisma.doctor.update({ where: { id: s.doktor.id }, data: { status: "PASIF" } });
