@@ -9,6 +9,7 @@ import { OrderStatus } from "@/generated/prisma/enums";
 import { stokHareketiYaz, stokKilitle } from "@/lib/stok";
 import { IsHatasi } from "@/lib/hata";
 import { iadeYaz } from "@/lib/iade";
+import { kalaniKapat } from "@/lib/kalan-kapat";
 import { siparisAc, siparisFiyatiOnizle, siparisSatirlariniOku, type FiyatOnizlemeSonucu } from "@/lib/siparis-giris";
 import { siparisiHazirla, teslimEdildiIsaretle } from "@/lib/siparis-durum";
 import { basarili, engel, type IslemSonucu } from "@/lib/sonuc";
@@ -92,6 +93,31 @@ export async function cancelOrder(id: string): Promise<IslemSonucu> {
   revalidatePath("/products");
   revalidatePath("/stock");
   redirect(`/orders/${id}`);
+}
+
+/**
+ * Kalanı kapat (A-3 eki): en az bir sevkiyatı olan `HAZIRLANIYOR` siparişin sevk edilmeyecek kalanını
+ * gerekçeyle kapatır; sipariş `KARGOLANDI` olur. `YONETICI` ve `OPERASYON` yapar; onay bloğu açmaz.
+ * Başarıda sayfada kalınır.
+ */
+export async function closeRemainder(orderId: string, _prev: unknown, formData: FormData): Promise<IslemSonucu> {
+  const session = await requireStaff();
+  try {
+    await prisma.$transaction((tx) =>
+      kalaniKapat(tx, {
+        siparisId: orderId,
+        gerekce: String(formData.get("closeReason") ?? ""),
+        not: String(formData.get("closeNote") ?? ""),
+        yapanId: session.user.id,
+      })
+    );
+  } catch (e) {
+    if (e instanceof IsHatasi) return e.sonuc;
+    throw e;
+  }
+  revalidateOrders();
+  revalidatePath(`/orders/${orderId}`);
+  return basarili();
 }
 
 const IADE_KALEMI = "iade_";

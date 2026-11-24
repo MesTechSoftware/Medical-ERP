@@ -70,7 +70,7 @@ export async function topluKargo(
       id: true,
       documentNo: true,
       doctor: { select: { fullName: true } },
-      items: { select: { id: true, quantity: true, shipmentItems: { select: { quantity: true } } } },
+      items: { select: { id: true, quantity: true, closedQuantity: true, shipmentItems: { select: { quantity: true } } } },
     },
   });
   const sonuclar: TopluSatirSonucu[] = [];

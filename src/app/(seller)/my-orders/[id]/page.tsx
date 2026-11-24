@@ -19,11 +19,15 @@ export default async function MyOrderDetailPage({
     where: { id, sellerId: session.user.id },
     include: {
       doctor: true,
-      items: { include: { product: { select: { name: true, code: true } } } },
+      items: {
+        include: {
+          product: { select: { name: true, code: true } },
+          shipmentItems: { select: { quantity: true } },
+        },
+      },
       shipments: {
-        orderBy: { createdAt: "desc" },
-        take: 1,
-        include: { carrier: { select: { name: true } } },
+        orderBy: { createdAt: "asc" },
+        include: { carrier: { select: { name: true, trackingUrlTemplate: true } } },
       },
     },
   });
@@ -43,7 +47,7 @@ export default async function MyOrderDetailPage({
           </Link>
         }
       />
-      <OrderDetail order={{ ...order, shipment: order.shipments[0] ?? null }} />
+      <OrderDetail order={order} />
     </div>
   );
 }

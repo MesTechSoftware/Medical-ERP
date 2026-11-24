@@ -5,6 +5,7 @@ import { IsHatasi } from "@/lib/hata";
 import { degistirDoktorSahibi } from "@/lib/sahiplik";
 import { blokKarariVer } from "@/lib/onay-blogu";
 import { sevkiyatYaz, type SevkiyatSonucu } from "@/lib/sevkiyat";
+import { kalaniKapat } from "@/lib/kalan-kapat";
 import { hesaplaStok } from "@/lib/stok";
 import { bugun, gunEkle, takvimYili } from "@/lib/zaman";
 import { referansVeri, yeniDoktorVerisi } from "../../test/integration/referans";
@@ -467,5 +468,67 @@ describe("D-3-1 — kargo bilgisi sevkiyatta", () => {
       "TR123",
       bugun().toISOString().slice(0, 10),
     ]);
+  });
+});
+
+describe("A-3-4/5/6 — kalanı kapat", () => {
+  const kapat = (siparisId: string, gerekce = "TEDARIK_EDILEMEDI", not: string | null = null) =>
+    prisma.$transaction((tx) => kalaniKapat(tx, { siparisId, gerekce, not, yapanId: s.yonetici.id }));
+
+  it("kısmi sevkli siparişte kalanı satıra yazar, KARGOLANDI'ya geçirir, denetim bırakır; onay bloğu, cari ve stok değişmez", async () => {
+    const o = await siparis({ kalemler: [{ miktar: 10, birim: "10" }] });
+    await sevk(o.id, [{ siparisKalemiId: o.items[0].id, miktar: 4 }]);
+    const stokOnce = await hesaplaStok(s.urun.id);
+    const hareketOnce = await prisma.ledgerEntry.count();
+
+    expect(await kapat(o.id)).toEqual({ kapatilan: 6 });
+
+    const sip = await prisma.order.findUniqueOrThrow({ where: { id: o.id }, include: { items: true } });
+    expect([sip.status, sip.closeReason, sip.closedById, sip.closeNote]).toEqual(["KARGOLANDI", "TEDARIK_EDILEMEDI", s.yonetici.id, null]);
+    expect(sip.closedAt).not.toBeNull();
+    expect(sip.items[0].closedQuantity).toBe(6);
+    expect(await hesaplaStok(s.urun.id)).toBe(stokOnce);
+    expect(await prisma.ledgerEntry.count()).toBe(hareketOnce);
+    expect(await prisma.approvalBlock.count()).toBe(0);
+    const iz = await prisma.auditLog.findMany({ where: { entityId: o.id, action: "ORDER_REMAINDER_CLOSE" }, select: { actorId: true, actionType: true } });
+    expect(iz).toEqual([{ actorId: s.yonetici.id, actionType: "GUNCELLEME" }]);
+    // Kapatılan miktar bir daha sevk edilemez (sipariş artık HAZIRLANIYOR değil).
+    expect(await kodlar(sevk(o.id, [{ siparisKalemiId: o.items[0].id, miktar: 1 }]))).toEqual(["SIPARIS_DURUMU_UYGUN_DEGIL"]);
+  });
+
+  it("sevkiyatı olmayan, BEKLIYOR ve KARGOLANDI sipariş kapatılamaz; hiçbir şey yazılmaz", async () => {
+    const sevkiyatsiz = await siparis();
+    const bekleyen = await siparis({ status: "BEKLIYOR" });
+    const tam = await siparis({ kalemler: [{ miktar: 2, birim: "10" }] });
+    await sevk(tam.id, [{ siparisKalemiId: tam.items[0].id, miktar: 2 }]);
+    for (const o of [sevkiyatsiz, bekleyen, tam]) {
+      expect(await kodlar(kapat(o.id))).toEqual(["SIPARIS_DURUMU_UYGUN_DEGIL"]);
+    }
+    expect((await prisma.orderItem.findMany({ select: { closedQuantity: true } })).every((i) => i.closedQuantity === 0)).toBe(true);
+    expect(await prisma.auditLog.count({ where: { action: "ORDER_REMAINDER_CLOSE" } })).toBe(0);
+  });
+
+  it("gerekçe kapalı listedendir; DIGER'de açıklama zorunludur", async () => {
+    const o = await siparis({ kalemler: [{ miktar: 5, birim: "10" }] });
+    await sevk(o.id, [{ siparisKalemiId: o.items[0].id, miktar: 1 }]);
+    expect(await kodlar(kapat(o.id, "BASKA"))).toEqual(["GEREKCE_ZORUNLU"]);
+    expect(await kodlar(kapat(o.id, "DIGER", "  "))).toEqual(["ALAN_ZORUNLU"]);
+    await kapat(o.id, "DIGER", "Ürün üretimden kalktı");
+    const sip = await prisma.order.findUniqueOrThrow({ where: { id: o.id } });
+    expect([sip.closeReason, sip.closeNote]).toEqual(["DIGER", "Ürün üretimden kalktı"]);
+  });
+
+  it("eşzamanlı sevkiyat ve kapatmadan yalnız biri başarılı olur", async () => {
+    const o = await siparis({ kalemler: [{ miktar: 10, birim: "10" }] });
+    await sevk(o.id, [{ siparisKalemiId: o.items[0].id, miktar: 4 }]);
+    const sonuc = await Promise.allSettled([
+      sevk(o.id, [{ siparisKalemiId: o.items[0].id, miktar: 6 }]),
+      kapat(o.id),
+    ]);
+    expect(sonuc.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+    const sip = await prisma.order.findUniqueOrThrow({ where: { id: o.id }, include: { items: { include: { shipmentItems: true } } } });
+    expect(sip.status).toBe("KARGOLANDI");
+    const sevkEdilen = sip.items[0].shipmentItems.reduce((t, x) => t + x.quantity, 0);
+    expect(sevkEdilen + sip.items[0].closedQuantity).toBe(10);
   });
 });

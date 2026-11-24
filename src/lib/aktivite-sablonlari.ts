@@ -12,6 +12,7 @@ type Fiil = string | ((veri: Record<string, unknown>) => string);
 export const SABLONLAR = {
   ORDER_CREATE: "yeni sipariş oluşturdu",
   ORDER_CANCEL: "siparişi iptal etti",
+  ORDER_REMAINDER_CLOSE: "sipariş kalanını kapattı",
   ORDER_STATUS_CHANGE: (v) =>
     v.sevkiyat
       ? v.tamamlandi

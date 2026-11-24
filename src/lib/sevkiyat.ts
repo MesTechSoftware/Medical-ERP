@@ -80,6 +80,7 @@ export async function sevkiyatYaz(tx: Prisma.TransactionClient, girdi: SevkiyatG
       id: true,
       productId: true,
       quantity: true,
+      closedQuantity: true,
       unitPrice: true,
       listPrice: true,
       vatRate: true,

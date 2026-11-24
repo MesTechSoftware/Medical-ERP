@@ -1,5 +1,5 @@
 import { formatla } from "@/lib/money";
-import type { FreeReason } from "@/generated/prisma/enums";
+import type { CloseReason, FreeReason } from "@/generated/prisma/enums";
 import type { BlokKuralKodu } from "@/lib/onay-blogu";
 import type { Bildirim, KuralKodu, Parametreler } from "@/lib/sonuc";
 import { BRUT, TABAN_ETIKETI } from "@/lib/taban";
@@ -139,6 +139,13 @@ export const BEDELSIZ_SEBEP_ADI: Record<FreeReason, string> = {
   NUMUNE: "Numune",
   PROMOSYON: "Promosyon",
   MAL_FAZLASI: "Mal fazlası",
+  DIGER: "Diğer",
+};
+
+/** Kalanı kapatma gerekçesi (A-3 eki). */
+export const KAPATMA_GEREKCESI_ADI: Record<CloseReason, string> = {
+  TEDARIK_EDILEMEDI: "Tedarik edilemedi",
+  MUSTERI_VAZGECTI: "Müşteri vazgeçti",
   DIGER: "Diğer",
 };
 

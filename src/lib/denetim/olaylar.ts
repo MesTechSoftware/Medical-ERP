@@ -18,6 +18,7 @@ export const AUDIT_ACTIONS = {
   STOCK_ADJUSTMENT: "STOCK_ADJUSTMENT",
   ORDER_CREATE: "ORDER_CREATE",
   ORDER_CANCEL: "ORDER_CANCEL",
+  ORDER_REMAINDER_CLOSE: "ORDER_REMAINDER_CLOSE",
   ORDER_STATUS_CHANGE: "ORDER_STATUS_CHANGE",
   RETURN_CREATE: "RETURN_CREATE",
   DOCTOR_CREATE: "DOCTOR_CREATE",
@@ -53,6 +54,7 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   STOCK_ADJUSTMENT: "Stok düzeltme",
   ORDER_CREATE: "Sipariş oluşturma",
   ORDER_CANCEL: "Sipariş iptali",
+  ORDER_REMAINDER_CLOSE: "Sipariş kalanını kapatma",
   ORDER_STATUS_CHANGE: "Sipariş durum değişikliği",
   RETURN_CREATE: "İade kaydı",
   DOCTOR_CREATE: "Doktor oluşturma",
@@ -99,6 +101,7 @@ export const MODUL_ETIKETI: Record<AuditModule, string> = {
 export const ISLEM_SINIFI: Record<AuditAction, IslemSinifi> = {
   ORDER_CREATE: { tur: "EKLEME", modul: "SATIS" },
   ORDER_CANCEL: { tur: "GUNCELLEME", modul: "SATIS" },
+  ORDER_REMAINDER_CLOSE: { tur: "GUNCELLEME", modul: "SATIS" },
   ORDER_STATUS_CHANGE: { tur: "GUNCELLEME", modul: "SATIS" },
   RETURN_CREATE: { tur: "EKLEME", modul: "SATIS" },
   STOCK_ENTRY: { tur: "EKLEME", modul: "STOK" },

@@ -113,6 +113,13 @@ enum ImportDataType {
 
 // A-2 eki (20.10.2026): bedelsiz satır sebebi — kodda kapalı katalog. NUMUNE onaysızdır;
 // diğerleri yönetici onayı ister (A-8 `BEDELSIZ_ONAYI`). DIGER'de açıklama zorunlu.
+// A-3 eki — kalanı kapatma gerekçesi (kapalı liste; DIGER'de açıklama zorunlu).
+enum CloseReason {
+  TEDARIK_EDILEMEDI
+  MUSTERI_VAZGECTI
+  DIGER
+}
+
 enum FreeReason {
   NUMUNE
   PROMOSYON
@@ -173,6 +180,7 @@ model User {
   importBatches   ImportBatch[]      @relation("ImportBatchBy")
   revertedBatches ImportBatch[]      @relation("ImportBatchRevertedBy")
   stockMovements  StockMovement[]    @relation("StockMovementBy")
+  closedOrders    Order[]            @relation("OrderClosedBy")
 }
 
 // E-2 · ADR-003: opak token; DB'de yalnız SHA-256 hash'i durur.
@@ -517,6 +525,13 @@ model Order {
   quoteValidUntil DateTime?   @db.Date // A-5
   paymentTermDays Int // A-7: vade gün sayısı; vade tarihi cari harekettedir (X-11 §(4))
 
+  // A-3 eki (Paket 4): kalanı kapatma — açık sipariş miktarını düşürür, tahsilat-borç eşleştirmesi (X-6) değildir.
+  closedBy    User?        @relation("OrderClosedBy", fields: [closedById], references: [id])
+  closedById  String?
+  closedAt    DateTime?    @db.Timestamptz(3)
+  closeReason CloseReason?
+  closeNote   String?      @db.VarChar(200) // DIGER'de zorunlu (CHECK)
+
   orderDate DateTime @default(now()) @db.Timestamptz(3)
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
@@ -538,6 +553,8 @@ model OrderItem {
   product   Product @relation(fields: [productId], references: [id])
   productId String
   quantity  Int
+  // A-3 eki: kalanı kapatılan miktar. Kalan = quantity − sevk − closedQuantity (`kalanMiktar`, tek kaynak).
+  closedQuantity Int @default(0)
 
   // Sipariş anında donar (RULE-04). İskonto oranı türetilir, saklanmaz (X-5 §(9)).
   listPrice Decimal @db.Decimal(18, 4)

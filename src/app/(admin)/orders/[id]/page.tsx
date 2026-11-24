@@ -5,8 +5,10 @@ import { PageHeader, Card } from "@/components/ui";
 import OrderDetail from "@/components/OrderDetail";
 import ConfirmSubmit from "@/components/ConfirmSubmit";
 import { IslemFormu } from "@/components/Sonuc";
-import { prepareOrder, markDelivered, cancelOrder, createReturn } from "../actions";
+import { prepareOrder, markDelivered, cancelOrder, createReturn, closeRemainder } from "../actions";
 import IadeFormu from "./IadeFormu";
+import KalaniKapatFormu from "./KalaniKapatFormu";
+import { kalanMiktar } from "@/lib/siparis";
 import { formatDateTime } from "@/lib/format";
 import { buton } from "@/components/stil";
 import { Ikon } from "@/components/Ikon";
@@ -31,9 +33,8 @@ export default async function AdminOrderDetailPage({
         },
       },
       shipments: {
-        orderBy: { createdAt: "desc" },
-        take: 1,
-        include: { carrier: { select: { name: true } } },
+        orderBy: { createdAt: "asc" },
+        include: { carrier: { select: { name: true, trackingUrlTemplate: true } } },
       },
     },
   });
@@ -57,6 +58,11 @@ export default async function AdminOrderDetailPage({
 
   const canCancel =
     order.status !== "IPTAL" && order.status !== "TESLIM_EDILDI";
+  // A-3 eki: kalanı kapat yalnız en az bir sevkiyatı olan HAZIRLANIYOR siparişte.
+  const kapatilabilirKalan =
+    order.status === "HAZIRLANIYOR" && order.shipments.length > 0
+      ? order.items.reduce((t, i) => t + kalanMiktar(i), 0)
+      : 0;
 
   return (
     <div>
@@ -73,7 +79,7 @@ export default async function AdminOrderDetailPage({
         }
       />
 
-      <OrderDetail order={{ ...order, shipment: order.shipments[0] ?? null }} showSeller />
+      <OrderDetail order={order} showSeller />
 
       <Card>
         <h2 className="mb-3 text-sm font-semibold text-slate-900">İşlemler</h2>
@@ -131,6 +137,18 @@ export default async function AdminOrderDetailPage({
           )}
         </div>
       </Card>
+
+      {kapatilabilirKalan > 0 && (
+        <div className="mt-6">
+          <Card>
+            <h2 className="mb-3 text-sm font-semibold text-slate-900">Kalanı Kapat</h2>
+            <p className="mb-3 text-sm text-slate-600">
+              Kalan miktar sevk edilmeyecekse kapatılır; sipariş kargolandı sayılır. Bu işlem borç eşleştirmesi değildir.
+            </p>
+            <KalaniKapatFormu action={closeRemainder.bind(null, id)} kalan={kapatilabilirKalan} />
+          </Card>
+        </div>
+      )}
 
       {(iadeKalemleri.length > 0 || iadeler.length > 0) && (
         <div className="mt-6">

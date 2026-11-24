@@ -187,6 +187,7 @@ export async function onayPaneli(id: string): Promise<OnayPaneli | null> {
                 freeReason: true,
                 freeNote: true,
                 productId: true,
+                closedQuantity: true,
                 product: { select: { name: true, code: true } },
                 shipmentItems: { select: { quantity: true } },
               },
