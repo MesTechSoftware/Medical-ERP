@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { kalemMiktarlari, siparisToplami, siparisTutarlari } from "./siparis";
 
-const kalem = (sevk: number[], iade: number[] = []) => ({
+const kalem = (sevk: number[], iade: number[] = [], closedQuantity = 0) => ({
   quantity: 5,
+  closedQuantity,
   shipmentItems: sevk.map((quantity) => ({ quantity })),
   returnItems: iade.map((quantity) => ({ quantity })),
 });
@@ -22,6 +23,11 @@ describe("kalem miktarları (A-3-2)", () => {
 
   it("iade kalanı değiştirmez (A-1: iade ayrı belgedir)", () => {
     expect(kalemMiktarlari(kalem([2, 3], [1]))).toEqual({ sevk: 5, iade: 1, kalan: 0 });
+  });
+
+  it("kalan = sipariş − sevk − kapatılan (A-3 eki)", () => {
+    expect(kalemMiktarlari(kalem([2], [], 3))).toEqual({ sevk: 2, iade: 0, kalan: 0 });
+    expect(kalemMiktarlari(kalem([1], [], 1))).toEqual({ sevk: 1, iade: 0, kalan: 3 });
   });
 });
 

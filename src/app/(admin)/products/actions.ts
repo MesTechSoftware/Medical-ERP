@@ -9,7 +9,7 @@ import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { stokHareketiYaz, varsayilanDepoId } from "@/lib/stok";
 import { EntityStatus } from "@/generated/prisma/enums";
 import { benzersizIhlali, IsHatasi } from "@/lib/hata";
-import { urunAcmaDenetle, urunAcmaYaz, varsayilanListeFiyatiYaz } from "@/lib/urun";
+import { urunAcmaDenetle, urunAcmaYaz, urunSil, varsayilanListeFiyatiYaz } from "@/lib/urun";
 import { engel, sonucOlustur, sert, type IslemSonucu } from "@/lib/sonuc";
 
 function parseProductForm(formData: FormData) {
@@ -118,12 +118,13 @@ export async function updateProduct(
 }
 
 export async function deleteProduct(id: string): Promise<IslemSonucu> {
-  await requireAdmin();
-  const usedInOrders = await prisma.orderItem.count({ where: { productId: id } });
-  if (usedInOrders > 0) return engel("URUN_SIPARISTE_KULLANILDI");
-  await prisma.stockMovement.deleteMany({ where: { productId: id } });
-  await prisma.priceListItem.deleteMany({ where: { productId: id } });
-  await prisma.product.delete({ where: { id } });
+  const session = await requireAdmin();
+  try {
+    await prisma.$transaction((tx) => urunSil(tx, id, session.user.id));
+  } catch (e) {
+    if (e instanceof IsHatasi) return e.sonuc;
+    throw e;
+  }
   revalidatePath("/products");
   redirect("/products");
 }

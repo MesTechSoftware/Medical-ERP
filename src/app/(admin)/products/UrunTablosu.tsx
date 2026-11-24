@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { Card, LinkButton, StatusBadge } from "@/components/ui";
-import ConfirmSubmit from "@/components/ConfirmSubmit";
 import { Ikon } from "@/components/Ikon";
 import { BosDurum } from "@/components/liste/BosDurum";
-import { IslemFormu } from "@/components/Sonuc";
 import { StokMiktari } from "@/components/StokMiktari";
 import { BAGLANTI, buton } from "@/components/stil";
 import { Tutar } from "@/components/Tutar";
@@ -12,7 +10,6 @@ import { BRUT, MATRAH, tabanli } from "@/lib/taban";
 import type { UrunSatiri } from "@/lib/urun-listesi/sorgu";
 import { SUTUNLAR, type UrunSutunu } from "@/lib/urun-listesi/sutunlar";
 import { bosDurum, urunAdresi, type BosDurum as BosTur, type UrunSuzgeci } from "@/lib/urun-listesi/suzgec";
-import { deleteProduct } from "./actions";
 
 /** Sütun başlıkları; liste fiyatının tabanı başlıktadır (`tabanli` — Ü-3-1). */
 const BASLIK: Record<UrunSutunu, { metin: string; sinif?: string }> = {
@@ -34,7 +31,7 @@ const BOS: Record<BosTur, { ikon: "yeni" | "onayla" | "filtrele"; baslik: string
 
 /**
  * Ürün listesinin tablosu (spec Ü-19 §3.3). Gizli sütunun başlığı ve hücresi çizilmez. Ad yan
- * paneli açar; Düzenle ve Sil yalnız YONETICI (D-2 17.10 eki).
+ * paneli açar; Düzenle (ve silme) yalnız YONETICI (D-2 17.10 eki).
  */
 export function UrunTablosu({
   satirlar,
@@ -106,18 +103,13 @@ export function UrunTablosu({
                     <StatusBadge status={p.status} />
                   </td>
                 )}
-                <td>
+                <td className="sayi">
                   {yonetici && (
                     <div className="flex items-center justify-end gap-3">
                       <Link href={`/products/${p.id}/edit`} className={buton("metin")}>
                         <Ikon ad="duzenle" />
                         Düzenle
                       </Link>
-                      <IslemFormu action={deleteProduct.bind(null, p.id)}>
-                        <ConfirmSubmit confirmText={`"${p.name}" silinsin mi?`} ikon="sil">
-                          Sil
-                        </ConfirmSubmit>
-                      </IslemFormu>
                     </div>
                   )}
                 </td>

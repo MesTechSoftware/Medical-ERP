@@ -1,10 +1,11 @@
-import { type Page, expect } from "@playwright/test";
+import { type Locator, type Page, expect } from "@playwright/test";
+import { demoParola } from "../src/lib/demo-parola";
 
 // Seed'lenen sabit kullanıcılar (prisma/seed.ts ile birebir).
 export const USERS = {
-  admin: { email: "admin@medikal.local", password: "admin123" },
-  seller: { email: "ahmet@medikal.local", password: "satici123" },
-  operasyon: { email: "operasyon@medikal.local", password: "operasyon123" },
+  admin: { email: "admin@medikal.local", password: demoParola("admin").parola },
+  seller: { email: "ahmet@medikal.local", password: demoParola("satici").parola },
+  operasyon: { email: "operasyon@medikal.local", password: demoParola("operasyon").parola },
 } as const;
 
 // Seed'lenen satıcı adları (cari/ödeme testleri için).
@@ -36,6 +37,21 @@ export async function login(
   await page.getByLabel("Şifre").fill(user.password);
   await page.getByRole("button", { name: "Giriş Yap" }).click();
   await expect(page).not.toHaveURL(/\/login/);
+}
+
+/**
+ * Aramalı seçimde (`AramaliSecim`) kayıt seçer: kutuya `metin` yazılır (verilmezse yazılmaz) ve listenin
+ * ilk seçeneği alınır. Seçilen kaydın başlık metnini döner.
+ */
+export async function aramaliSec(kapsam: Page | Locator, etiket: string, metin?: string): Promise<string> {
+  const kutu = kapsam.getByRole("combobox", { name: etiket, exact: true }).first();
+  await kutu.click();
+  if (metin) await kutu.fill(metin);
+  const secenek = kapsam.getByRole("option").first();
+  await expect(secenek).toBeVisible();
+  const ad = ((await secenek.locator("span").first().textContent()) ?? "").trim();
+  await secenek.click();
+  return ad;
 }
 
 /** Politikaya uyan iki parola (E-2-6): yöneticinin verdiği geçici parola ve kullanıcının yenisi. */
@@ -198,7 +214,8 @@ export async function toplamlarKolonlaHizali(page: Page) {
   await page.goto("/orders");
   await page.getByRole("link", { name: "Detay" }).first().click();
   await expect(page.getByRole("heading", { level: 1, name: "Sipariş Detayı" })).toBeVisible();
-  const tablo = page.getByRole("table").filter({ has: page.getByRole("columnheader", { name: "Ürün" }) });
+  // Sevkiyatlı siparişte Fatura Hazırlık kartının tablosu da "Ürün" sütununu taşır; siparişin kendi tablosu ilktir.
+  const tablo = page.getByRole("table").filter({ has: page.getByRole("columnheader", { name: "Ürün" }) }).first();
   // Gizli kolon colSpan hesabını kaydırır: altı kolonun hepsi görünür olmalı.
   await expect(tablo.getByRole("columnheader")).toHaveCount(6);
   for (const baslik of await tablo.getByRole("columnheader").all()) await expect(baslik).toBeVisible();

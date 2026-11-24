@@ -181,11 +181,10 @@ test("toplu devir: iki doktor tek gerekçeyle, her birine iz satırı (X-17-3)",
 
   await page.goto("/doctors");
 
-  // Seçimsiz ve gerekçesiz devir kaydedilmez.
-  await page.locator("#toplu-gerekce").fill("E2E toplu");
-  await page.locator("#toplu-devir").getByRole("button", { name: "Devret" }).click();
-  await expect(page.getByText("Devredilecek doktor seçilmedi.")).toBeVisible();
+  // Toplu devir çubuğu yalnız seçim varken görünür; gerekçesiz devir kaydedilmez.
+  await expect(page.locator("#toplu-devir")).toBeHidden();
   await page.locator(`#sec-${docs[0].id}`).check();
+  await expect(page.locator("#toplu-devir")).toBeVisible();
   await page.locator("#toplu-gerekce").fill("");
   await page.locator("#toplu-devir").getByRole("button", { name: "Devret" }).click();
   await expect(page.getByText("Gerekçe zorunludur.")).toBeVisible();

@@ -38,6 +38,10 @@ export async function recordCollection(
   if (!tutar.success) return engel("GECERSIZ_TUTAR", {}, "amount");
   if (!paymentMethodId) return engel("ALAN_ZORUNLU", {}, "paymentMethodId");
   const amount = tutar.data;
+  // A-11-4: ödeme tarihi geçersizse 500 yerine iş hatası; boşsa şimdi.
+  const paidAtHam = String(formData.get("paidAt") ?? "").trim();
+  const odemeAni = paidAtHam ? new Date(paidAtHam) : simdi();
+  if (Number.isNaN(odemeAni.getTime())) return engel("GECERSIZ_TARIH", {}, "paidAt");
 
   let uyarilar: Bildirim[];
   try {
@@ -47,7 +51,7 @@ export async function recordCollection(
         doktorId: doctorId,
         odemeYontemiId: paymentMethodId,
         tutar: amount,
-        odemeAni: formData.get("paidAt") ? new Date(String(formData.get("paidAt"))) : simdi(),
+        odemeAni,
         referansNo: ((formData.get("referenceNo") as string) || "").trim() || null,
         not: ((formData.get("note") as string) || "").trim() || null,
         yapanId: session.user.id,

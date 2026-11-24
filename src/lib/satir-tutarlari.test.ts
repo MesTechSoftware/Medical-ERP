@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hesaplaKomisyonTutari, hesaplaSatirTutarlari, type SatirGirdisi } from "@/lib/satir-tutarlari";
+import { birimFiyatPozitifMi, hesaplaKomisyonTutari, hesaplaSatirTutarlari, iskontoTavaniAsimi, iskontoYuzdesi, type SatirGirdisi } from "@/lib/satir-tutarlari";
 
 // `vat.test.ts`'in (15 test) Decimal karşılığı — C-6 §(5), X-5 §(7). FAZ1 §D.1 CM: "yeniden yazılır".
 const satir = (birimFiyat: string, miktar: number, kdvOrani: string, listeFiyat = birimFiyat): SatirGirdisi => ({
@@ -192,5 +192,34 @@ describe("ters satır — iade netlemesi (A-1-1)", () => {
     ]);
     expect(toplam.iskontoOran?.toFixed(2)).toBe("10.00");
     expect(toplam.matrah.toFixed(2)).toBe("40.00");
+  });
+});
+
+describe("iskontoYuzdesi — canlı yüzde tek fonksiyondan (A-10-3)", () => {
+  it("liste altı artı, liste üstü eksi, eşit 0; 2 hane yarım sıfırdan uzağa", () => {
+    expect(iskontoYuzdesi("1000", "800")?.toFixed(2)).toBe("20.00");
+    expect(iskontoYuzdesi("1000", "1250.5")?.toFixed(2)).toBe("-25.05");
+    expect(iskontoYuzdesi("1000", "1000")?.toFixed(2)).toBe("0.00");
+    expect(iskontoYuzdesi("3", "2")?.toFixed(2)).toBe("33.33");
+  });
+
+  it("liste fiyatı 0 ise yüzde yoktur; satır hesabıyla aynı değeri verir", () => {
+    expect(iskontoYuzdesi("0", "5")).toBeNull();
+    expect(tek(satir("800", 1, "20", "1000")).iskontoOran?.toFixed(2)).toBe(iskontoYuzdesi("1000", "800")?.toFixed(2));
+  });
+});
+
+describe("birimFiyatPozitifMi / iskontoTavaniAsimi (A-10-4, A-10-5)", () => {
+  it("sıfır ve negatif geçersizdir", () => {
+    expect(birimFiyatPozitifMi("0")).toBe(false);
+    expect(birimFiyatPozitifMi("-1")).toBe(false);
+    expect(birimFiyatPozitifMi("0.0001")).toBe(true);
+  });
+
+  it("tavan yalnız aşıldığında (>) yüzdeyi döner; null tavan devrede değildir; liste üstü aşmaz", () => {
+    expect(iskontoTavaniAsimi("1000", "800", 10)).toBe("20.00");
+    expect(iskontoTavaniAsimi("1000", "900", 10)).toBeNull();
+    expect(iskontoTavaniAsimi("1000", "800", null)).toBeNull();
+    expect(iskontoTavaniAsimi("1000", "1300", 10)).toBeNull();
   });
 });

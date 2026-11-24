@@ -2,7 +2,9 @@ import type Decimal from "decimal.js";
 import type { Prisma } from "@/generated/prisma/client";
 import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { policy } from "@/lib/policy";
+import { IsHatasi } from "@/lib/hata";
 import { sert, type Bildirim } from "@/lib/sonuc";
+import { stokKilitle } from "@/lib/stok";
 import { priceSchema } from "@/lib/validation";
 
 /**
@@ -80,4 +82,23 @@ export async function urunAcmaYaz(
     tx
   );
   return { id: p.id };
+}
+
+/**
+ * Ürün silme (C-3 §(1), Ü-39). Stok hareketi ya da sipariş kalemi olan ürün silinmez (sert red);
+ * stok hareketi hiçbir koşulda silinmez. Ürün kilidi sıra gereği ilk alınır (ADR-012); fiyat satırları
+ * ve ürün tek transaction'da silinir, denetime yazılır.
+ */
+export async function urunSil(tx: Prisma.TransactionClient, id: string, actorId: string): Promise<void> {
+  await stokKilitle(tx, [id]);
+  const urun = await tx.product.findUnique({ where: { id } });
+  if (!urun) throw new IsHatasi([sert("URUN_BULUNAMADI")]);
+  const [hareket, kalem] = await Promise.all([
+    tx.stockMovement.count({ where: { productId: id } }),
+    tx.orderItem.count({ where: { productId: id } }),
+  ]);
+  if (hareket > 0 || kalem > 0) throw new IsHatasi([sert("URUN_SIPARISTE_KULLANILDI")]);
+  await tx.priceListItem.deleteMany({ where: { productId: id } });
+  await tx.product.delete({ where: { id } });
+  await createAuditLog({ actorId, action: AUDIT_ACTIONS.PRODUCT_DELETE, entityType: "Product", entityId: id, before: urun }, tx);
 }

@@ -23,8 +23,12 @@ export type TahsilatGirdisi = {
  * demo geçmiş seed'i). Doktor bakiyesi hareketlerden HESAPLANIR (RULE-08); tahsilat siparişle
  * eşleştirilmez (X-6). Ödeme yöntemi tanım tablosudur; komisyon oranı kayda kopyalanır ve donar
  * (A-11). Numara, kayıt, cari hareket (X-11 §(5)) ve denetim kaydı çağıranın transaction'ındadır (X-2).
+ * Doktorun varlığı denetlenir (A-11-4); **pasif doktora tahsilat reddedilmez** — tahliye vanasıdır (B-7).
  */
 export async function tahsilatYaz(tx: Prisma.TransactionClient, g: TahsilatGirdisi) {
+  if (!(await tx.doctor.findUnique({ where: { id: g.doktorId }, select: { id: true } }))) {
+    throw new IsHatasi([sert("DOKTOR_BULUNAMADI", {}, "doctorId")]);
+  }
   const yontem = await tx.paymentMethod.findUnique({ where: { id: g.odemeYontemiId } });
   if (!yontem || !yontem.isActive) throw new IsHatasi([sert("ODEME_YONTEMI_BULUNAMADI", {}, "paymentMethodId")]);
   const documentNo = await uretBelgeNo("THS", tx);

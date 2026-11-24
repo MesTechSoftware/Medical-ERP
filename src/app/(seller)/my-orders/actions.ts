@@ -6,9 +6,31 @@ import { prisma } from "@/lib/db";
 import { requireSeller } from "@/lib/session";
 import { canSellerOrderForDoctor, kapsamliDoktorlariGetir } from "@/lib/doctor";
 import { IsHatasi } from "@/lib/hata";
-import { siparisAc, siparisSatirlariniOku } from "@/lib/siparis-giris";
-import { engel, type IslemSonucu } from "@/lib/sonuc";
+import { siparisAc, siparisFiyatiOnizle, siparisSatirlariniOku, type FiyatOnizlemeSonucu } from "@/lib/siparis-giris";
+import { riskBilgileri } from "@/lib/doctor-cari";
+import { bilgiyleAdres } from "@/lib/bilgi-seridi";
+import { basarili, engel, sonucOlustur, type Bildirim, type IslemSonucu } from "@/lib/sonuc";
 
+/** Formda cari ve miktara göre liste fiyatı önizlemesi (A-10-2). Kapsam dışı cari için sonuç yok. */
+export async function fiyatOnizle(doctorId: string, productId: string, quantity: number): Promise<FiyatOnizlemeSonucu> {
+  const session = await requireSeller();
+  const doctor = await prisma.doctor.findFirst({
+    where: { AND: [kapsamliDoktorlariGetir(session.user), { id: doctorId }] },
+    select: { id: true },
+  });
+  if (!doctor) return { ...basarili(), listeFiyat: null };
+  return { ...basarili(), listeFiyat: await siparisFiyatiOnizle(doctor.id, productId, quantity) };
+}
+
+/** Formda cari seçilince limit ve vade bilgisi (A-12-8); kapsam dışı cari için bilgi yok. */
+export async function cariRiskiOnizle(doctorId: string): Promise<IslemSonucu> {
+  const session = await requireSeller();
+  const doctor = await prisma.doctor.findFirst({
+    where: { AND: [kapsamliDoktorlariGetir(session.user), { id: doctorId }] },
+    select: { id: true },
+  });
+  return sonucOlustur(doctor ? await riskBilgileri(doctor.id) : []);
+}
 
 export async function createOrder(
   _prev: unknown,
@@ -35,15 +57,16 @@ export async function createOrder(
   const okunan = siparisSatirlariniOku(formData.get("items") as string | null);
   if ("hata" in okunan) return okunan.hata;
 
+  let bildirimler: Bildirim[];
   try {
-    await prisma.$transaction((tx) =>
+    ({ bildirimler } = await prisma.$transaction((tx) =>
       siparisAc(tx, {
         doktorId: doctorId,
         satirlar: okunan.satirlar,
         gerekce: ((formData.get("gerekce") as string) || "").trim() || null,
         yapan: { id: sellerId, rol: session.user.role },
       })
-    );
+    ));
   } catch (e) {
     // Yalnız iş hatası sonuca döner; teknik hata hata sınırına düşer (X-3 §(2)/(4), X-4 §(2)).
     if (e instanceof IsHatasi) return e.sonuc;
@@ -53,5 +76,5 @@ export async function createOrder(
   revalidatePath("/my-orders");
   revalidatePath("/products");
   revalidatePath("/stock");
-  redirect("/my-orders");
+  redirect(bilgiyleAdres("/my-orders", bildirimler));
 }

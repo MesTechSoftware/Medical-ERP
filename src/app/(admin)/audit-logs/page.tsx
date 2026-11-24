@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { DetayPaneli, KayitYokPaneli } from "@/components/denetim/DetayPaneli";
@@ -44,6 +45,8 @@ const imlecParametresi = (i: Imlec) => (i === null ? {} : i.yon === "once" ? { o
  * Yalnız `YONETICI` (D-2); salt okunur, kayıt değiştirilemez ve silinemez (X-18 §(1)). Üstte "bugün ne oldu"
  * kartları, tarih kısayolları, açılır süzgeç, etkin etiketler ve sütun seçici (spec Ü-28).
  */
+export const metadata: Metadata = { title: "Denetim Kaydı" };
+
 export default async function DenetimKaydiSayfasi({
   searchParams,
 }: {

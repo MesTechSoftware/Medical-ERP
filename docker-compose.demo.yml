@@ -8,6 +8,13 @@ x-app: &app
   image: medikal-demo-app
   environment:
     DATABASE_URL: postgresql://medikal:${POSTGRES_PASSWORD}@postgres:5432/medikal_demo?schema=public
+    # E-2: marka ve demo parolaları .env'den; boşsa nötr varsayılan / yerel varsayılan (.env.demo.example).
+    APP_BRAND: ${APP_BRAND:-}
+    APP_LOGO: ${APP_LOGO:-}
+    APP_LOGO_MARK: ${APP_LOGO_MARK:-}
+    DEMO_ADMIN_PAROLA: ${DEMO_ADMIN_PAROLA:-}
+    DEMO_SATICI_PAROLA: ${DEMO_SATICI_PAROLA:-}
+    DEMO_OPERASYON_PAROLA: ${DEMO_OPERASYON_PAROLA:-}
 
 services:
   postgres:

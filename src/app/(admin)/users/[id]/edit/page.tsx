@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
@@ -6,6 +7,8 @@ import { ROLE_LABEL } from "@/lib/roles";
 import { PageHeader, Card } from "@/components/ui";
 import UserForm from "../../UserForm";
 import { updateUser } from "../../actions";
+
+export const metadata: Metadata = { title: "Kullanıcı Düzenle" };
 
 export default async function EditUserPage({
   params,

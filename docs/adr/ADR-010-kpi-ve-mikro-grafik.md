@@ -1,6 +1,6 @@
 # ADR-010 — KPI kartları ve mikro grafikler: sunucu SVG, tek hesap yolu, kart düzeyinde hata
 
-- **Durum:** ✅ Kabul edildi
+- **Durum:** ✅ Kabul edildi — *yalnız 03.11.2026 eki (Siparişler ekranı 6 kart) yürürlükten kalktı → ADR-013 (24.11.2026); gövde değişmedi*
 - **Tarih:** 26.10.2026
 - **Kaynak soru:** Görsel tasarım 2. tur brief'i (kullanıcı, 26.10.2026) — kararlar K-1…K-5 ve X-5 dar istisnası; "Dashboard Geliştirme – Tasarım 2. Tur Eki" brief'i (27.10.2026) — kararlar K-D1…K-D5 (madde 10)
 - **Bağlı KARARLAR maddeleri:**

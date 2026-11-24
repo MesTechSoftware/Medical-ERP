@@ -25,7 +25,7 @@ export function SutunSecici<L extends SutunluListe>({
     // Kaydedince menü yeni tercihle, liste adresi (süzgeç, sayfa, ayrıntı) değişince kapalı yeniden kurulur (yumuşak gezinme).
     <AcilirPanel key={`${[...gizliler].join(",")}#${donus}`} className="relative">
       <summary className={`${buton("ikincil")} cursor-pointer list-none`}>
-        <Ikon ad="duzenle" />
+        <Ikon ad="sutunlar" />
         Sütunlar
       </summary>
       <form

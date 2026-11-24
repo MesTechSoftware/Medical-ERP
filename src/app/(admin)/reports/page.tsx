@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/session";
 import { BRUT, MATRAH } from "@/lib/taban";
@@ -35,6 +36,8 @@ import { KpiSatiri } from "@/components/kpi/KpiSatiri";
  * KPI'lar seçili döneme bağlıdır (K-4); karşılaştırma K-1, "tüm zamanlar"da yoktur (ADR-010).
  * Doktor ciro sıralaması dönemin bütün cirolu carileridir; süzgeç ve sütun seçici (spec Ü-27, X-1-2).
  */
+export const metadata: Metadata = { title: "Raporlar" };
+
 export default async function ReportsPage({
   searchParams,
 }: {

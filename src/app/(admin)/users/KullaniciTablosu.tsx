@@ -96,7 +96,7 @@ export function KullaniciTablosu({
                     <StatusBadge status={u.isActive ? "AKTIF" : "PASIF"} />
                   </td>
                 )}
-                <td>
+                <td className="sayi">
                   {yonetici && (
                     <div className="flex items-center justify-end gap-3">
                       <Link href={`/users/${u.id}/edit`} className={buton("metin")}>

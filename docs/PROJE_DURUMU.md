@@ -270,8 +270,25 @@ uygulamanın kendi servislerinden yazılır ve geçmişe kaydırılır; sonda tu
 hiçbir şey yazılmaz. Canlıda, bayraksız ya da izinli olmayan veritabanı sunucusunda, demo işareti
 yokken ya da geçmiş zaten varken çalışmaz.
 
-Demo hesapları (yalnız `db:seed:demo`, üretime taşınmaz): `admin@medikal.local` / `admin123` ·
-`ahmet@…`, `ayse@…`, `mehmet@…` / `satici123`.
+Demo hesapları (yalnız `db:seed:demo`, üretime taşınmaz): `admin@medikal.local` · `ahmet@…`, `ayse@…`, `mehmet@…` ·
+`operasyon@…`. Parolalar `DEMO_ADMIN_PAROLA` / `DEMO_SATICI_PAROLA` / `DEMO_OPERASYON_PAROLA` ortam değişkenlerinden gelir;
+boşsa yerel varsayılan (`admin123` / `satici123` / `operasyon123`) — **canlı demo sunucusunda varsayılan bırakılmaz**
+(README "Demo ortamı"). Seed ortamdan gelen parolayı yazdırmaz (Paket 13 · E-2).
+
+Demo verisi jenerik estetik/tıbbi cihaz kataloğudur (toksin ve gerçek marka yok; Paket 12): 8 ürün, barem 1+/10+/25+,
+özel liste atanmış cari (Burak Şahin), 2 bayi, konsinye klinik (Elif Yıldız), 2 onay bekleyen sevkiyat, Kurye ve Elden teslim
+(takip bağlantısız) ve üç fatura senaryosu (tam / eksik / 7 günden eski sevk).
+
+## Demo öncesi revizyon (Ü-39 · 24.11.2026 — dal `revize/demo-oncesi-is-akisi`, Paket 0–16 kodda)
+
+Kapsam: `docs/superpowers/specs/2026-11-24-demo-oncesi-revizyon-karar-ozeti.md`. Kodda çalışan başlıca davranışlar:
+A-10 fiyat/iskonto formu ve `ISKONTO_TAVANI` (varsayılan `null`) · A-3 kalanı kapat ve tüm sevkiyatlar · A-12 limit/vade
+bilgi şeridi · A-8 öksüz onay düşer · A-4 pasif doktora yeni çıkış SERT · X-18 konsinye/transfer/onay kararı denetimde ·
+D-2 OPERASYON panosu · C-3 ürün silme bağ kontrolü · güvenlik başlıkları · jenerik demo verisi · K-4 §(6)-k Fatura Hazırlık
+Kartı · sipariş sekmelerinde sayılar (ADR-013), tek "Dikkat gerektirenler" kartı, "Genel Bakış" · **marka sunucu ortamından**:
+`APP_BRAND`, `APP_LOGO`, `APP_LOGO_MARK` (boşsa nötr varsayılan), sekme başlığı "Sayfa · {marka}" (`src/lib/marka.ts`).
+Bilinen sapmalar: sekme sayıları listenin gerçek filtresini izler; tarih filtresi yokken dönem etiketi "Tüm zamanlar";
+üst uyarı bandı kaldırıldı. WebKit mobil e2e projeleri (iphone/ipad) yerelde koşmaz; mobil kapsamı Android verir.
 
 ## Faz 1B'de gelecekler (henüz kodda yok)
 

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { prisma } from "@/lib/db";
 import { baremMatrisi, cozumleBirimFiyat, cozumleListeFiyatlari } from "@/lib/fiyat";
+import { siparisFiyatiOnizle } from "@/lib/siparis-giris";
 import { referansVeri, yeniDoktorVerisi } from "../../test/integration/referans";
 
 // `cozumleBirimFiyat()` tamamı — B-5-1 (tarih), B-6-1 (barem), X-10-1 (liste seçimi).
@@ -196,5 +197,25 @@ describe("barem matrisi — fiyat seçiminin tek yolundan (X-10-5)", () => {
     expect(yarin.urunler[0].hucreler.map(ozet)).toEqual(["90.00"]);
     const dun = await baremMatrisi(s.liste.id, gun("2026-10-19"));
     expect(dun.esikler).toEqual([1]);
+  });
+});
+
+describe("sipariş formu fiyat önizlemesi (A-10-2)", () => {
+  it("seçili carinin listesinden ve miktarın barem basamağından çözülür", async () => {
+    const ozel = await prisma.priceList.create({ data: { code: "OZEL", name: "Özel" } });
+    await satir("100", 1);
+    await satir("70", 1, undefined, undefined, ozel.id);
+    await satir("60", 20, undefined, undefined, ozel.id);
+    const doktor = await prisma.doctor.create({ data: { ...yeniDoktorVerisi(), priceListId: ozel.id } });
+
+    expect(await siparisFiyatiOnizle(doktor.id, urunId, 1)).toBe("70");
+    expect(await siparisFiyatiOnizle(doktor.id, urunId, 25)).toBe("60");
+    expect(await siparisFiyatiOnizle("", urunId, 1)).toBe("100");
+  });
+
+  it("fiyat çözülemezse ya da miktar geçersizse null döner; varsayılana düşülmez", async () => {
+    await satir("90", 10);
+    expect(await siparisFiyatiOnizle("", urunId, 5)).toBeNull();
+    expect(await siparisFiyatiOnizle("", urunId, 0)).toBeNull();
   });
 });

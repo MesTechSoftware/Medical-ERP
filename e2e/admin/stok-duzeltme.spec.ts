@@ -5,6 +5,7 @@ import { sorgu, stoksuzSiparis } from "../helpers";
 test("yönetici iki satırlı düzeltme kaydeder; stok ve belge yazılır (B-7-1)", async ({ page }) => {
   const s = await stoksuzSiparis({ stoklu: true }); // 10 adet stoklu yeni ürün
   await page.goto("/stock");
+  await page.getByRole("link", { name: "Stok Düzeltme" }).click();
   const form = page.locator("form").filter({ has: page.getByRole("button", { name: "Düzeltmeyi Kaydet" }) });
   const urun = `${s.urunAdi} (${s.urunKodu})`;
 

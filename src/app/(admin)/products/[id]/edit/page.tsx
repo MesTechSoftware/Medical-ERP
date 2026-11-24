@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/session";
@@ -5,8 +6,12 @@ import { formatla } from "@/lib/money";
 import { cozumleBirimFiyat } from "@/lib/fiyat";
 import { PageHeader, Card } from "@/components/ui";
 import ProductForm from "../../ProductForm";
-import { updateProduct } from "../../actions";
+import { deleteProduct, updateProduct } from "../../actions";
+import ConfirmSubmit from "@/components/ConfirmSubmit";
+import { IslemFormu } from "@/components/Sonuc";
 import { bugun } from "@/lib/zaman";
+
+export const metadata: Metadata = { title: "Ürün Düzenle" };
 
 export default async function EditProductPage({
   params,
@@ -49,6 +54,19 @@ export default async function EditProductPage({
           }}
         />
       </Card>
+      <div className="mt-4">
+      <Card>
+        <h2 className="mb-1 text-sm font-semibold text-slate-900">Ürünü sil</h2>
+        <p className="mb-3 text-sm text-slate-600">
+          Yalnız stok hareketi ve siparişi olmayan ürün silinir; aksi hâlde durumunu Pasif yapın.
+        </p>
+        <IslemFormu action={deleteProduct.bind(null, id)}>
+          <ConfirmSubmit confirmText={`"${product.name}" silinsin mi?`} ikon="sil">
+            Sil
+          </ConfirmSubmit>
+        </IslemFormu>
+      </Card>
+      </div>
     </div>
   );
 }

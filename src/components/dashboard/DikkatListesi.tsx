@@ -5,10 +5,9 @@ import { formatSayi } from "@/lib/format";
 import type { Istisna } from "@/lib/istisnalar";
 
 /**
- * Dikkat gerektirenler (brief §3.5): bantta en çok üç madde varken burada hepsi. Sayı uyarı ya da
+ * Dikkat gerektirenler (brief §3.5): tüm istisnalar tek kartta (üstte ayrı bant yoktur — Paket 16). Sayı uyarı ya da
  * hata etiketinde, yanında metin ve eylem bağlantısı; rolün göremediği madde listede hiç yoktur
- * (`istisnalar()`). İstisna yoksa sakin metin: yeşil "uygun" rozeti ve ünlem yok. Bantın
- * "+N uyarı daha" bağlantısı buraya (`#dikkat`) gelir.
+ * (`istisnalar()`). İstisna yoksa sakin metin: yeşil "uygun" rozeti ve ünlem yok.
  */
 export function DikkatListesi({ istisnalar }: { istisnalar: readonly Istisna[] }) {
   const var_ = istisnalar.length > 0;

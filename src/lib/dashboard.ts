@@ -1,10 +1,25 @@
 import type { OrderStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import type { Aralik } from "@/lib/donem";
+import { kapaliSiparisler, onayKosulu } from "@/lib/onay-listesi/sorgu";
+import { BOS_SUZGEC } from "@/lib/onay-listesi/suzgec";
 import { kapsamKosulu, type SiparisKapsami } from "@/lib/siparis-listesi/suzgec";
 
 /** Teklif (A-5) hiçbir sayıma girmez; durum dağılımı iptali de gösterir, o yüzden `sayilanBelgeler.siparis` değil. */
 const ONAYLI = { stage: "ONAYLI" } as const;
+
+/**
+ * OPERASYON panosunun iki anlık sayısı (D-2): onay bekleyen blok (onay ekranının koşuluyla aynı,
+ * iptal ve kapatılmış siparişin bloğu hariç) ve kalanı açık sipariş — en az bir sevkiyatı olup
+ * hâlâ HAZIRLANIYOR olan onaylı sipariş (tam sevk ya da kalanı kapatma siparişi KARGOLANDI yapar).
+ */
+export async function operasyonSayilari(an: Date): Promise<{ onayBekleyen: number; kalaniAcik: number }> {
+  const [onayBekleyen, kalaniAcik] = await Promise.all([
+    prisma.approvalBlock.count({ where: onayKosulu(BOS_SUZGEC, an, null, await kapaliSiparisler()) }),
+    prisma.order.count({ where: { ...ONAYLI, status: "HAZIRLANIYOR", shipments: { some: {} } } }),
+  ]);
+  return { onayBekleyen, kalaniAcik };
+}
 
 /**
  * Sipariş durum dağılımı (brief §3.3): aralıkta açılan onaylı siparişlerin bugünkü durumları.

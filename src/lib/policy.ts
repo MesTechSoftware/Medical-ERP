@@ -29,7 +29,7 @@ export const policy = {
     primOraniVarsayilan: 5,
   },
   pricing: {
-    /** #7 — İskonto tavanı yok (A-10). */
+    /** #7 — İskonto tavanı yok (A-10). Dolu (yüzde) olursa `ISKONTO_TAVANI` onay bloğu devreye girer; liste üstü satış serbesttir. */
     iskontoTavani: null,
     /** #8 — Fiyat girişi KDV hariç; AÇILMAZ (Ü-3 §(3)). */
     fiyatGirisiKdvDahil: false,

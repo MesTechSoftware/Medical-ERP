@@ -1,5 +1,5 @@
 import { formatla } from "@/lib/money";
-import type { FreeReason } from "@/generated/prisma/enums";
+import type { CloseReason, FreeReason } from "@/generated/prisma/enums";
 import type { BlokKuralKodu } from "@/lib/onay-blogu";
 import type { Bildirim, KuralKodu, Parametreler } from "@/lib/sonuc";
 import { BRUT, TABAN_ETIKETI } from "@/lib/taban";
@@ -39,6 +39,7 @@ export const KURAL_METNI: Record<KuralKodu, (p: Parametreler) => string> = {
       : `Bu telefon numarası (${p.telefon}) sistemde zaten kayıtlı. Yöneticinize başvurun.`,
   DOKTOR_KAPSAM_DISI: () => "Bu doktor sizin portföyünüzde değil.",
   DOKTOR_PASIF: () => "Doktor kaydı pasif durumda.",
+  DOKTOR_BULUNAMADI: () => "Doktor bulunamadı.",
   DOKTOR_SAHIPSIZ: () =>
     "Bu doktorun sorumlu satıcısı yok. Yönetici bir satıcıya atayana kadar sipariş girilemez.",
   SAHIP_AKTIF_SATICI_DEGIL: () => "Doktorlar yalnız aktif bir satıcıya devredilebilir.",
@@ -57,7 +58,7 @@ export const KURAL_METNI: Record<KuralKodu, (p: Parametreler) => string> = {
   VERGI_ORANI_BULUNAMADI: () => "KDV oranı tanımlı değil.",
   FIYAT_SATIRI_CAKISIYOR: () => "Bu listede aynı ürün ve min. adet için satır zaten var.",
   URUN_SIPARISTE_KULLANILDI: () =>
-    "Bu ürün siparişlerde kullanıldığı için silinemez. Bunun yerine durumunu Pasif yapın.",
+    "Bu ürünün stok hareketi ya da siparişi olduğu için silinemez. Bunun yerine durumunu Pasif yapın.",
   FIYAT_COZUMLENEMEDI: (p) => `${p.urun} için fiyat çözümlenemedi.`,
   FIYAT_LISTESI_KODU_GECERSIZ: () => "Liste kodu 2–32 karakter olmalı; yalnız harf (A–Z), rakam, - ve _ kullanılabilir.",
   FIYAT_LISTESI_KODU_KAYITLI: () => "Bu liste kodu zaten kullanılıyor.",
@@ -90,6 +91,11 @@ export const KURAL_METNI: Record<KuralKodu, (p: Parametreler) => string> = {
   VADESI_GECMIS_HAREKET: (p) =>
     `Vadesi geçmiş hareket var; en eski vade ${String(p.enEskiVade).split("-").reverse().join(".")}. ` +
     "Tahsilatlar borçlarla eşleştirilmez; bu tarih o borcun hâlâ açık olduğunu göstermez.",
+  // A-12-6: sipariş ve sevkiyat bilgi şeridi; borç tutarı yazılmaz (X-6 §(7)). Limit 0 = peşin çalışılan cari (A-12-7).
+  LIMIT_ASILDI: (p) =>
+    `${String(p.limit).replace(/[.,]0+$/, "") === "0" ? "Peşin çalışılan cari. " : ""}Limit aşıldı: risk ${formatla(p.risk)} / limit ${formatla(p.limit)}`,
+  VADESI_GECMIS_BORC: (p) =>
+    `Vadesi geçmiş borç var (en eski vade: ${String(p.enEskiVade).split("-").reverse().join(".")})`,
   FATURA_SABLONU_TANIMSIZ: () =>
     "Fatura hazırlık şablonu tanımlı değil; dosya, entegratörün sütun eşlemesi kurulumda girildikten sonra üretilir.",
   // K-4 §(6)-d: sistem tarih hesaplar, vergisel sonucu hesaplamaz.
@@ -118,6 +124,8 @@ export const KURAL_METNI: Record<KuralKodu, (p: Parametreler) => string> = {
   ACILIS_STOGU_TEKRAR: (p) => `Aynı ürün ve konum dosyada birden çok kez geçiyor (satır ${p.satirlar}).`,
   NEGATIF_STOK: (p) => `Stok yetersiz${p.urun ? ` (${p.urun})` : ""}: işlem sonrası stok ${p.sonra} adet olur.`,
   BEDELSIZ_ONAYI: (p) => `Bedelsiz satır (${p.urun}, ${BEDELSIZ_SEBEP_ADI[p.sebep as FreeReason] ?? p.sebep}) yönetici onayı gerektirir.`,
+  ISKONTO_TAVANI: (p) => `İskonto tavanı aşıldı (${p.urun}: %${p.oran}, tavan %${p.tavan}); yönetici onayı gerektirir.`,
+  BIRIM_FIYAT_GECERSIZ: (p) => `Birim fiyat sıfırdan büyük olmalı${p.urun ? ` (${p.urun})` : ""}; ücretsiz kalem için Bedelsiz seçin.`,
   NEGATIF_STOK_YONETICI_GEREKIR: (p) =>
     `Stok yetersiz${p.urun ? ` (${p.urun})` : ""}: işlem sonrası stok ${p.sonra} adet olur. Bu işlemi yalnız yönetici gerekçeyle yapabilir; önce stok düzeltmesi gerekebilir.`,
   ONAY_BEKLIYOR: () => "Bu sipariş yönetici onayı bekliyor; karar verilmeden sevk edilemez.",
@@ -129,6 +137,7 @@ export const KURAL_METNI: Record<KuralKodu, (p: Parametreler) => string> = {
 export const BLOK_KURAL_ADI: Record<BlokKuralKodu, string> = {
   NEGATIF_STOK: "Negatif stok",
   BEDELSIZ_ONAYI: "Bedelsiz satır",
+  ISKONTO_TAVANI: "İskonto tavanı",
 };
 
 /** Bedelsiz satır sebebi (A-2 eki 20.10.2026). */
@@ -136,6 +145,13 @@ export const BEDELSIZ_SEBEP_ADI: Record<FreeReason, string> = {
   NUMUNE: "Numune",
   PROMOSYON: "Promosyon",
   MAL_FAZLASI: "Mal fazlası",
+  DIGER: "Diğer",
+};
+
+/** Kalanı kapatma gerekçesi (A-3 eki). */
+export const KAPATMA_GEREKCESI_ADI: Record<CloseReason, string> = {
+  TEDARIK_EDILEMEDI: "Tedarik edilemedi",
+  MUSTERI_VAZGECTI: "Müşteri vazgeçti",
   DIGER: "Diğer",
 };
 

@@ -44,6 +44,19 @@ describe("suzgecCoz ↔ urunAdresi", () => {
   });
 });
 
+describe("arama (C-3 eki)", () => {
+  it("q gidiş-dönüşte korunur, kırpılır; boş q süzgeç sayılmaz; etiket × ile düşer", () => {
+    const s: UrunSuzgeci = { durum: "AKTIF", stok: null, q: "stent" };
+    expect(urunAdresi(s)).toBe("/products?durum=AKTIF&q=stent");
+    expect(suzgecCoz(params(urunAdresi(s))).suzgec).toEqual(s);
+    expect(suzgecCoz({ q: "   " }).suzgec).toEqual(BOS_SUZGEC);
+    const e = etkinSuzgecler(s);
+    expect(e.map((x) => x.etiket)).toEqual(["Ara: stent", "Durum: Aktif"]);
+    expect(e[0].kaldirAdresi).toBe("/products?durum=AKTIF");
+    expect(bosDurum({ durum: null, stok: null, q: "x" })).toBe("suzgecli");
+  });
+});
+
 describe("etkinSuzgecler", () => {
   it("her etkin alan bir etiket; kaldırma adresi diğerini korur", () => {
     const e = etkinSuzgecler({ durum: "AKTIF", stok: "kritik" });

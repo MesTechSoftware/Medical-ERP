@@ -34,11 +34,9 @@ export default defineConfig({
   // NOT: Prisma 7'de `migrate reset` seed'i ARTIK kendisi çalıştırmıyor
   // (bu yüzden `--skip-seed` seçeneği de kaldırıldı) — seed açıkça çağrılmalı.
   webServer: {
-    command: [
-      `DATABASE_URL="${TEST_DATABASE_URL}" npx prisma migrate reset --force`,
-      `DATABASE_URL="${TEST_DATABASE_URL}" npm run db:seed:demo`,
-      `DATABASE_URL="${TEST_DATABASE_URL}" PORT=${PORT} npm run dev`,
-    ].join(" && "),
+    // Ortam değişkenleri `env` ile verilir (satır başı `VAR=x` sözdizimi Windows cmd'de çalışmaz).
+    command: ["npx prisma migrate reset --force", "npm run db:seed:demo", "npm run dev"].join(" && "),
+    env: { DATABASE_URL: TEST_DATABASE_URL, PORT: String(PORT) },
     url: baseURL,
     reuseExistingServer: false,
     timeout: 120_000,

@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import { PageHeader, Card } from "@/components/ui";
 import DoctorForm from "../DoctorForm";
 import { createDoctor } from "../actions";
+
+export const metadata: Metadata = { title: "Yeni Doktor" };
 
 export default function NewDoctorPage() {
   return (

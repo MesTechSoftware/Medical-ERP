@@ -95,3 +95,4 @@ Uygulamada soruları **sırayla** sor. İlk "evet" cevabı yeri belirler.
 | [ADR-010](./ADR-010-kpi-ve-mikro-grafik.md) | KPI kartları ve mikro grafikler — sunucu SVG, tek hesap yolu, kart düzeyinde hata | ✅ Kabul edildi | 26.10.2026 | Tasarım 2. tur · KARARLAR X-5 eki, X-3, E-1 |
 | [ADR-011](./ADR-011-denetim-kaydi-zinciri.md) | Denetim kaydı — değişmez tablo, commit anında SHA-256 zinciri, istek bağlamı | ✅ Kabul edildi | 27.10.2026 | Tasarım 3 · KARARLAR X-18 |
 | [ADR-012](./ADR-012-kilit-sirasi-denetim-zinciri.md) | Kilit sırası — tek küresel sıra, denetim zinciri commit anında (ADR-008'in yerine) | ✅ Kabul edildi | 27.10.2026 | KARARLAR X-18 §(2) · A-14 §(3) |
+| [ADR-013](./ADR-013-siparis-ekranlarinda-durum-sayilari-sekmede.md) | Sipariş ekranlarında durum sayıları sekmede (ADR-010'un 03.11 ekinin yerine) | ✅ Kabul edildi | 24.11.2026 | KARARLAR §5.22 · A-5-8 · X-13-3 |

@@ -203,3 +203,41 @@ describe("topluKargo (A-3-3)", () => {
   });
 });
 
+describe("limit ve vade BİLGİ şeridi (A-12-6)", () => {
+  it("sevkiyat sonrası risk limiti aşarsa tekli ve toplu sonuç LIMIT_ASILDI taşır; sevkiyat yine yazılır", async () => {
+    await prisma.doctor.update({ where: { id: s.doktor.id }, data: { creditLimit: "10" } });
+    const a = await siparis([{ miktar: 1 }]);
+    const tek = await siparisiSevkEt({
+      siparisId: a.id,
+      kalemler: [{ siparisKalemiId: a.items[0].id, miktar: 1 }],
+      carrierId: null,
+      trackingNumber: null,
+      externalDispatchNo: null,
+      yapan: yonetici(),
+      gerekce: null,
+    });
+    expect(tek.durum).toBe("SEVK_EDILDI");
+    if (tek.durum === "SEVK_EDILDI") expect(tek.bildirimler.map((x) => x.kural_kodu)).toEqual(["LIMIT_ASILDI"]);
+    expect(await prisma.shipment.count({ where: { orderId: a.id } })).toBe(1);
+
+    const b = await siparis([{ miktar: 1 }]);
+    const [toplu] = await topluKargo([{ siparisId: b.id, takip: null, irsaliye: null }], s.firma.id, yonetici());
+    expect(toplu.sonuc.durum).toBe("SEVK_EDILDI");
+    if (toplu.sonuc.durum === "SEVK_EDILDI") expect(toplu.sonuc.bildirimler.map((x) => x.kural_kodu)).toContain("LIMIT_ASILDI");
+  });
+
+  it("limit tanımsızken (null) bilgi yoktur", async () => {
+    const a = await siparis([{ miktar: 1 }]);
+    const r = await siparisiSevkEt({
+      siparisId: a.id,
+      kalemler: [{ siparisKalemiId: a.items[0].id, miktar: 1 }],
+      carrierId: null,
+      trackingNumber: null,
+      externalDispatchNo: null,
+      yapan: yonetici(),
+      gerekce: null,
+    });
+    if (r.durum === "SEVK_EDILDI") expect(r.bildirimler).toEqual([]);
+    else throw new Error(r.durum);
+  });
+});

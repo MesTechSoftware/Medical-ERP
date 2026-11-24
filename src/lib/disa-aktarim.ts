@@ -367,11 +367,16 @@ export type FaturaKolonu = keyof typeof FATURA_KOLONLARI;
 /** `export.sablonTanimi` biçimi: entegratör şablonunun sütunları, sırasıyla (K-4 §(6)-b). */
 export type FaturaSablonu = { sutunlar: { baslik: string; kaynak: FaturaKolonu }[] };
 
-async function faturaHazirlik(a: Aralik, db: Db): Promise<VeriSetiCiktisi> {
+/** Fatura hazırlık süzgeci: dışa aktarımda tarih aralığı; Fatura Hazırlık Kartında tek sevkiyat (K-4 §(6)-k). */
+type FaturaSuzgeci = Aralik | { sevkiyatId: string };
+
+async function faturaHazirlik(a: FaturaSuzgeci, db: Db): Promise<VeriSetiCiktisi> {
   // Sevk günü `date` kolonudur; aralığın İstanbul günleri gün tarihine çevrilir (E-1 §(1)/(4)).
+  const sevkSuzgeci: Prisma.ShipmentWhereInput =
+    "sevkiyatId" in a ? { id: a.sevkiyatId } : { shippedOn: { gte: bugun(a.baslangic), lt: bugun(a.bitis) } };
   const satirlar = await db.shipmentItem.findMany({
     where: {
-      AND: [sayilanBelgeler.sevkSatiri, { shipment: { shippedOn: { gte: bugun(a.baslangic), lt: bugun(a.bitis) } } }],
+      AND: [sayilanBelgeler.sevkSatiri, { shipment: sevkSuzgeci }],
     },
     orderBy: [{ shipment: { shippedOn: "asc" } }, { shipment: { documentNo: "asc" } }, { id: "asc" }],
     select: {
@@ -446,6 +451,50 @@ async function faturaHazirlik(a: Aralik, db: Db): Promise<VeriSetiCiktisi> {
   return {
     kolonlar: (Object.entries(FATURA_KOLONLARI) as [FaturaKolonu, Kolon][]).map(([kod, k]) => ({ ...k, kod })),
     satirlar: cikti,
+  };
+}
+
+export type FaturaKartiKdv = { oran: string; matrah: string; kdv: string; toplam: string };
+export type FaturaKarti = {
+  veri: VeriSetiCiktisi;
+  kdvKirilimi: FaturaKartiKdv[];
+  /** Belge toplamı = Σ satır (K-4 §(6)-f). */
+  toplam: { matrah: string; kdv: string; toplam: string };
+  /** Sevkiyattaki bedelsiz satır sayısı; bunlar faturaya girmez, yalnız not düşülür. */
+  bedelsizSatir: number;
+  eksikFaturaBilgisi: Bildirim | null;
+  geriyeDonuk: Bildirim | null;
+};
+
+/**
+ * Fatura Hazırlık Kartı verisi (K-4 §(6)-k): `faturaHazirlik`'in tek sevkiyat süzgeciyle çalışan hâli;
+ * ikinci hesap yolu yoktur. Dosya üretmez, `ExportLog`'a yazmaz, `sablonTanimi`'na bakmaz.
+ * Sayılan belgeler süzgecinden geçmeyen (iptal edilmiş vb.) sevkiyatta satır yoktur.
+ */
+export async function faturaKartiVerisi(sevkiyatId: string, db: Db = prisma): Promise<FaturaKarti> {
+  const veri = await faturaHazirlik({ sevkiyatId }, db);
+  const k = (kod: FaturaKolonu) => veri.kolonlar.findIndex((c) => c.kod === kod);
+  const [iOran, iMatrah] = [k("KDV_ORANI"), k("MATRAH")];
+  // Kırılım satır tutarlarının oran bazında toplamıdır; yeni yuvarlama yoktur (satır tutarı ×1 → aynı).
+  const girdi = (r: Hucre[]) => ({ birimFiyat: r[iMatrah]!, listeFiyat: r[iMatrah]!, miktar: 1, kdvOrani: r[iOran]! });
+  const oranlar = [...new Set(veri.satirlar.map((r) => r[iOran]!))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  const kdvKirilimi = oranlar.map((oran) => {
+    const { toplam } = hesaplaSatirTutarlari(veri.satirlar.filter((r) => r[iOran] === oran).map(girdi));
+    return { oran, matrah: toplam.matrah.toFixed(2), kdv: toplam.kdvTutar.toFixed(2), toplam: toplam.toplam.toFixed(2) };
+  });
+  const { toplam } = hesaplaSatirTutarlari(veri.satirlar.map(girdi));
+  const sevk = await db.shipment.findUnique({ where: { id: sevkiyatId }, select: { order: { select: { doctorId: true } } } });
+  const eksik = sevk
+    ? await db.doctor.count({ where: { AND: [{ id: sevk.order.doctorId }, EKSIK_FATURA_BILGISI] } })
+    : 0;
+  return {
+    veri,
+    kdvKirilimi,
+    toplam: { matrah: toplam.matrah.toFixed(2), kdv: toplam.kdvTutar.toFixed(2), toplam: toplam.toplam.toFixed(2) },
+    // Bedelsiz satır veri setine girmez (A-2); kartta yalnız sayısı not düşülür.
+    bedelsizSatir: await db.shipmentItem.count({ where: { shipmentId: sevkiyatId, orderItem: { isFree: true } } }),
+    eksikFaturaBilgisi: eksik > 0 ? bilgi("EKSIK_FATURA_BILGISI", { sayi: eksik }) : null,
+    geriyeDonuk: faturaGeriyeDonukUyarisi(veri),
   };
 }
 

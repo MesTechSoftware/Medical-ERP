@@ -150,13 +150,12 @@ export async function hesaplaDoktorRisk(doktorId: string, db: Db = prisma): Prom
 export async function hesaplaDoktorRiskleri(idler: readonly string[], db: Db = prisma): Promise<Map<string, DoktorRisk>> {
   const sonuc = new Map<string, DoktorRisk>();
   if (idler.length === 0) return sonuc;
-  const [doktorlar, satirlar] = await Promise.all([
-    db.doctor.findMany({ where: { id: { in: [...idler] } }, select: { id: true, creditLimit: true } }),
-    db.orderItem.findMany({
-      where: { order: { ...sayilanBelgeler.siparis, doctorId: { in: [...idler] } } },
-      select: { ...SIPARIS_SATIRI, shipmentItems: { select: { quantity: true } }, order: { select: { doctorId: true } } },
-    }),
-  ]);
+  // Sıralı okuma: `db` bir transaction olabilir (sipariş/sevkiyat bilgi şeridi); tx içinde paralel sorgu gönderilmez.
+  const doktorlar = await db.doctor.findMany({ where: { id: { in: [...idler] } }, select: { id: true, creditLimit: true } });
+  const satirlar = await db.orderItem.findMany({
+    where: { order: { ...sayilanBelgeler.siparis, doctorId: { in: [...idler] } } },
+    select: { ...SIPARIS_SATIRI, shipmentItems: { select: { quantity: true } }, order: { select: { doctorId: true } } },
+  });
   if (doktorlar.length === 0) return sonuc;
 
   const acikSatirlar = new Map<string, typeof satirlar>();
@@ -185,5 +184,21 @@ export async function hesaplaDoktorRiskleri(idler: readonly string[], db: Db = p
       limitAsildi: krediLimiti !== null && risk.gt(krediLimiti),
     });
   }
+  return sonuc;
+}
+
+/**
+ * Sipariş ve sevkiyat sonucunun BİLGİ şeridi (A-12-6): limit aşılmışsa "Limit aşıldı: risk X / limit Y", vadesi geçmiş
+ * borç varsa "Vadesi geçmiş borç var (en eski vade: …)". Borç tutarı yazılmaz (X-6 §(7)); hiçbir işlemi engellemez.
+ * Okumalar sıralıdır (`db` transaction olabilir).
+ */
+export async function riskBilgileri(doktorId: string, db: Db = prisma): Promise<Bildirim[]> {
+  const r = await hesaplaDoktorRisk(doktorId, db);
+  const sonuc: Bildirim[] = [];
+  if (r.limitAsildi && r.krediLimiti) {
+    sonuc.push(bilgi("LIMIT_ASILDI", { risk: r.risk.toFixed(2), limit: r.krediLimiti.toFixed(2) }));
+  }
+  const vade = await vadesiGecmisUyarisi(doktorId, { db, bakiye: Promise.resolve(r.bakiye) });
+  if (vade) sonuc.push(bilgi("VADESI_GECMIS_BORC", vade.parametreler));
   return sonuc;
 }

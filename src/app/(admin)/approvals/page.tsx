@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/session";
 import { PageHeader } from "@/components/ui";
@@ -18,6 +19,8 @@ import { SuzgecCubugu } from "./SuzgecCubugu";
  * Onay bekleyenler (A-8, spec Ü-25): bekleyen talepler en eskisi önce; verilmiş kararlar geçmiş sekmelerinde.
  * Karar yalnız yöneticinindir; karar formu yan paneldedir (not zorunlu).
  */
+export const metadata: Metadata = { title: "Onay Bekleyenler" };
+
 export default async function ApprovalsPage({ searchParams }: { searchParams: Promise<Parametreler> }) {
   const session = await requireAdmin();
   const params = await searchParams;

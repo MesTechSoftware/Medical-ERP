@@ -14,7 +14,7 @@ import { sert, yumusak, type Bildirim, type IslemSonucu } from "@/lib/sonuc";
  */
 
 export type SevkSonucu =
-  | { durum: "SEVK_EDILDI"; documentNo: string; tamamlandi: boolean }
+  | { durum: "SEVK_EDILDI"; documentNo: string; tamamlandi: boolean; bildirimler: Bildirim[] }
   | { durum: "ONAYA_GONDERILDI"; bildirimler: Bildirim[] }
   | { durum: "HATA"; sonuc: IslemSonucu };
 
@@ -35,7 +35,7 @@ export async function siparisiSevkEt(g: SevkiyatGirdisi): Promise<SevkSonucu> {
         },
         tx
       );
-      return { durum: "SEVK_EDILDI", documentNo: sevk.documentNo, tamamlandi: sevk.tamamlandi };
+      return { durum: "SEVK_EDILDI", documentNo: sevk.documentNo, tamamlandi: sevk.tamamlandi, bildirimler: sevk.bildirimler };
     });
   } catch (e) {
     if (e instanceof IsHatasi) return { durum: "HATA", sonuc: e.sonuc };
@@ -70,7 +70,7 @@ export async function topluKargo(
       id: true,
       documentNo: true,
       doctor: { select: { fullName: true } },
-      items: { select: { id: true, quantity: true, shipmentItems: { select: { quantity: true } } } },
+      items: { select: { id: true, quantity: true, closedQuantity: true, shipmentItems: { select: { quantity: true } } } },
     },
   });
   const sonuclar: TopluSatirSonucu[] = [];

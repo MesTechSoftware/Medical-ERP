@@ -61,6 +61,13 @@ describe("urunListesi — süzgeç", () => {
     expect(await kodlar({ durum: "PASIF" })).toEqual(["PASIF5"]);
   });
 
+  it("arama ad ya da kodda büyük/küçük harf duyarsız içerir; diğer süzgeçlerle birleşir (C-3 eki)", async () => {
+    expect(await kodlar({ q: "esik" })).toEqual(["ESIK"]);
+    expect(await kodlar({ q: "ÜRÜN-ESIK" })).toEqual([]);
+    expect(await kodlar({ q: "sifir", stok: "tukendi" })).toEqual(["SIFIR"]);
+    expect(await kodlar({ q: "pasif5", durum: "AKTIF" })).toEqual([]);
+  });
+
   it("sayfalama süzgeçten sonra; toplam süzülmüş sayıdır", async () => {
     const r = await urunListesi({ ...BOS_SUZGEC, stok: "kritik" }, { skip: 1, take: 2 });
     expect(r.toplam).toBe(4);

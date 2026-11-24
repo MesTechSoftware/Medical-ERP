@@ -32,8 +32,8 @@ const BOS: Record<BosTur, { ikon: "yeni" | "onayla" | "filtrele"; baslik: string
 };
 
 /**
- * Cari listesinin tablosu (spec Ü-18 §3.3). Eksik fatura bilgisi olan satır uyarı arka planı taşır
- * (A-13-3). Gizli sütunun başlığı ve hücresi çizilmez. İsim yan paneli açar.
+ * Cari listesinin tablosu (spec Ü-18 §3.3). Eksik fatura bilgisi yalnız "Eksik fatura" rozetiyle
+ * işaretlenir (A-13-3; satır arka planı yok — Paket 16). Gizli sütunun başlığı ve hücresi çizilmez. İsim yan paneli açar.
  */
 export function DoktorTablosu({
   satirlar,
@@ -74,8 +74,8 @@ export function DoktorTablosu({
               <BosHucre tur={bosDurum(suzgec)} colSpan={2 + gorunur.length} yeniCari={devirYetkisi} />
             )}
             {satirlar.map((d) => (
-              <tr key={d.id} className={d.eksikFatura ? "bg-critical-bg" : undefined}>
-                <td className={d.eksikFatura ? "border-l-2 border-critical" : undefined}>
+              <tr key={d.id}>
+                <td>
                   {devirYetkisi && d.accountClass === "DOKTOR" && (
                     <label className="dokunma-hedefi">
                       <input

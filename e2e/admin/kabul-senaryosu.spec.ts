@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { USERS, ilkGiris, login, sorgu, yeniKullanici, sevkKartiAc } from "../helpers";
+import { USERS, aramaliSec, ilkGiris, login, sorgu, yeniKullanici, sevkKartiAc } from "../helpers";
 
 /**
  * F-11 — uçtan uca kabul senaryosu (FAZ1 §D.3 madde 9, §C-e). Eski PRD senaryosu geri çekilen
@@ -78,8 +78,8 @@ test("kabul senaryosu (F-11)", async ({ page, browser }) => {
 
   // 5 — sipariş 700 × 850
   await a.goto("/my-orders/new");
-  await a.getByLabel("Doktor").selectOption({ label: `${doktorAdi} — Merkez Klinik` });
-  await a.getByLabel("Ürün").selectOption({ label: `${urunAdi} (${urunKodu}) — Stok: 1000` });
+  await aramaliSec(a, "Doktor", doktorAdi);
+  await aramaliSec(a, "Ürün", urunKodu);
   await a.getByLabel("Miktar").fill("700");
   await a.getByLabel(/^Birim/).fill("850");
   await expect(a.getByText("₺714.000,00")).toBeVisible();
@@ -118,7 +118,7 @@ test("kabul senaryosu (F-11)", async ({ page, browser }) => {
   // 8 — tahsilat 714.000
   const tahsil = async (cari: string, tutar: string) => {
     await page.goto("/collections/new");
-    await page.getByLabel("Doktor").selectOption({ label: cari });
+    await page.getByLabel("Cari").selectOption({ label: cari });
     await page.getByLabel(/^Tutar/).fill(tutar);
     await page.getByLabel("Yöntem").selectOption({ label: "Havale / EFT" });
     await page.getByRole("button", { name: "Tahsilat Kaydet" }).click();
@@ -169,8 +169,8 @@ test("kabul senaryosu (F-11)", async ({ page, browser }) => {
   const [{ id: bayiId }] = await sorgu<{ id: string }>(`SELECT id FROM "Doctor" WHERE "fullName" = $1`, [bayiAdi]);
 
   await page.goto("/orders/new");
-  await page.getByLabel("Doktor").selectOption({ label: `[Bayi] ${bayiAdi}` });
-  await page.getByLabel("Ürün").selectOption({ label: `${urunAdi} (${urunKodu}) — Stok: 400` });
+  await aramaliSec(page, "Doktor", bayiAdi);
+  await aramaliSec(page, "Ürün", urunKodu);
   await page.getByLabel("Miktar").fill("50");
   await page.getByRole("button", { name: "Siparişi Oluştur" }).click();
   await expect(page).toHaveURL(/\/orders\/(?!new$)[^/]+$/);

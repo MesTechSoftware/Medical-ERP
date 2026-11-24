@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { hazirlamaSureleri, siparisDagilimi } from "@/lib/dashboard";
+import { hazirlamaSureleri, operasyonSayilari, siparisDagilimi } from "@/lib/dashboard";
 import { TUM_SIPARISLER } from "@/lib/siparis-listesi/suzgec";
 import { prisma } from "@/lib/db";
 import { yeniDoktorVerisi } from "../../test/integration/referans";
@@ -46,6 +46,22 @@ describe("siparisDagilimi — sipariş durum dağılımı (brief §3.3)", () => 
     await siparis({ orderDate: ekim(9), stage: "TEKLIF" });
     await siparis({ orderDate: new Date("2026-09-20T00:00:00Z") });
     expect(await siparisDagilimi(ARALIK, TUM_SIPARISLER)).toEqual({ BEKLIYOR: 2, HAZIRLANIYOR: 0, KARGOLANDI: 0, TESLIM_EDILDI: 1, IPTAL: 1 });
+  });
+});
+
+describe("operasyonSayilari — OPERASYON panosu (D-2-4)", () => {
+  it("kalanı açık = sevkiyatı olan HAZIRLANIYOR onaylı sipariş; sevksiz, kargolanmış ve teklif hariç; onay bekleyen açık blok, iptal siparişinki hariç", async () => {
+    const acik = await siparis({ orderDate: ekim(2), status: "HAZIRLANIYOR", sevkler: [ekim(3)] });
+    await siparis({ orderDate: ekim(2), status: "HAZIRLANIYOR" });
+    await siparis({ orderDate: ekim(2), status: "KARGOLANDI", sevkler: [ekim(3)] });
+    await siparis({ orderDate: ekim(2), status: "HAZIRLANIYOR", stage: "TEKLIF", sevkler: [ekim(3)] });
+    const iptal = await siparis({ orderDate: ekim(2), status: "IPTAL" });
+    const kul = await prisma.user.create({ data: { name: "y", email: "y@medikal.local", passwordHash: "x", role: "YONETICI" } });
+    const blok = (documentId: string) =>
+      prisma.approvalBlock.create({ data: { documentType: "SIP", documentId, ruleCode: "NEGATIF_STOK", openedById: kul.id, openReason: "acil" } });
+    await blok(acik.id);
+    await blok(iptal.id);
+    expect(await operasyonSayilari(new Date("2026-10-27T00:00:00Z"))).toEqual({ onayBekleyen: 1, kalaniAcik: 1 });
   });
 });
 

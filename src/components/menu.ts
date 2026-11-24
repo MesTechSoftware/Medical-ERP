@@ -1,6 +1,6 @@
 import {
   LayoutDashboard,
-  Globe,
+  Package,
   Layers,
   Users,
   ClipboardList,
@@ -19,8 +19,8 @@ import type { Role } from "@/generated/prisma/enums";
 
 /** Yönetici kabuğunun menüsü. Kabuk ve dashboard'daki sayfa özetleri aynı listeyi okur. */
 export const ANA_MENU: readonly NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/products", label: "Ürünler", icon: Globe },
+  { href: "/dashboard", label: "Genel Bakış", icon: LayoutDashboard },
+  { href: "/products", label: "Ürünler", icon: Package },
   { href: "/stock", label: "Stok", icon: Layers },
   { href: "/price-lists", label: "Fiyat Listeleri", icon: Tags },
   { href: "/users", label: "Kullanıcılar", icon: Users },

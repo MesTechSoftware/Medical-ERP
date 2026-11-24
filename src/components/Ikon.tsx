@@ -7,8 +7,10 @@ import {
   CalendarDays,
   CalendarRange,
   Check,
+  Columns3,
   ChevronLeft,
   ChevronRight,
+  Copy,
   Download,
   Eye,
   FileSearch,
@@ -20,16 +22,20 @@ import {
   Minus,
   OctagonAlert,
   PackageCheck,
+  PackageMinus,
   PackageOpen,
   PackagePlus,
   Pencil,
+  Split,
   Plus,
   RotateCcw,
   Save,
+  SlidersHorizontal,
   TriangleAlert,
   Trash2,
   Truck,
   Undo2,
+  Warehouse,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -42,6 +48,8 @@ import {
 const IKONLAR = {
   yeni: Plus,
   duzenle: Pencil,
+  sutunlar: Columns3,
+  kismiSevk: Split,
   sil: Trash2,
   kaydet: Save,
   vazgec: X,
@@ -64,6 +72,9 @@ const IKONLAR = {
   teslim: PackageCheck,
   devret: ArrowRightLeft,
   stokGirisi: PackagePlus,
+  stokDuzeltme: SlidersHorizontal,
+  konsinyeCikis: PackageMinus,
+  depoyaTransfer: Warehouse,
   parola: KeyRound,
   giris: LogIn,
   cikis: LogOut,
@@ -74,6 +85,7 @@ const IKONLAR = {
   hata: OctagonAlert,
   // Fark görünümü (denetim kaydı): eski değer eksi, yeni değer `yeni` (artı).
   eksi: Minus,
+  kopyala: Copy,
 } as const satisfies Record<string, LucideIcon>;
 
 export type IkonAdi = keyof typeof IKONLAR;

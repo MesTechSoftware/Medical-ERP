@@ -1,91 +1,19 @@
-"use client";
+import type { Metadata } from "next";
+import { connection } from "next/server";
 
-import Image from "next/image";
-import Link from "next/link";
-import { useActionState } from "react";
-import { Donen } from "@/components/form";
-import { Ikon } from "@/components/Ikon";
-import { SonucGosterimi, type SonucDurumu } from "@/components/Sonuc";
-import { loginAction } from "@/lib/auth-actions";
-import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
+import { MarkaLogosu } from "@/components/MarkaLogosu";
+import { marka } from "@/lib/marka";
+import LoginFormu from "./LoginFormu";
 
-export default function LoginPage() {
-  const [state, formAction, pending] = useActionState<SonucDurumu, FormData>(loginAction, null);
+export const metadata: Metadata = { title: "Giriş" };
 
+/** Marka istek anında okunur (E-2): sayfa derlemede donmaz; form istemci bileşenidir, marka prop olarak girer. */
+export default async function LoginPage() {
+  await connection();
   return (
-    <main className="flex min-h-dvh items-center justify-center p-4">
-      <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
-        <div className="mb-6 text-center">
-          <Image
-            src="/logo.png"
-            // Küçük statik PNG; optimizasyon sunucusundan geçmez (CI'da /_next/image asılı kalıp sayfanın load olayını tutuyordu).
-            unoptimized
-            alt="Anka West"
-            width={421}
-            height={399}
-            priority
-            className="mx-auto mb-5 h-auto w-36"
-          />
-          <h1 className="text-lg font-semibold text-slate-900">Anka West</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Medikal Satış Operasyon Sistemi
-          </p>
-        </div>
-
-        <form action={formAction} className="space-y-4">
-          <div>
-            <label
-              htmlFor="email"
-              className="mb-1 block text-sm font-medium text-slate-700"
-            >
-              E-posta
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              required
-              autoComplete="email"
-              className={`w-full ${KONTROL_TEK_SATIR}`}
-              placeholder="ornek@medikal.local"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="password"
-              className="mb-1 block text-sm font-medium text-slate-700"
-            >
-              Şifre
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              autoComplete="current-password"
-              className={`w-full ${KONTROL_TEK_SATIR}`}
-            />
-          </div>
-
-          <SonucGosterimi sonuc={state} />
-
-          <button
-            type="submit"
-            disabled={pending}
-            className={`${buton("birincil")} w-full`}
-          >
-            {pending ? <Donen /> : <Ikon ad="giris" />}
-            {pending ? "Giriş yapılıyor..." : "Giriş Yap"}
-          </button>
-        </form>
-
-        <p className="mt-6 text-center text-xs text-slate-400">
-          <Link href="/privacy" className="hover:text-slate-600">
-            Gizlilik Politikası
-          </Link>
-        </p>
-      </div>
-    </main>
+    <LoginFormu
+      marka={marka()}
+      logo={<MarkaLogosu tur="tam" sinif="h-auto w-36" kutu="size-16 text-3xl" />}
+    />
   );
 }

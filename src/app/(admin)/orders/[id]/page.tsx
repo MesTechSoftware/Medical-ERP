@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
@@ -5,18 +6,28 @@ import { PageHeader, Card } from "@/components/ui";
 import OrderDetail from "@/components/OrderDetail";
 import ConfirmSubmit from "@/components/ConfirmSubmit";
 import { IslemFormu } from "@/components/Sonuc";
-import { prepareOrder, markDelivered, cancelOrder, createReturn } from "../actions";
+import { prepareOrder, markDelivered, cancelOrder, createReturn, closeRemainder } from "../actions";
 import IadeFormu from "./IadeFormu";
+import KalaniKapatFormu from "./KalaniKapatFormu";
+import { kalanMiktar } from "@/lib/siparis";
 import { formatDateTime } from "@/lib/format";
 import { buton } from "@/components/stil";
 import { Ikon } from "@/components/Ikon";
+import { BilgiSeridi } from "@/components/BilgiSeridi";
+import FaturaHazirlikKarti from "@/components/siparis/FaturaHazirlikKarti";
+import { faturaKartiVerisi } from "@/lib/disa-aktarim";
+
+export const metadata: Metadata = { title: "Sipariş Detayı" };
 
 export default async function AdminOrderDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ bilgi?: string | string[] }>;
 }) {
   const { id } = await params;
+  const { bilgi } = await searchParams;
 
   const order = await prisma.order.findUnique({
     where: { id },
@@ -31,9 +42,8 @@ export default async function AdminOrderDetailPage({
         },
       },
       shipments: {
-        orderBy: { createdAt: "desc" },
-        take: 1,
-        include: { carrier: { select: { name: true } } },
+        orderBy: { createdAt: "asc" },
+        include: { carrier: { select: { name: true, trackingUrlTemplate: true } } },
       },
     },
   });
@@ -55,8 +65,19 @@ export default async function AdminOrderDetailPage({
     include: { items: { include: { orderItem: { select: { product: { select: { name: true } } } } } } },
   });
 
-  const canCancel =
-    order.status !== "IPTAL" && order.status !== "TESLIM_EDILDI";
+  // A-3-1: sevkiyatı olan sipariş iptal edilemez (iade sürecidir); kargolanmış siparişte buton yoktur.
+  // Stok sevkiyatta düşer; sevksiz siparişin iptali stoğa dokunmaz.
+  const canCancel = (order.status === "BEKLIYOR" || order.status === "HAZIRLANIYOR") && order.shipments.length === 0;
+  // A-3 eki: kalanı kapat yalnız en az bir sevkiyatı olan HAZIRLANIYOR siparişte.
+  const kapatilabilirKalan =
+    order.status === "HAZIRLANIYOR" && order.shipments.length > 0
+      ? order.items.reduce((t, i) => t + kalanMiktar(i), 0)
+      : 0;
+
+  // K-4 §(6)-k: sevkiyat başına salt okunur Fatura Hazırlık Kartı; sayfa YONETICI + OPERASYON'a açıktır (layout).
+  const faturaKartlari = await Promise.all(
+    order.shipments.map(async (s) => ({ belgeNo: s.documentNo, karti: await faturaKartiVerisi(s.id) }))
+  );
 
   return (
     <div>
@@ -73,7 +94,20 @@ export default async function AdminOrderDetailPage({
         }
       />
 
-      <OrderDetail order={{ ...order, shipment: order.shipments[0] ?? null }} showSeller />
+      <BilgiSeridi ham={bilgi} />
+
+      <OrderDetail order={order} showSeller />
+
+      {faturaKartlari.length > 0 && (
+        <div className="mt-6">
+          <Card>
+            <h2 className="text-sm font-semibold text-slate-900">Fatura Hazırlık</h2>
+            {faturaKartlari.map((k) => (
+              <FaturaHazirlikKarti key={k.belgeNo} belgeNo={k.belgeNo} karti={k.karti} />
+            ))}
+          </Card>
+        </div>
+      )}
 
       <Card>
         <h2 className="mb-3 text-sm font-semibold text-slate-900">İşlemler</h2>
@@ -115,7 +149,7 @@ export default async function AdminOrderDetailPage({
           {canCancel && (
             <IslemFormu action={cancelOrder.bind(null, id)}>
               <ConfirmSubmit
-                confirmText="Sipariş iptal edilecek ve stok geri yüklenecek. Onaylıyor musunuz?"
+                confirmText="Sipariş iptal edilecek. Onaylıyor musunuz?"
                 className={buton("olumsuz-cerceve")}
                 ikon="iptalEt"
               >
@@ -131,6 +165,18 @@ export default async function AdminOrderDetailPage({
           )}
         </div>
       </Card>
+
+      {kapatilabilirKalan > 0 && (
+        <div className="mt-6">
+          <Card>
+            <h2 className="mb-3 text-sm font-semibold text-slate-900">Kalanı Kapat</h2>
+            <p className="mb-3 text-sm text-slate-600">
+              Kalan miktar sevk edilmeyecekse kapatılır; sipariş kargolandı sayılır. Bu işlem borç eşleştirmesi değildir.
+            </p>
+            <KalaniKapatFormu action={closeRemainder.bind(null, id)} kalan={kapatilabilirKalan} />
+          </Card>
+        </div>
+      )}
 
       {(iadeKalemleri.length > 0 || iadeler.length > 0) && (
         <div className="mt-6">

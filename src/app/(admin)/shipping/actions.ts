@@ -6,6 +6,7 @@ import { requireStaff } from "@/lib/session";
 import { topluSecimCoz, TOPLU_SINIR } from "@/lib/kargo-listesi/suzgec";
 import { siparisiSevkEt, topluKargo, type TopluSatirSonucu } from "@/lib/sevk-et";
 import type { TopluSonucSatiri } from "@/components/Sonuc";
+import { bilgiyleAdres } from "@/lib/bilgi-seridi";
 import { basarili, engel, onayaGonderildi, type IslemSonucu } from "@/lib/sonuc";
 
 const KALEM = "miktar_";
@@ -52,7 +53,7 @@ export async function shipOrder(orderId: string, _prev: unknown, formData: FormD
     return onayaGonderildi(sonuc.bildirimler);
   }
   yenile();
-  redirect(sonuc.tamamlandi ? "/shipping" : `/shipping?kismi=${encodeURIComponent(orderId)}`);
+  redirect(bilgiyleAdres(sonuc.tamamlandi ? "/shipping" : `/shipping?kismi=${encodeURIComponent(orderId)}`, sonuc.bildirimler));
 }
 
 /** Toplu kargoda bir siparişin sonucu; tip ve metin `TopluKargoSonucListesi`'ndedir (X-4-2). */
@@ -70,7 +71,7 @@ function satir(r: TopluSatirSonucu): TopluKargoSatiri {
     referans: s.durum === "TEKNIK" ? s.referans : null,
     tamamlandi: s.durum === "SEVK_EDILDI" && s.tamamlandi,
     sonucDurumu: s.durum === "HATA" ? s.sonuc.durum : null,
-    bildirimler: s.durum === "HATA" ? s.sonuc.bildirimler : s.durum === "ONAYA_GONDERILDI" ? s.bildirimler : [],
+    bildirimler: s.durum === "HATA" ? s.sonuc.bildirimler : s.durum === "ONAYA_GONDERILDI" || s.durum === "SEVK_EDILDI" ? s.bildirimler : [],
   };
 }
 

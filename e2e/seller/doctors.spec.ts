@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { Client } from "pg";
-import { USERS, unique } from "../helpers";
+import { USERS, aramaliSec, unique } from "../helpers";
 
 /**
  * Faz A — doktor varlığı, sahiplik ve mükerrer kayıt engeli.
@@ -142,18 +142,13 @@ test("🔴 sahibi olmayan doktora sipariş SUNUCUDA reddedilir (FR-04/RULE-02)",
   const foreignDoctorId = rows[0].id;
 
   await page.goto("/my-orders/new");
-  await page.getByRole("combobox").nth(1).selectOption({ index: 1 }); // ürün
+  await aramaliSec(page, "Ürün");
 
-  // Arayüzde bu doktor listelenmiyor; seçeneği enjekte ederek ham istek taklit edilir.
+  // Arayüzde bu doktor listelenmiyor; gizli alana yazılarak ham istek taklit edilir.
   await page.evaluate((id) => {
-    const sel = document.querySelector<HTMLSelectElement>("#doctorId");
-    if (!sel) throw new Error("doctorId select bulunamadı");
-    const opt = document.createElement("option");
-    opt.value = id;
-    opt.textContent = "enjekte";
-    sel.appendChild(opt);
-    sel.value = id;
-    sel.dispatchEvent(new Event("change", { bubbles: true }));
+    const alan = document.querySelector<HTMLInputElement>('input[name="doctorId"]');
+    if (!alan) throw new Error("doctorId alanı bulunamadı");
+    alan.value = id;
   }, foreignDoctorId);
 
   await page.getByRole("button", { name: "Siparişi Oluştur" }).click();

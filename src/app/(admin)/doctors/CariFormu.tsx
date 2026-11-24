@@ -68,8 +68,8 @@ export default function CariFormu({
         )}
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label={sinif === "BAYI" ? "Ünvan / Ad" : "Ad Soyad"} name="fullName" defaultValue={d("fullName")} required sonuc={sonuc} />
-          <Field label="Unvan (Prof. Dr. …)" name="title" defaultValue={d("title")} sonuc={sonuc} />
-          <Field label="Branş" name="specialty" defaultValue={d("specialty")} sonuc={sonuc} />
+          {sinif !== "BAYI" && <Field label="Unvan (Prof. Dr. …)" name="title" defaultValue={d("title")} sonuc={sonuc} />}
+          {sinif !== "BAYI" && <Field label="Branş" name="specialty" defaultValue={d("specialty")} sonuc={sonuc} />}
           <Field label={sinif === "BAYI" ? "Klinik (isteğe bağlı)" : "Klinik"} name="clinic" defaultValue={d("clinic")} sonuc={sonuc} />
           <Field label={sinif === "BAYI" ? "Bölge (isteğe bağlı)" : "Bölge"} name="region" defaultValue={d("region")} sonuc={sonuc} />
           <Field label="Şehir" name="city" defaultValue={d("city")} sonuc={sonuc} />
@@ -81,7 +81,7 @@ export default function CariFormu({
           )}
           <SelectField label="Fiyat listesi (boş: varsayılan)" name="priceListId" defaultValue={d("priceListId")} options={[{ value: "", label: "Varsayılan" }, ...listeler]} sonuc={sonuc} />
           <Field label="Ödeme vadesi (gün)" name="paymentTermDays" type="number" min="0" defaultValue={d("paymentTermDays")} sonuc={sonuc} />
-          <Field label={`${tabanli("Kredi limiti", BRUT)} — boş: limitsiz`} name="creditLimit" defaultValue={d("creditLimit")} sonuc={sonuc} />
+          <Field label={`${tabanli("Kredi limiti", BRUT)} — boş: limitsiz, 0: peşin`} name="creditLimit" defaultValue={d("creditLimit")} sonuc={sonuc} />
         </div>
       </section>
 

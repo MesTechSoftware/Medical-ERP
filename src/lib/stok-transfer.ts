@@ -1,4 +1,5 @@
 import type { Prisma } from "@/generated/prisma/client";
+import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
 import { uretBelgeNo } from "@/lib/belge-no";
 import { IsHatasi } from "@/lib/hata";
 import { blokKontrolleriniCalistir, type BlokIhlali } from "@/lib/onay-blogu";
@@ -83,8 +84,10 @@ async function tasi(
 
 /** Doktorun konsinye konumu; yoksa açılır (doktor başına tek — DB `UNIQUE`). */
 export async function konsinyeKonumu(tx: Prisma.TransactionClient, doktorId: string): Promise<string> {
-  const doktor = await tx.doctor.findUnique({ where: { id: doktorId }, select: { id: true, fullName: true } });
+  const doktor = await tx.doctor.findUnique({ where: { id: doktorId }, select: { id: true, fullName: true, status: true } });
   if (!doktor) throw new IsHatasi([sert("DOKTOR_KAPSAM_DISI", {}, "doctorId")]);
+  // A-4-2 (D1): pasif doktora yeni konsinye çıkışı yok. Pasif doktordan depoya transfer (`stokTransferYaz`) açık kalır.
+  if (doktor.status !== "AKTIF") throw new IsHatasi([sert("DOKTOR_PASIF", {}, "doctorId")]);
   const konum = await tx.stockLocation.upsert({
     where: { doctorId: doktor.id },
     create: { code: `KONSINYE-${doktor.id}`, name: `Konsinye — ${doktor.fullName}`, type: "KONSINYE", doctorId: doktor.id },
@@ -101,7 +104,7 @@ export async function konsinyeCikisYaz(
   const kalemler = kalemleriDenetle(g.kalemler);
   const kaynakId = await varsayilanDepoId(tx);
   const hedefId = await konsinyeKonumu(tx, g.doktorId);
-  return tasi(tx, {
+  const belge = await tasi(tx, {
     onek: "KNS",
     kaynakId,
     hedefId,
@@ -123,6 +126,19 @@ export async function konsinyeCikisYaz(
       }),
     bag: (id) => ({ consignmentIssueId: id }),
   });
+  // X-18-9: belge ve hareketlerle aynı transaction'da denetim kaydı.
+  await createAuditLog(
+    {
+      actorId: g.yapan.id,
+      action: AUDIT_ACTIONS.CONSIGNMENT_CREATE,
+      entityType: "ConsignmentIssue",
+      entityId: belge.belgeId,
+      after: { documentNo: belge.documentNo, doktorId: g.doktorId, kalemler },
+      gerekce: g.gerekce,
+    },
+    tx
+  );
+  return belge;
 }
 
 export async function stokTransferYaz(
@@ -139,7 +155,7 @@ export async function stokTransferYaz(
   if (g.kaynakId === g.hedefId || konumlar.length !== 2 || hedef?.type !== "DEPO") {
     throw new IsHatasi([sert("TRANSFER_KONUMU_GECERSIZ")]);
   }
-  return tasi(tx, {
+  const belge = await tasi(tx, {
     onek: "TRF",
     kaynakId: g.kaynakId,
     hedefId: g.hedefId,
@@ -160,4 +176,16 @@ export async function stokTransferYaz(
       }),
     bag: (id) => ({ stockTransferId: id }),
   });
+  await createAuditLog(
+    {
+      actorId: g.yapan.id,
+      action: AUDIT_ACTIONS.STOCK_TRANSFER_CREATE,
+      entityType: "StockTransfer",
+      entityId: belge.belgeId,
+      after: { documentNo: belge.documentNo, kaynakId: g.kaynakId, hedefId: g.hedefId, kalemler },
+      gerekce: g.gerekce,
+    },
+    tx
+  );
+  return belge;
 }

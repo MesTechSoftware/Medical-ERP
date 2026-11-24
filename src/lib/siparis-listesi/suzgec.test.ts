@@ -3,6 +3,7 @@ import {
   BOS_SUZGEC,
   bosDurum,
   dagilimAdresi,
+  donemEtiketi,
   etkinSuzgecler,
   hizliSekmeler,
   kartAdresi,
@@ -16,12 +17,12 @@ const S = (ek: Partial<SiparisSuzgeci>): SiparisSuzgeci => ({ ...BOS_SUZGEC, ...
 
 describe("sipariş süzgeci (spec Ü-23 §3.3)", () => {
   it("çözme ve adres gidiş-dönüş; ilk sayfa yazılmaz", () => {
-    const p = { durum: "TEKLIF", baslangic: "2026-10-01", bitis: "2026-10-15", satici: "u-1", q: "SIP-1", detay: "o-1" };
+    const p = { durum: "KARGOLANDI", baslangic: "2026-10-01", bitis: "2026-10-15", satici: "u-1", q: "SIP-1", detay: "o-1" };
     const { suzgec, detay } = suzgecCoz(p);
-    expect(suzgec).toEqual({ durum: "TEKLIF", baslangic: "2026-10-01", bitis: "2026-10-15", satici: "u-1", q: "SIP-1" });
+    expect(suzgec).toEqual({ durum: "KARGOLANDI", baslangic: "2026-10-01", bitis: "2026-10-15", satici: "u-1", q: "SIP-1" });
     expect(detay).toBe("o-1");
     expect(siparisAdresi(suzgec, { page: 2, per: 50, detay: "o-1" })).toBe(
-      "/orders?durum=TEKLIF&baslangic=2026-10-01&bitis=2026-10-15&satici=u-1&q=SIP-1&page=2&per=50&detay=o-1"
+      "/orders?durum=KARGOLANDI&baslangic=2026-10-01&bitis=2026-10-15&satici=u-1&q=SIP-1&page=2&per=50&detay=o-1"
     );
     expect(siparisAdresi(BOS_SUZGEC, { page: 1 })).toBe("/orders");
   });
@@ -52,11 +53,25 @@ describe("sipariş süzgeci (spec Ü-23 §3.3)", () => {
   it("sekmeler yalnız durumu yazar, öbür süzgeçleri korur, sayfa düşer", () => {
     const s = S({ durum: "IPTAL", satici: "u-1", q: "x" });
     const sekmeler = hizliSekmeler(s);
-    expect(sekmeler.map((t) => t.etiket)).toEqual(["Tümü", "Bekliyor", "Hazırlanıyor", "Kargolandı", "Teslim Edildi", "İptal", "Teklif"]);
+    expect(sekmeler.map((t) => t.etiket)).toEqual(["Tümü", "Bekliyor", "Hazırlanıyor", "Kargolandı", "Teslim Edildi", "İptal"]);
+    expect(sekmeler).toHaveLength(6); // B-6: Teklif sekmesi yok; teklifler yalnız Tümü'de
     expect(sekmeler.find((t) => t.etkin)?.etiket).toBe("İptal");
     expect(sekmeler[0].adres).toBe("/orders?satici=u-1&q=x");
-    expect(sekmeler[6].adres).toBe("/orders?durum=TEKLIF&satici=u-1&q=x");
+    expect(sekmeler[5].adres).toBe("/orders?durum=IPTAL&satici=u-1&q=x");
     expect(hizliSekmeler(BOS_SUZGEC)[0].etkin).toBe(true);
+    expect(sekmeler.every((t) => t.sayi === undefined)).toBe(true);
+  });
+
+  it("sayılar verilirse her sekme kendi sayısını taşır; Tümü teklif dahil toplamdır (A-5-8)", () => {
+    const sayilar = { tumu: 9, BEKLIYOR: 4, HAZIRLANIYOR: 1, KARGOLANDI: 2, TESLIM_EDILDI: 1, IPTAL: 0 };
+    expect(hizliSekmeler(BOS_SUZGEC, "/orders", sayilar).map((t) => [t.etiket, t.sayi])).toEqual([
+      ["Tümü", 9], ["Bekliyor", 4], ["Hazırlanıyor", 1], ["Kargolandı", 2], ["Teslim Edildi", 1], ["İptal", 0],
+    ]);
+  });
+
+  it("dönem etiketi: tarih süzgeci varsa aralık, yoksa Tüm zamanlar", () => {
+    expect(donemEtiketi(BOS_SUZGEC)).toBe("Tüm zamanlar");
+    expect(donemEtiketi(S({ baslangic: "2026-11-01", bitis: "2026-11-05" }))).toContain("2026");
   });
 });
 
@@ -98,12 +113,12 @@ describe("KPI aralığı ve kart adresi (A-5-8)", () => {
 
 describe("etkin süzgeç etiketleri ve boş durum", () => {
   it("etiketler, her biri kendi alanını düşüren adresle", () => {
-    const s = S({ durum: "TEKLIF", baslangic: "2026-10-01", bitis: "2026-10-15", satici: "yok", q: "SIP-1" });
+    const s = S({ durum: "KARGOLANDI", baslangic: "2026-10-01", bitis: "2026-10-15", satici: "yok", q: "SIP-1" });
     expect(etkinSuzgecler(s, () => undefined)).toEqual([
-      { anahtar: "durum", etiket: "Durum: Teklif", kaldirAdresi: "/orders?baslangic=2026-10-01&bitis=2026-10-15&satici=yok&q=SIP-1" },
-      { anahtar: "tarih", etiket: "Tarih: 01.10.2026 – 15.10.2026", kaldirAdresi: "/orders?durum=TEKLIF&satici=yok&q=SIP-1" },
-      { anahtar: "satici", etiket: "Satıcı: Satıcısız (bayi)", kaldirAdresi: "/orders?durum=TEKLIF&baslangic=2026-10-01&bitis=2026-10-15&q=SIP-1" },
-      { anahtar: "q", etiket: "Ara: SIP-1", kaldirAdresi: "/orders?durum=TEKLIF&baslangic=2026-10-01&bitis=2026-10-15&satici=yok" },
+      { anahtar: "durum", etiket: "Durum: Kargolandı", kaldirAdresi: "/orders?baslangic=2026-10-01&bitis=2026-10-15&satici=yok&q=SIP-1" },
+      { anahtar: "tarih", etiket: "Tarih: 01.10.2026 – 15.10.2026", kaldirAdresi: "/orders?durum=KARGOLANDI&satici=yok&q=SIP-1" },
+      { anahtar: "satici", etiket: "Satıcı: Satıcısız (bayi)", kaldirAdresi: "/orders?durum=KARGOLANDI&baslangic=2026-10-01&bitis=2026-10-15&q=SIP-1" },
+      { anahtar: "q", etiket: "Ara: SIP-1", kaldirAdresi: "/orders?durum=KARGOLANDI&baslangic=2026-10-01&bitis=2026-10-15&satici=yok" },
     ]);
   });
 

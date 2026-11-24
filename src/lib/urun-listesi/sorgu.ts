@@ -86,7 +86,10 @@ export async function urunListesi(
   sayfa: { skip: number; take: number }
 ): Promise<{ satirlar: UrunSatiri[]; toplam: number }> {
   const urunler = await prisma.product.findMany({
-    where: s.durum ? { status: s.durum } : {},
+    where: {
+      ...(s.durum ? { status: s.durum } : {}),
+      ...(s.q ? { OR: [{ name: { contains: s.q, mode: "insensitive" as const } }, { code: { contains: s.q, mode: "insensitive" as const } }] } : {}),
+    },
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     select: URUN_SECIMI,
   });

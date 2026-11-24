@@ -10,7 +10,7 @@ import type { BelgeTutari } from "@/lib/satir-tutarlari";
 import { kalemMiktarlari, SIPARIS_SATIRI, sevkMiktari, siparisToplami, siparisTutarlari } from "@/lib/siparis";
 import { metinVaryantlari } from "@/lib/liste/metin";
 import { gunleriAraliga } from "@/lib/liste/parametreler";
-import { kapsamKosulu, SATICISIZ, type SiparisKapsami, type SiparisSuzgeci } from "@/lib/siparis-listesi/suzgec";
+import { DURUMLAR, kapsamKosulu, SATICISIZ, type SekmeSayilari, type SiparisKapsami, type SiparisSuzgeci } from "@/lib/siparis-listesi/suzgec";
 
 /**
  * Siparişler ekranı sorguları (spec Ü-23 §4). Süzgeç tek `where` üreticisindedir; durum kartı ile
@@ -125,6 +125,16 @@ export async function siparisListesi(
   ]);
   const onay = await belgeOnayDurumlari("SIP", kayitlar.map((o) => o.id));
   return { satirlar: kayitlar.map((o) => satir(o, onay.get(o.id))), toplam };
+}
+
+/**
+ * Durum sekmelerinin sayıları: her sekme, açtığı listenin satır sayısıdır (aynı `siparisKosulu`, aynı kapsam);
+ * sekmenin kendi durumu dışındaki süzgeçler (dönem, satıcı, metin) uygulanır. "Tümü" teklifi de sayar.
+ */
+export async function siparisSekmeSayilari(s: SiparisSuzgeci, kapsam: SiparisKapsami): Promise<SekmeSayilari> {
+  const say = (durum: SiparisSuzgeci["durum"]) => prisma.order.count({ where: siparisKosulu({ ...s, durum }, kapsam) });
+  const [tumu, ...durumlar] = await Promise.all([say(null), ...DURUMLAR.map((d) => say(d.kod))]);
+  return Object.fromEntries([["tumu", tumu], ...DURUMLAR.map((d, i) => [d.kod, durumlar[i]])]) as SekmeSayilari;
 }
 
 export type SiparisKpileri = Record<OrderStatus, number> & { toplam: number };

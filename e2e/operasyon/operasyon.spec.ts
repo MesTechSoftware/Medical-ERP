@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { Client } from "pg";
-import { sorgu, stoksuzSiparis, sevkKartiAc } from "../helpers";
+import { aramaliSec, sorgu, stoksuzSiparis, sevkKartiAc } from "../helpers";
 
 /**
  * D-2-1 — OPERASYON ekran matrisi (D-2 §(1) ve 17.10 eki). Oturum `auth.setup.ts`'te
@@ -33,11 +33,15 @@ test("menü raporları ve denetim kaydını göstermez; rol etiketi Operasyon", 
   await expect(page.locator("header").getByText("Operasyon", { exact: true })).toBeVisible();
 });
 
-test("dashboard KPI'ları görünür (bu ay ciro ve tahsilat); prim ve hakediş yok (D-2 §(1))", async ({ page }) => {
+test("dashboard KPI'ları: Ciro ve Tahsilat yok; bekleyen, kargolanacak, kritik stok, kalanı açık/onay bekleyen var; prim ve hakediş yok (D-2-4)", async ({ page }) => {
   await page.goto("/dashboard");
-  await expect(page.getByRole("group", { name: "Ciro", exact: true })).toContainText("KDV hariç");
-  await expect(page.getByRole("group", { name: "Tahsilat", exact: true })).toContainText("KDV dahil");
+  await expect(page.locator("[data-kpi-satiri]").first()).toHaveAttribute("data-kpi-satiri", "4");
+  await expect(page.getByRole("group", { name: "Ciro", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("group", { name: "Tahsilat", exact: true })).toHaveCount(0);
   await expect(page.getByRole("group", { name: "Bekleyen sipariş" })).toBeVisible();
+  await expect(page.getByRole("group", { name: "Kargolanacak" })).toBeVisible();
+  await expect(page.getByRole("group", { name: "Kritik stok" })).toBeVisible();
+  await expect(page.getByRole("group", { name: "Kalanı açık sipariş" })).toContainText("Onay bekleyen");
   await expect(page.getByRole("main").getByText(/hakediş|prim/i)).toHaveCount(0);
 });
 
@@ -70,7 +74,7 @@ test("ürünleri ve satıcıları salt okur — ekleme/düzenleme/silme yok", as
   // Liste sayfalıdır (Ü-19); seed ürünü e2e'nin eklediklerinin altında kalabilir.
   await page.goto("/products?per=100");
   await expect(page.getByRole("heading", { name: "Ürünler" })).toBeVisible();
-  await expect(page.getByText("Cerrahi Eldiven (Kutu)")).toBeVisible();
+  await expect(page.getByText("Hyaluronik Asit Dolgu 1 ml")).toBeVisible();
   await expect(page.getByRole("link", { name: "Yeni Ürün" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Düzenle" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Sil" })).toHaveCount(0);
@@ -140,12 +144,13 @@ test("OPERASYON stok KPI ve hareket tablosunu görür; Stok Düzeltme yok", asyn
   await expect(page.getByRole("region", { name: "Stok sayıları" })).toBeVisible();
   await expect(page.getByRole("columnheader", { name: "İşlemi yapan" })).toBeVisible();
   await expect(page.locator("tbody tr[data-hareket]").first()).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Stok Düzeltme" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Stok Düzeltme" })).toHaveCount(0);
 });
 
 test("stok girişi yapar (stok hareketi — D-2 §(1))", async ({ page }) => {
   const not = `E2E operasyon girişi ${Date.now()}`;
   await page.goto("/stock");
+  await page.getByRole("link", { name: "Stok Girişi" }).click();
   const form = page.locator("form").filter({ has: page.getByRole("button", { name: "Stok Girişi Ekle" }) });
   await form.getByLabel("Ürün").selectOption({ index: 1 });
   await form.getByLabel("Miktar (adet)").fill("3");
@@ -187,8 +192,8 @@ test("bayiye sipariş girer; sipariş satıcısız açılır (X-8-3, D-2 §(1))"
     [`e2e-bayi-${ek}`, ad, `+90537${ek}`]
   );
   await page.goto("/orders/new");
-  await page.getByLabel("Doktor").selectOption({ label: `[Bayi] ${ad}` });
-  await page.getByLabel("Ürün").selectOption({ index: 1 });
+  await aramaliSec(page, "Doktor", ad);
+  await aramaliSec(page, "Ürün");
   await page.getByRole("button", { name: "Siparişi Oluştur" }).click();
   await expect(page).toHaveURL(/\/orders\/(?!new$)[^/]+$/);
   const [o] = await sorgu<{ sellerId: string | null }>(`SELECT "sellerId" FROM "Order" WHERE "doctorId" = $1`, [`e2e-bayi-${ek}`]);

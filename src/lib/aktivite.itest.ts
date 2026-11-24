@@ -56,6 +56,28 @@ describe("aktiviteAkisi — dashboard aktivite akışı", () => {
     expect(satirlar[0].an.getTime()).toBeGreaterThan(satirlar[1].an.getTime());
   });
 
+  it("devir satırı nesneyi gösterir: doktor → yeni sahip (sahipsizse 'Sahipsiz'); kimlik yazılmaz", async () => {
+    const { doktor } = await kurulum();
+    const satici = await prisma.user.create({ data: { name: "Ayşe Demir", email: "ayse@medikal.local", passwordHash: "x", role: "SATICI" } });
+    const devir = (dk: number, sahip: string | null) =>
+      prisma.auditLog.create({
+        data: {
+          action: "DOCTOR_TRANSFER",
+          actionType: ISLEM_SINIFI.DOCTOR_TRANSFER.tur,
+          module: ISLEM_SINIFI.DOCTOR_TRANSFER.modul,
+          entityType: "Doctor",
+          entityId: doktor.id,
+          afterData: JSON.stringify({ ownerSellerId: sahip }),
+          createdAt: new Date(Date.now() + dk * DAKIKA),
+        },
+      });
+    await devir(2, satici.id);
+    await devir(3, null);
+    const metinler = (await aktiviteAkisi("YONETICI", 15)).map((s) => s.metin);
+    expect(metinler.slice(0, 2)).toEqual(["Sistem doktor devretti · Dr. Gizli → Sahipsiz", "Sistem doktor devretti · Dr. Gizli → Ayşe Demir"]);
+    expect(metinler.join("\n")).not.toContain(satici.id);
+  });
+
   it("adet sınırı: istenen kadar satır", async () => {
     await kurulum();
     expect(await aktiviteAkisi("YONETICI", 2)).toHaveLength(2);

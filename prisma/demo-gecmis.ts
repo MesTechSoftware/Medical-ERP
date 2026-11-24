@@ -137,10 +137,14 @@ async function demoVerisi(tx: Tx): Promise<DemoVerisi> {
   };
 }
 
-/** Geçmiş zaten üretildiyse (ya da veri gerçek kullanımdansa) durur: iki günden eski sevkiyat var mı. */
+/**
+ * Geçmiş zaten üretildiyse (ya da veri gerçek kullanımdansa) durur: iki günden önce açılmış sevkiyat var mı.
+ * Sevk günü değil kayıt anına bakılır: demo seed'i fatura senaryosu için bir sevkiyatın sevk gününü geriye
+ * alır, ama kaydı bugün açar.
+ */
 async function gecmisYokMu(tx: Tx, an: Date): Promise<void> {
   const sinir = gunAraligi(new Date(an.getTime() - 2 * GUN)).baslangic;
-  const eski = await tx.shipment.count({ where: { shippedAt: { lt: sinir } } });
+  const eski = await tx.shipment.count({ where: { createdAt: { lt: sinir } } });
   if (eski > 0) {
     throw new Error("Veritabanında iki günden eski sevkiyat var: geçmiş zaten üretilmiş ya da veri gerçek kullanımdan. Önce demo seed'iyle sıfırlayın.");
   }

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/session";
 import { PageHeader, LinkButton } from "@/components/ui";
@@ -14,6 +15,8 @@ import { ListeTablosu } from "./ListeTablosu";
 import { SuzgecCubugu } from "./SuzgecCubugu";
 
 /** Fiyat listeleri (X-10, spec Ü-21) — yalnız yönetici. Cariye atama cari kartında, satır yazımı detayda. */
+export const metadata: Metadata = { title: "Fiyat Listeleri" };
+
 export default async function PriceListsPage({ searchParams }: { searchParams: Promise<Parametreler> }) {
   await requireAdmin();
   const params = await searchParams;

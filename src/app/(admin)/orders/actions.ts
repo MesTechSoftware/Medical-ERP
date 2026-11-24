@@ -9,9 +9,12 @@ import { OrderStatus } from "@/generated/prisma/enums";
 import { stokHareketiYaz, stokKilitle } from "@/lib/stok";
 import { IsHatasi } from "@/lib/hata";
 import { iadeYaz } from "@/lib/iade";
-import { siparisAc, siparisSatirlariniOku } from "@/lib/siparis-giris";
+import { kalaniKapat } from "@/lib/kalan-kapat";
+import { siparisAc, siparisFiyatiOnizle, siparisSatirlariniOku, type FiyatOnizlemeSonucu } from "@/lib/siparis-giris";
 import { siparisiHazirla, teslimEdildiIsaretle } from "@/lib/siparis-durum";
-import { basarili, engel, type IslemSonucu } from "@/lib/sonuc";
+import { riskBilgileri } from "@/lib/doctor-cari";
+import { bilgiyleAdres } from "@/lib/bilgi-seridi";
+import { basarili, engel, sonucOlustur, type Bildirim, type IslemSonucu } from "@/lib/sonuc";
 
 function revalidateOrders() {
   revalidatePath("/orders");
@@ -94,6 +97,31 @@ export async function cancelOrder(id: string): Promise<IslemSonucu> {
   redirect(`/orders/${id}`);
 }
 
+/**
+ * Kalanı kapat (A-3 eki): en az bir sevkiyatı olan `HAZIRLANIYOR` siparişin sevk edilmeyecek kalanını
+ * gerekçeyle kapatır; sipariş `KARGOLANDI` olur. `YONETICI` ve `OPERASYON` yapar; onay bloğu açmaz.
+ * Başarıda sayfada kalınır.
+ */
+export async function closeRemainder(orderId: string, _prev: unknown, formData: FormData): Promise<IslemSonucu> {
+  const session = await requireStaff();
+  try {
+    await prisma.$transaction((tx) =>
+      kalaniKapat(tx, {
+        siparisId: orderId,
+        gerekce: String(formData.get("closeReason") ?? ""),
+        not: String(formData.get("closeNote") ?? ""),
+        yapanId: session.user.id,
+      })
+    );
+  } catch (e) {
+    if (e instanceof IsHatasi) return e.sonuc;
+    throw e;
+  }
+  revalidateOrders();
+  revalidatePath(`/orders/${orderId}`);
+  return basarili();
+}
+
 const IADE_KALEMI = "iade_";
 
 /**
@@ -148,6 +176,18 @@ export async function createReturn(orderId: string, _prev: unknown, formData: Fo
  * satıcı ekranıyla aynı yoldan (`siparisAc`); satıcı sipariş anındaki sahiptir, bayide yoktur.
  * Yönetici girerse bedelsiz onayı aynı işlemde verilir (A-8-5).
  */
+/** Formda cari ve miktara göre liste fiyatı önizlemesi (A-10-2). */
+export async function fiyatOnizle(doctorId: string, productId: string, quantity: number): Promise<FiyatOnizlemeSonucu> {
+  await requireStaff();
+  return { ...basarili(), listeFiyat: await siparisFiyatiOnizle(doctorId, productId, quantity) };
+}
+
+/** Formda cari seçilince limit ve vade bilgisi (A-12-8); yalnız bilgi, işlemi engellemez. */
+export async function cariRiskiOnizle(doctorId: string): Promise<IslemSonucu> {
+  await requireStaff();
+  return sonucOlustur(await riskBilgileri(doctorId));
+}
+
 export async function createStaffOrder(_prev: unknown, formData: FormData): Promise<IslemSonucu> {
   const session = await requireStaff();
   const doctorId = String(formData.get("doctorId") ?? "").trim();
@@ -155,8 +195,9 @@ export async function createStaffOrder(_prev: unknown, formData: FormData): Prom
   const okunan = siparisSatirlariniOku(formData.get("items") as string | null);
   if ("hata" in okunan) return okunan.hata;
   let id: string;
+  let bildirimler: Bildirim[];
   try {
-    ({ id } = await prisma.$transaction((tx) =>
+    ({ id, bildirimler } = await prisma.$transaction((tx) =>
       siparisAc(tx, {
         doktorId: doctorId,
         satirlar: okunan.satirlar,
@@ -169,5 +210,5 @@ export async function createStaffOrder(_prev: unknown, formData: FormData): Prom
     throw e;
   }
   revalidateOrders();
-  redirect(`/orders/${id}`);
+  redirect(bilgiyleAdres(`/orders/${id}`, bildirimler));
 }

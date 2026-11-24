@@ -21,7 +21,7 @@ export default function CollectionForm({
   return (
     <form action={formAction} className="grid gap-4 sm:grid-cols-2">
       <SelectField
-        label="Doktor"
+        label="Cari"
         name="doctorId"
         required
         sonuc={state}

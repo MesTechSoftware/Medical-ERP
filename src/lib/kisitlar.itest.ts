@@ -51,6 +51,25 @@ describe("fiyat listesi satırı — tarih aralığı çakışmaz (EXCLUDE — B
   });
 });
 
+describe("sipariş satırı — bedelsiz olmayan satırın birim fiyatı > 0 (CHECK — A-10-5)", () => {
+  it("bedelli satır 0 fiyatla yazılamaz; bedelsiz satır 0 olabilir", async () => {
+    const ref = await referansVeri();
+    const doktor = await prisma.doctor.create({ data: yeniDoktorVerisi("Dr. Fiyat") });
+    const urun = await prisma.product.create({ data: { name: "Ü", code: "U-CHK", taxRateId: ref.kdv20.id } });
+    const o = await prisma.order.create({
+      data: { documentNo: "SIP-CHK", doctorId: doktor.id, stage: "ONAYLI", status: "BEKLIYOR", paymentTermDays: 30 },
+    });
+    const satir = (veri: object) =>
+      prisma.orderItem.create({
+        data: { orderId: o.id, productId: urun.id, quantity: 1, listPrice: "10", unitPrice: "10", vatRate: "20", ...veri },
+      });
+    await expect(satir({ unitPrice: "0" })).rejects.toThrow(/OrderItem_birim_fiyat_pozitif_check/);
+    await expect(satir({ unitPrice: "-1" })).rejects.toThrow(/OrderItem_birim_fiyat_pozitif_check/);
+    await expect(satir({ unitPrice: "0.0001" })).resolves.toBeTruthy();
+    await expect(satir({ unitPrice: "0", isFree: true, freeReason: "NUMUNE" })).resolves.toBeTruthy();
+  });
+});
+
 describe("uretBelgeNo (A-14)", () => {
   it("biçim {ÖNEK}-{YIL}-{SIRA}, önek başına ayrı sayaç", async () => {
     const [a, b, c] = await prisma.$transaction(async (tx) => [

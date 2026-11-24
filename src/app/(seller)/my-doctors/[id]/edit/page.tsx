@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireSeller } from "@/lib/session";
@@ -6,6 +7,8 @@ import { formatPhone } from "@/lib/phone";
 import { PageHeader, Card } from "@/components/ui";
 import DoctorForm from "../../DoctorForm";
 import { updateDoctor } from "../../actions";
+
+export const metadata: Metadata = { title: "Doktor Düzenle" };
 
 export default async function EditDoctorPage({
   params,

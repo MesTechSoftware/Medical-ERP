@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
@@ -7,7 +8,7 @@ import { BRUT, SATIR_TABANI, tabanli } from "@/lib/taban";
 import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
 import { formatDate } from "@/lib/format";
 import { formatPhone } from "@/lib/phone";
-import { bakiyeSerisi, hesaplaDoktorBakiye, vadesiGecmisUyarisi } from "@/lib/doctor-cari";
+import { bakiyeSerisi, hesaplaDoktorBakiye, hesaplaDoktorRisk, vadesiGecmisUyarisi } from "@/lib/doctor-cari";
 import { sonAylar } from "@/lib/donem";
 import { kpiGetir } from "@/lib/kpi/getir";
 import { simdi, takvimAyi } from "@/lib/zaman";
@@ -33,6 +34,8 @@ import { Ikon } from "@/components/Ikon";
  * Kongre defteri C2'de (GÇ-5), yaşlandırma ve vadesi geçmiş tutar C3'te
  * söküldü (GÇ-3, X-6 §(5)/(7)).
  */
+export const metadata: Metadata = { title: "Cari Detayı" };
+
 export default async function DoctorDetailPage({
   params,
 }: {
@@ -51,7 +54,7 @@ export default async function DoctorDetailPage({
   const aylar = sonAylar(6, takvimAyi(an), an);
   // Bakiye bir kez hesaplanır: kart ve vade uyarısı aynı değeri kullanır.
   const bakiyeP = hesaplaDoktorBakiye(id);
-  const [cari, vadeUyarisi, orders, payments] = await Promise.all([
+  const [cari, vadeUyarisi, risk, orders, payments] = await Promise.all([
     // Bakiye ve ay sonu trendi tek hata alanıdır: biri düşerse kart referansla düşer (X-3).
     kpiGetir(
       async () => {
@@ -61,6 +64,7 @@ export default async function DoctorDetailPage({
       { yol: `/doctors/${id}`, kullaniciId: session.user.id }
     ),
     vadesiGecmisUyarisi(id, { bakiye: bakiyeP.then((b) => b.bakiye) }),
+    hesaplaDoktorRisk(id),
     prisma.order.findMany({
       where: { doctorId: id },
       orderBy: { orderDate: "desc" },
@@ -163,10 +167,15 @@ export default async function DoctorDetailPage({
             {[
               [
                 "Sorumlu satıcı",
-                doctor.ownerSeller?.name ?? <StatusChip ton="uyari">Sahipsiz</StatusChip>,
+                doctor.accountClass === "BAYI" ? "—" : (doctor.ownerSeller?.name ?? <StatusChip ton="uyari">Sahipsiz</StatusChip>),
               ],
               ["Fiyat listesi", doctor.priceList ? `${doctor.priceList.code} — ${doctor.priceList.name}` : "Varsayılan"],
               ["Ödeme vadesi", doctor.paymentTermDays !== null ? `${doctor.paymentTermDays} gün` : "Varsayılan"],
+              ["Risk (bakiye + açık sipariş)", <Tutar key="risk" deger={risk.risk} taban={BRUT} />],
+              [
+                "Kredi limiti",
+                risk.krediLimiti === null ? "Limitsiz" : risk.krediLimiti.isZero() ? "Peşin çalışılan cari" : <Tutar key="limit" deger={risk.krediLimiti} taban={BRUT} />,
+              ],
               ["Cari tipi", doctor.partyType === "GERCEK_KISI" ? "Gerçek kişi" : "Tüzel kişi"],
               ["VKN / TCKN", doctor.taxId ?? "—"],
               ["Fatura ünvanı", doctor.invoiceTitle ?? doctor.fullName],
@@ -206,8 +215,10 @@ export default async function DoctorDetailPage({
                 {orders.map((o) => {
                   return (
                     <tr key={o.id}>
-                      <td className="whitespace-nowrap text-slate-500">
-                        {o.documentNo}
+                      <td className="whitespace-nowrap">
+                        <Link href={`/orders/${o.id}`} className="text-link hover:underline">
+                          {o.documentNo}
+                        </Link>
                       </td>
                       <td className="whitespace-nowrap text-slate-500">
                         {formatDate(o.orderDate)}

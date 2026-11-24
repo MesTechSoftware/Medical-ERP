@@ -66,3 +66,67 @@ test("kısmi sevkiyat: 3'ün 1'i sevk edilir, borç yazılır, sipariş beklemed
   const [{ status }] = await sorgu<{ status: string }>(`SELECT status FROM "Order" WHERE id = $1`, [siparisId]);
   expect(status).toBe("HAZIRLANIYOR");
 });
+
+test("kalanı kapat: gerekçe zorunlu, sipariş kargolandı olur, rozet ve sevk/kalan görünür (A-3-4/6/7)", async ({ page }) => {
+  const ek = Date.now().toString().slice(-7);
+  const doktorAdi = `Dr. Kapat ${ek}`;
+  const [{ id: doktorId }] = await sorgu<{ id: string }>(
+    `INSERT INTO "Doctor" (id, "accountClass", "fullName", clinic, region, "phoneNormalized", "partyType", status)
+     VALUES ($1, 'DOKTOR', $2, 'Klinik', 'Bölge', $3, 'TUZEL_KISI', 'AKTIF') RETURNING id`,
+    [`e2e-drk-${ek}`, doktorAdi, `+90538${ek}`]
+  );
+  const [urun] = await sorgu<{ id: string }>(
+    `SELECT "productId" AS id FROM "StockMovement" GROUP BY "productId"
+     HAVING SUM(CASE WHEN type = 'GIRIS' THEN quantity ELSE -quantity END) >= 3 ORDER BY "productId" LIMIT 1`
+  );
+  const [satici] = await sorgu<{ id: string }>(`SELECT id FROM "User" WHERE role = 'SATICI' ORDER BY email LIMIT 1`);
+  const siparisId = `e2e-sipk-${ek}`;
+  const kalemId = `e2e-kalk-${ek}`;
+  await sorgu(
+    `INSERT INTO "Order" (id, "documentNo", "doctorId", "sellerId", stage, status, "paymentTermDays", "updatedAt")
+     VALUES ($1, $2, $3, $4, 'ONAYLI', 'HAZIRLANIYOR', 30, now())`,
+    [siparisId, `E2E-SIPK-${ek}`, doktorId, satici.id]
+  );
+  await sorgu(
+    `INSERT INTO "OrderItem" (id, "orderId", "productId", quantity, "listPrice", "unitPrice", "vatRate")
+     VALUES ($1, $2, $3, 3, 100, 100, 20)`,
+    [kalemId, siparisId, urun.id]
+  );
+
+  // Sevkiyatsız siparişte kapatma sunulmaz; bir sevkiyattan sonra sunulur.
+  await page.goto(`/orders/${siparisId}`);
+  await expect(page.getByRole("heading", { name: "Kalanı Kapat" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Siparişi İptal Et" })).toBeVisible();
+  const kart = await sevkKartiAc(page, doktorAdi);
+  await kart.locator(`#miktar_${kalemId}`).fill("1");
+  await kart.getByRole("button", { name: "Kargola" }).click();
+  await expect(page.locator("[data-sevk-karti]").filter({ hasText: doktorAdi }).getByText("kalan 2/3")).toBeVisible();
+
+  page.on("dialog", (d) => d.accept());
+  await page.goto(`/orders/${siparisId}`);
+  await expect(page.getByRole("heading", { name: "Kalanı Kapat" })).toBeVisible();
+  await expect(page.locator("[data-sevkiyat]")).toHaveCount(1);
+  // A-3-1 / F-3: sevkiyatı olan sipariş iptal edilemez — buton sunulmaz.
+  await expect(page.getByRole("button", { name: "Siparişi İptal Et" })).toHaveCount(0);
+
+  // K-4-2: sevkiyat başına salt okunur Fatura Hazırlık Kartı; muhatabın fatura bilgisi eksik (A-13 §5).
+  const faturaKarti = page.locator("[data-fatura-karti]");
+  await expect(faturaKarti).toHaveCount(1);
+  await expect(faturaKarti).toContainText("Bilgi amaçlıdır — mali belge değildir.");
+  await expect(faturaKarti).toContainText("fatura bilgisi eksik");
+
+  // DIGER'de açıklama zorunlu.
+  await page.getByLabel("Kapatma gerekçesi").selectOption("DIGER");
+  await page.getByRole("button", { name: /Kalanı Kapat \(2 adet\)/ }).click();
+  await expect(page.getByText("Bu alan zorunludur.")).toBeVisible();
+
+  await page.getByLabel(/Açıklama/).fill("Üretimden kalktı");
+  await page.getByRole("button", { name: /Kalanı Kapat \(2 adet\)/ }).click();
+  await expect(page.locator("[data-kismi-kapatildi]")).toContainText("Diğer — Üretimden kalktı");
+  await expect(page.locator("[data-kalem-miktari]")).toContainText("Sevk 1 · Kalan 0 · Kapatılan 2");
+  await expect(page.getByRole("heading", { name: "Kalanı Kapat" })).toHaveCount(0);
+  const [{ status }] = await sorgu<{ status: string }>(`SELECT status FROM "Order" WHERE id = $1`, [siparisId]);
+  expect(status).toBe("KARGOLANDI");
+  // Kargolanmış siparişte de iptal sunulmaz (F-3).
+  await expect(page.getByRole("button", { name: "Siparişi İptal Et" })).toHaveCount(0);
+});

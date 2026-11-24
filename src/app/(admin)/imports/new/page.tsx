@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import type { ImportDataType } from "@/generated/prisma/enums";
 import { requireAdmin } from "@/lib/session";
@@ -8,6 +9,8 @@ import IceAktarimFormu from "../IceAktarimFormu";
 import { BAGLANTI } from "@/components/stil";
 
 /** Yeni içe aktarım (spec Ü-30 §3.5): bugünkü form — doğrula → önizle → yaz (D-6). */
+export const metadata: Metadata = { title: "Yeni İçe Aktarım" };
+
 export default async function NewImportPage() {
   await requireAdmin();
   const turler = (Object.keys(TANIMLAR) as ImportDataType[]).map((kod) => ({ kod, ad: VERI_TIPI_ADI[kod] }));

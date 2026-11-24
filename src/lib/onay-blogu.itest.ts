@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { prisma } from "@/lib/db";
-import { acikBlokVarMi, blokKontrolleriniCalistir, type BlokIhlali } from "@/lib/onay-blogu";
+import { acikBlokVarMi, blokKarariVer, blokKontrolleriniCalistir, type BlokIhlali } from "@/lib/onay-blogu";
 
 // `acikBlokVarMi()` / `blokKontrolleriniCalistir()` — KABUL_KRITERLERI A-8-1…A-8-5.
 
@@ -157,5 +157,48 @@ describe("blokKontrolleriniCalistir — yönetici (A-8-5)", () => {
     });
     expect(b.decidedAt).toBeInstanceOf(Date);
     expect(await acikBlokVarMi("SIP", "o1")).toBe(false);
+  });
+});
+
+describe("onay/red kararı denetim kaydına yazılır (X-18-9)", () => {
+  it.each(["ONAY", "RED"] as const)("%s kararı: aynı işlemde kayıt, gerekçe alanında karar notu; ikinci karar kayıt eklemez", async (karar) => {
+    const b = await blok("o1");
+    expect(await prisma.$transaction((tx) => blokKarariVer(tx, { blokId: b.id, karar, not: "kontrol edildi", yapanId: yoneticiId }))).toBe(true);
+    expect(await prisma.$transaction((tx) => blokKarariVer(tx, { blokId: b.id, karar: "RED", not: "geç", yapanId: yoneticiId }))).toBe(false);
+
+    const kayitlar = await prisma.auditLog.findMany({ where: { action: "APPROVAL_DECIDE" } });
+    expect(kayitlar).toHaveLength(1);
+    expect(kayitlar[0]).toMatchObject({ actorId: yoneticiId, entityType: "ApprovalBlock", entityId: b.id, reason: "kontrol edildi" });
+    expect(JSON.parse(kayitlar[0].afterData!)).toMatchObject({ karar, ruleCode: "NEGATIF_STOK", documentType: "SIP", documentId: "o1" });
+  });
+
+  it("karar işlemi geri alınırsa denetim kaydı da kalmaz", async () => {
+    const b = await blok("o1");
+    await expect(
+      prisma.$transaction(async (tx) => {
+        await blokKarariVer(tx, { blokId: b.id, karar: "ONAY", not: "x", yapanId: yoneticiId });
+        throw new Error("geri al");
+      })
+    ).rejects.toThrow("geri al");
+    expect(await prisma.auditLog.count({ where: { action: "APPROVAL_DECIDE" } })).toBe(0);
+    expect((await prisma.approvalBlock.findUniqueOrThrow({ where: { id: b.id } })).decision).toBeNull();
+  });
+});
+
+describe("ISKONTO_TAVANI kuralı (A-10-4)", () => {
+  const iskonto: BlokIhlali = { kuralKodu: "ISKONTO_TAVANI", parametreler: { urun: "Stent", oran: "25.00", tavan: 10 } };
+
+  it("satıcı gerekçeyle gönderirse ISKONTO_TAVANI bloğu açılır ve belge onaya gider", async () => {
+    const s = await calistir({ id: saticiId, rol: "SATICI" }, "Hacimli sipariş", [iskonto]);
+    expect(s).toMatchObject({ durum: "BASARILI_UYARILI", onayaGonderildi: true });
+    const bloklar = await prisma.approvalBlock.findMany();
+    expect(bloklar.map((b) => b.ruleCode)).toEqual(["ISKONTO_TAVANI"]);
+    expect(await acikBlokVarMi("SIP", "o1")).toBe(true);
+  });
+
+  it("gerekçe yoksa ONAY_GEREKLI döner, blok yazılmaz", async () => {
+    const s = await calistir({ id: saticiId, rol: "SATICI" }, null, [iskonto]);
+    expect(s.durum).toBe("ONAY_GEREKLI");
+    expect(await prisma.approvalBlock.count()).toBe(0);
   });
 });

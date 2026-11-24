@@ -1,10 +1,13 @@
+import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { requireSeller } from "@/lib/session";
 import { kapsamliDoktorlariGetir } from "@/lib/doctor";
 import { PageHeader, Card } from "@/components/ui";
 import OrderForm from "../OrderForm";
 import { siparisFormuUrunleri } from "@/lib/siparis-giris";
-import { createOrder } from "../actions";
+import { cariRiskiOnizle, createOrder, fiyatOnizle } from "../actions";
+
+export const metadata: Metadata = { title: "Yeni Sipariş" };
 
 export default async function NewOrderPage() {
   const session = await requireSeller();
@@ -25,7 +28,7 @@ export default async function NewOrderPage() {
         description="Ürünleri seçip sipariş oluşturun"
       />
       <Card>
-        <OrderForm products={products} doctors={doctors} action={createOrder} />
+        <OrderForm products={products} doctors={doctors} action={createOrder} fiyatOnizle={fiyatOnizle} riskOnizle={cariRiskiOnizle} />
       </Card>
     </div>
   );

@@ -83,7 +83,7 @@ export function BekleyenTablosu({
                   <input
                     name={`takip_${r.id}`}
                     aria-label={`${r.documentNo} takip no`}
-                    placeholder="TR123456789"
+                    placeholder="Takip no"
                     className={`w-36 ${KONTROL_TEK_SATIR}`}
                   />
                 </td>
@@ -97,7 +97,7 @@ export function BekleyenTablosu({
                 </td>
                 <td className="text-right">
                   <Link href={kismiAdresi(r.id)} scroll={false} data-kayit={r.id} className={buton("metin")}>
-                    <Ikon ad="duzenle" />
+                    <Ikon ad="kismiSevk" />
                     Kısmi sevk
                   </Link>
                 </td>

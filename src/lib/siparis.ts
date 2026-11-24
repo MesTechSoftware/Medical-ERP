@@ -7,6 +7,7 @@ import { hesaplaSatirTutarlari, type BelgeTutari, type SatirTutari } from "@/lib
  */
 export const SIPARIS_SATIRI = {
   quantity: true,
+  closedQuantity: true,
   listPrice: true,
   unitPrice: true,
   vatRate: true,
@@ -40,6 +41,7 @@ export function siparisToplami(satirlar: readonly Satir[]): BelgeTutari {
 
 type KalemHareketleri = {
   quantity: number;
+  closedQuantity: number;
   shipmentItems: readonly { quantity: number }[];
   returnItems: readonly { quantity: number }[];
 };
@@ -49,9 +51,16 @@ export function sevkMiktari(k: { shipmentItems: readonly { quantity: number }[] 
   return k.shipmentItems.reduce((t, s) => t + s.quantity, 0);
 }
 
-/** Kalemin sevk edilmemiş miktarı: sipariş − sevk (A-3); iade kalanı değiştirmez (A-1), okunması gerekmez. */
-export function kalanMiktar(k: { quantity: number; shipmentItems: readonly { quantity: number }[] }): number {
-  return k.quantity - sevkMiktari(k);
+/**
+ * Kalemin sevk edilmemiş ve kapatılmamış miktarı: sipariş − sevk − kapatılan (A-3 eki, tek kaynak);
+ * iade kalanı değiştirmez (A-1), okunması gerekmez.
+ */
+export function kalanMiktar(k: {
+  quantity: number;
+  closedQuantity: number;
+  shipmentItems: readonly { quantity: number }[];
+}): number {
+  return k.quantity - sevkMiktari(k) - k.closedQuantity;
 }
 
 /**

@@ -5,8 +5,11 @@ import { Tutar } from "@/components/Tutar";
 import { MATRAH, SATIR_TABANI, tabanli } from "@/lib/taban";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { hesaplaSatirTutarlari } from "@/lib/satir-tutarlari";
-import type { FreeReason } from "@/generated/prisma/enums";
-import { BEDELSIZ_SEBEP_ADI } from "@/lib/sozluk";
+import type { CloseReason, FreeReason } from "@/generated/prisma/enums";
+import { BEDELSIZ_SEBEP_ADI, KAPATMA_GEREKCESI_ADI } from "@/lib/sozluk";
+import { kalanMiktar, sevkMiktari } from "@/lib/siparis";
+import { takipLinki } from "@/lib/kargo";
+import { BAGLANTI } from "@/components/stil";
 
 type OrderWithRelations = {
   id: string;
@@ -20,9 +23,14 @@ type OrderWithRelations = {
   status: string;
   orderDate: Date;
   seller?: { name: string } | null;
+  /** A-3 eki: kalanı kapatma kaydı (kapatılmadıysa `null`). */
+  closeReason?: CloseReason | null;
+  closeNote?: string | null;
   items: {
     id: string;
     quantity: number;
+    closedQuantity: number;
+    shipmentItems: { quantity: number }[];
     listPrice: Decimal.Value;
     unitPrice: Decimal.Value;
     vatRate: Decimal.Value;
@@ -31,13 +39,14 @@ type OrderWithRelations = {
     freeNote: string | null;
     product: { name: string; code: string };
   }[];
-  /** En son sevkiyat (A-3 kısmi sevkiyat ekranı 1B'dedir). */
-  shipment?: {
+  /** Siparişin tüm sevkiyatları, eskiden yeniye (A-3-7). */
+  shipments: {
+    id: string;
     documentNo: string;
-    carrier: { name: string } | null;
+    carrier: { name: string; trackingUrlTemplate: string | null } | null;
     trackingNumber: string | null;
     shippedAt: Date | null;
-  } | null;
+  }[];
 };
 
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
@@ -85,7 +94,17 @@ export default function OrderDetail({
           <InfoRow label="Tarih" value={formatDate(order.orderDate)} />
           <InfoRow
             label="Durum"
-            value={<StatusBadge status={order.status} />}
+            value={
+              <>
+                <StatusBadge status={order.status} />
+                {order.closeReason && (
+                  <span data-kismi-kapatildi className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">
+                    Kısmi kapatıldı · {KAPATMA_GEREKCESI_ADI[order.closeReason]}
+                    {order.closeNote ? ` — ${order.closeNote}` : ""}
+                  </span>
+                )}
+              </>
+            }
           />
         </dl>
       </Card>
@@ -127,6 +146,12 @@ export default function OrderDetail({
                   </td>
                   <td className="sayi">
                     {it.quantity}
+                    {sevkMiktari(it) > 0 && (
+                      <span className="block text-xs text-slate-500" data-kalem-miktari>
+                        Sevk {sevkMiktari(it)} · Kalan {kalanMiktar(it)}
+                        {it.closedQuantity > 0 ? ` · Kapatılan ${it.closedQuantity}` : ""}
+                      </span>
+                    )}
                   </td>
                   <td className="sayi">
                     <Tutar deger={it.unitPrice} taban={MATRAH} baslikta />
@@ -182,27 +207,35 @@ export default function OrderDetail({
         </div>
       </Card>
 
-      {order.shipment && (
+      {order.shipments.length > 0 && (
         <Card>
           <h2 className="mb-4 text-sm font-semibold text-slate-900">
             Kargo Bilgisi
           </h2>
-          <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <InfoRow label="Sevkiyat No" value={order.shipment.documentNo} />
-            <InfoRow label="Kargo Firması" value={order.shipment.carrier?.name ?? "—"} />
-            <InfoRow
-              label="Takip No"
-              value={order.shipment.trackingNumber ?? "—"}
-            />
-            <InfoRow
-              label="Kargo Tarihi"
-              value={
-                order.shipment.shippedAt
-                  ? formatDateTime(order.shipment.shippedAt)
-                  : "—"
-              }
-            />
-          </dl>
+          <div className="space-y-4">
+            {order.shipments.map((v) => {
+              const link = takipLinki(v.carrier?.trackingUrlTemplate, v.trackingNumber);
+              return (
+                <dl key={v.id} data-sevkiyat className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                  <InfoRow label="Sevkiyat No" value={v.documentNo} />
+                  <InfoRow label="Kargo Firması" value={v.carrier?.name ?? "—"} />
+                  <InfoRow
+                    label="Takip No"
+                    value={
+                      v.trackingNumber && link ? (
+                        <a href={link} target="_blank" rel="noopener noreferrer" className={BAGLANTI}>
+                          {v.trackingNumber}
+                        </a>
+                      ) : (
+                        (v.trackingNumber ?? "—")
+                      )
+                    }
+                  />
+                  <InfoRow label="Kargo Tarihi" value={v.shippedAt ? formatDateTime(v.shippedAt) : "—"} />
+                </dl>
+              );
+            })}
+          </div>
         </Card>
       )}
     </div>

@@ -1,29 +1,27 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { requireStaff } from "@/lib/session";
 import { PageHeader, LinkButton } from "@/components/ui";
 import { ListeSayfalama } from "@/components/liste/ListeSayfalama";
 import { SutunSecici } from "@/components/liste/SutunSecici";
 import { gizliSutunlar } from "@/lib/liste/sutun-tercihi";
-import { kpiGetir } from "@/lib/kpi/getir";
 import { sayfaCoz, sayfaDisi } from "@/lib/liste/sayfa";
-import { gunleriAraliga } from "@/lib/liste/parametreler";
-import { saticiSecenekleri, siparisKpileri, siparisListesi, siparisPaneli } from "@/lib/siparis-listesi/sorgu";
-import { kpiAraligi, SATICISIZ, siparisAdresi, suzgecCoz, TUM_SIPARISLER, type Parametreler } from "@/lib/siparis-listesi/suzgec";
-import { simdi, yerelGunMetni } from "@/lib/zaman";
-import { KpiKartlari } from "@/components/siparis/KpiKartlari";
+import { saticiSecenekleri, siparisListesi, siparisPaneli, siparisSekmeSayilari } from "@/lib/siparis-listesi/sorgu";
+import { SATICISIZ, siparisAdresi, suzgecCoz, TUM_SIPARISLER, type Parametreler } from "@/lib/siparis-listesi/suzgec";
 import { SiparisPaneli } from "@/components/siparis/SiparisPaneli";
 import { SiparisTablosu } from "@/components/siparis/SiparisTablosu";
 import { SuzgecCubugu } from "@/components/siparis/SuzgecCubugu";
 
+export const metadata: Metadata = { title: "Siparişler" };
+
 export default async function OrdersPage({ searchParams }: { searchParams: Promise<Parametreler> }) {
-  const session = await requireStaff();
+  await requireStaff();
   const params = await searchParams;
   const sayfa = sayfaCoz(params);
   const { perPage, skip, take, yer } = sayfa;
   const { suzgec, detay } = suzgecCoz(params);
   const gizli = await gizliSutunlar("/orders");
   const adres = siparisAdresi(suzgec, yer);
-  const aralik = kpiAraligi(suzgec, yerelGunMetni(simdi()));
 
   // Seçeneklerde olmayan satıcı süzgeci (eski yer imi, elle yazılmış kimlik) liste sorgularından önce adresten
   // düşer: formda "Tümü" görünürken uygulanırsa bir sonraki Uygula onu sessizce kaldırırdı (B-4-12 deseni).
@@ -32,9 +30,9 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
     redirect(siparisAdresi({ ...suzgec, satici: null }, { ...yer, ...(detay ? { detay } : {}) }));
   }
 
-  const [liste, kpi, panel, saticilar] = await Promise.all([
+  const [liste, sayilar, panel, saticilar] = await Promise.all([
     siparisListesi(suzgec, { skip, take }, TUM_SIPARISLER),
-    kpiGetir(() => siparisKpileri(gunleriAraliga(aralik), TUM_SIPARISLER), { yol: "/orders", kullaniciId: session.user.id }),
+    siparisSekmeSayilari(suzgec, TUM_SIPARISLER),
     detay ? siparisPaneli(detay, TUM_SIPARISLER) : null,
     saticilarP,
   ]);
@@ -53,10 +51,9 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         action={<LinkButton href="/orders/new" ikon="yeni">Yeni Sipariş</LinkButton>}
       />
 
-      <KpiKartlari sonuc={kpi} aralik={aralik} yol="/orders" />
-
       <SuzgecCubugu
         suzgec={suzgec}
+        sayilar={sayilar}
         per={yer.per}
         saticilar={saticilar}
         yol="/orders"

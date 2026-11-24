@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
@@ -21,6 +22,8 @@ const KUTU = `w-full ${KONTROL_TEK_SATIR}`;
  * Liste satırları (X-10 §(7)): ürün · `min_adet` (barem alt sınırı, B-6) · liste fiyatı (KDV hariç).
  * Tarihli satırlar import'tan gelir ve burada salt okunur (tarih ekranı Faz 2).
  */
+export const metadata: Metadata = { title: "Fiyat Listesi" };
+
 export default async function PriceListDetailPage({ params }: { params: Promise<{ id: string }> }) {
   await requireAdmin();
   const { id } = await params;

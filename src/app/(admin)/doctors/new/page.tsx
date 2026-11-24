@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/session";
 import { PageHeader, Card } from "@/components/ui";
 import CariFormu from "../CariFormu";
@@ -5,6 +6,8 @@ import { createCari } from "../actions";
 import { cariSecenekleri } from "../secenekler";
 
 /** Yönetici cari açar — doktor ya da bayi (X-8 §(5), D-2: OPERASYON cari açmaz). */
+export const metadata: Metadata = { title: "Yeni Cari" };
+
 export default async function NewCariPage() {
   await requireAdmin();
   const { saticilar, listeler } = await cariSecenekleri();

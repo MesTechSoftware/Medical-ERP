@@ -16,7 +16,7 @@ export default function Loading() {
           { etiket: "Pasif", varyant: "ikincil", ...kart },
         ]}
       />
-      <SuzgecCubuguIskeleti sekmeler={HIZLI_SEKMELER.map((s) => s.etiket)} dugmeler={["Sütunlar"]} />
+      <SuzgecCubuguIskeleti sekmeler={HIZLI_SEKMELER.map((s) => s.etiket)} dugmeler={["Sütunlar"]} arama />
       <TabloIskeleti />
     </div>
   );

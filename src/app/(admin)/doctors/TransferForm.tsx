@@ -8,7 +8,8 @@ import { KONTROL_TEK_SATIR } from "@/components/stil";
 
 /**
  * Toplu devir formu (X-17 §(4)). Doktor seçimi listedeki kutulardan gelir; kutular
- * `form={formId}` niteliğiyle bu forma bağlıdır. Gerekçe bir kez girilir.
+ * `form={formId}` niteliğiyle bu forma bağlıdır. Gerekçe bir kez girilir. Sonuç gelince (`data-sonuc`)
+ * çubuk, seçim sıfırlanmış olsa da sonucu göstermek için açık kalır.
  */
 export default function TransferForm({
   formId,
@@ -20,7 +21,7 @@ export default function TransferForm({
   const [state, formAction] = useActionState<SonucDurumu, FormData>(transferDoctor, null);
 
   return (
-    <form id={formId} action={formAction} className="flex flex-wrap items-end gap-2">
+    <form id={formId} action={formAction} data-sonuc={state ? "" : undefined} className="flex flex-wrap items-end gap-2">
       <div>
         <label htmlFor="toplu-satici" className="mb-1 block text-xs text-slate-500">
           Seçilen doktorların yeni sorumlu satıcısı

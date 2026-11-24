@@ -21,7 +21,7 @@
 }
 
 @theme {
-  /* Anka West logosunun turuncusu (logodan örneklendi) */
+  /* Marka turuncusu (varsayılan logodan örneklendi) */
   --color-brand: #fd8602;
 
   /* Semantik renkler (ADR-009): markadan bağımsızdır, anlamları sabittir — marka değişse de
@@ -248,6 +248,11 @@
   .sayi {
     text-align: end;
     font-variant-numeric: tabular-nums;
+  }
+
+  /* `.veri-tablosu th` (start) özgüllükte `.sayi`yı yener; başlık değerle aynı yöne hizalanır. */
+  .veri-tablosu th.sayi {
+    text-align: end;
   }
 
   /* Küçük kontrol (checkbox) için tıklanabilir alan: yalnız dokunmatikte 44×44 px. */

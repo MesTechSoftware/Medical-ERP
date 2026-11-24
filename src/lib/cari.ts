@@ -5,7 +5,7 @@ import { IsHatasi } from "@/lib/hata";
 import { tryNormalizePhone } from "@/lib/phone";
 import { degistirDoktorSahibi } from "@/lib/sahiplik";
 import { sert, type Bildirim } from "@/lib/sonuc";
-import { amountSchema } from "@/lib/validation";
+import { creditLimitSchema } from "@/lib/validation";
 
 /**
  * Cari — `YONETICI`'nin cari açma ve düzeltme akışı (X-8, A-13, X-10, X-15, X-17 §(7)). Bu dosyadaki
@@ -91,7 +91,7 @@ function ortakDenetle(v: Ortak, sinif: "DOKTOR" | "BAYI" | undefined, hatalar: B
   if (v.email && !z.string().email().safeParse(v.email).success) hatalar.push(sert("GECERSIZ_EPOSTA", {}, "email"));
   const vade = v.paymentTermDays === null ? null : /^\d{1,4}$/.test(v.paymentTermDays) ? parseInt(v.paymentTermDays, 10) : NaN;
   if (Number.isNaN(vade)) hatalar.push(sert("GECERSIZ_MIKTAR", {}, "paymentTermDays"));
-  const limit = v.creditLimit === null ? null : amountSchema.safeParse(v.creditLimit);
+  const limit = v.creditLimit === null ? null : creditLimitSchema.safeParse(v.creditLimit);
   if (limit && !limit.success) hatalar.push(sert("GECERSIZ_TUTAR", {}, "creditLimit"));
   return {
     telefon,

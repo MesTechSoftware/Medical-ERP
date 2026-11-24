@@ -69,7 +69,7 @@ describe("kargo bekleyenler ve KPI", () => {
     const ra = liste[0];
     expect(ra).toMatchObject({ kalanKalem: 1, kalanAdet: 2, adet: 5, onay: undefined });
     expect(ra.kalemler.map((k) => k.kalan)).toEqual(
-      a.items.map((k, i) => kalemMiktarlari({ quantity: k.quantity, shipmentItems: i === 0 ? [{ quantity: 3 }] : [], returnItems: [] }).kalan)
+      a.items.map((k, i) => kalemMiktarlari({ quantity: k.quantity, closedQuantity: 0, shipmentItems: i === 0 ? [{ quantity: 3 }] : [], returnItems: [] }).kalan)
     );
     expect(liste[1].onay).toBe("BEKLIYOR");
 

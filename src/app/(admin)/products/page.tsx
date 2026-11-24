@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { requireStaff } from "@/lib/session";
 import { PageHeader, LinkButton } from "@/components/ui";
@@ -11,6 +12,8 @@ import { KpiKartlari } from "./KpiKartlari";
 import { SuzgecCubugu } from "./SuzgecCubugu";
 import { UrunPaneli } from "./UrunPaneli";
 import { UrunTablosu } from "./UrunTablosu";
+
+export const metadata: Metadata = { title: "Ürünler" };
 
 export default async function ProductsPage({ searchParams }: { searchParams: Promise<Parametreler> }) {
   const session = await requireStaff();
