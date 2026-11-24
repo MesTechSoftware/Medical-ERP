@@ -120,3 +120,25 @@ test.describe("yükleme iskeleti ve hareket", () => {
     ).toBeLessThan(0.001);
   });
 });
+
+/** Sayısal sütun başlığı değeriyle aynı yöne hizalı kalır (başlık solda, değer sağda kayması). */
+for (const yol of ["/products", "/stock", "/price-lists", "/users", "/doctors", "/orders", "/shipping", "/collections", "/approvals"]) {
+  test(`${yol} tablo başlıkları sütun değerleriyle hizalı`, async ({ page }) => {
+    await page.goto(yol);
+    await expect(page.locator("table").first()).toBeVisible();
+    const kayanlar = await page.evaluate(() => {
+      const yon = (s: string) => (s === "right" ? "end" : s === "left" ? "start" : s);
+      return [...document.querySelectorAll("table")].flatMap((t) => {
+        const basliklar = [...t.querySelectorAll("thead th")];
+        const satir = t.querySelector("tbody tr");
+        if (!satir || satir.children.length !== basliklar.length) return [];
+        return basliklar.flatMap((th, i) => {
+          const metin = (th.textContent || "").trim();
+          const kayma = metin && yon(getComputedStyle(th).textAlign) !== yon(getComputedStyle(satir.children[i]).textAlign);
+          return kayma ? [metin] : [];
+        });
+      });
+    });
+    expect(kayanlar).toEqual([]);
+  });
+}

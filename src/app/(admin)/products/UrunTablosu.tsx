@@ -103,7 +103,7 @@ export function UrunTablosu({
                     <StatusBadge status={p.status} />
                   </td>
                 )}
-                <td>
+                <td className="sayi">
                   {yonetici && (
                     <div className="flex items-center justify-end gap-3">
                       <Link href={`/products/${p.id}/edit`} className={buton("metin")}>

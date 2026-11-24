@@ -250,6 +250,11 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* `.veri-tablosu th` (start) özgüllükte `.sayi`yı yener; başlık değerle aynı yöne hizalanır. */
+  .veri-tablosu th.sayi {
+    text-align: end;
+  }
+
   /* Küçük kontrol (checkbox) için tıklanabilir alan: yalnız dokunmatikte 44×44 px. */
   .dokunma-hedefi {
     display: inline-flex;
