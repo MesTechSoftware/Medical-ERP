@@ -66,16 +66,21 @@ export default async function AdminDoctorsPage({ searchParams }: { searchParams:
 
       <SuzgecCubugu suzgec={suzgec} secenekler={secenekler} sutunMenusu={<SutunSecici liste="/doctors" gizli={gizli} donus={listeAdresi} />} />
 
-      {/* Toplu devir (X-17 §(4)): satırlardaki kutular bu forma `form` niteliğiyle bağlıdır. */}
-      {devirYetkisi && (
-        <div className="mb-4">
-          <Card>
-            <TransferForm formId="toplu-devir" sellers={secenekler.saticilar} />
-          </Card>
-        </div>
-      )}
+      {/*
+        Toplu devir (X-17 §(4)): satırlardaki kutular bu forma `form` niteliğiyle bağlıdır. Çubuk yalnız
+        seçim varken (ya da devir sonucunu gösterirken) görünür (CSS `:has`).
+      */}
+      <div className="[&:not(:has(input[name=doctorId]:checked))_#toplu-cubuk:not(:has([data-sonuc]))]:hidden">
+        {devirYetkisi && (
+          <div id="toplu-cubuk" className="mb-4">
+            <Card>
+              <TransferForm formId="toplu-devir" sellers={secenekler.saticilar} />
+            </Card>
+          </div>
+        )}
 
-      <DoktorTablosu satirlar={liste.satirlar} gizli={gizli} devirYetkisi={devirYetkisi} suzgec={suzgec} yer={yer} an={an} />
+        <DoktorTablosu satirlar={liste.satirlar} gizli={gizli} devirYetkisi={devirYetkisi} suzgec={suzgec} yer={yer} an={an} />
+      </div>
 
       <ListeSayfalama sayfa={sayfa} toplam={liste.toplam} adres={doktorAdresi(suzgec)} />
 

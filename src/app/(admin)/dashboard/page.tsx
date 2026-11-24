@@ -25,7 +25,6 @@ import { AktiviteAkisi } from "@/components/dashboard/AktiviteAkisi";
 import { AkisYenileyici } from "@/components/dashboard/AkisYenileyici";
 import { DikkatListesi } from "@/components/dashboard/DikkatListesi";
 import { OperasyonKpiSatiri } from "@/components/dashboard/OperasyonKpiSatiri";
-import { IstisnaBandi } from "@/components/dashboard/IstisnaBandi";
 import { KritikStokListesi } from "@/components/dashboard/KritikStokListesi";
 import { ZamanFiltresi } from "@/components/dashboard/ZamanFiltresi";
 import { ALAN, YERLESIM } from "@/components/dashboard/yerlesim";
@@ -107,12 +106,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   return (
     <div>
       <PageHeader
-        title="Dashboard"
+        title="Genel Bakış"
         description="Operasyon özeti"
         action={<ZamanFiltresi secili={r.anahtar} className="hidden md:block" />}
       />
-
-      {istisna.tamam && <IstisnaBandi istisnalar={istisna.deger} />}
 
       {/* Telefonda filtre KPI'ların hemen üstünde, tam genişlik (brief §2). */}
       <ZamanFiltresi secili={r.anahtar} className="mb-4 md:hidden" />

@@ -5,7 +5,7 @@ import { siparisDagilimi } from "@/lib/dashboard";
 import { prisma } from "@/lib/db";
 import { siparisToplami } from "@/lib/siparis";
 import { gunleriAraliga } from "@/lib/liste/parametreler";
-import { siparisKpileri, siparisListesi, siparisPaneli } from "@/lib/siparis-listesi/sorgu";
+import { siparisKpileri, siparisListesi, siparisPaneli, siparisSekmeSayilari } from "@/lib/siparis-listesi/sorgu";
 import { BOS_SUZGEC, TUM_SIPARISLER, type SiparisKapsami, type SiparisSuzgeci } from "@/lib/siparis-listesi/suzgec";
 import { referansVeri, yeniDoktorVerisi } from "../../../test/integration/referans";
 
@@ -71,6 +71,34 @@ describe("durum kartları (A-5-8)", () => {
     }
     expect(k.BEKLIYOR).toBe(2);
     expect(k.toplam).toBe(6);
+  });
+
+  it("sekme sayısı = o sekmenin satır sayısı (dönem ve metin süzgeciyle); Tümü teklifi de sayar; kapsam sorguda (A-5-8, X-13-3)", async () => {
+    const ayse = await satici("Ayşe");
+    for (const status of DURUMLAR) await siparis({ orderDate: kasim(3), status, sellerId: ayse.id });
+    await siparis({ orderDate: kasim(4), documentNo: "SIP-BASKA" });
+    await siparis({ orderDate: kasim(5), stage: "TEKLIF", sellerId: ayse.id });
+    await siparis({ orderDate: new Date(Date.UTC(2026, 9, 10)), sellerId: ayse.id });
+
+    for (const [suzgec, kapsam] of [
+      [S({ ...KASIM }), TUM_SIPARISLER],
+      [S({}), TUM_SIPARISLER],
+      [S({ ...KASIM, q: "SIP-BASKA" }), TUM_SIPARISLER],
+      [S({ ...KASIM }), { tur: "satici", saticiId: ayse.id } as SiparisKapsami],
+    ] as const) {
+      // Sekmenin kendi durumu sayıya girmez: sayı o sekmeye tıklanınca açılan listenin satır sayısıdır.
+      const sayilar = await siparisSekmeSayilari({ ...suzgec, durum: "KARGOLANDI" }, kapsam);
+      for (const d of DURUMLAR) {
+        expect(sayilar[d], d).toBe((await siparisListesi({ ...suzgec, durum: d }, SAYFA, kapsam)).toplam);
+      }
+      expect(sayilar.tumu).toBe((await siparisListesi({ ...suzgec, durum: null }, SAYFA, kapsam)).toplam);
+    }
+    const kasimSayilari = await siparisSekmeSayilari(S({ ...KASIM }), TUM_SIPARISLER);
+    expect(kasimSayilari.tumu).toBe(7); // 5 durum + BASKA + teklif; Ekim dışı
+    expect(kasimSayilari.BEKLIYOR).toBe(2);
+    // Süzgeçsiz aynı aralıkta sekme sayıları dashboard dağılımına eşit.
+    const dagilim = await siparisDagilimi(gunleriAraliga(KASIM), TUM_SIPARISLER);
+    for (const d of DURUMLAR) expect(kasimSayilari[d]).toBe(dagilim[d]);
   });
 
   it("teklif (durumu BEKLIYOR) Bekliyor listesinde yok; Teklif sekmesinde ve Tümü'de var", async () => {

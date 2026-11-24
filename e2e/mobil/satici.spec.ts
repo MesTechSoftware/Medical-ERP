@@ -35,3 +35,20 @@ test("satıcı telefondan doktor ekler", async ({ page }) => {
   await expect(page).toHaveURL(/\/my-doctors$/);
   await expect(page.getByText(ad)).toBeVisible();
 });
+
+test("Siparişlerim telefonda: tablo ilk ekranda; sekmeler yatay kayan şerit, yalnız şerit kayar (A-5-9)", async ({ page }) => {
+  test.skip(page.viewportSize()!.width >= 768, "şerit taşması telefon genişliğine özgü");
+  await page.goto("/my-orders");
+  await expect(page.locator("[data-kpi-satiri]")).toHaveCount(0);
+  const satir = page.locator("tbody tr:has(a[data-kayit])").first();
+  await expect(satir).toBeVisible();
+  const kutu = (await satir.boundingBox())!;
+  expect(kutu.y + kutu.height, "ilk satır ilk ekranda").toBeLessThanOrEqual(page.viewportSize()!.height);
+  const serit = page.getByRole("navigation", { name: "Hızlı süzgeçler" });
+  const olcu = await serit.evaluate((e) => ({ sw: e.scrollWidth, cw: e.clientWidth }));
+  expect(olcu.sw, "şerit içeriği şeritten geniş").toBeGreaterThan(olcu.cw);
+  await serit.evaluate((e) => (e.scrollLeft = 200));
+  expect(await serit.evaluate((e) => e.scrollLeft)).toBeGreaterThan(0);
+  expect(await page.evaluate(() => window.scrollX), "sayfa kaymaz").toBe(0);
+  await yatayTasmaYok(page);
+});

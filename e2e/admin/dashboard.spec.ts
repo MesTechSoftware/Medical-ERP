@@ -21,17 +21,16 @@ const SERIT = [
   "/exports",
 ];
 
-test("istisna bandı sabit bölge: en çok 3 madde, her biri eylem bağlantılı; bütün istisnalar Dikkat listesinde", async ({ page }) => {
+test("Dikkat gerektirenler tek yerde: her madde eylem bağlantılı; üstte ayrı uyarı bandı yok", async ({ page }) => {
   await page.goto("/dashboard");
-  const bant = page.getByRole("region", { name: "Dikkat gerektirenler" });
-  await expect(bant).toBeVisible(); // demo verisinde kritik stok var
-  const maddeler = bant.getByRole("listitem");
+  const kart = page.locator("#dikkat");
+  await expect(kart).toContainText(/ürün (kritik stokta|tükendi)/); // demo verisinde kritik stok var
+  const maddeler = kart.getByRole("listitem");
   const adet = await maddeler.count();
   expect(adet).toBeGreaterThan(0);
-  expect(adet).toBeLessThanOrEqual(4); // 3 madde + "+N uyarı daha"
-  for (let i = 0; i < Math.min(adet, 3); i++) await expect(maddeler.nth(i).getByRole("link")).toHaveCount(1);
-  await expect(bant.locator("[aria-live]")).toHaveCount(0);
-  await expect(page.locator("#dikkat")).toContainText(/ürün (kritik stokta|tükendi)/);
+  for (let i = 0; i < adet; i++) await expect(maddeler.nth(i).getByRole("link")).toHaveCount(1);
+  await expect(page.getByRole("heading", { name: "Dikkat gerektirenler" })).toHaveCount(1);
+  await expect(page.getByRole("region", { name: "Dikkat gerektirenler" })).toHaveCount(0);
 });
 
 test("zaman filtresi URL'de: dönem KPI'ları değişir, anlık KPI değişmez; geri tuşu önceki aralığa döner", async ({ page }) => {

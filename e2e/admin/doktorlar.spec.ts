@@ -20,14 +20,14 @@ test("yeni sütunlar: son sipariş tarihi ve bakiye (KDV dahil başlık)", async
   await expect(r.getByText(/^(Doktor borçlu|Doktor alacaklı \(avans\)|Bakiye kapalı)$/)).toBeVisible();
 });
 
-test("eksik faturalı satır rozetli ve vurgulu (A-13-3)", async ({ page }) => {
+test("eksik faturalı satır yalnız rozetli; satır arka planı yok (A-13-3)", async ({ page }) => {
   const [d] = await sorgu<{ fullName: string }>(
     `SELECT "fullName" FROM "Doctor" WHERE "invoiceAddress" IS NULL ORDER BY "fullName" LIMIT 1`
   );
   await page.goto("/doctors?per=100");
   const r = satir(page, d.fullName);
   await expect(r.getByText("Eksik fatura", { exact: true })).toBeVisible();
-  await expect(r).toHaveClass(/bg-critical-bg/);
+  await expect(r).not.toHaveClass(/bg-critical-bg/);
 });
 
 test("limiti aşan cari 'Limit aşıldı' rozeti taşır (A-12-5)", async ({ page }) => {

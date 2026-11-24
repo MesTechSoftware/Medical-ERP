@@ -1,6 +1,7 @@
 import type { Role } from "@/generated/prisma/enums";
 import { AKIS_GORUNURLUGU, aktiviteCumlesi } from "@/lib/aktivite-sablonlari";
 import { prisma } from "@/lib/db";
+import { veriOku } from "@/lib/aktivite-sablonlari";
 
 type Etiket = { id: string; etiket: string };
 
@@ -35,6 +36,35 @@ export async function nesneEtiketleri(kayitlar: readonly { entityType: string; e
   return new Map(sonuclar.flat());
 }
 
+/**
+ * Devir satırının nesnesi: "Dr. Cem Arslan → Ayşe Demir" (doktor → yeni sahip satıcı; sahipsizse "Sahipsiz").
+ * Kişi adı yalnız devirde yazılır — devrin anlamı kimden kime gittiğidir; öbür olaylar ad taşımaz.
+ */
+async function devirNesneleri(
+  kayitlar: readonly { id: string; action: string; entityId: string | null; afterData: string | null }[]
+): Promise<Map<string, string>> {
+  const devirler = kayitlar.filter((k) => k.action === "DOCTOR_TRANSFER" && k.entityId);
+  if (devirler.length === 0) return new Map();
+  const yeniSahip = (k: { afterData: string | null }) => {
+    const id = veriOku(k.afterData).ownerSellerId;
+    return typeof id === "string" ? id : null;
+  };
+  const [doktorlar, satici] = await Promise.all([
+    prisma.doctor.findMany({ where: { id: { in: devirler.map((k) => k.entityId!) } }, select: { id: true, fullName: true } }),
+    prisma.user.findMany({ where: { id: { in: devirler.flatMap((k) => yeniSahip(k) ?? []) } }, select: { id: true, name: true } }),
+  ]);
+  const doktorAdi = new Map(doktorlar.map((d) => [d.id, d.fullName]));
+  const saticiAdi = new Map(satici.map((u) => [u.id, u.name]));
+  return new Map(
+    devirler.flatMap((k) => {
+      const dr = doktorAdi.get(k.entityId!);
+      if (!dr) return [];
+      const yeni = yeniSahip(k);
+      return [[k.id, `${dr} → ${yeni ? (saticiAdi.get(yeni) ?? "Sahipsiz") : "Sahipsiz"}`] as const];
+    })
+  );
+}
+
 export type AktiviteSatiri = { id: string; an: Date; metin: string };
 
 /**
@@ -50,9 +80,9 @@ export async function aktiviteAkisi(rol: Role, adet: number): Promise<AktiviteSa
     take: adet,
     select: { id: true, action: true, entityType: true, entityId: true, afterData: true, createdAt: true, actor: { select: { name: true } } },
   });
-  const etiketler = await nesneEtiketleri(kayitlar);
+  const [etiketler, devirler] = await Promise.all([nesneEtiketleri(kayitlar), devirNesneleri(kayitlar)]);
   return kayitlar.flatMap((k) => {
-    const nesne = k.entityId ? (etiketler.get(`${k.entityType}:${k.entityId}`) ?? null) : null;
+    const nesne = devirler.get(k.id) ?? (k.entityId ? (etiketler.get(`${k.entityType}:${k.entityId}`) ?? null) : null);
     const metin = aktiviteCumlesi({ action: k.action, afterData: k.afterData, aktor: k.actor?.name ?? null, nesne });
     return metin ? [{ id: k.id, an: k.createdAt, metin }] : [];
   });

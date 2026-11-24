@@ -92,13 +92,29 @@ export function siparisAdresi(
   return q ? `${yol}?${q}` : yol;
 }
 
-/** Durum sekmeleri: yalnız `durum`'u yazar, öbür süzgeçleri korur; sayfa düşer. */
-export function hizliSekmeler(s: SiparisSuzgeci, yol: SiparisYolu = "/orders"): readonly { etiket: string; adres: string; etkin: boolean }[] {
+/** Sekme sayıları: her durum o sekmenin satır sayısı; `tumu` teklifleri de içerir (A-5-8). */
+export type SekmeSayilari = Record<OrderStatus, number> & { tumu: number };
+
+/**
+ * Durum sekmeleri: yalnız `durum`'u yazar, öbür süzgeçleri korur; sayfa düşer. `sayilar` verilirse her
+ * sekme kendi satır sayısını taşır.
+ */
+export function hizliSekmeler(
+  s: SiparisSuzgeci,
+  yol: SiparisYolu = "/orders",
+  sayilar?: SekmeSayilari
+): readonly { etiket: string; adres: string; etkin: boolean; sayi?: number }[] {
   return [{ kod: null, etiket: "Tümü" }, ...DURUMLAR].map((d) => ({
     etiket: d.etiket,
     adres: siparisAdresi({ ...s, durum: d.kod }, {}, yol),
     etkin: s.durum === d.kod,
+    ...(sayilar ? { sayi: d.kod === null ? sayilar.tumu : sayilar[d.kod as OrderStatus] } : {}),
   }));
+}
+
+/** Sekme sayılarının dönemi: tarih süzgeci varsa o aralık, yoksa listenin tamamı. */
+export function donemEtiketi(s: SiparisSuzgeci): string {
+  return s.baslangic || s.bitis ? aralikEtiketi(s.baslangic, s.bitis) : "Tüm zamanlar";
 }
 
 /**

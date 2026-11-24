@@ -5,7 +5,7 @@ import { HizliSekmeler } from "@/components/liste/HizliSekmeler";
 import { AcilirPanel } from "@/components/liste/AcilirPanel";
 import { SuzgecFormu } from "@/components/liste/SuzgecFormu";
 import { KONTROL_TEK_SATIR, buton } from "@/components/stil";
-import { etkinSuzgecler, hizliSekmeler, SATICISIZ, siparisAdresi, type SiparisSuzgeci, type SiparisYolu } from "@/lib/siparis-listesi/suzgec";
+import { donemEtiketi, etkinSuzgecler, hizliSekmeler, SATICISIZ, siparisAdresi, type SekmeSayilari, type SiparisSuzgeci, type SiparisYolu } from "@/lib/siparis-listesi/suzgec";
 import { SuzgecAlani } from "@/components/liste/SuzgecAlani";
 
 /**
@@ -20,8 +20,10 @@ export function SuzgecCubugu({
   saticilar,
   sutunMenusu,
   yol,
+  sayilar,
 }: {
   suzgec: SiparisSuzgeci;
+  sayilar: SekmeSayilari;
   per: number | undefined;
   saticilar?: readonly { id: string; name: string; isActive: boolean }[];
   sutunMenusu?: React.ReactNode;
@@ -34,7 +36,13 @@ export function SuzgecCubugu({
   return (
     <div className="mb-4 space-y-3">
       <div className="flex flex-wrap items-start gap-2">
-        <HizliSekmeler sekmeler={hizliSekmeler(suzgec, yol)} />
+        <div className="flex min-w-0 max-w-full flex-col gap-1">
+          <HizliSekmeler sekmeler={hizliSekmeler(suzgec, yol, sayilar)} kaydir />
+          {/* Sekme sayılarının dönemi sekmelerin yanında görünür (A-5-8). */}
+          <p data-donem className="px-1 text-xs text-slate-500">
+            Dönem: {donemEtiketi(suzgec)}
+          </p>
+        </div>
         <div className="ml-auto flex flex-wrap items-start gap-2">
           {/* Uygulanan süzgeç değişince panel kapalı, form yeni değerlerle kurulur. */}
           <AcilirPanel key={uygulanan} className="relative">

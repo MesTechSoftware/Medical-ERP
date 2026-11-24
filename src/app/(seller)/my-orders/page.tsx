@@ -3,24 +3,20 @@ import { requireSeller } from "@/lib/session";
 import { PageHeader, LinkButton } from "@/components/ui";
 import { BilgiSeridi } from "@/components/BilgiSeridi";
 import { ListeSayfalama } from "@/components/liste/ListeSayfalama";
-import { KpiKartlari } from "@/components/siparis/KpiKartlari";
 import { SiparisPaneli } from "@/components/siparis/SiparisPaneli";
 import { SiparisTablosu } from "@/components/siparis/SiparisTablosu";
 import { SuzgecCubugu } from "@/components/siparis/SuzgecCubugu";
 import { SutunSecici } from "@/components/liste/SutunSecici";
 import { gizliSutunlar } from "@/lib/liste/sutun-tercihi";
-import { kpiGetir } from "@/lib/kpi/getir";
 import { ilk } from "@/lib/liste/parametreler";
 import { sayfaCoz, sayfaDisi } from "@/lib/liste/sayfa";
-import { gunleriAraliga } from "@/lib/liste/parametreler";
-import { siparisKpileri, siparisListesi, siparisPaneli } from "@/lib/siparis-listesi/sorgu";
-import { kpiAraligi, siparisAdresi, suzgecCoz, type Parametreler } from "@/lib/siparis-listesi/suzgec";
-import { simdi, yerelGunMetni } from "@/lib/zaman";
+import { siparisListesi, siparisPaneli, siparisSekmeSayilari } from "@/lib/siparis-listesi/sorgu";
+import { siparisAdresi, suzgecCoz, type Parametreler } from "@/lib/siparis-listesi/suzgec";
 
 const YOL = "/my-orders";
 
 /**
- * Siparişlerim (spec Ü-31): yönetici Siparişler ekranının (Ü-23) satıcı kapsamlı hâli — KPI, durum sekmeleri,
+ * Siparişlerim (spec Ü-31): yönetici Siparişler ekranının (Ü-23) satıcı kapsamlı hâli — durum sekmeleri ve sayıları,
  * Filtrele (tarih, metin), sütun seçici, sayfalı liste, yan panel. Kapsam sorgudadır (`kapsam`, X-13):
  * liste, kartlar ve panel yalnız bu satıcının siparişlerini okur; adresteki `satici` adresten düşer.
  */
@@ -39,12 +35,11 @@ export default async function MyOrdersPage({ searchParams }: { searchParams: Pro
   if (ilk(params, "satici") !== null) redirect(siparisAdresi(suzgec, { ...yer, ...(detay ? { detay } : {}) }, YOL));
   const gizli = await gizliSutunlar("/my-orders");
   const adres = siparisAdresi(suzgec, yer, YOL);
-  const aralik = kpiAraligi(suzgec, yerelGunMetni(simdi()));
 
   // Üç okuma birbirinden bağımsızdır; tek turda gider.
-  const [liste, kpi, panel] = await Promise.all([
+  const [liste, sayilar, panel] = await Promise.all([
     siparisListesi(suzgec, { skip, take }, kapsam),
-    kpiGetir(() => siparisKpileri(gunleriAraliga(aralik), kapsam), { yol: YOL, kullaniciId: saticiId }),
+    siparisSekmeSayilari(suzgec, kapsam),
     detay ? siparisPaneli(detay, kapsam) : null,
   ]);
 
@@ -64,10 +59,9 @@ export default async function MyOrdersPage({ searchParams }: { searchParams: Pro
 
       <BilgiSeridi ham={params.bilgi} />
 
-      <KpiKartlari sonuc={kpi} aralik={aralik} yol={YOL} />
-
       <SuzgecCubugu
         suzgec={suzgec}
+        sayilar={sayilar}
         per={yer.per}
         yol={YOL}
         sutunMenusu={<SutunSecici liste="/my-orders" gizli={gizli} donus={adres} />}

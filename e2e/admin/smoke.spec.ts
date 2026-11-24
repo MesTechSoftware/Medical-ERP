@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 const pages: [path: string, heading: string][] = [
-  ["/dashboard", "Dashboard"],
+  ["/dashboard", "Genel Bakış"],
   ["/products", "Ürünler"],
   ["/stock", "Stok"],
   ["/users", "Kullanıcılar"],

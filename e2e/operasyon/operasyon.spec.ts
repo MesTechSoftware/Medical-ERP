@@ -144,12 +144,13 @@ test("OPERASYON stok KPI ve hareket tablosunu görür; Stok Düzeltme yok", asyn
   await expect(page.getByRole("region", { name: "Stok sayıları" })).toBeVisible();
   await expect(page.getByRole("columnheader", { name: "İşlemi yapan" })).toBeVisible();
   await expect(page.locator("tbody tr[data-hareket]").first()).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Stok Düzeltme" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Stok Düzeltme" })).toHaveCount(0);
 });
 
 test("stok girişi yapar (stok hareketi — D-2 §(1))", async ({ page }) => {
   const not = `E2E operasyon girişi ${Date.now()}`;
   await page.goto("/stock");
+  await page.getByRole("link", { name: "Stok Girişi" }).click();
   const form = page.locator("form").filter({ has: page.getByRole("button", { name: "Stok Girişi Ekle" }) });
   await form.getByLabel("Ürün").selectOption({ index: 1 });
   await form.getByLabel("Miktar (adet)").fill("3");

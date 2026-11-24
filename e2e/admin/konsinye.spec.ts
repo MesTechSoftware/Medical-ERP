@@ -7,6 +7,7 @@ import { sorgu, stoksuzSiparis } from "../helpers";
 test("konsinye çıkış doktorun konumuna taşır, transfer depoya geri alır (A-4-1, B-4-5)", async ({ page }) => {
   const s = await stoksuzSiparis({ stoklu: true }); // yeni doktor + 10 adet stoklu yeni ürün
   await page.goto("/stock");
+  await page.getByRole("link", { name: "Konsinye Çıkış" }).click();
 
   const konsinye = page.locator("form").filter({ has: page.getByRole("button", { name: "Konsinye Çıkış Kaydet" }) });
   await konsinye.getByLabel("Doktor").selectOption({ label: s.doktorAdi });
@@ -16,6 +17,7 @@ test("konsinye çıkış doktorun konumuna taşır, transfer depoya geri alır (
   await expect(page.getByText(/Konsinye çıkış kaydedildi: KNS-/)).toBeVisible();
   await expect(page.getByText(`Konsinye — ${s.doktorAdi} · ${s.urunAdi}`)).toBeVisible();
 
+  await page.goto("/stock?islem=transfer");
   const transfer = page.locator("form").filter({ has: page.getByRole("button", { name: "Transfer Kaydet" }) });
   await transfer.getByLabel("Kaynak").selectOption({ label: `Konsinye — ${s.doktorAdi}` });
   await transfer.getByLabel("Ürün").selectOption({ label: `${s.urunAdi} (${s.urunKodu})` });

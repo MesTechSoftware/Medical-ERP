@@ -80,7 +80,7 @@ export function KismiPanel({
             <label htmlFor="kismi-takip" className="mb-1 block text-xs text-slate-500">
               Takip Numarası
             </label>
-            <input id="kismi-takip" name="trackingNumber" placeholder="Örn: TR123456789" className={`w-full ${KONTROL_TEK_SATIR}`} />
+            <input id="kismi-takip" name="trackingNumber" placeholder="Takip no" className={`w-full ${KONTROL_TEK_SATIR}`} />
           </div>
           <div className="min-w-[160px] flex-1">
             <label htmlFor="kismi-irsaliye" className="mb-1 block text-xs text-slate-500">

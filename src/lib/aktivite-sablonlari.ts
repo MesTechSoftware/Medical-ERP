@@ -5,8 +5,8 @@ type Fiil = string | ((veri: Record<string, unknown>) => string);
 
 /**
  * Aktivite akışı şablonları (brief §3.6): olay türü → fiil. Cümle "{aktör} {fiil} · {nesne}"; nesne
- * belge numarası ya da ürün/liste adıdır. Kişi adı (doktor, kullanıcı), ham alan, JSON ve kimlik
- * yazılmaz. Şablonu olmayan olay akışta görünmez: her olay ya burada ya `AKIS_DISI`'ndadır
+ * belge numarası ya da ürün/liste adıdır; tek istisna devirdir ("Dr. A → Satıcı B", `aktivite.ts`). Başka kişi adı,
+ * ham alan, JSON ve kimlik yazılmaz. Şablonu olmayan olay akışta görünmez: her olay ya burada ya `AKIS_DISI`'ndadır
  * (`aktivite.test.ts` tarar).
  */
 export const SABLONLAR = {

@@ -14,7 +14,7 @@ test("masaüstünde tablo satırı, başlık, hap ve sayfalama 32 px", async ({ 
   await expect(tablo.getByRole("columnheader").first()).toBeVisible();
   yakin((await tablo.getByRole("columnheader").first().boundingBox())!.height, 32);
   yakin((await tablo.getByRole("row").nth(1).getByRole("cell").first().boundingBox())!.height, 32);
-  yakin((await page.getByRole("link", { name: "Tümü", exact: true }).boundingBox())!.height, 32);
+  yakin((await page.getByRole("link", { name: /^Tümü/ }).boundingBox())!.height, 32);
   yakin((await page.getByRole("navigation", { name: "Sayfalama" }).getByRole("link", { name: "Sonraki" }).boundingBox())!.height, 32);
 });
 

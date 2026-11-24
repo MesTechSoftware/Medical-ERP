@@ -1,9 +1,9 @@
 import { test, expect, type Locator, type Page } from "@playwright/test";
-import { USERS, kpiIskeletiEslesir, kpiKartlariTasmaz, sorgu, yumusakGezinmeIsareti } from "../helpers";
+import { USERS, sorgu, yumusakGezinmeIsareti } from "../helpers";
 
-/** Ü-31 — Siparişlerim: kapsam (X-13-3), KPI (A-5-8 satıcı kapsamıyla), süzgeç, sütun seçici, yan panel, yeniden yüklemesiz gezinme. */
+/** Ü-31 — Siparişlerim: kapsam (X-13-3), sekme sayıları (A-5-8 satıcı kapsamıyla), süzgeç, sütun seçici, yan panel, yeniden yüklemesiz gezinme. */
 
-const kpi = (page: Page) => page.getByRole("region", { name: "Sipariş sayıları" });
+const sekmeler = (page: Page) => page.getByRole("navigation", { name: "Hızlı süzgeçler" });
 const etkinler = (page: Page) => page.getByRole("list", { name: "Etkin süzgeçler" });
 const satirlar = (page: Page) => page.locator("tbody tr:has(a[data-kayit])");
 const sayi = async (l: Locator) => Number((await l.innerText()).match(/\d+/)![0]);
@@ -13,18 +13,23 @@ async function saticiKimligi(): Promise<string> {
   return u.id;
 }
 
-test("4 kart; Bekliyor kartı aralığıyla süzgeci açar ve satır sayısına eşit; liste yalnız kendi siparişleri", async ({ page }) => {
+test("KPI kart bloğu yok; Bekliyor sekmesinin sayısı açtığı listenin satır sayısı; liste yalnız kendi siparişleri (A-5-8, X-13-3)", async ({ page }) => {
   const id = await saticiKimligi();
   const [{ n }] = await sorgu<{ n: number }>(`SELECT count(*)::int AS n FROM "Order" WHERE "sellerId" = $1`, [id]);
   await page.goto("/my-orders?per=100");
-  await expect(kpi(page).getByRole("group")).toHaveCount(4);
-  await expect(kpi(page).getByRole("link")).toHaveCount(3);
+  await expect(page.locator("[data-kpi-satiri]")).toHaveCount(0);
   await expect(satirlar(page)).toHaveCount(Math.min(n, 100));
+  expect(await sayi(sekmeler(page).getByRole("link", { name: /^Tümü/ }))).toBe(n);
 
-  const kart = kpi(page).getByRole("link", { name: /^Bekliyor/ });
-  const deger = await sayi(kart);
-  await kart.click();
-  await expect(page).toHaveURL(/\/my-orders\?durum=BEKLIYOR&baslangic=\d{4}-\d{2}-01&bitis=\d{4}-\d{2}-\d{2}/);
+  const sekme = sekmeler(page).getByRole("link", { name: /^Bekliyor/ });
+  const deger = await sayi(sekme);
+  const [{ bekliyor }] = await sorgu<{ bekliyor: number }>(
+    `SELECT count(*)::int AS bekliyor FROM "Order" WHERE "sellerId" = $1 AND stage = 'ONAYLI' AND status = 'BEKLIYOR'`,
+    [id]
+  );
+  expect(deger).toBe(bekliyor);
+  await sekme.click();
+  await expect(page).toHaveURL(/\/my-orders\?durum=BEKLIYOR/);
   await expect(etkinler(page).getByText("Durum: Bekliyor")).toBeVisible();
   await page.goto(`${page.url()}&per=100`);
   await expect(satirlar(page)).toHaveCount(Math.min(deger, 100));
@@ -62,12 +67,12 @@ test("Filtrele'de satıcı alanı yok; adresteki satıcı süzgeci kapsamı değ
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 
-test("yan panel istemci tarafında açılır ve kapanır: sayfa yeniden yüklenmez, KPI ve tablo yerinde kalır", async ({ page }) => {
+test("yan panel istemci tarafında açılır ve kapanır: sayfa yeniden yüklenmez, sekmeler ve tablo yerinde kalır", async ({ page }) => {
   await page.goto("/my-orders");
   const yumusak = await yumusakGezinmeIsareti(page);
   // İşaret DOM düğümünde durur: düğüm yeniden kurulursa (iskelet, tam yükleme) kaybolur.
-  await kpi(page).evaluate((el) => ((el as HTMLElement & { __isaret?: number }).__isaret = 1));
-  const isaretYerinde = () => kpi(page).evaluate((el) => (el as HTMLElement & { __isaret?: number }).__isaret === 1);
+  await sekmeler(page).evaluate((el) => ((el as HTMLElement & { __isaret?: number }).__isaret = 1));
+  const isaretYerinde = () => sekmeler(page).evaluate((el) => (el as HTMLElement & { __isaret?: number }).__isaret === 1);
 
   const ilk = satirlar(page).first().locator("a[data-kayit]");
   await ilk.click();
@@ -118,9 +123,34 @@ test.describe("sütun seçici", () => {
   });
 });
 
-test("kartlar taşmaz; iskelet gerçek kartlarla eşleşir", async ({ page }) => {
-  await page.goto("/my-orders");
-  await expect(page.getByRole("group", { name: "Toplam sipariş", exact: true })).toContainText("Bu ay · teklif hariç");
-  await kpiKartlariTasmaz(page);
-  await kpiIskeletiEslesir(page, "/my-orders");
+test.describe("1440 px dizüstü", () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+  test("tablo ilk ekranda; sekme sayıları ve dönem görünür (A-5-9)", async ({ page }) => {
+    await page.goto("/my-orders");
+    await expect(page.locator("[data-kpi-satiri]")).toHaveCount(0);
+    await expect(sekmeler(page).getByRole("link", { name: /^Tümü\s*\d+$/ })).toBeVisible();
+    await expect(page.locator("[data-donem]")).toBeVisible();
+    const satir = satirlar(page).first();
+    await expect(satir).toBeVisible();
+    expect((await satir.boundingBox())!.y + (await satir.boundingBox())!.height).toBeLessThanOrEqual(900);
+  });
+});
+
+test.describe("390 px telefon", () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+  test("tablo ilk ekranda; sekmeler yatay kayan şerit, yalnız şerit kayar (A-5-9)", async ({ page }) => {
+    await page.goto("/my-orders");
+    const satir = satirlar(page).first();
+    await expect(satir).toBeVisible();
+    const kutu = (await satir.boundingBox())!;
+    expect(kutu.y + kutu.height).toBeLessThanOrEqual(844);
+    const serit = sekmeler(page);
+    const olcu = await serit.evaluate((e) => ({ sw: e.scrollWidth, cw: e.clientWidth }));
+    expect(olcu.sw).toBeGreaterThan(olcu.cw);
+    await serit.evaluate((e) => (e.scrollLeft = 200));
+    expect(await serit.evaluate((e) => e.scrollLeft)).toBeGreaterThan(0);
+    const sayfa = await page.evaluate(() => ({ x: window.scrollX, sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
+    expect(sayfa.x).toBe(0);
+    expect(sayfa.sw).toBeLessThanOrEqual(sayfa.cw);
+  });
 });

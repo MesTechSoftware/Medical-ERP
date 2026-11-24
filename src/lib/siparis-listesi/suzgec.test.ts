@@ -3,6 +3,7 @@ import {
   BOS_SUZGEC,
   bosDurum,
   dagilimAdresi,
+  donemEtiketi,
   etkinSuzgecler,
   hizliSekmeler,
   kartAdresi,
@@ -58,6 +59,19 @@ describe("sipariş süzgeci (spec Ü-23 §3.3)", () => {
     expect(sekmeler[0].adres).toBe("/orders?satici=u-1&q=x");
     expect(sekmeler[5].adres).toBe("/orders?durum=IPTAL&satici=u-1&q=x");
     expect(hizliSekmeler(BOS_SUZGEC)[0].etkin).toBe(true);
+    expect(sekmeler.every((t) => t.sayi === undefined)).toBe(true);
+  });
+
+  it("sayılar verilirse her sekme kendi sayısını taşır; Tümü teklif dahil toplamdır (A-5-8)", () => {
+    const sayilar = { tumu: 9, BEKLIYOR: 4, HAZIRLANIYOR: 1, KARGOLANDI: 2, TESLIM_EDILDI: 1, IPTAL: 0 };
+    expect(hizliSekmeler(BOS_SUZGEC, "/orders", sayilar).map((t) => [t.etiket, t.sayi])).toEqual([
+      ["Tümü", 9], ["Bekliyor", 4], ["Hazırlanıyor", 1], ["Kargolandı", 2], ["Teslim Edildi", 1], ["İptal", 0],
+    ]);
+  });
+
+  it("dönem etiketi: tarih süzgeci varsa aralık, yoksa Tüm zamanlar", () => {
+    expect(donemEtiketi(BOS_SUZGEC)).toBe("Tüm zamanlar");
+    expect(donemEtiketi(S({ baslangic: "2026-11-01", bitis: "2026-11-05" }))).toContain("2026");
   });
 });
 

@@ -134,20 +134,8 @@ describe("KpiSatiri — statik grid, ilk kart birincil", () => {
     expect(satir(1)).toContain('data-kpi-satiri="1"');
   });
 
-  it("en çok 4 kart (Siparişler ekranının 6 kartı dışında, ADR-010 eki); boş satır yok", () => {
-    expect(() => satir(5)).toThrow(/1–4 ya da 6 kart/);
-    expect(() => satir(7)).toThrow(/1–4 ya da 6 kart/);
-    expect(() => satir(0)).toThrow(/1–4 ya da 6 kart/);
-  });
-
-  it("6 kart: dar 2 kolon (birincil ve son kart tam satır), orta 6 birim (3 + 2), geniş 7 birim tek satır", () => {
-    const h = satir(6);
-    expect(h).toContain('data-kpi-satiri="6"');
-    expect(h).toContain("grid-cols-2 @min-[576px]:grid-cols-6 @min-[1200px]:grid-cols-7");
-    expect(h).toContain("col-span-2 @min-[576px]:col-span-6 @min-[1200px]:col-span-2");
-    expect(h.match(/@min-\[576px\]:col-span-2 @min-\[1200px\]:col-span-1/g)).toHaveLength(3);
-    expect(h).toContain('"min-w-0 @min-[576px]:col-span-3 @min-[1200px]:col-span-1"');
-    expect(h).toContain('"min-w-0 col-span-2 @min-[576px]:col-span-3 @min-[1200px]:col-span-1"');
+  it("en çok 4 kart, 6 kartlık dal yok (A-5-9); boş satır yok", () => {
+    for (const n of [0, 5, 6, 7]) expect(() => satir(n), `${n} kart`).toThrow(/1–4 kart/);
   });
 
   it("iskelet aynı grid'i, aynı değer satırını ve aynı metinleri kullanır", () => {
