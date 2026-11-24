@@ -3,7 +3,7 @@ import { EKSIK_FATURA_BILGISI } from "@/lib/cari";
 import { prisma } from "@/lib/db";
 import { SAHIPSIZ_DOKTOR } from "@/lib/sahiplik";
 import { stokDurumu } from "@/lib/stok-durumu";
-import { onayKosulu } from "@/lib/onay-listesi/sorgu";
+import { kapaliSiparisler, onayKosulu } from "@/lib/onay-listesi/sorgu";
 import { BOS_SUZGEC, ESKI_ONAY_SAATI, onayAdresi } from "@/lib/onay-listesi/suzgec";
 
 export type IstisnaKodu = "tukenen" | "kritik" | "eskiOnay" | "faturaEksik" | "sahipsiz";
@@ -28,7 +28,7 @@ export type Istisna = {
 export async function istisnalar(rol: Role, stoklar: readonly { stok: number }[], an: Date): Promise<Istisna[]> {
   const [eskiOnay, faturaEksik, sahipsiz] = await Promise.all([
     // Onay ekranının `eski` süzgeciyle aynı koşul (tek `where` üreticisi, A-8-11).
-    rol === "YONETICI" ? prisma.approvalBlock.count({ where: onayKosulu({ ...BOS_SUZGEC, eski: true }, an) }) : 0,
+    rol === "YONETICI" ? prisma.approvalBlock.count({ where: onayKosulu({ ...BOS_SUZGEC, eski: true }, an, null, await kapaliSiparisler()) }) : 0,
     prisma.doctor.count({ where: EKSIK_FATURA_BILGISI }),
     prisma.doctor.count({ where: SAHIPSIZ_DOKTOR }),
   ]);

@@ -73,6 +73,31 @@ const blok = (o: {
     },
   });
 
+describe("öksüz onay bloğu (A-8-13)", () => {
+  it("iptal edilmiş ve kalanı kapatılmış siparişin bekleyen bloğu kart, liste ve dashboard'dan düşer; kararlı blok kalır", async () => {
+    const acik = await siparis();
+    const iptal = await siparis();
+    const kapali = await siparis();
+    const kararli = await siparis();
+    const eski = new Date(AN.getTime() - 30 * SAAT);
+    const bAcik = await blok({ belge: acik.id, acildi: eski });
+    await blok({ belge: iptal.id, acildi: eski });
+    await blok({ belge: kapali.id, acildi: eski });
+    const bKararli = await blok({ belge: kararli.id, acildi: eski, karar: { tur: "ONAY", an: new Date(AN.getTime() - SAAT) } });
+    await prisma.order.update({ where: { id: iptal.id }, data: { status: "IPTAL" } });
+    await prisma.order.update({ where: { id: kararli.id }, data: { status: "IPTAL" } });
+    await prisma.order.update({ where: { id: kapali.id }, data: { closedAt: AN, closeReason: "MUSTERI_VAZGECTI" } });
+
+    const k = await onayKpileri("2026-11-04", AN);
+    expect(k.bekleyen).toBe(1);
+    expect(k.eski).toBe(1);
+    expect((await onayListesi(BOS_SUZGEC, SAYFA, AN)).satirlar.map((r) => r.id)).toEqual([bAcik.id]);
+    expect((await onayListesi(S({ eski: true }), SAYFA, AN)).toplam).toBe(1);
+    expect((await istisnalar("YONETICI", [], AN)).find((i) => i.kod === "eskiOnay")?.adet).toBe(1);
+    expect((await onayListesi(S({ durum: "ONAY" }), SAYFA, AN)).satirlar.map((r) => r.id)).toEqual([bKararli.id]);
+  });
+});
+
 describe("kartlar ve süzgeç (A-8-11)", () => {
   it("24 saatten eski kart = eski süzgeç = dashboard istisnası; bekleyen en eski önce", async () => {
     const o = await siparis();

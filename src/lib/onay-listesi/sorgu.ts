@@ -20,8 +20,15 @@ const eskiSiniri = (an: Date) => new Date(an.getTime() - ESKI_ONAY_SAATI * 3_600
  * Tek `where`. Tarih olay günüdür: açık blokta açılış, kararlıda karar anı. `qBelgeleri` metin aramasının
  * belge kimlikleridir (`metinBelgeleri`); verilmişse blok yalnız bu belgelerden olur.
  */
-export function onayKosulu(s: OnaySuzgeci, an: Date, qBelgeleri: readonly string[] | null = null): Prisma.ApprovalBlockWhereInput {
+export function onayKosulu(
+  s: OnaySuzgeci,
+  an: Date,
+  qBelgeleri: readonly string[] | null = null,
+  kapali: readonly string[] = []
+): Prisma.ApprovalBlockWhereInput {
   const ve: Prisma.ApprovalBlockWhereInput[] = [];
+  // A-8-13: iptal edilmiş ya da kalanı kapatılmış siparişin bekleyen bloğu kuyruktan düşer; kararlılar iz olarak kalır.
+  if (kapali.length > 0) ve.push({ NOT: { decision: null, documentType: "SIP", documentId: { in: [...kapali] } } });
   if (s.eski) ve.push({ decision: null, openedAt: { lt: eskiSiniri(an) } });
   else if (s.durum === "bekleyen") ve.push({ decision: null });
   else if (s.durum !== "tumu") ve.push({ decision: s.durum });
@@ -34,6 +41,15 @@ export function onayKosulu(s: OnaySuzgeci, an: Date, qBelgeleri: readonly string
   if (s.acan) ve.push({ openedById: s.acan });
   if (qBelgeleri) ve.push({ documentId: { in: [...qBelgeleri] } });
   return { AND: ve };
+}
+
+/** İptal edilmiş ya da kalanı kapatılmış siparişlerin kimlikleri (A-8-13). */
+export async function kapaliSiparisler(): Promise<string[]> {
+  const siparisler = await prisma.order.findMany({
+    where: { OR: [{ status: "IPTAL" }, { closedAt: { not: null } }] },
+    select: { id: true },
+  });
+  return siparisler.map((o) => o.id);
 }
 
 /**
@@ -132,7 +148,7 @@ export async function onayListesi(
   sayfa: { skip: number; take: number },
   an: Date
 ): Promise<{ satirlar: OnaySatiri[]; toplam: number }> {
-  const where = onayKosulu(s, an, s.q ? await metinBelgeleri(s.q) : null);
+  const where = onayKosulu(s, an, s.q ? await metinBelgeleri(s.q) : null, await kapaliSiparisler());
   const [bloklar, toplam] = await Promise.all([
     prisma.approvalBlock.findMany({ where, orderBy: siralama(s), ...sayfa }),
     prisma.approvalBlock.count({ where }),
@@ -143,11 +159,12 @@ export async function onayListesi(
 export type OnayKpileri = { bekleyen: number; enEski: Date | null; eski: number; bugunOnay: number; bugunRed: number };
 
 export async function onayKpileri(bugun: string, an: Date): Promise<OnayKpileri> {
-  const sayi = (s: Partial<OnaySuzgeci>) => prisma.approvalBlock.count({ where: onayKosulu({ ...BOS_SUZGEC, ...s }, an) });
+  const kapali = await kapaliSiparisler();
+  const sayi = (s: Partial<OnaySuzgeci>) => prisma.approvalBlock.count({ where: onayKosulu({ ...BOS_SUZGEC, ...s }, an, null, kapali) });
   const gun = { baslangic: bugun, bitis: bugun };
   const [bekleyen, eski, bugunOnay, bugunRed] = await Promise.all([
     // Bekleyen sayısı ve en eskisi aynı koşuldan, tek sorguda.
-    prisma.approvalBlock.aggregate({ where: onayKosulu(BOS_SUZGEC, an), _count: true, _min: { openedAt: true } }),
+    prisma.approvalBlock.aggregate({ where: onayKosulu(BOS_SUZGEC, an, null, kapali), _count: true, _min: { openedAt: true } }),
     sayi({ eski: true }),
     sayi({ durum: "ONAY", ...gun }),
     sayi({ durum: "RED", ...gun }),
