@@ -1,6 +1,10 @@
+import path from "node:path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    root: path.resolve(__dirname),
+  },
   experimental: {
     // İçe aktarım dosyası server action'la gelir (E-3 §(3): policy.import.azamiDosyaBoyutMb = 5).
     // Sınır, çok parçalı gövdenin ek baytları için biraz geniştir; boyut sert kısıtı action'dadır.
