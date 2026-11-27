@@ -7,13 +7,18 @@ import { type LucideIcon } from "lucide-react";
 
 export type NavItem = { href: string; label: string; icon: LucideIcon; /** Menü rozeti; 0 ya da yoksa çizilmez. */ sayi?: number };
 
+export type NavGrubu = { baslik: string; ogeler: readonly NavItem[] };
+
 export default function AppShell({
   navItems,
+  navGruplari,
   userName,
   roleLabel,
   children,
 }: {
   navItems: NavItem[];
+  /** Verilirse masaüstü kenar menü başlıklı gruplar çizer; mobil şerit `navItems`'tan düz kalır. */
+  navGruplari?: readonly NavGrubu[];
   userName: string;
   roleLabel: string;
   children: React.ReactNode;
@@ -37,14 +42,19 @@ export default function AppShell({
           </div>
         </div>
         <nav aria-label="Ana menü" className="flex flex-1 flex-col gap-1 px-4 py-4">
-          {navItems.map((item) => (
-            <SidebarLink
-              key={item.href}
-              href={item.href}
-              label={item.label}
-              icon={<item.icon size={20} strokeWidth={1.75} className="shrink-0" />}
-              sayi={item.sayi}
-            />
+          {(navGruplari ?? [{ baslik: "", ogeler: navItems }]).map((g) => (
+            <div key={g.baslik} role={g.baslik ? "group" : undefined} aria-label={g.baslik || undefined} className="flex flex-col gap-1">
+              {g.baslik && <p className="mt-3 px-3 text-xs font-semibold uppercase tracking-wide text-slate-400 first:mt-0">{g.baslik}</p>}
+              {g.ogeler.map((item) => (
+                <SidebarLink
+                  key={item.href}
+                  href={item.href}
+                  label={item.label}
+                  icon={<item.icon size={20} strokeWidth={1.75} className="shrink-0" />}
+                  sayi={item.sayi}
+                />
+              ))}
+            </div>
           ))}
         </nav>
       </aside>
