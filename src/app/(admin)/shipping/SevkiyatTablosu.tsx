@@ -21,12 +21,15 @@ export function SevkiyatTablosu({
   gizli,
   suzgec,
   donus,
+  duzenleAdresi,
 }: {
   satirlar: SevkiyatSatiri[];
   gizli: ReadonlySet<KargoSutunu>;
   suzgec: KargoSuzgeci;
   /** Teslim sonrası dönülecek Kargo adresi (süzgeçler korunur). */
   donus: string;
+  /** Takip düzeltme panelini açan adres (D-3-3). */
+  duzenleAdresi: (sevkiyatId: string) => string;
 }) {
   const gorunur = SUTUNLAR.filter((s) => !gizli.has(s.anahtar));
   const acik = (k: KargoSutunu) => !gizli.has(k);
@@ -89,6 +92,9 @@ export function SevkiyatTablosu({
               {acik("adet") && <td className="sayi">{v.adet}</td>}
               <td>
                 <StatusBadge status={v.durum} />
+                <Link href={duzenleAdresi(v.id)} scroll={false} data-duzenle={v.id} className={`block text-xs ${BAGLANTI}`}>
+                  Düzenle
+                </Link>
                 {v.teslimEdilebilir && (
                   <IslemFormu action={markDelivered.bind(null, v.siparis.id, donus)} className="mt-1">
                     <ConfirmSubmit

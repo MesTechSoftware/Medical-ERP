@@ -207,6 +207,31 @@ export function TopluKargoSonucListesi({ satirlar }: { satirlar: readonly TopluS
   );
 }
 
+/** Toplu Hazırlığa Al'ın sipariş başına sonucu (A-3-10); bildirim metni sözlüktendir (X-4-2). */
+export function TopluHazirlaSonucListesi({ satirlar }: { satirlar: readonly TopluSonucSatiri[] }) {
+  if (satirlar.length === 0) return null;
+  return (
+    <section role="status" aria-label="Toplu hazırlık sonucu" className="rounded-lg border border-slate-200 p-3">
+      <h3 className="mb-2 text-sm font-semibold text-slate-900">Toplu hazırlık sonucu</h3>
+      <ul className="divide-y divide-slate-100 text-sm">
+        {satirlar.map((r) => (
+          <li key={r.siparisId} className="flex flex-wrap items-baseline gap-x-2 py-1.5">
+            <span className="font-medium text-slate-900">{r.belge ?? "Sipariş bulunamadı"}</span>
+            {r.cari && <span className="text-slate-500">{r.cari}</span>}
+            <span className={r.tamamlandi ? "text-positive" : "text-negative"}>
+              {r.tamamlandi
+                ? "Hazırlığa alındı"
+                : r.durum === "TEKNIK"
+                  ? `Teknik bir hata oluştu; sipariş değişmedi. Referans: ${r.referans}`
+                  : r.bildirimler.map(bildirimMetni).join(" ")}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 /**
  * Alansız tek düğmeli işlem formu (durum geçişi, silme, sevk): action'ın sonucu formun
  * içinde aynı desenle gösterilir. Form, action'dan sonra sıfırlanmaz: `YUMUSAK` diyaloğu

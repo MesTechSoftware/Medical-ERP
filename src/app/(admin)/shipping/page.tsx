@@ -12,9 +12,11 @@ import { gizliSutunlar } from "@/lib/liste/sutun-tercihi";
 import { kpiGetir } from "@/lib/kpi/getir";
 import { firmaSecenekleri, kargoBekleyenler, kargoKpileri, kismiSecimi, sevkiyatListesi } from "@/lib/kargo-listesi/sorgu";
 import { FIRMASIZ, kargoAdresi, suzgecCoz, type Parametreler } from "@/lib/kargo-listesi/suzgec";
+import { ilk, kimlik } from "@/lib/liste/parametreler";
 import { sayfaCoz, sayfaDisi } from "@/lib/liste/sayfa";
 import { simdi, yerelGunMetni } from "@/lib/zaman";
 import { BekleyenTablosu } from "./BekleyenTablosu";
+import { DuzeltPanel } from "./DuzeltPanel";
 import { KismiPanel } from "./KismiPanel";
 import { KpiKartlari } from "./KpiKartlari";
 import { SevkiyatTablosu } from "./SevkiyatTablosu";
@@ -58,6 +60,12 @@ export default async function ShippingPage({ searchParams }: { searchParams: Pro
   const sevkiyatId = typeof params.sevkiyat === "string" && params.sevkiyat.length <= 40 ? params.sevkiyat : null;
   const yeniSevkiyat = sevkiyatId ? await prisma.shipment.findUnique({ where: { id: sevkiyatId }, select: { documentNo: true, orderId: true } }) : null;
 
+  // Takip düzeltme paneli: kimlik DB'den okunur; bulunmazsa panel açılmaz.
+  const duzenleId = kimlik(ilk(params, "duzenle"));
+  const duzeltilen = duzenleId
+    ? await prisma.shipment.findUnique({ where: { id: duzenleId }, select: { id: true, documentNo: true, carrierId: true, trackingNumber: true, externalDispatchNo: true } })
+    : null;
+
   return (
     <div>
       <PageHeader title="Kargo" description="Hazırlanan siparişleri kargoya verin" />
@@ -91,13 +99,14 @@ export default async function ShippingPage({ searchParams }: { searchParams: Pro
           firmalar={firmalar}
           sutunMenusu={<SutunSecici liste="/shipping" gizli={gizli} donus={adres} />}
         />
-        <SevkiyatTablosu satirlar={liste.satirlar} gizli={gizli} suzgec={suzgec} donus={adres} />
+        <SevkiyatTablosu satirlar={liste.satirlar} gizli={gizli} suzgec={suzgec} donus={adres} duzenleAdresi={(id) => kargoAdresi(suzgec, { ...yer, duzenle: id })} />
       </Card>
 
       <ListeSayfalama sayfa={sayfa} toplam={liste.toplam} adres={kargoAdresi(suzgec)} />
 
       {/* Kargo bekleyen olmayan sipariş için panel açılmaz (spec §3.4). */}
       {panel && <KismiPanel key={panel.id} r={panel} firmalar={aktifFirmalar} kapatAdresi={adres} />}
+      {duzeltilen && <DuzeltPanel key={duzeltilen.id} sevkiyat={duzeltilen} firmalar={firmalar} kapatAdresi={adres} />}
     </div>
   );
 }

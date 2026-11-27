@@ -8,6 +8,9 @@ import { siparisiSevkEt, topluKargo, type TopluSatirSonucu } from "@/lib/sevk-et
 import type { TopluSonucSatiri } from "@/components/Sonuc";
 import { bilgiyleAdres } from "@/lib/bilgi-seridi";
 import { basarili, engel, onayaGonderildi, type IslemSonucu } from "@/lib/sonuc";
+import { prisma } from "@/lib/db";
+import { donusAdresi } from "@/lib/donus-adresi";
+import { IRSALIYE_SINIRI, sevkiyatTakipDuzelt } from "@/lib/sevkiyat-duzelt";
 
 const KALEM = "miktar_";
 
@@ -93,4 +96,28 @@ export async function topluKargola(_prev: TopluKargoSonucu | null, formData: For
   yenile();
   revalidatePath("/approvals");
   return { ...basarili(), satirlar: sonuclar.map(satir) };
+}
+
+
+/**
+ * Yazılmış sevkiyatın firma, takip no ve harici irsaliye no'sunu düzeltir (D-3-3). Stok, cari hareket, durum ve
+ * gönderi tarihi değişmez; fark yoksa kayıt yazılmaz. Başarıda `donus` (kapalı liste) adresine döner.
+ */
+export async function updateShipmentTracking(sevkiyatId: string, donus: string | null, _prev: unknown, formData: FormData): Promise<IslemSonucu> {
+  const session = await requireStaff();
+  const metin = (ad: string) => String(formData.get(ad) ?? "");
+  const sonuc = await prisma.$transaction((tx) =>
+    sevkiyatTakipDuzelt(tx, {
+      sevkiyatId,
+      carrierId: metin("carrierId"),
+      trackingNumber: metin("trackingNumber"),
+      externalDispatchNo: metin("externalDispatchNo"),
+      yapanId: session.user.id,
+    })
+  );
+  if (sonuc.durum === "HATA") return engel(sonuc.kod, sonuc.kod === "IRSALIYE_NO_UZUN" ? { sinir: IRSALIYE_SINIRI } : {});
+  if (sonuc.durum === "DEGISIKLIK_YOK") return engel("SEVKIYAT_DEGISIKLIK_YOK");
+  yenile();
+  revalidatePath(`/orders/${sonuc.siparisId}`);
+  redirect(donusAdresi(donus, sonuc.siparisId));
 }
