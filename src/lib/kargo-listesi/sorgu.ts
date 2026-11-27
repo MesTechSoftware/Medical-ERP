@@ -2,6 +2,7 @@ import type Decimal from "decimal.js";
 import type { Prisma } from "@/generated/prisma/client";
 import type { OrderStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
+import { EKSIK_FATURA_BILGISI } from "@/lib/cari";
 import { takipLinki } from "@/lib/kargo";
 import { FIRMASIZ, type KargoSuzgeci } from "@/lib/kargo-listesi/suzgec";
 import { metinVaryantlari } from "@/lib/liste/metin";
@@ -25,6 +26,8 @@ export type BekleyenSatir = {
   orderDate: Date;
   cari: { fullName: string; clinic: string | null };
   satici: string | null;
+  /** Carinin fatura bilgisi eksik (`EKSIK_FATURA_BILGISI`); yalnız bilgi, seçimi engellemez (A-3-9). */
+  faturaEksik: boolean;
   /** KDV dahil belge toplamı (`siparisToplami`). */
   toplam: Decimal;
   kalemler: { id: string; urun: string; kod: string; adet: number; kalan: number }[];
@@ -46,6 +49,7 @@ export async function kargoBekleyenler(): Promise<BekleyenSatir[]> {
       id: true,
       documentNo: true,
       orderDate: true,
+      doctorId: true,
       doctor: { select: { fullName: true, clinic: true } },
       seller: { select: { name: true } },
       items: {
@@ -59,7 +63,12 @@ export async function kargoBekleyenler(): Promise<BekleyenSatir[]> {
       },
     },
   });
-  const onay = await belgeOnayAyrintilari("SIP", siparisler.map((o) => o.id));
+  const [onay, eksikler] = await Promise.all([
+    belgeOnayAyrintilari("SIP", siparisler.map((o) => o.id)),
+    // Tek sorgu: bekleyen siparişlerin carileri içinde eksik fatura bilgisi olanlar.
+    prisma.doctor.findMany({ where: { AND: [{ id: { in: [...new Set(siparisler.map((o) => o.doctorId))] } }, EKSIK_FATURA_BILGISI] }, select: { id: true } }),
+  ]);
+  const eksikCari = new Set(eksikler.map((d) => d.id));
   return siparisler.map((o) => {
     const a = onay.get(o.id);
     const kalemler = o.items.map((k) => ({ id: k.id, urun: k.product.name, kod: k.product.code, adet: k.quantity, kalan: kalanMiktar(k) }));
@@ -69,6 +78,7 @@ export async function kargoBekleyenler(): Promise<BekleyenSatir[]> {
       orderDate: o.orderDate,
       cari: o.doctor,
       satici: o.seller?.name ?? null,
+      faturaEksik: eksikCari.has(o.doctorId),
       toplam: siparisToplami(o.items).toplam,
       kalemler,
       kalanKalem: kalemler.filter((k) => k.kalan > 0).length,

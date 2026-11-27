@@ -188,3 +188,15 @@ describe("onay görünürlüğü (A-8-14…18, KARARLAR §5.23)", () => {
     expect(baskasi?.red).toBeNull();
   });
 });
+
+describe("fatura bilgisi eksik rozeti (A-3-9)", () => {
+  it("bekleyen satırda faturaEksik EKSIK_FATURA_BILGISI koşuluyla; tam bilgili cari işaretlenmez; seçimi engellemez", async () => {
+    const eksik = await siparis({ cari: "Dr. Eksik" });
+    const tam = await siparis({ cari: "Dr. Tam" });
+    await prisma.doctor.update({ where: { id: tam.doctorId }, data: { taxId: "1234567890", invoiceAddress: "Adres 1", invoiceCity: "İstanbul", taxOffice: "Kadıköy" } });
+    const liste = await kargoBekleyenler();
+    expect(liste.find((r) => r.id === eksik.id)?.faturaEksik).toBe(true);
+    expect(liste.find((r) => r.id === tam.id)?.faturaEksik).toBe(false);
+    expect(liste).toHaveLength(2);
+  });
+});

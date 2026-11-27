@@ -79,6 +79,11 @@ export function BekleyenTablosu({
                     <OnayEtiketi durum={r.onay} href={yonetici ? (onayBaglantisi(r) ?? undefined) : undefined} />
                   </div>
                   {r.onay === "BEKLIYOR" && !yonetici && <div className="text-xs font-normal text-slate-500">Yönetici onayı bekleniyor</div>}
+                  {r.faturaEksik && (
+                    <div className="mt-1">
+                      <StatusChip ton="uyari">Fatura bilgisi eksik</StatusChip>
+                    </div>
+                  )}
                   {r.onay === "RED" && <RedNotu r={r} />}
                   {r.cari.clinic && <div className="text-xs font-normal text-slate-500">{r.cari.clinic}</div>}
                 </td>

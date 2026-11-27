@@ -53,7 +53,12 @@ export function SevkiyatTablosu({
           {satirlar.map((v) => (
             <tr key={v.id}>
               <td className="whitespace-nowrap text-slate-500">{v.shippedAt ? formatDateTime(v.shippedAt) : "—"}</td>
-              <td className="whitespace-nowrap text-slate-700">{v.documentNo}</td>
+              <td className="whitespace-nowrap text-slate-700">
+                {v.documentNo}
+                <Link href={`/orders/${v.siparis.id}#fatura-${v.documentNo}`} className={`block text-xs ${BAGLANTI}`}>
+                  Fatura bilgisi
+                </Link>
+              </td>
               <td className="font-medium text-slate-900">{v.cari}</td>
               {acik("siparis") && (
                 <td className={SINIF.siparis}>

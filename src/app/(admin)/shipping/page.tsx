@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { requireStaff } from "@/lib/session";
 import { PageHeader, Card } from "@/components/ui";
+import Link from "next/link";
+import { prisma } from "@/lib/db";
+import { BAGLANTI } from "@/components/stil";
 import { BilgiSeridi } from "@/components/BilgiSeridi";
 import { ListeSayfalama } from "@/components/liste/ListeSayfalama";
 import { SutunSecici } from "@/components/liste/SutunSecici";
@@ -51,10 +54,22 @@ export default async function ShippingPage({ searchParams }: { searchParams: Pro
 
   const aktifFirmalar = firmalar.filter((f) => f.isActive);
   const panel = kismiSecimi(bekleyenler, kismi);
+  // Sevk başarı bildirimi: kimlik DB'den doğrulanır, bağlantı sunucuda kurulur; parametreden metin alınmaz.
+  const sevkiyatId = typeof params.sevkiyat === "string" && params.sevkiyat.length <= 40 ? params.sevkiyat : null;
+  const yeniSevkiyat = sevkiyatId ? await prisma.shipment.findUnique({ where: { id: sevkiyatId }, select: { documentNo: true, orderId: true } }) : null;
 
   return (
     <div>
       <PageHeader title="Kargo" description="Hazırlanan siparişleri kargoya verin" />
+
+      {yeniSevkiyat && (
+        <p data-sevkiyat-bildirimi className="mb-4 text-sm text-slate-700">
+          {yeniSevkiyat.documentNo} oluşturuldu.{" "}
+          <Link href={`/orders/${yeniSevkiyat.orderId}#fatura-${yeniSevkiyat.documentNo}`} className={BAGLANTI}>
+            Fatura bilgisi
+          </Link>
+        </p>
+      )}
 
       <BilgiSeridi ham={params.bilgi} />
 

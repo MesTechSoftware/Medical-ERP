@@ -148,6 +148,14 @@ export function SiparisPaneli({ veri, kapatAdresi, yol }: { veri: Veri; kapatAdr
                     </>
                   )}
                   {v.irsaliyeNo && ` · İrsaliye: ${v.irsaliyeNo}`}
+                  {yonetici && (
+                    <>
+                      {" · "}
+                      <Link href={`/orders/${o.id}#fatura-${v.documentNo}`} className={BAGLANTI}>
+                        Fatura bilgisi
+                      </Link>
+                    </>
+                  )}
                 </div>
               </li>
             ))}

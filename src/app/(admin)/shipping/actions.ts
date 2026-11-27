@@ -53,7 +53,9 @@ export async function shipOrder(orderId: string, _prev: unknown, formData: FormD
     return onayaGonderildi(sonuc.bildirimler);
   }
   yenile();
-  redirect(bilgiyleAdres(sonuc.tamamlandi ? "/shipping" : `/shipping?kismi=${encodeURIComponent(orderId)}`, sonuc.bildirimler));
+  // `sevkiyat` yalnız kimliktir; sayfa DB'den doğrulayıp bağlantıyı sunucuda kurar (KARARLAR §5.23 S3).
+  const taban = sonuc.tamamlandi ? "/shipping?" : `/shipping?kismi=${encodeURIComponent(orderId)}&`;
+  redirect(bilgiyleAdres(`${taban}sevkiyat=${encodeURIComponent(sonuc.sevkiyatId)}`, sonuc.bildirimler));
 }
 
 /** Toplu kargoda bir siparişin sonucu; tip ve metin `TopluKargoSonucListesi`'ndedir (X-4-2). */
