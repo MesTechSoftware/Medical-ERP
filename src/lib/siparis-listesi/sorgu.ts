@@ -5,7 +5,7 @@ import { siparisDagilimi } from "@/lib/dashboard";
 import { prisma } from "@/lib/db";
 import type { Aralik } from "@/lib/donem";
 import { takipLinki } from "@/lib/kargo";
-import { belgeOnayDurumlari } from "@/lib/onay-blogu";
+import { belgeOnayAyrintilari, belgeOnayDurumlari } from "@/lib/onay-blogu";
 import type { BelgeTutari } from "@/lib/satir-tutarlari";
 import { kalemMiktarlari, SIPARIS_SATIRI, sevkMiktari, siparisToplami, siparisTutarlari } from "@/lib/siparis";
 import { metinVaryantlari } from "@/lib/liste/metin";
@@ -172,6 +172,11 @@ export type SiparisPaneli = {
     adet: number;
   }[];
   iadeler: { id: string; documentNo: string; createdAt: Date; adet: number }[];
+  /**
+   * Son red kararı (A-8-17, S6): yönetimde karar veren adıyla; satıcıda yalnız kendi açtığı bloğun karar/tarih/notu,
+   * karar veren adı yoktur. Başkasının bloğunda `null` (yalnız rozet durumu görünür).
+   */
+  red: { kural: string; not: string | null; tarih: Date | null; kararVeren: string | null } | null;
 };
 
 export async function siparisPaneli(id: string, kapsam: SiparisKapsami): Promise<SiparisPaneli | null> {
@@ -199,13 +204,20 @@ export async function siparisPaneli(id: string, kapsam: SiparisKapsami): Promise
       orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       select: { id: true, documentNo: true, createdAt: true, items: { where: { orderItem: { orderId: id } }, select: { quantity: true } } },
     }),
-    belgeOnayDurumlari("SIP", [id]),
+    belgeOnayAyrintilari("SIP", [id]),
   ]);
   if (!o) return null;
+  const ayrinti = onay.get(id);
+  const r = ayrinti?.red ?? null;
+  const gorunur = r !== null && (kapsam.tur !== "satici" || r.acanId === kapsam.saticiId);
+  const kararVeren =
+    gorunur && kapsam.tur !== "satici" && r.kararVerenId
+      ? ((await prisma.user.findUnique({ where: { id: r.kararVerenId }, select: { name: true } }))?.name ?? null)
+      : null;
   // Satır matrahı ve belge toplamı tek hesaptan; liste satırının toplamıyla aynı yol (A-3-2).
   const tutarlar = siparisTutarlari(o.items);
   return {
-    siparis: { ...satir(o, onay.get(id), tutarlar.toplam.toplam), paymentTermDays: o.paymentTermDays },
+    siparis: { ...satir(o, ayrinti?.durum, tutarlar.toplam.toplam), paymentTermDays: o.paymentTermDays },
     kalemler: o.items.map((k, i) => ({
       id: k.id,
       urun: k.product.name,
@@ -233,6 +245,7 @@ export async function siparisPaneli(id: string, kapsam: SiparisKapsami): Promise
       createdAt: r.createdAt,
       adet: r.items.reduce((t, k) => t + k.quantity, 0),
     })),
+    red: gorunur ? { kural: r.kural, not: r.not, tarih: r.tarih, kararVeren } : null,
   };
 }
 

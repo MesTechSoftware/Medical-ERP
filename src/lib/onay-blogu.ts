@@ -78,6 +78,56 @@ export async function sonBlokDurumu(
   return b ? (b.decision ?? "BEKLIYOR") : "YOK";
 }
 
+/** Bir belgenin onay görünümü (A-8, KARARLAR §5.23): kararsız son bloklar ve en yeni `RED` son blok. */
+export type OnayAyrintisi = {
+  /** Bir kuralın son bloğu kararsızsa `BEKLIYOR`; değilse bir kuralın son kararı `RED` ise `RED`. */
+  durum: "BEKLIYOR" | "RED";
+  /** Karar verilmemiş (kuralın son) blokların kimlikleri. */
+  acikBloklar: string[];
+  /** Son bloğu `RED` olan kurallar arasında en yeni karar; yoksa `null`. */
+  red: {
+    blokId: string;
+    kural: string;
+    not: string | null;
+    tarih: Date | null;
+    acanId: string;
+    kararVerenId: string | null;
+  } | null;
+};
+
+/**
+ * Ekranlar için belgelerin onay ayrıntısı: her kuralın **son** bloğuna bakılır (`acikBlokVarMi` ile aynı
+ * ilke). Onay geçmiş belge haritada yoktur.
+ */
+export async function belgeOnayAyrintilari(
+  belgeTipi: BelgeOneki,
+  belgeIdleri: readonly string[],
+  db: Db = prisma
+): Promise<Map<string, OnayAyrintisi>> {
+  const bloklar = await db.approvalBlock.findMany({
+    where: { documentType: belgeTipi, documentId: { in: [...belgeIdleri] } },
+    orderBy: [{ openedAt: "desc" }, { id: "desc" }],
+    select: { id: true, documentId: true, ruleCode: true, decision: true, openedById: true, decidedById: true, decidedAt: true, decisionNote: true },
+  });
+  const goruldu: Record<string, true> = {};
+  const harita = new Map<string, OnayAyrintisi>();
+  for (const b of bloklar) {
+    const k = `${b.documentId}|${b.ruleCode}`;
+    if (goruldu[k]) continue; // yalnız kuralın son bloğu
+    goruldu[k] = true;
+    if (b.decision === "ONAY") continue;
+    const a = harita.get(b.documentId) ?? { durum: "RED" as const, acikBloklar: [], red: null };
+    harita.set(b.documentId, a);
+    if (b.decision === null) {
+      a.durum = "BEKLIYOR";
+      a.acikBloklar.push(b.id);
+    } else if (!a.red || (b.decidedAt?.getTime() ?? 0) > (a.red.tarih?.getTime() ?? 0)) {
+      a.red = { blokId: b.id, kural: b.ruleCode, not: b.decisionNote, tarih: b.decidedAt, acanId: b.openedById, kararVerenId: b.decidedById };
+    }
+  }
+  return harita;
+}
+
 /**
  * Ekranlar için belgelerin onay durumu (A-8): her kuralın son bloğuna bakılır; bir kural
  * kararsızsa `BEKLIYOR`, değilse bir kuralın son kararı `RED` ise `RED`. Geçen belge haritada yoktur.
@@ -87,23 +137,8 @@ export async function belgeOnayDurumlari(
   belgeIdleri: readonly string[],
   db: Db = prisma
 ): Promise<Map<string, "BEKLIYOR" | "RED">> {
-  const bloklar = await db.approvalBlock.findMany({
-    where: { documentType: belgeTipi, documentId: { in: [...belgeIdleri] } },
-    orderBy: [{ openedAt: "desc" }, { id: "desc" }],
-    select: { documentId: true, ruleCode: true, decision: true },
-  });
-  const son = new Map<string, string | null>();
-  for (const b of bloklar) {
-    const k = `${b.documentId}|${b.ruleCode}`;
-    if (!son.has(k)) son.set(k, b.decision);
-  }
-  const durum = new Map<string, "BEKLIYOR" | "RED">();
-  for (const [k, karar] of son) {
-    const id = k.slice(0, k.indexOf("|"));
-    if (karar === null) durum.set(id, "BEKLIYOR");
-    else if (karar === "RED" && !durum.has(id)) durum.set(id, "RED");
-  }
-  return durum;
+  const ayrinti = await belgeOnayAyrintilari(belgeTipi, belgeIdleri, db);
+  return new Map([...ayrinti].map(([id, a]) => [id, a.durum]));
 }
 
 /**

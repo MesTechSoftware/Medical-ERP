@@ -63,7 +63,7 @@ export default async function ShippingPage({ searchParams }: { searchParams: Pro
       <div className="mb-6">
         <Card>
           <h2 className="mb-4 text-sm font-semibold text-slate-900">Kargo Bekleyenler ({bekleyenler.length})</h2>
-          <BekleyenTablosu satirlar={bekleyenler} firmalar={aktifFirmalar} kismiAdresi={(id) => kargoAdresi(suzgec, { ...yer, kismi: id })} />
+          <BekleyenTablosu satirlar={bekleyenler} firmalar={aktifFirmalar} kismiAdresi={(id) => kargoAdresi(suzgec, { ...yer, kismi: id })} yonetici={session.user.role === "YONETICI"} />
         </Card>
       </div>
 

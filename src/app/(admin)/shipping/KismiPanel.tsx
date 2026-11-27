@@ -8,6 +8,7 @@ import { formatDate } from "@/lib/format";
 import type { BekleyenSatir } from "@/lib/kargo-listesi/sorgu";
 import { SATIR_TABANI } from "@/lib/taban";
 import { shipOrder } from "./actions";
+import { RedNotu } from "./BekleyenTablosu";
 
 /**
  * Kısmi sevk paneli (spec Ü-24 §3.4, 12-A): bugünkü kart formu — kalem başına miktar (varsayılan kalan; 0 bu
@@ -41,6 +42,7 @@ export function KismiPanel({
             <Tutar deger={r.toplam} taban={SATIR_TABANI.toplam} />
           </span>
         </div>
+        {r.onay === "RED" && <RedNotu r={r} />}
         <IslemFormu action={shipOrder.bind(null, r.id)} className="flex flex-wrap items-end gap-2">
           <div className="w-full space-y-1">
             {r.kalemler.map((i) => (

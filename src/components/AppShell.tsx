@@ -5,7 +5,7 @@ import LogoutButton from "@/components/LogoutButton";
 import MobilNavSeridi from "@/components/MobilNavSeridi";
 import { type LucideIcon } from "lucide-react";
 
-export type NavItem = { href: string; label: string; icon: LucideIcon };
+export type NavItem = { href: string; label: string; icon: LucideIcon; /** Menü rozeti; 0 ya da yoksa çizilmez. */ sayi?: number };
 
 export default function AppShell({
   navItems,
@@ -43,6 +43,7 @@ export default function AppShell({
               href={item.href}
               label={item.label}
               icon={<item.icon size={20} strokeWidth={1.75} className="shrink-0" />}
+              sayi={item.sayi}
             />
           ))}
         </nav>
@@ -72,6 +73,7 @@ export default function AppShell({
                 href={item.href}
                 label={item.label}
                 icon={<item.icon size={20} strokeWidth={1.75} className="shrink-0" />}
+                sayi={item.sayi}
               />
             ))}
           </MobilNavSeridi>

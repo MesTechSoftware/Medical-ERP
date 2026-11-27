@@ -103,8 +103,8 @@ export function OnayTablosu({
                 {acik("kararZamani") && <td className="whitespace-nowrap text-slate-500 oncelik-dusuk">{b.decidedAt ? formatDateTime(b.decidedAt) : "—"}</td>}
                 <td className="text-right">
                   <Link href={onayAdresi(suzgec, { ...yer, detay: b.id })} scroll={false} data-kayit={b.id} className={buton("metin")}>
-                    <Ikon ad="detay" />
-                    İncele
+                    <Ikon ad={b.decision === null ? "onayla" : "detay"} />
+                    {b.decision === null ? "Karar Ver" : "İncele"}
                   </Link>
                 </td>
               </tr>

@@ -128,3 +128,63 @@ describe("sevkiyat listesi süzgeçleri", () => {
     );
   });
 });
+
+describe("onay görünürlüğü (A-8-14…18, KARARLAR §5.23)", () => {
+  async function kisi(ad: string, role: "YONETICI" | "SATICI") {
+    no += 1;
+    return prisma.user.create({ data: { name: ad, email: `k${no}@medikal.local`, passwordHash: "x", role } });
+  }
+
+  it("A-8-16: KPI onayBekleyen yalnız kararsız blokluları sayar; RED ayrı alan", async () => {
+    const yon = await kisi("Yön", "YONETICI");
+    const a = await siparis();
+    const b = await siparis();
+    await siparis();
+    await prisma.approvalBlock.create({ data: { documentType: "SIP", documentId: a.id, ruleCode: "NEGATIF_STOK", openedById: yon.id, openReason: "x" } });
+    await prisma.approvalBlock.create({
+      data: { documentType: "SIP", documentId: b.id, ruleCode: "BEDELSIZ_ONAYI", openedById: yon.id, openReason: "x", decision: "RED", decidedById: yon.id, decidedAt: new Date(), decisionNote: "uygun değil" },
+    });
+    const liste = await kargoBekleyenler();
+    const k = await kargoKpileri("2026-11-02", Promise.resolve(liste));
+    expect(k).toMatchObject({ bekleyen: 3, onayBekleyen: 1, reddedilen: 1 });
+    const red = liste.find((r) => r.id === b.id)!;
+    expect(red.redNotu).toMatchObject({ kural: "BEDELSIZ_ONAYI", not: "uygun değil" });
+    expect(liste.find((r) => r.id === a.id)!.acikBloklar).toHaveLength(1);
+  });
+
+  it("A-8-15: menü sayısı onay listesinin bekleyen toplamıdır (kapalı sipariş düşer)", async () => {
+    const yon = await kisi("Yön", "YONETICI");
+    const a = await siparis();
+    const b = await siparis();
+    for (const s of [a, b]) {
+      await prisma.approvalBlock.create({ data: { documentType: "SIP", documentId: s.id, ruleCode: "NEGATIF_STOK", openedById: yon.id, openReason: "x" } });
+    }
+    const { bekleyenOnaySayisi, onayListesi } = await import("@/lib/onay-listesi/sorgu");
+    const { BOS_SUZGEC: ONAY_BOS } = await import("@/lib/onay-listesi/suzgec");
+    const an = new Date();
+    expect(await bekleyenOnaySayisi(an)).toBe(2);
+    expect((await onayListesi(ONAY_BOS, { skip: 0, take: 100 }, an)).toplam).toBe(2);
+    await prisma.order.update({ where: { id: b.id }, data: { status: "IPTAL" } });
+    expect(await bekleyenOnaySayisi(an)).toBe(1);
+  });
+
+  it("A-8-17/18: sipariş panelinde red — yönetimde karar veren adı; satıcıda yalnız kendi bloğu, ad yok", async () => {
+    const yon = await kisi("Yönetici Ada", "YONETICI");
+    const sat = await kisi("Satıcı 1", "SATICI");
+    const bas = await kisi("Satıcı 2", "SATICI");
+    const s = await siparis();
+    await prisma.order.update({ where: { id: s.id }, data: { sellerId: sat.id } });
+    await prisma.approvalBlock.create({
+      data: { documentType: "SIP", documentId: s.id, ruleCode: "BEDELSIZ_ONAYI", openedById: sat.id, openReason: "x", decision: "RED", decidedById: yon.id, decidedAt: new Date(), decisionNote: "gerekçe" },
+    });
+    const { siparisPaneli } = await import("@/lib/siparis-listesi/sorgu");
+    const y = await siparisPaneli(s.id, TUM_SIPARISLER);
+    expect(y?.red).toMatchObject({ not: "gerekçe", kararVeren: "Yönetici Ada" });
+    const kendi = await siparisPaneli(s.id, { tur: "satici", saticiId: sat.id });
+    expect(kendi?.red).toMatchObject({ not: "gerekçe", kararVeren: null });
+    // Başkasının bloğu: kapsam zaten siparişi vermez; sahibi olsa bile açan farklıysa red ayrıntısı yok.
+    await prisma.approvalBlock.updateMany({ where: { documentId: s.id }, data: { openedById: bas.id } });
+    const baskasi = await siparisPaneli(s.id, { tur: "satici", saticiId: sat.id });
+    expect(baskasi?.red).toBeNull();
+  });
+});

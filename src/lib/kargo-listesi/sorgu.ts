@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import { takipLinki } from "@/lib/kargo";
 import { FIRMASIZ, type KargoSuzgeci } from "@/lib/kargo-listesi/suzgec";
 import { metinVaryantlari } from "@/lib/liste/metin";
-import { belgeOnayDurumlari } from "@/lib/onay-blogu";
+import { belgeOnayAyrintilari } from "@/lib/onay-blogu";
 import { kalanMiktar, SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
 import { gunleriAraliga } from "@/lib/liste/parametreler";
 import { siparisKosulu } from "@/lib/siparis-listesi/sorgu";
@@ -32,6 +32,10 @@ export type BekleyenSatir = {
   kalanAdet: number;
   adet: number;
   onay: "BEKLIYOR" | "RED" | undefined;
+  /** Karar verilmemiş (kuralın son) onay blokları; rozet bağlantısı bunlardan kurulur (A-8-14). */
+  acikBloklar: string[];
+  /** Son bloğu `RED` olan kuralın en yeni kararı (kural, not, tarih); yoksa `null` (A-8-17, A-8-18). */
+  redNotu: { kural: string; not: string | null; tarih: Date | null } | null;
 };
 
 export async function kargoBekleyenler(): Promise<BekleyenSatir[]> {
@@ -55,8 +59,9 @@ export async function kargoBekleyenler(): Promise<BekleyenSatir[]> {
       },
     },
   });
-  const onay = await belgeOnayDurumlari("SIP", siparisler.map((o) => o.id));
+  const onay = await belgeOnayAyrintilari("SIP", siparisler.map((o) => o.id));
   return siparisler.map((o) => {
+    const a = onay.get(o.id);
     const kalemler = o.items.map((k) => ({ id: k.id, urun: k.product.name, kod: k.product.code, adet: k.quantity, kalan: kalanMiktar(k) }));
     return {
       id: o.id,
@@ -69,12 +74,14 @@ export async function kargoBekleyenler(): Promise<BekleyenSatir[]> {
       kalanKalem: kalemler.filter((k) => k.kalan > 0).length,
       kalanAdet: kalemler.reduce((t, k) => t + k.kalan, 0),
       adet: kalemler.reduce((t, k) => t + k.adet, 0),
-      onay: onay.get(o.id),
+      onay: a?.durum,
+      acikBloklar: a?.acikBloklar ?? [],
+      redNotu: a?.red ? { kural: a.red.kural, not: a.red.not, tarih: a.red.tarih } : null,
     };
   });
 }
 
-export type KargoKpileri = { bekleyen: number; bekleyenAdet: number; onayBekleyen: number; bugunKargolanan: number; teslimBekleyen: number };
+export type KargoKpileri = { bekleyen: number; bekleyenAdet: number; onayBekleyen: number; reddedilen: number; bugunKargolanan: number; teslimBekleyen: number };
 
 /** Kartlar (spec §3.2): bekleyen sayıları sayfanın okuduğu listeden; bugün ve teslim bekleyen sayımla. */
 export async function kargoKpileri(bugun: string, bekleyenOkumasi: Promise<readonly BekleyenSatir[]>): Promise<KargoKpileri> {
@@ -88,7 +95,9 @@ export async function kargoKpileri(bugun: string, bekleyenOkumasi: Promise<reado
   return {
     bekleyen: bekleyenler.length,
     bekleyenAdet: bekleyenler.reduce((t, r) => t + r.kalanAdet, 0),
-    onayBekleyen: bekleyenler.filter((r) => r.onay !== undefined).length,
+    // Kart = satır (D-3-2): kararsız bloklu sipariş ile reddedilen ayrı sayılır (A-8-16).
+    onayBekleyen: bekleyenler.filter((r) => r.onay === "BEKLIYOR").length,
+    reddedilen: bekleyenler.filter((r) => r.onay === "RED").length,
     bugunKargolanan,
     teslimBekleyen,
   };

@@ -2,7 +2,7 @@ import { Panel, PanelBolumu as Bolum, PanelSatiri as Satir } from "@/components/
 import { Ikon } from "@/components/Ikon";
 import { IslemFormu } from "@/components/Sonuc";
 import { KONTROL_COK_SATIR, buton } from "@/components/stil";
-import { StatusBadge, StatusChip } from "@/components/ui";
+import { LinkButton, StatusBadge, StatusChip } from "@/components/ui";
 import { formatDateTime } from "@/lib/format";
 import type { OnayPaneli as Veri } from "@/lib/onay-listesi/sorgu";
 import { BEDELSIZ_SEBEP_ADI } from "@/lib/sozluk";
@@ -15,10 +15,18 @@ import { BelgeBaglantisi, KararRozeti, kuralAdi } from "./OnayTablosu";
  */
 export function OnayPaneli({ veri, kapatAdresi }: { veri: Veri; kapatAdresi: string }) {
   const b = veri.blok;
+  // Onaylanan negatif stok talebi: sevk Kargo ekranında yapılır (A-8, KARARLAR §5.23).
+  const kargoBaglantisi =
+    b.decision === "ONAY" && b.ruleCode === "NEGATIF_STOK" && b.belge?.siparisId ? (
+      <LinkButton href={`/shipping?kismi=${b.belge.siparisId}`} ikon="kargola">
+        Kargo ekranında aç
+      </LinkButton>
+    ) : undefined;
   return (
     <Panel
       kapatAdresi={kapatAdresi}
       kayitId={b.id}
+      altBilgi={b.decision === null ? kararFormu(b.id) : kargoBaglantisi}
       baslik={<>{kuralAdi(b.ruleCode)} · {b.belge?.no ?? "belge bulunamadı"}</>}
       ust={
         <>
@@ -105,28 +113,7 @@ export function OnayPaneli({ veri, kapatAdresi }: { veri: Veri; kapatAdresi: str
         </Bolum>
       )}
 
-      {b.decision === null ? (
-        <Bolum baslik="Karar">
-          <div data-blok-id={b.id}>
-            <IslemFormu action={blokKarari.bind(null, b.id)} className="space-y-2">
-              <label htmlFor={`not_${b.id}`} className="block text-xs text-slate-500">
-                Karar notu
-              </label>
-              <textarea id={`not_${b.id}`} name="not" required rows={2} className={`w-full ${KONTROL_COK_SATIR}`} />
-              <div className="flex gap-2">
-                <button type="submit" name="karar" value="ONAY" className={buton("birincil")}>
-                  <Ikon ad="onayla" />
-                  Onayla
-                </button>
-                <button type="submit" name="karar" value="RED" className={buton("olumsuz-cerceve")}>
-                  <Ikon ad="reddet" />
-                  Reddet
-                </button>
-              </div>
-            </IslemFormu>
-          </div>
-        </Bolum>
-      ) : (
+      {b.decision !== null && (
         <Bolum baslik="Karar">
           <dl className="divide-y divide-slate-100">
             <Satir ad="Karar">
@@ -139,5 +126,29 @@ export function OnayPaneli({ veri, kapatAdresi }: { veri: Veri; kapatAdresi: str
         </Bolum>
       )}
     </Panel>
+  );
+}
+
+/** Açık talepte karar formu: panelin sabit alt bilgisinde, gövde kayarken görünür kalır (A-8, KARARLAR §5.23). */
+function kararFormu(id: string) {
+  return (
+    <div data-blok-id={id} className="w-full">
+      <IslemFormu action={blokKarari.bind(null, id)} className="space-y-2">
+        <label htmlFor={`not_${id}`} className="block text-xs text-slate-500">
+          Karar notu
+        </label>
+        <textarea id={`not_${id}`} name="not" required rows={2} className={`w-full ${KONTROL_COK_SATIR}`} />
+        <div className="flex gap-2">
+          <button type="submit" name="karar" value="ONAY" className={buton("birincil")}>
+            <Ikon ad="onayla" />
+            Onayla
+          </button>
+          <button type="submit" name="karar" value="RED" className={buton("olumsuz-cerceve")}>
+            <Ikon ad="reddet" />
+            Reddet
+          </button>
+        </div>
+      </IslemFormu>
+    </div>
   );
 }

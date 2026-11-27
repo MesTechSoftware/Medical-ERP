@@ -9,6 +9,8 @@ import type { SiparisPaneli as Veri } from "@/lib/siparis-listesi/sorgu";
 import type { SiparisYolu } from "@/lib/siparis-listesi/suzgec";
 import { SATIR_TABANI, tabanli } from "@/lib/taban";
 import { DurumRozeti } from "./SiparisTablosu";
+import { BLOK_KURAL_ADI } from "@/lib/sozluk";
+import type { BlokKuralKodu } from "@/lib/onay-blogu";
 
 /**
  * Siparişin yan paneli (spec Ü-23 §3.5, 11-A): özet, kalemler (sevk / kalan / iade — A-3-2), tutarlar
@@ -35,6 +37,17 @@ export function SiparisPaneli({ veri, kapatAdresi, yol }: { veri: Veri; kapatAdr
         </LinkButton>
       }
     >
+      {veri.red && (
+        <Bolum baslik="Red kararı">
+          <dl className="divide-y divide-slate-100" data-red-karari>
+            <Satir ad="Kural">{BLOK_KURAL_ADI[veri.red.kural as BlokKuralKodu] ?? veri.red.kural}</Satir>
+            {veri.red.kararVeren && <Satir ad="Veren">{veri.red.kararVeren}</Satir>}
+            <Satir ad="Zaman">{veri.red.tarih ? formatDateTime(veri.red.tarih) : "—"}</Satir>
+            <Satir ad="Not">{veri.red.not ?? "—"}</Satir>
+          </dl>
+        </Bolum>
+      )}
+
       <Bolum baslik="Özet">
         <dl className="divide-y divide-slate-100">
           <Satir ad="Tarih">{formatDateTime(o.orderDate)}</Satir>
