@@ -239,13 +239,7 @@ export async function saticiOrtalamaIskontosu(saticiId: string): Promise<Decimal
  * ilk iz satırının eski sahibi; doktorun hiç izi yoksa bugünkü sahibi. Sahipsiz doktorun
  * ve `BAYI`'nin tahsilatı kimseye sayılmaz. Toplam veritabanında alınır (X-5 §(4)).
  */
-async function donemTahsilatlari(donem: Donem, saticiIdleri: string[]): Promise<Map<string, Decimal.Value>> {
-  if (saticiIdleri.length === 0) return new Map();
-  const satirlar = await prisma.$queryRaw<{ saticiId: string; toplam: Decimal.Value }[]>`
-    SELECT t.sahip AS "saticiId", SUM(t.amount) AS toplam
-    FROM (
-      SELECT p.amount,
-        CASE
+const SAHIP_ATFI = Prisma.sql`CASE
           WHEN EXISTS (SELECT 1 FROM "DoctorAssignment" a WHERE a."doctorId" = p."doctorId" AND a."changedAt" <= p."paidAt")
             THEN (SELECT a."toSellerId" FROM "DoctorAssignment" a
                   WHERE a."doctorId" = p."doctorId" AND a."changedAt" <= p."paidAt"
@@ -255,7 +249,14 @@ async function donemTahsilatlari(donem: Donem, saticiIdleri: string[]): Promise<
                   WHERE a."doctorId" = p."doctorId"
                   ORDER BY a."changedAt" ASC, a."id" ASC LIMIT 1)
           ELSE d."ownerSellerId"
-        END AS sahip
+        END`;
+
+async function donemTahsilatlari(donem: Donem, saticiIdleri: string[]): Promise<Map<string, Decimal.Value>> {
+  if (saticiIdleri.length === 0) return new Map();
+  const satirlar = await prisma.$queryRaw<{ saticiId: string; toplam: Decimal.Value }[]>`
+    SELECT t.sahip AS "saticiId", SUM(t.amount) AS toplam
+    FROM (
+      SELECT p.amount, ${SAHIP_ATFI} AS sahip
       FROM "DoctorPayment" p
       JOIN "Doctor" d ON d."id" = p."doctorId"
       WHERE p."status" = 'AKTIF' AND p."paidAt" >= ${donem.baslangic} AND p."paidAt" < ${donem.bitis}
@@ -263,6 +264,51 @@ async function donemTahsilatlari(donem: Donem, saticiIdleri: string[]): Promise<
     WHERE t.sahip IN (${Prisma.join(saticiIdleri)})
     GROUP BY t.sahip`;
   return new Map(satirlar.map((r) => [r.saticiId, r.toplam]));
+}
+
+export type SaticiTahsilatSatiri = { id: string; paidAt: Date; doktor: string; yontem: string; referansNo: string | null; tutar: Decimal };
+
+/**
+ * Satıcının dönem tahsilat satırları (Raporum "Dönem Tahsilatları", D-2-5): `donemTahsilatlari` ile aynı atıf
+ * parçası (`SAHIP_ATFI`) ve aynı koşul; satırların toplamı Tahsilatım KPI'ına eşittir. Tutar brüttür (S9).
+ * Yeniden eskiye, sayfalı; `toplam` sayfalamanın satır sayısıdır.
+ */
+export async function saticiDonemTahsilatlari(
+  donem: Donem,
+  saticiId: string,
+  sayfa: { skip: number; take: number }
+): Promise<{ satirlar: SaticiTahsilatSatiri[]; toplam: number }> {
+  const kayitlar = await prisma.$queryRaw<
+    { id: string; paidAt: Date; doktor: string; yontem: string; referansNo: string | null; tutar: Decimal.Value; toplam: bigint }[]
+  >`
+    SELECT t.id, t."paidAt", t.doktor, t.yontem, t."referansNo", t.tutar, COUNT(*) OVER() AS toplam
+    FROM (
+      SELECT p.id, p."paidAt", d."fullName" AS doktor, m."name" AS yontem, p."referenceNo" AS "referansNo", p.amount AS tutar,
+        ${SAHIP_ATFI} AS sahip
+      FROM "DoctorPayment" p
+      JOIN "Doctor" d ON d."id" = p."doctorId"
+      JOIN "PaymentMethod" m ON m."id" = p."paymentMethodId"
+      WHERE p."status" = 'AKTIF' AND p."paidAt" >= ${donem.baslangic} AND p."paidAt" < ${donem.bitis}
+    ) t
+    WHERE t.sahip = ${saticiId}
+    ORDER BY t."paidAt" DESC, t.id DESC
+    LIMIT ${sayfa.take} OFFSET ${sayfa.skip}`;
+  const toplam = kayitlar.length > 0 ? parseInt(String(kayitlar[0].toplam), 10) : sayfa.skip > 0 ? await saticiTahsilatSayisi(donem, saticiId) : 0;
+  return {
+    satirlar: kayitlar.map((r) => ({ id: r.id, paidAt: r.paidAt, doktor: r.doktor, yontem: r.yontem, referansNo: r.referansNo, tutar: new Decimal(r.tutar) })),
+    toplam,
+  };
+}
+
+/** Sayfa dışı istekte (satır yok) kayıtlı sayfa sayısını bulmak için satır sayısı. */
+async function saticiTahsilatSayisi(donem: Donem, saticiId: string): Promise<number> {
+  const [s] = await prisma.$queryRaw<{ n: bigint }[]>`
+    SELECT COUNT(*) AS n FROM (
+      SELECT ${SAHIP_ATFI} AS sahip
+      FROM "DoctorPayment" p JOIN "Doctor" d ON d."id" = p."doctorId"
+      WHERE p."status" = 'AKTIF' AND p."paidAt" >= ${donem.baslangic} AND p."paidAt" < ${donem.bitis}
+    ) t WHERE t.sahip = ${saticiId}`;
+  return parseInt(String(s.n), 10);
 }
 
 /** Dönemin doktor ciro sıralaması (FR-63). Gecikmiş borç tutarı C3'te söküldü (X-6 §(7)). */

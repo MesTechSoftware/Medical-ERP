@@ -1,4 +1,4 @@
-import { Card, StatusBadge } from "@/components/ui";
+import { Card } from "@/components/ui";
 import type Decimal from "decimal.js";
 import { formatla } from "@/lib/money";
 import { Tutar } from "@/components/Tutar";
@@ -10,6 +10,7 @@ import { BEDELSIZ_SEBEP_ADI, KAPATMA_GEREKCESI_ADI } from "@/lib/sozluk";
 import { kalanMiktar, sevkMiktari } from "@/lib/siparis";
 import { takipLinki } from "@/lib/kargo";
 import { BAGLANTI } from "@/components/stil";
+import { DurumCizelgesi } from "@/components/siparis/DurumCizelgesi";
 
 type OrderWithRelations = {
   id: string;
@@ -61,9 +62,12 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 export default function OrderDetail({
   order,
   showSeller,
+  onayBekliyor,
 }: {
   order: OrderWithRelations;
   showSeller?: boolean;
+  /** Karar verilmemiş onay bloğu var (gerekçe/kural gösterilmez). */
+  onayBekliyor?: boolean;
 }) {
   // Tutarlar saklanmaz; donmuş satır değerlerinden türetilir (C-6 §(3), GÇ-18).
   const hesap = hesaplaSatirTutarlari(
@@ -96,7 +100,12 @@ export default function OrderDetail({
             label="Durum"
             value={
               <>
-                <StatusBadge status={order.status} />
+                <DurumCizelgesi
+                  status={order.status}
+                  sevkVar={order.shipments.length > 0}
+                  kalanKapatildi={!!order.closeReason}
+                  onayBekliyor={onayBekliyor}
+                />
                 {order.closeReason && (
                   <span data-kismi-kapatildi className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">
                     Kısmi kapatıldı · {KAPATMA_GEREKCESI_ADI[order.closeReason]}

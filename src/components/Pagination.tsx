@@ -12,12 +12,15 @@ export default function Pagination({
   total,
   basePath,
   params,
+  sayfaParametresi = "page",
 }: {
   page: number;
   totalPages: number;
   total: number;
   basePath: string;
   params?: Record<string, string | undefined>;
+  /** Sayfa numarasının adres parametresi; aynı ekranda ikinci bir liste için `page`'den farklı verilir. */
+  sayfaParametresi?: string;
 }) {
   if (totalPages <= 1) return null;
 
@@ -26,7 +29,7 @@ export default function Pagination({
     for (const [k, v] of Object.entries(params ?? {})) {
       if (v) qs.set(k, v);
     }
-    qs.set("page", String(target));
+    qs.set(sayfaParametresi, String(target));
     return `${basePath}?${qs.toString()}`;
   };
 

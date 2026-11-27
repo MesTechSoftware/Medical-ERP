@@ -5,7 +5,9 @@ import { donemBitisAyi, donemCoz, karsilastirmaAraliklari, karsilastirmaNotu, so
 import { kpiGetir } from "@/lib/kpi/getir";
 import { BRUT, MATRAH } from "@/lib/taban";
 import { simdi } from "@/lib/zaman";
-import { ciroOku, ciroOzeti, ciroOzetiAraligi, getSellerReports, kapsayanAralik, saticiTahsilatOzeti } from "@/lib/reports-service";
+import { ciroOku, ciroOzeti, ciroOzetiAraligi, getSellerReports, kapsayanAralik, saticiDonemTahsilatlari, saticiTahsilatOzeti } from "@/lib/reports-service";
+import Pagination from "@/components/Pagination";
+import { pageCount } from "@/lib/pagination";
 import DonemSecici from "@/components/DonemSecici";
 import { ilk, type Parametreler } from "@/lib/liste/parametreler";
 import SaticiRaporTablosu from "@/components/SaticiRaporTablosu";
@@ -14,6 +16,7 @@ import { sayfaCoz, sayfaDisi } from "@/lib/liste/sayfa";
 import { doktorSiralamasi } from "@/lib/rapor-listesi/sorgu";
 import { korunanlar, raporAdresi, suzgecCoz } from "@/lib/rapor-listesi/suzgec";
 import { CiroSiralamasi } from "./CiroSiralamasi";
+import { TahsilatTablosu } from "./TahsilatTablosu";
 import { PageHeader, Card } from "@/components/ui";
 import { KovaOzeti } from "@/components/kpi/KovaOzeti";
 import { KpiCard } from "@/components/kpi/KpiCard";
@@ -27,6 +30,12 @@ import { KpiSatiri } from "@/components/kpi/KpiSatiri";
  * kapsamlı doktor ciro sıralamasıdır (`doktorSiralamasi`, Raporlar'la tek yol); İadem kartı Cirom'un okumasından gelir.
  */
 const YOL = "/my-report";
+const TAHSILAT_SAYFA_BOYU = 10;
+
+/** Adresteki düz metin parametreler (sayfalama bağlantıları diğer listenin konumunu korusun). */
+function digerParametreler(p: Parametreler): Record<string, string> {
+  return Object.fromEntries(Object.entries(p).filter((e): e is [string, string] => typeof e[1] === "string" && e[0] !== "tpage"));
+}
 
 export const metadata: Metadata = { title: "Raporum" };
 
@@ -54,15 +63,23 @@ export default async function MyReportPage({
 
   // Satıcının dönem sevk ve iade satırları bir kez okunur: rapor satırı, Cirom özeti ve doktorlarıma göre cirom aynı
   // okumadan hesaplanır. Okumalar tek turdadır.
+  // Dönem tahsilatları kendi sayfa parametresiyle (`tpage`) sayfalanır; Cirom sıralamasının `page`'iyle karışmaz.
+  const tSayfa = sayfaCoz({ page: ilk(params, "tpage") ?? undefined }, TAHSILAT_SAYFA_BOYU);
   const g = { kovalar: aylar, ...k };
   const okuma = ciroOku(kapsayanAralik([ciroOzetiAraligi(g), donem.aralik]), kapsam);
-  const [satirlar, ozet, tahsilat, siralama] = await Promise.all([
+  const [satirlar, ozet, tahsilat, siralama, tahsilatListesi] = await Promise.all([
     getSellerReports(session.user, donem.aralik, okuma),
     kpiGetir(() => ciroOzeti(g, kapsam, okuma), baglam),
     kpiGetir(() => saticiTahsilatOzeti(k, session.user.id), baglam),
     // Sıralama da kart gibi kapsüllüdür: hesap düşerse yalnız o bölüm hata referansı gösterir, KPI'lar kalır.
     kpiGetir(() => doktorSiralamasi(donem.aralik, suzgec, { skip, take }, kapsam, okuma), baglam),
+    kpiGetir(() => saticiDonemTahsilatlari(donem.aralik, session.user.id, { skip: tSayfa.skip, take: tSayfa.take }), baglam),
   ]);
+  // Sayfa dışı tahsilat sayfası son sayfaya gider.
+  if (tahsilatListesi.tamam && tahsilatListesi.deger.satirlar.length === 0 && tSayfa.page > 1) {
+    const son = Math.max(1, pageCount(tahsilatListesi.deger.toplam, tSayfa.perPage));
+    redirect(`${YOL}?${new URLSearchParams({ ...digerParametreler(params), tpage: String(son) })}`);
+  }
   // Sayfa dışı adres son sayfaya gider.
   // Sonuçsuz aramada ikinci sayfadan sonrası birinci sayfaya (sayfalama "3 / 1" demesin).
   if (siralama.tamam && siralama.deger.satirlar.length === 0 && page > 1) {
@@ -136,6 +153,27 @@ export default async function MyReportPage({
           Hakediş sevkiyat anında doğar; ödeme zamanlaması sistemin dışındadır.
         </p>
       </Card>
+
+      <div className="mt-6">
+        {tahsilatListesi.tamam ? (
+          <>
+            <TahsilatTablosu satirlar={tahsilatListesi.deger.satirlar} />
+            <Pagination
+              page={tSayfa.page}
+              totalPages={pageCount(tahsilatListesi.deger.toplam, tSayfa.perPage)}
+              total={tahsilatListesi.deger.toplam}
+              basePath={YOL}
+              params={digerParametreler(params)}
+              sayfaParametresi="tpage"
+            />
+          </>
+        ) : (
+          <Card>
+            <h2 className="mb-1 text-sm font-semibold text-slate-900">Dönem Tahsilatları</h2>
+            <p className="text-sm text-slate-500">Bu bölüm şu an gösterilemiyor. Referans: {tahsilatListesi.referans}</p>
+          </Card>
+        )}
+      </div>
 
       <div className="mt-6">
         <CiroSiralamasi sonuc={siralama} suzgec={suzgec} per={yer.per} saticiId={session.user.id} tumZamanlar={donem.anahtar === "tum"} />

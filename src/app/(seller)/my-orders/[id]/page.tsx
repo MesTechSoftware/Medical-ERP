@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/ui";
 import OrderDetail from "@/components/OrderDetail";
 import { buton } from "@/components/stil";
 import { Ikon } from "@/components/Ikon";
+import { belgeOnayAyrintilari } from "@/lib/onay-blogu";
 
 export const metadata: Metadata = { title: "Sipariş Detayı" };
 
@@ -35,6 +36,7 @@ export default async function MyOrderDetailPage({
     },
   });
   if (!order) notFound();
+  const onay = (await belgeOnayAyrintilari("SIP", [order.id])).get(order.id);
 
   return (
     <div>
@@ -50,7 +52,7 @@ export default async function MyOrderDetailPage({
           </Link>
         }
       />
-      <OrderDetail order={order} />
+      <OrderDetail order={order} onayBekliyor={(onay?.acikBloklar.length ?? 0) > 0} />
     </div>
   );
 }
