@@ -8,7 +8,7 @@ import { buton } from "@/components/stil";
  * Tek tıkla panoya kopyalar (A-13). Pano yalnız güvenli bağlamda (HTTPS/localhost) vardır;
  * yoksa düğme yine görünür, kopyalama sessizce düşer.
  */
-export default function KopyalaDugmesi({ deger, etiket }: { deger: string; etiket: string }) {
+export default function KopyalaDugmesi({ deger, etiket, yazi = "Kopyala" }: { deger: string; etiket: string; yazi?: string }) {
   const [kopyalandi, setKopyalandi] = useState(false);
   return (
     <button
@@ -23,7 +23,7 @@ export default function KopyalaDugmesi({ deger, etiket }: { deger: string; etike
       }}
     >
       <Ikon ad="kopyala" />
-      {kopyalandi ? "Kopyalandı" : "Kopyala"}
+      {kopyalandi ? "Kopyalandı" : yazi}
     </button>
   );
 }

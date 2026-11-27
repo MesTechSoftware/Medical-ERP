@@ -48,7 +48,7 @@ export function suzgecCoz(p: Parametreler): { suzgec: KargoSuzgeci; kismi: strin
 }
 
 /** Süzgeci koruyan ekran adresi; sayfa, sayfa boyu ve kısmi sevk paneli isteğe bağlı. */
-export function kargoAdresi(s: KargoSuzgeci, ek: { page?: number; per?: number; kismi?: string } = {}): string {
+export function kargoAdresi(s: KargoSuzgeci, ek: { page?: number; per?: number; kismi?: string; duzenle?: string } = {}): string {
   const p = new URLSearchParams();
   if (s.baslangic) p.set("baslangic", s.baslangic);
   if (s.bitis) p.set("bitis", s.bitis);
@@ -58,6 +58,7 @@ export function kargoAdresi(s: KargoSuzgeci, ek: { page?: number; per?: number; 
   if (ek.page !== undefined && ek.page > 1) p.set("page", String(ek.page));
   if (ek.per !== undefined) p.set("per", String(ek.per));
   if (ek.kismi !== undefined) p.set("kismi", ek.kismi);
+  if (ek.duzenle !== undefined) p.set("duzenle", ek.duzenle);
   const q = p.toString();
   return q ? `/shipping?${q}` : "/shipping";
 }

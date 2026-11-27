@@ -7,10 +7,12 @@ export default function SidebarLink({
   href,
   label,
   icon,
+  sayi,
 }: {
   href: string;
   label: string;
   icon: React.ReactNode;
+  sayi?: number;
 }) {
   const pathname = usePathname();
   const active = pathname === href || pathname.startsWith(href + "/");
@@ -30,6 +32,11 @@ export default function SidebarLink({
         {icon}
       </span>
       {label}
+      {sayi ? (
+        <span data-menu-sayi className="ml-auto rounded-full bg-critical-bg px-2 text-xs font-semibold tabular-nums text-critical">
+          {sayi}
+        </span>
+      ) : null}
     </Link>
   );
 }

@@ -23,5 +23,8 @@ export async function blokKarari(blokId: string, _prev: unknown, formData: FormD
 
   revalidatePath("/approvals");
   revalidatePath("/shipping");
+  revalidatePath("/orders");
+  revalidatePath("/my-orders");
+  revalidatePath("/dashboard");
   return basarili();
 }

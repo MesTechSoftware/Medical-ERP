@@ -2,10 +2,11 @@ import type Decimal from "decimal.js";
 import type { Prisma } from "@/generated/prisma/client";
 import type { OrderStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
+import { EKSIK_FATURA_BILGISI } from "@/lib/cari";
 import { takipLinki } from "@/lib/kargo";
 import { FIRMASIZ, type KargoSuzgeci } from "@/lib/kargo-listesi/suzgec";
 import { metinVaryantlari } from "@/lib/liste/metin";
-import { belgeOnayDurumlari } from "@/lib/onay-blogu";
+import { belgeOnayAyrintilari } from "@/lib/onay-blogu";
 import { kalanMiktar, SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
 import { gunleriAraliga } from "@/lib/liste/parametreler";
 import { siparisKosulu } from "@/lib/siparis-listesi/sorgu";
@@ -25,6 +26,8 @@ export type BekleyenSatir = {
   orderDate: Date;
   cari: { fullName: string; clinic: string | null };
   satici: string | null;
+  /** Carinin fatura bilgisi eksik (`EKSIK_FATURA_BILGISI`); yalnız bilgi, seçimi engellemez (A-3-9). */
+  faturaEksik: boolean;
   /** KDV dahil belge toplamı (`siparisToplami`). */
   toplam: Decimal;
   kalemler: { id: string; urun: string; kod: string; adet: number; kalan: number }[];
@@ -32,6 +35,10 @@ export type BekleyenSatir = {
   kalanAdet: number;
   adet: number;
   onay: "BEKLIYOR" | "RED" | undefined;
+  /** Karar verilmemiş (kuralın son) onay blokları; rozet bağlantısı bunlardan kurulur (A-8-14). */
+  acikBloklar: string[];
+  /** Son bloğu `RED` olan kuralın en yeni kararı (kural, not, tarih); yoksa `null` (A-8-17, A-8-18). */
+  redNotu: { kural: string; not: string | null; tarih: Date | null } | null;
 };
 
 export async function kargoBekleyenler(): Promise<BekleyenSatir[]> {
@@ -42,6 +49,7 @@ export async function kargoBekleyenler(): Promise<BekleyenSatir[]> {
       id: true,
       documentNo: true,
       orderDate: true,
+      doctorId: true,
       doctor: { select: { fullName: true, clinic: true } },
       seller: { select: { name: true } },
       items: {
@@ -55,8 +63,14 @@ export async function kargoBekleyenler(): Promise<BekleyenSatir[]> {
       },
     },
   });
-  const onay = await belgeOnayDurumlari("SIP", siparisler.map((o) => o.id));
+  const [onay, eksikler] = await Promise.all([
+    belgeOnayAyrintilari("SIP", siparisler.map((o) => o.id)),
+    // Tek sorgu: bekleyen siparişlerin carileri içinde eksik fatura bilgisi olanlar.
+    prisma.doctor.findMany({ where: { AND: [{ id: { in: [...new Set(siparisler.map((o) => o.doctorId))] } }, EKSIK_FATURA_BILGISI] }, select: { id: true } }),
+  ]);
+  const eksikCari = new Set(eksikler.map((d) => d.id));
   return siparisler.map((o) => {
+    const a = onay.get(o.id);
     const kalemler = o.items.map((k) => ({ id: k.id, urun: k.product.name, kod: k.product.code, adet: k.quantity, kalan: kalanMiktar(k) }));
     return {
       id: o.id,
@@ -64,17 +78,20 @@ export async function kargoBekleyenler(): Promise<BekleyenSatir[]> {
       orderDate: o.orderDate,
       cari: o.doctor,
       satici: o.seller?.name ?? null,
+      faturaEksik: eksikCari.has(o.doctorId),
       toplam: siparisToplami(o.items).toplam,
       kalemler,
       kalanKalem: kalemler.filter((k) => k.kalan > 0).length,
       kalanAdet: kalemler.reduce((t, k) => t + k.kalan, 0),
       adet: kalemler.reduce((t, k) => t + k.adet, 0),
-      onay: onay.get(o.id),
+      onay: a?.durum,
+      acikBloklar: a?.acikBloklar ?? [],
+      redNotu: a?.red ? { kural: a.red.kural, not: a.red.not, tarih: a.red.tarih } : null,
     };
   });
 }
 
-export type KargoKpileri = { bekleyen: number; bekleyenAdet: number; onayBekleyen: number; bugunKargolanan: number; teslimBekleyen: number };
+export type KargoKpileri = { bekleyen: number; bekleyenAdet: number; onayBekleyen: number; reddedilen: number; bugunKargolanan: number; teslimBekleyen: number };
 
 /** Kartlar (spec §3.2): bekleyen sayıları sayfanın okuduğu listeden; bugün ve teslim bekleyen sayımla. */
 export async function kargoKpileri(bugun: string, bekleyenOkumasi: Promise<readonly BekleyenSatir[]>): Promise<KargoKpileri> {
@@ -88,7 +105,9 @@ export async function kargoKpileri(bugun: string, bekleyenOkumasi: Promise<reado
   return {
     bekleyen: bekleyenler.length,
     bekleyenAdet: bekleyenler.reduce((t, r) => t + r.kalanAdet, 0),
-    onayBekleyen: bekleyenler.filter((r) => r.onay !== undefined).length,
+    // Kart = satır (D-3-2): kararsız bloklu sipariş ile reddedilen ayrı sayılır (A-8-16).
+    onayBekleyen: bekleyenler.filter((r) => r.onay === "BEKLIYOR").length,
+    reddedilen: bekleyenler.filter((r) => r.onay === "RED").length,
     bugunKargolanan,
     teslimBekleyen,
   };
@@ -127,6 +146,8 @@ export type SevkiyatSatiri = {
   irsaliyeNo: string | null;
   adet: number;
   durum: OrderStatus;
+  /** Sipariş KARGOLANDI iken, siparişin en yeni sevkiyat satırında Teslim görünür (A-3-9 / S4). */
+  teslimEdilebilir: boolean;
 };
 
 export async function sevkiyatListesi(
@@ -147,7 +168,15 @@ export async function sevkiyatListesi(
         externalDispatchNo: true,
         status: true,
         carrier: { select: { name: true, trackingUrlTemplate: true } },
-        order: { select: { id: true, documentNo: true, doctor: { select: { fullName: true } } } },
+        order: {
+          select: {
+            id: true,
+            documentNo: true,
+            status: true,
+            doctor: { select: { fullName: true } },
+            shipments: { orderBy: [{ shippedAt: { sort: "desc", nulls: "last" } }, { id: "desc" }], take: 1, select: { id: true } },
+          },
+        },
         items: { select: { quantity: true } },
       },
     }),
@@ -166,6 +195,7 @@ export async function sevkiyatListesi(
       irsaliyeNo: v.externalDispatchNo,
       adet: v.items.reduce((t, k) => t + k.quantity, 0),
       durum: v.status,
+      teslimEdilebilir: v.order.status === "KARGOLANDI" && v.order.shipments[0]?.id === v.id,
     })),
     toplam,
   };

@@ -10,6 +10,7 @@ import { saticiSecenekleri, siparisListesi, siparisPaneli, siparisSekmeSayilari 
 import { SATICISIZ, siparisAdresi, suzgecCoz, TUM_SIPARISLER, type Parametreler } from "@/lib/siparis-listesi/suzgec";
 import { SiparisPaneli } from "@/components/siparis/SiparisPaneli";
 import { SiparisTablosu } from "@/components/siparis/SiparisTablosu";
+import { TopluHazirlaFormu } from "@/components/siparis/TopluHazirlaFormu";
 import { SuzgecCubugu } from "@/components/siparis/SuzgecCubugu";
 
 export const metadata: Metadata = { title: "Siparişler" };
@@ -60,7 +61,13 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         sutunMenusu={<SutunSecici liste="/orders" gizli={gizli} donus={adres} />}
       />
 
-      <SiparisTablosu satirlar={liste.satirlar} gizli={gizli} suzgec={suzgec} yer={yer} yol="/orders" />
+      {suzgec.durum === "BEKLIYOR" ? (
+        <TopluHazirlaFormu>
+          <SiparisTablosu satirlar={liste.satirlar} gizli={gizli} suzgec={suzgec} yer={yer} yol="/orders" secilebilir />
+        </TopluHazirlaFormu>
+      ) : (
+        <SiparisTablosu satirlar={liste.satirlar} gizli={gizli} suzgec={suzgec} yer={yer} yol="/orders" />
+      )}
 
       <ListeSayfalama sayfa={sayfa} toplam={liste.toplam} adres={siparisAdresi(suzgec)} />
 

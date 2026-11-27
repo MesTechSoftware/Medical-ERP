@@ -4,15 +4,7 @@ import { SATIR_TABANI, tabanli } from "@/lib/taban";
 import { SonucGosterimi } from "@/components/Sonuc";
 import { sonucOlustur } from "@/lib/sonuc";
 import type { FaturaKarti, FaturaKolonu } from "@/lib/disa-aktarim";
-
-const MUHATAP: { kod: FaturaKolonu; etiket: string }[] = [
-  { kod: "FATURA_UNVANI", etiket: "Fatura unvanı" },
-  { kod: "VKN_TCKN", etiket: "VKN / TCKN" },
-  { kod: "VERGI_DAIRESI", etiket: "Vergi dairesi" },
-  { kod: "FATURA_ADRESI", etiket: "Fatura adresi" },
-  { kod: "FATURA_ILCE", etiket: "İlçe" },
-  { kod: "FATURA_IL", etiket: "İl" },
-];
+import { FATURA_MUHATAP_ALANLARI as MUHATAP, faturaKartiMetni } from "@/lib/fatura-karti-metni";
 
 /**
  * Fatura Hazırlık Kartı (K-4 §(6)-k): sevkiyat başına salt okunur özet. Veri `faturaHazirlik`'ten gelir;
@@ -24,8 +16,11 @@ export default function FaturaHazirlikKarti({ belgeNo, karti }: { belgeNo: strin
   const ilk = veri.satirlar[0];
   const bildirimler = [karti.eksikFaturaBilgisi, karti.geriyeDonuk].filter((b) => b !== null);
   return (
-    <section data-fatura-karti={belgeNo} className="mt-3 rounded-lg border border-slate-200 p-3 text-sm">
-      <h3 className="mb-2 font-semibold text-slate-900">Fatura Hazırlık — {belgeNo}</h3>
+    <section id={`fatura-${belgeNo}`} data-fatura-karti={belgeNo} className="mt-3 scroll-mt-20 rounded-lg border border-slate-200 p-3 text-sm">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <h3 className="font-semibold text-slate-900">Fatura Hazırlık — {belgeNo}</h3>
+        {ilk && <KopyalaDugmesi deger={faturaKartiMetni(belgeNo, karti)} etiket="Fatura kartının tamamını" yazi="Tümünü Kopyala" />}
+      </div>
       {!ilk ? (
         <p className="text-slate-500">Bu sevkiyat fatura hazırlığına girmiyor.</p>
       ) : (

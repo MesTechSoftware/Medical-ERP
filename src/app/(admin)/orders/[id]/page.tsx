@@ -11,11 +11,12 @@ import IadeFormu from "./IadeFormu";
 import KalaniKapatFormu from "./KalaniKapatFormu";
 import { kalanMiktar } from "@/lib/siparis";
 import { formatDateTime } from "@/lib/format";
-import { buton } from "@/components/stil";
+import { BAGLANTI, buton } from "@/components/stil";
 import { Ikon } from "@/components/Ikon";
 import { BilgiSeridi } from "@/components/BilgiSeridi";
 import FaturaHazirlikKarti from "@/components/siparis/FaturaHazirlikKarti";
 import { faturaKartiVerisi } from "@/lib/disa-aktarim";
+import { belgeOnayAyrintilari } from "@/lib/onay-blogu";
 
 export const metadata: Metadata = { title: "Sipariş Detayı" };
 
@@ -48,6 +49,7 @@ export default async function AdminOrderDetailPage({
     },
   });
   if (!order) notFound();
+  const onay = (await belgeOnayAyrintilari("SIP", [order.id])).get(order.id);
 
   // A-1: iade edilebilir = sevk edilen − önceki iadeler.
   const iadeKalemleri = order.items
@@ -76,7 +78,7 @@ export default async function AdminOrderDetailPage({
 
   // K-4 §(6)-k: sevkiyat başına salt okunur Fatura Hazırlık Kartı; sayfa YONETICI + OPERASYON'a açıktır (layout).
   const faturaKartlari = await Promise.all(
-    order.shipments.map(async (s) => ({ belgeNo: s.documentNo, karti: await faturaKartiVerisi(s.id) }))
+    order.shipments.map(async (s) => ({ id: s.id, belgeNo: s.documentNo, karti: await faturaKartiVerisi(s.id) }))
   );
 
   return (
@@ -96,14 +98,19 @@ export default async function AdminOrderDetailPage({
 
       <BilgiSeridi ham={bilgi} />
 
-      <OrderDetail order={order} showSeller />
+      <OrderDetail order={order} showSeller onayBekliyor={(onay?.acikBloklar.length ?? 0) > 0} />
 
       {faturaKartlari.length > 0 && (
         <div className="mt-6">
           <Card>
             <h2 className="text-sm font-semibold text-slate-900">Fatura Hazırlık</h2>
             {faturaKartlari.map((k) => (
-              <FaturaHazirlikKarti key={k.belgeNo} belgeNo={k.belgeNo} karti={k.karti} />
+              <div key={k.belgeNo}>
+                <FaturaHazirlikKarti belgeNo={k.belgeNo} karti={k.karti} />
+                <Link href={`/shipping?duzenle=${k.id}`} data-takip-duzelt={k.id} className={`mt-1 inline-block text-xs ${BAGLANTI}`}>
+                  Takip düzelt
+                </Link>
+              </div>
             ))}
           </Card>
         </div>
@@ -112,8 +119,8 @@ export default async function AdminOrderDetailPage({
       <Card>
         <h2 className="mb-3 text-sm font-semibold text-slate-900">İşlemler</h2>
         <div className="flex flex-wrap items-center gap-3">
-          {order.status === "BEKLIYOR" && (
-            <IslemFormu action={prepareOrder.bind(null, id)}>
+          {order.status === "BEKLIYOR" && order.stage === "ONAYLI" && (
+            <IslemFormu action={prepareOrder.bind(null, id, null)}>
               <button
                 type="submit"
                 className={buton("birincil")}
@@ -135,7 +142,7 @@ export default async function AdminOrderDetailPage({
           )}
 
           {order.status === "KARGOLANDI" && (
-            <IslemFormu action={markDelivered.bind(null, id)}>
+            <IslemFormu action={markDelivered.bind(null, id, null)}>
               <button
                 type="submit"
                 className={buton("olumlu")}

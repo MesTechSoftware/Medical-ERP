@@ -3,8 +3,10 @@ import { OnayEtiketi } from "@/components/OnayEtiketi";
 import { BAGLANTI, KONTROL_TEK_SATIR, buton } from "@/components/stil";
 import { Tutar } from "@/components/Tutar";
 import { Ikon } from "@/components/Ikon";
-import { formatDate } from "@/lib/format";
+import { StatusChip } from "@/components/ui";
+import { formatDate, formatDateTime } from "@/lib/format";
 import type { BekleyenSatir } from "@/lib/kargo-listesi/sorgu";
+import { onayBaglantisi } from "@/lib/kargo-listesi/onay-baglantisi";
 import { SATIR_TABANI, tabanli } from "@/lib/taban";
 import { TopluKargoFormu } from "./TopluKargoFormu";
 
@@ -22,10 +24,13 @@ export function BekleyenTablosu({
   satirlar,
   firmalar,
   kismiAdresi,
+  yonetici,
 }: {
   satirlar: readonly BekleyenSatir[];
   firmalar: readonly { id: string; name: string }[];
   kismiAdresi: (id: string) => string;
+  /** Onay ekranı yalnız yöneticinindir: rozet bağlantı olur; OPERASYON'da düz etiket ve bilgi notu (A-8-14). */
+  yonetici: boolean;
 }) {
   if (satirlar.length === 0) {
     return <p className="py-6 text-center text-sm text-slate-400">Kargo bekleyen sipariş yok.</p>;
@@ -71,8 +76,15 @@ export function BekleyenTablosu({
                 <td className="font-medium text-slate-900">
                   <div className="flex flex-wrap items-center gap-2">
                     <span>{r.cari.fullName}</span>
-                    <OnayEtiketi durum={r.onay} />
+                    <OnayEtiketi durum={r.onay} href={yonetici ? (onayBaglantisi(r) ?? undefined) : undefined} />
                   </div>
+                  {r.onay === "BEKLIYOR" && !yonetici && <div className="text-xs font-normal text-slate-500">Yönetici onayı bekleniyor</div>}
+                  {r.faturaEksik && (
+                    <div className="mt-1">
+                      <StatusChip ton="uyari">Fatura bilgisi eksik</StatusChip>
+                    </div>
+                  )}
+                  {r.onay === "RED" && <RedNotu r={r} />}
                   {r.cari.clinic && <div className="text-xs font-normal text-slate-500">{r.cari.clinic}</div>}
                 </td>
                 <td className="whitespace-nowrap text-slate-700">{kalanMetni(r)}</td>
@@ -107,5 +119,24 @@ export function BekleyenTablosu({
         </table>
       </div>
     </TopluKargoFormu>
+  );
+}
+
+/** Reddedilen siparişin red notu; bedelsiz/iskonto reddinde sipariş iptal edilmelidir (A-8-18, S7). */
+export function RedNotu({ r }: { r: Pick<BekleyenSatir, "id" | "redNotu"> }) {
+  if (!r.redNotu) return null;
+  const iptal = r.redNotu.kural === "BEDELSIZ_ONAYI" || r.redNotu.kural === "ISKONTO_TAVANI";
+  return (
+    <div className="text-xs font-normal text-slate-500">
+      {iptal && (
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusChip ton="hata">Reddedildi — sipariş iptal edilmeli</StatusChip>
+          <Link href={`/orders/${r.id}`} className={BAGLANTI}>
+            Sipariş detayı
+          </Link>
+        </div>
+      )}
+      {r.redNotu.not && <div>“{r.redNotu.not}”{r.redNotu.tarih ? ` · ${formatDateTime(r.redNotu.tarih)}` : ""}</div>}
+    </div>
   );
 }

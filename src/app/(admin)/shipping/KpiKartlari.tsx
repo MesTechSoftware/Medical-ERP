@@ -23,6 +23,7 @@ export function KpiKartlari({ sonuc, bugun, yonetici }: { sonuc: KpiSonucu<Kargo
       iyiYon="asagi-iyi"
       bosDavranisi="sifir"
       adet={k ? k.onayBekleyen : null}
+      ikincilMetrik={k && k.reddedilen > 0 ? `${formatSayi(k.reddedilen)} reddedildi` : undefined}
       karsilastirma={{ anlik: "şu an" }}
       vurgu={k && k.onayBekleyen > 0 ? "uyari" : undefined}
       hataReferansi={hataReferansi}

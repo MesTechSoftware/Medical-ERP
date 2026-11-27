@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import Decimal from "decimal.js";
 import { prisma } from "@/lib/db";
 import { degistirDoktorSahibi } from "@/lib/sahiplik";
-import { ciroluDoktorRaporlari, getCiroTotal, getSellerReports, saticiOrtalamaIskontosu } from "@/lib/reports-service";
+import { ciroluDoktorRaporlari, getCiroTotal, getSellerReports, saticiDonemTahsilatlari, saticiOrtalamaIskontosu, saticiTahsilatOzeti } from "@/lib/reports-service";
 import { sayilanBelgeler } from "@/lib/sayilan-belgeler";
 import { SIPARIS_SATIRI, siparisToplami } from "@/lib/siparis";
 import { TUM_ZAMANLAR } from "@/lib/zaman";
@@ -248,6 +249,67 @@ describe("satıcı raporu — dönem tahsilatı (X-1 17.10 eki)", () => {
     await tahsilat(bayi.id, "500.00", new Date("2026-10-12T10:00:00Z"));
 
     expect((await satiri(yonetici(), EKIM, "Ali")).tahsilat.toFixed(2)).toBe("0.00");
+  });
+});
+
+describe("satıcı dönem tahsilatları — Raporum tablosu (D-2-5)", () => {
+  const liste = (saticiId: string, donem = EKIM, sayfa = { skip: 0, take: 50 }) => saticiDonemTahsilatlari(donem, saticiId, sayfa);
+
+  it("yalnız tahsilat anında sahibi olduğu doktorların aktif tahsilatları; başkası, BAYI, sahipsiz ve iptal görünmez", async () => {
+    const ali = await kullanici("Ali", "ali@medikal.local");
+    const veli = await kullanici("Veli", "veli@medikal.local");
+    const d1 = await doktor("Dr. A", ali.id);
+    const d2 = await doktor("Dr. B", veli.id);
+    const bayi = await doktor("Bayi A.Ş.", null, "BAYI");
+    const sahipsiz = await doktor("Dr. S", null);
+    await tahsilat(d1.id, "1000.00", new Date("2026-10-02T10:00:00Z"));
+    await tahsilat(d1.id, "9999.99", new Date("2026-10-10T10:00:00Z"), "IPTAL");
+    await tahsilat(d1.id, "7777.00", EKIM.bitis);
+    await tahsilat(d2.id, "700.00", new Date("2026-10-10T10:00:00Z"));
+    await tahsilat(bayi.id, "500.00", new Date("2026-10-10T10:00:00Z"));
+    await tahsilat(sahipsiz.id, "300.00", new Date("2026-10-10T10:00:00Z"));
+
+    const r = await liste(ali.id);
+    expect(r.toplam).toBe(1);
+    expect(r.satirlar.map((x) => [x.doktor, x.tutar.toFixed(2)])).toEqual([["Dr. A", "1000.00"]]);
+  });
+
+  it("devir öncesi tahsilat eski sahipte, sonrası yeni sahipte kalır; yeniden eskiye sıralanır", async () => {
+    const ali = await kullanici("Ali", "ali@medikal.local");
+    const veli = await kullanici("Veli", "veli@medikal.local");
+    const d = await doktor("Dr. A", ali.id);
+    await tahsilat(d.id, "100.00", new Date("2026-10-05T10:00:00Z"));
+    await tahsilat(d.id, "150.00", new Date("2026-10-08T10:00:00Z"));
+    await sahiplikVer(d.id, veli.id, new Date("2026-10-15T00:00:00Z"));
+    await tahsilat(d.id, "40.00", new Date("2026-10-20T10:00:00Z"));
+
+    expect((await liste(ali.id)).satirlar.map((x) => x.tutar.toFixed(2))).toEqual(["150.00", "100.00"]);
+    expect((await liste(veli.id)).satirlar.map((x) => x.tutar.toFixed(2))).toEqual(["40.00"]);
+  });
+
+  it("satırların toplamı Tahsilatım KPI'ına eşittir; sayfalama toplamı korur", async () => {
+    const ali = await kullanici("Ali", "ali@medikal.local");
+    const d = await doktor("Dr. A", ali.id);
+    for (const [i, tutar] of ["10.10", "20.20", "30.30"].entries()) await tahsilat(d.id, tutar, new Date(`2026-10-0${i + 1}T10:00:00Z`));
+
+    const tum = await liste(ali.id);
+    const kpi = await saticiTahsilatOzeti({ simdi: EKIM, onceki: null }, ali.id);
+    expect(tum.satirlar.reduce((t, x) => t.plus(x.tutar), new Decimal(0)).toFixed(2)).toBe(kpi.simdi.toFixed(2));
+
+    const ikinci = await liste(ali.id, EKIM, { skip: 2, take: 2 });
+    expect(ikinci.toplam).toBe(3);
+    expect(ikinci.satirlar).toHaveLength(1);
+    expect((await liste(ali.id, EKIM, { skip: 20, take: 2 })).toplam).toBe(3);
+  });
+
+  it("ödeme yöntemi ve referans no satıra gelir", async () => {
+    const ali = await kullanici("Ali", "ali@medikal.local");
+    const d = await doktor("Dr. A", ali.id);
+    const t = await tahsilat(d.id, "55.00", new Date("2026-10-02T10:00:00Z"));
+    await prisma.doctorPayment.update({ where: { id: t.id }, data: { referenceNo: "DEKONT-9" } });
+    const [satir] = (await liste(ali.id)).satirlar;
+    expect(satir.referansNo).toBe("DEKONT-9");
+    expect(satir.yontem).toBeTruthy();
   });
 });
 

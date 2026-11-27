@@ -38,7 +38,7 @@ test("panelde negatif stok bağlamı; notla red → Reddedilen sekmesinde not g�
   const blokId = await blokAc(s.siparisId, 1);
   // Bekleyenler en eski önce: yeni talep sonraki sayfada olabilir, belge numarasıyla süzülür.
   await page.goto(`/approvals?q=${s.documentNo}`);
-  await satirlar(page).filter({ hasText: s.documentNo }).getByRole("link", { name: "İncele" }).click();
+  await satirlar(page).filter({ hasText: s.documentNo }).getByRole("link", { name: "Karar Ver" }).click();
   const panel = page.getByRole("dialog");
   const stok = panel.getByRole("region", { name: "Stok durumu" });
   await expect(stok).toContainText(s.urunAdi);

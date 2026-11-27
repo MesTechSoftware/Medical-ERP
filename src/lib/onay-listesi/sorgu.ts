@@ -156,6 +156,11 @@ export async function onayListesi(
   return { satirlar: await satirlar(bloklar), toplam };
 }
 
+/** Menü rozeti: onay listesinin bekleyen koşuluyla aynı sayı (koşul kopyalanmaz; A-8-15). */
+export async function bekleyenOnaySayisi(an: Date = new Date()): Promise<number> {
+  return prisma.approvalBlock.count({ where: onayKosulu(BOS_SUZGEC, an, null, await kapaliSiparisler()) });
+}
+
 export type OnayKpileri = { bekleyen: number; enEski: Date | null; eski: number; bugunOnay: number; bugunRed: number };
 
 export async function onayKpileri(bugun: string, an: Date): Promise<OnayKpileri> {

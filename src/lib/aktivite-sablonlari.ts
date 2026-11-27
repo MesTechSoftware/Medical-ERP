@@ -23,6 +23,7 @@ export const SABLONLAR = {
         : v.status === "TESLIM_EDILDI"
           ? "siparişi teslim edildi olarak işaretledi"
           : "sipariş durumunu değiştirdi",
+  SHIPMENT_TRACKING_UPDATE: "sevkiyat takip bilgisini düzeltti",
   RETURN_CREATE: "iade kaydetti",
   COLLECTION_CREATE: "tahsilat kaydetti",
   COLLECTION_CANCEL: "tahsilatı iptal etti",

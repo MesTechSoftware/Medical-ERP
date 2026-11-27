@@ -1,5 +1,9 @@
 import Link from "next/link";
-import { BAGLANTI } from "@/components/stil";
+import ConfirmSubmit from "@/components/ConfirmSubmit";
+import { IslemFormu } from "@/components/Sonuc";
+import { BAGLANTI, buton } from "@/components/stil";
+import { Ikon } from "@/components/Ikon";
+import { markDelivered, prepareOrder } from "@/app/(admin)/orders/actions";
 import { Panel, PanelBolumu as Bolum, PanelSatiri as Satir } from "@/components/panel/Panel";
 import { OnayEtiketi } from "@/components/OnayEtiketi";
 import { Tutar } from "@/components/Tutar";
@@ -9,15 +13,20 @@ import type { SiparisPaneli as Veri } from "@/lib/siparis-listesi/sorgu";
 import type { SiparisYolu } from "@/lib/siparis-listesi/suzgec";
 import { SATIR_TABANI, tabanli } from "@/lib/taban";
 import { DurumRozeti } from "./SiparisTablosu";
+import { BLOK_KURAL_ADI } from "@/lib/sozluk";
+import type { BlokKuralKodu } from "@/lib/onay-blogu";
 
 /**
  * Siparişin yan paneli (spec Ü-23 §3.5, 11-A): özet, kalemler (sevk / kalan / iade — A-3-2), tutarlar
- * (`siparisToplami` ile aynı yol), sevkiyatlar, iadeler. İşlem düğmesi yoktur; işlemler detay sayfasındadır.
+ * (`siparisToplami` ile aynı yol), sevkiyatlar, iadeler. Yönetimde alt çubukta durum işlemleri vardır (S2:
+ * Hazırlığa Al · Kargoya git · Teslim; iptal yok, o detay sayfasındadır).
  * Siparişlerim'de (Ü-31) satıcı satırı yoktur (kendi siparişi); cari adı Doktorlarım panelini açar (Ü-32).
  */
 export function SiparisPaneli({ veri, kapatAdresi, yol }: { veri: Veri; kapatAdresi: string; yol: SiparisYolu }) {
   const o = veri.siparis;
   const yonetici = yol === "/orders";
+  // İşlem sonrası aynı ekranda, panel açık kalır (A-3-8).
+  const donus = `${kapatAdresi}${kapatAdresi.includes("?") ? "&" : "?"}detay=${o.id}`;
   return (
     <Panel
       kapatAdresi={kapatAdresi}
@@ -30,11 +39,48 @@ export function SiparisPaneli({ veri, kapatAdresi, yol }: { veri: Veri; kapatAdr
         </>
       }
       altBilgi={
-        <LinkButton href={`${yol}/${o.id}`} ikon="detay">
-          Tam detay
-        </LinkButton>
+        <div className="flex flex-wrap items-center gap-2">
+          {yonetici && o.stage === "ONAYLI" && o.status === "BEKLIYOR" && (
+            <IslemFormu action={prepareOrder.bind(null, o.id, donus)}>
+              <button type="submit" className={buton("birincil")}>
+                <Ikon ad="hazirla" />
+                Hazırlığa Al
+              </button>
+            </IslemFormu>
+          )}
+          {yonetici && o.stage === "ONAYLI" && o.status === "HAZIRLANIYOR" && (
+            <LinkButton href={`/shipping?kismi=${o.id}`} ikon="kargola">
+              Kargo Bilgisi Gir
+            </LinkButton>
+          )}
+          {yonetici && o.stage === "ONAYLI" && o.status === "KARGOLANDI" && (
+            <IslemFormu action={markDelivered.bind(null, o.id, donus)}>
+              <ConfirmSubmit
+                confirmText="Siparişin bütün sevkiyatları teslim edildi olarak işaretlenecek. Onaylıyor musunuz?"
+                className={buton("olumlu")}
+                ikon="teslim"
+              >
+                Teslim Edildi
+              </ConfirmSubmit>
+            </IslemFormu>
+          )}
+          <LinkButton href={`${yol}/${o.id}`} ikon="detay">
+            Tam detay
+          </LinkButton>
+        </div>
       }
     >
+      {veri.red && (
+        <Bolum baslik="Red kararı">
+          <dl className="divide-y divide-slate-100" data-red-karari>
+            <Satir ad="Kural">{BLOK_KURAL_ADI[veri.red.kural as BlokKuralKodu] ?? veri.red.kural}</Satir>
+            {veri.red.kararVeren && <Satir ad="Veren">{veri.red.kararVeren}</Satir>}
+            <Satir ad="Zaman">{veri.red.tarih ? formatDateTime(veri.red.tarih) : "—"}</Satir>
+            <Satir ad="Not">{veri.red.not ?? "—"}</Satir>
+          </dl>
+        </Bolum>
+      )}
+
       <Bolum baslik="Özet">
         <dl className="divide-y divide-slate-100">
           <Satir ad="Tarih">{formatDateTime(o.orderDate)}</Satir>
@@ -135,6 +181,14 @@ export function SiparisPaneli({ veri, kapatAdresi, yol }: { veri: Veri; kapatAdr
                     </>
                   )}
                   {v.irsaliyeNo && ` · İrsaliye: ${v.irsaliyeNo}`}
+                  {yonetici && (
+                    <>
+                      {" · "}
+                      <Link href={`/orders/${o.id}#fatura-${v.documentNo}`} className={BAGLANTI}>
+                        Fatura bilgisi
+                      </Link>
+                    </>
+                  )}
                 </div>
               </li>
             ))}
