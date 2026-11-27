@@ -15,5 +15,5 @@ test("RED'li ISKONTO_TAVANI siparişi Kargo'da seçilemez ve iptal edilmeli yaza
   await page.goto("/shipping");
   const satir = page.locator("tr", { hasText: s.documentNo });
   await expect(satir).toContainText("iptal edilmeli");
-  await expect(satir.getByRole("checkbox")).toHaveCount(0);
+  await expect(satir.getByRole("checkbox")).toBeDisabled();
 });

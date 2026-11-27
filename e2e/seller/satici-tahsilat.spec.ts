@@ -12,9 +12,9 @@ test("Raporum Dönem Tahsilatları tablosu: Tutar sütunu, indirme yok (D-2-5)",
 
 test("Sipariş detayında durum çizelgesi görünür; satıcıda 'Fatura Hazırlık' geçmez (A-3-10)", async ({ page }) => {
   await page.goto("/my-orders");
-  const ilk = page.locator("table tbody tr a").first();
-  if ((await ilk.count()) === 0) test.skip(true, "Satıcının siparişi yok");
-  await ilk.click();
+  const ilkSatir = page.locator("table tbody tr").first();
+  await expect(ilkSatir).toBeVisible();
+  await ilkSatir.getByRole("link", { name: "Detay" }).click();
   await expect(page.locator("[data-durum-cizelgesi]")).toBeVisible();
   await expect(page.getByText("Fatura Hazırlık")).toHaveCount(0);
 });
