@@ -17,3 +17,6 @@ playwright
 MD_files
 PRD.md
 screenshots.db*
+docs
+coverage
+*.log

@@ -35,6 +35,7 @@ excalidraw.log
 .env*
 !.env.example
 !.env.demo.example
+!.env.coolify.example
 
 # vercel
 .vercel
