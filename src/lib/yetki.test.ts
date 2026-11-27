@@ -15,6 +15,7 @@ const ACTION_YETKISI: Record<string, "requireAdmin" | "requireStaff" | "requireS
   // OPERASYON: sipariş, sevkiyat, tahsilat, stok hareketi (D-2 §(1)).
   "(admin)/orders/actions.ts#prepareOrder": "requireStaff",
   "(admin)/orders/actions.ts#markDelivered": "requireStaff",
+  "(admin)/orders/actions.ts#topluHazirla": "requireStaff", // A-3-10: toplu Hazırlığa Al
   "(admin)/orders/actions.ts#cancelOrder": "requireStaff",
   "(admin)/orders/actions.ts#createReturn": "requireStaff", // A-1 eki: YONETICI + OPERASYON
   "(admin)/orders/actions.ts#closeRemainder": "requireStaff", // A-3 eki: kalanı kapat, YONETICI + OPERASYON

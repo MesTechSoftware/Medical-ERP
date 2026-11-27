@@ -91,7 +91,7 @@ export default async function ShippingPage({ searchParams }: { searchParams: Pro
           firmalar={firmalar}
           sutunMenusu={<SutunSecici liste="/shipping" gizli={gizli} donus={adres} />}
         />
-        <SevkiyatTablosu satirlar={liste.satirlar} gizli={gizli} suzgec={suzgec} />
+        <SevkiyatTablosu satirlar={liste.satirlar} gizli={gizli} suzgec={suzgec} donus={adres} />
       </Card>
 
       <ListeSayfalama sayfa={sayfa} toplam={liste.toplam} adres={kargoAdresi(suzgec)} />

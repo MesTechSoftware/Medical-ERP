@@ -112,8 +112,8 @@ export default async function AdminOrderDetailPage({
       <Card>
         <h2 className="mb-3 text-sm font-semibold text-slate-900">İşlemler</h2>
         <div className="flex flex-wrap items-center gap-3">
-          {order.status === "BEKLIYOR" && (
-            <IslemFormu action={prepareOrder.bind(null, id)}>
+          {order.status === "BEKLIYOR" && order.stage === "ONAYLI" && (
+            <IslemFormu action={prepareOrder.bind(null, id, null)}>
               <button
                 type="submit"
                 className={buton("birincil")}
@@ -135,7 +135,7 @@ export default async function AdminOrderDetailPage({
           )}
 
           {order.status === "KARGOLANDI" && (
-            <IslemFormu action={markDelivered.bind(null, id)}>
+            <IslemFormu action={markDelivered.bind(null, id, null)}>
               <button
                 type="submit"
                 className={buton("olumlu")}

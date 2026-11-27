@@ -8,10 +8,10 @@ import { AUDIT_ACTIONS, createAuditLog } from "@/lib/audit";
  * `SIPARIS_DURUMU_UYGUN_DEGIL` bildirir (X-4 §(7)).
  */
 
-/** BEKLIYOR -> HAZIRLANIYOR */
+/** BEKLIYOR -> HAZIRLANIYOR; yalnız onaylı sipariş (teklif hazırlanamaz, A-5-10). */
 export async function siparisiHazirla(tx: Prisma.TransactionClient, g: { siparisId: string; yapanId: string }): Promise<boolean> {
   const res = await tx.order.updateMany({
-    where: { id: g.siparisId, status: "BEKLIYOR" },
+    where: { id: g.siparisId, status: "BEKLIYOR", stage: "ONAYLI" },
     data: { status: OrderStatus.HAZIRLANIYOR },
   });
   if (res.count === 0) return false;

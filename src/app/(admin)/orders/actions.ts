@@ -14,6 +14,10 @@ import { siparisAc, siparisFiyatiOnizle, siparisSatirlariniOku, type FiyatOnizle
 import { siparisiHazirla, teslimEdildiIsaretle } from "@/lib/siparis-durum";
 import { riskBilgileri } from "@/lib/doctor-cari";
 import { bilgiyleAdres } from "@/lib/bilgi-seridi";
+import { hataKapsulu } from "@/lib/hata-kapsulu";
+import { donusAdresi } from "@/lib/donus-adresi";
+import { topluSecimCoz, TOPLU_SINIR } from "@/lib/kargo-listesi/suzgec";
+import type { TopluSonucSatiri } from "@/components/Sonuc";
 import { basarili, engel, sonucOlustur, type Bildirim, type IslemSonucu } from "@/lib/sonuc";
 
 function revalidateOrders() {
@@ -26,21 +30,68 @@ function revalidateOrders() {
 // sessizce geçmez, `SIPARIS_DURUMU_UYGUN_DEGIL` döner (X-4 §(7)).
 
 /** BEKLIYOR -> HAZIRLANIYOR */
-export async function prepareOrder(id: string): Promise<IslemSonucu> {
+export async function prepareOrder(id: string, donus?: string | null): Promise<IslemSonucu> {
   const session = await requireStaff();
   const gecti = await prisma.$transaction((tx) => siparisiHazirla(tx, { siparisId: id, yapanId: session.user.id }));
   if (!gecti) return engel("SIPARIS_DURUMU_UYGUN_DEGIL");
   revalidateOrders();
-  redirect(`/orders/${id}`);
+  redirect(donusAdresi(donus, id));
+}
+
+export type TopluHazirlaSonucu = IslemSonucu & { satirlar: TopluSonucSatiri[] };
+
+/**
+ * Seçilen BEKLIYOR siparişleri toplu Hazırlığa Alır (A-3-10, S8): en çok `TOPLU_SINIR`; her sipariş ayrı
+ * transaction, biri uygun değilse (teklif, durumu değişmiş) yalnız o satır HATA olur.
+ */
+export async function topluHazirla(_prev: TopluHazirlaSonucu | null, formData: FormData): Promise<TopluHazirlaSonucu> {
+  const session = await requireStaff();
+  const secim = topluSecimCoz(formData);
+  if ("hata" in secim) {
+    const s = secim.hata === "SECIM_YOK" ? engel("TOPLU_SECIM_YOK") : engel("TOPLU_SINIR_ASILDI", { sinir: TOPLU_SINIR });
+    return { ...s, satirlar: [] };
+  }
+  const siparisler = await prisma.order.findMany({
+    where: { id: { in: secim.secimler.map((s) => s.siparisId) } },
+    select: { id: true, documentNo: true, doctor: { select: { fullName: true } } },
+  });
+  const satirlar: TopluSonucSatiri[] = [];
+  for (const { siparisId } of secim.secimler) {
+    const o = siparisler.find((x) => x.id === siparisId);
+    let gecti = false;
+    let teknik: string | null = null;
+    if (o) {
+      const r = await hataKapsulu(() => prisma.$transaction((tx) => siparisiHazirla(tx, { siparisId, yapanId: session.user.id })), {
+        yol: "/orders",
+        kullaniciId: session.user.id,
+      });
+      if (r.tamam) gecti = r.deger;
+      else teknik = r.referans;
+    }
+    const uygunDegil = engel("SIPARIS_DURUMU_UYGUN_DEGIL");
+    satirlar.push({
+      siparisId,
+      belge: o?.documentNo ?? null,
+      cari: o?.doctor.fullName ?? null,
+      durum: teknik ? "TEKNIK" : gecti ? "SEVK_EDILDI" : "HATA",
+      sevkiyat: null,
+      referans: teknik,
+      tamamlandi: gecti,
+      sonucDurumu: gecti || teknik ? null : uygunDegil.durum,
+      bildirimler: gecti || teknik ? [] : uygunDegil.bildirimler,
+    });
+  }
+  revalidateOrders();
+  return { ...basarili(), satirlar };
 }
 
 /** KARGOLANDI -> TESLIM_EDILDI */
-export async function markDelivered(id: string): Promise<IslemSonucu> {
+export async function markDelivered(id: string, donus?: string | null): Promise<IslemSonucu> {
   const session = await requireStaff();
   const gecti = await prisma.$transaction((tx) => teslimEdildiIsaretle(tx, { siparisId: id, yapanId: session.user.id }));
   if (!gecti) return engel("SIPARIS_DURUMU_UYGUN_DEGIL");
   revalidateOrders();
-  redirect(`/orders/${id}`);
+  redirect(donusAdresi(donus, id));
 }
 
 /**

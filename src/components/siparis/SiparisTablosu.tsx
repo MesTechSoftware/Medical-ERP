@@ -45,12 +45,15 @@ export function SiparisTablosu({
   suzgec,
   yer,
   yol,
+  secilebilir = false,
 }: {
   satirlar: SiparisSatiri[];
   gizli: ReadonlySet<SiparisSutunu>;
   suzgec: SiparisSuzgeci;
   yer: { page?: number; per?: number };
   yol: SiparisYolu;
+  /** Satır seçim kutuları (yalnız Siparişler "Bekliyor" sekmesi; toplu Hazırlığa Al, A-3-10). */
+  secilebilir?: boolean;
 }) {
   const gorunur = ekranSutunlari(yol).filter((s) => !gizli.has(s.anahtar));
   const acikKume = new Set(gorunur.map((s) => s.anahtar));
@@ -63,6 +66,7 @@ export function SiparisTablosu({
         <table className="veri-tablosu">
           <thead>
             <tr>
+              {secilebilir && <th aria-label="Seç" />}
               <th>Tarih</th>
               {acik("belgeNo") && <th className={SINIF.belgeNo}>Belge no</th>}
               <th>Cari</th>
@@ -80,7 +84,7 @@ export function SiparisTablosu({
           <tbody>
             {satirlar.length === 0 && (
               <BosDurum
-                colSpan={4 + gorunur.length}
+                colSpan={4 + gorunur.length + (secilebilir ? 1 : 0)}
                 ikon={tur === "suzgecli" ? "filtrele" : "yeni"}
                 baslik={tur === "suzgecli" ? "Bu süzgeçlere uyan sipariş yok." : yol === "/orders" ? "Henüz sipariş yok." : "Henüz sipariş oluşturmadınız."}
                 temizleAdresi={tur === "suzgecli" ? yol : undefined}
@@ -95,6 +99,18 @@ export function SiparisTablosu({
             )}
             {satirlar.map((o) => (
               <tr key={o.id}>
+                {secilebilir && (
+                  <td>
+                    <input
+                      type="checkbox"
+                      name="secili"
+                      value={o.id}
+                      disabled={o.stage !== "ONAYLI" || o.status !== "BEKLIYOR"}
+                      aria-label={`${o.documentNo} seç`}
+                      className="size-4"
+                    />
+                  </td>
+                )}
                 <td className="whitespace-nowrap text-slate-500">{formatDate(o.orderDate)}</td>
                 {acik("belgeNo") && <td className="whitespace-nowrap text-slate-600">{o.documentNo}</td>}
                 <td className="font-medium text-slate-900">

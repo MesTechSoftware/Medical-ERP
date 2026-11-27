@@ -146,6 +146,8 @@ export type SevkiyatSatiri = {
   irsaliyeNo: string | null;
   adet: number;
   durum: OrderStatus;
+  /** Sipariş KARGOLANDI iken, siparişin en yeni sevkiyat satırında Teslim görünür (A-3-9 / S4). */
+  teslimEdilebilir: boolean;
 };
 
 export async function sevkiyatListesi(
@@ -166,7 +168,15 @@ export async function sevkiyatListesi(
         externalDispatchNo: true,
         status: true,
         carrier: { select: { name: true, trackingUrlTemplate: true } },
-        order: { select: { id: true, documentNo: true, doctor: { select: { fullName: true } } } },
+        order: {
+          select: {
+            id: true,
+            documentNo: true,
+            status: true,
+            doctor: { select: { fullName: true } },
+            shipments: { orderBy: [{ shippedAt: { sort: "desc", nulls: "last" } }, { id: "desc" }], take: 1, select: { id: true } },
+          },
+        },
         items: { select: { quantity: true } },
       },
     }),
@@ -185,6 +195,7 @@ export async function sevkiyatListesi(
       irsaliyeNo: v.externalDispatchNo,
       adet: v.items.reduce((t, k) => t + k.quantity, 0),
       durum: v.status,
+      teslimEdilebilir: v.order.status === "KARGOLANDI" && v.order.shipments[0]?.id === v.id,
     })),
     toplam,
   };

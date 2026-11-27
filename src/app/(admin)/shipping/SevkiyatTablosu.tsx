@@ -5,7 +5,10 @@ import { formatDateTime } from "@/lib/format";
 import type { SevkiyatSatiri } from "@/lib/kargo-listesi/sorgu";
 import { SUTUNLAR, type KargoSutunu } from "@/lib/kargo-listesi/sutunlar";
 import { bosDurum, type KargoSuzgeci } from "@/lib/kargo-listesi/suzgec";
-import { BAGLANTI } from "@/components/stil";
+import ConfirmSubmit from "@/components/ConfirmSubmit";
+import { IslemFormu } from "@/components/Sonuc";
+import { BAGLANTI, buton } from "@/components/stil";
+import { markDelivered } from "@/app/(admin)/orders/actions";
 
 const SINIF: Partial<Record<KargoSutunu, string>> = { siparis: "whitespace-nowrap", firma: "oncelik-dusuk", irsaliye: "oncelik-dusuk", adet: "sayi" };
 
@@ -17,10 +20,13 @@ export function SevkiyatTablosu({
   satirlar,
   gizli,
   suzgec,
+  donus,
 }: {
   satirlar: SevkiyatSatiri[];
   gizli: ReadonlySet<KargoSutunu>;
   suzgec: KargoSuzgeci;
+  /** Teslim sonrası dönülecek Kargo adresi (süzgeçler korunur). */
+  donus: string;
 }) {
   const gorunur = SUTUNLAR.filter((s) => !gizli.has(s.anahtar));
   const acik = (k: KargoSutunu) => !gizli.has(k);
@@ -83,6 +89,17 @@ export function SevkiyatTablosu({
               {acik("adet") && <td className="sayi">{v.adet}</td>}
               <td>
                 <StatusBadge status={v.durum} />
+                {v.teslimEdilebilir && (
+                  <IslemFormu action={markDelivered.bind(null, v.siparis.id, donus)} className="mt-1">
+                    <ConfirmSubmit
+                      confirmText="Siparişin bütün sevkiyatları teslim edildi olarak işaretlenecek. Onaylıyor musunuz?"
+                      className={buton("olumlu")}
+                      ikon="teslim"
+                    >
+                      Teslim
+                    </ConfirmSubmit>
+                  </IslemFormu>
+                )}
               </td>
             </tr>
           ))}
